@@ -2,22 +2,51 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { Plus, Home, Briefcase, Dumbbell, Plane, FolderOpen, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 
-const typeColors: Record<string, string> = {
-  personal: "bg-primary/10 text-primary",
-  work: "bg-warning/10 text-warning",
-  fitness: "bg-success/10 text-success",
-  travel: "bg-destructive/10 text-destructive",
-};
+const workspaceConfig = [
+  {
+    id: "personal",
+    title: "Personal Projects",
+    icon: Home,
+    colorClass: "bg-primary",
+    textClass: "text-primary",
+    borderClass: "border-primary",
+    hoverClass: "hover:bg-primary/5",
+  },
+  {
+    id: "work",
+    title: "Work",
+    icon: Briefcase,
+    colorClass: "bg-accent-foreground",
+    textClass: "text-accent-foreground",
+    borderClass: "border-accent-foreground",
+    hoverClass: "hover:bg-accent/50",
+  },
+  {
+    id: "travel",
+    title: "Trips",
+    icon: Plane,
+    colorClass: "bg-destructive",
+    textClass: "text-destructive",
+    borderClass: "border-destructive",
+    hoverClass: "hover:bg-destructive/5",
+  },
+  {
+    id: "fitness",
+    title: "Fitness & Goals",
+    icon: Dumbbell,
+    colorClass: "bg-primary/70",
+    textClass: "text-primary/70",
+    borderClass: "border-primary/70",
+    hoverClass: "hover:bg-primary/5",
+  },
+];
 
 export default function Projects() {
   const { data: projects = [], isLoading } = useProjects();
@@ -28,54 +57,89 @@ export default function Projects() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-[32px] font-semibold tracking-tight">Projects</h1>
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="mr-1.5 h-4 w-4" /> New Project
-          </Button>
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-4xl font-bold text-foreground">Workspaces</h1>
         </div>
 
-        {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-2xl bg-muted" />
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-muted-foreground">No projects yet</p>
-            <Button className="mt-4" onClick={() => setModalOpen(true)}>Create your first project</Button>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p) => {
-              const projectTasks = tasks.filter((t) => t.project_id === p.id);
-              const done = projectTasks.filter((t) => t.status === "done").length;
-              const total = projectTasks.length;
-              const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+        <div className="space-y-8">
+          {workspaceConfig.map((workspace) => {
+            const Icon = workspace.icon;
+            const workspaceProjects = projects.filter((p) => p.type === workspace.id);
 
-              return (
-                <Card
-                  key={p.id}
-                  className="cursor-pointer rounded-2xl border-border p-6 shadow-none transition-colors hover:border-primary/30"
-                  onClick={() => navigate(`/project/${p.id}`)}
-                >
-                  <div className="flex items-start justify-between">
-                    <h3 className="text-xl font-medium">{p.name}</h3>
-                    <Badge variant="secondary" className={typeColors[p.type] || ""}>
-                      {p.type}
-                    </Badge>
+            return (
+              <div key={workspace.id} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`${workspace.colorClass} rounded-xl p-3`}>
+                      <Icon className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-foreground">{workspace.title}</h2>
+                      <p className="text-sm text-muted-foreground">{workspaceProjects.length} projects</p>
+                    </div>
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{total} tasks</p>
-                  <Progress value={progress} className="mt-3 h-1.5" />
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Updated {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}
-                  </p>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className={`flex items-center gap-2 rounded-lg ${workspace.colorClass} px-4 py-2 text-primary-foreground transition hover:opacity-90`}
+                  >
+                    <Plus className="h-5 w-5" />
+                    New Project
+                  </button>
+                </div>
+
+                {workspaceProjects.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {workspaceProjects.map((project) => {
+                      const projectTasks = tasks.filter((t) => t.project_id === project.id);
+                      const done = projectTasks.filter((t) => t.status === "done").length;
+                      const total = projectTasks.length;
+                      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+                      return (
+                        <div
+                          key={project.id}
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          className={`group cursor-pointer rounded-xl border-2 ${workspace.borderClass} p-4 transition ${workspace.hoverClass}`}
+                        >
+                          <div className="mb-3 flex items-start justify-between">
+                            <FolderOpen className={`h-8 w-8 ${workspace.textClass}`} />
+                            <ChevronRight className="h-5 w-5 text-muted-foreground transition group-hover:text-foreground" />
+                          </div>
+                          <h3 className="mb-2 font-semibold text-foreground">{project.name}</h3>
+                          {total > 0 && (
+                            <div className="mb-2">
+                              <Progress value={progress} className="h-1.5" />
+                              <p className="mt-1 text-xs text-muted-foreground">{done}/{total} tasks done</p>
+                            </div>
+                          )}
+                          {project.end_date && (
+                            <p className="text-sm text-muted-foreground">
+                              Due: {format(new Date(project.end_date), "MMM d, yyyy")}
+                            </p>
+                          )}
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Created {format(new Date(project.created_at), "MMM d, yyyy")}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
+                    <FolderOpen className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" />
+                    <p className="mb-4 text-muted-foreground">No projects yet</p>
+                    <button
+                      onClick={() => setModalOpen(true)}
+                      className="font-medium text-primary hover:text-primary/80"
+                    >
+                      Create your first project
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </motion.div>
 
       <NewProjectModal open={modalOpen} onOpenChange={setModalOpen} />
