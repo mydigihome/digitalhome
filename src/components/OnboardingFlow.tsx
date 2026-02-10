@@ -1,59 +1,57 @@
 import { useState } from 'react';
-import { ChevronRight, Check, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronRight, X, Play, GripVertical } from 'lucide-react';
+
+interface Widget {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
 
 interface OnboardingFlowProps {
-  onComplete: (userName: string) => void;
+  onComplete: (userName: string, widgets: Widget[]) => void;
 }
 
 const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [userName, setUserName] = useState('');
-  const [selectedWorkspaces, setSelectedWorkspaces] = useState<string[]>([]);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  
+  const [widgets, setWidgets] = useState<Widget[]>([
+    { id: 'today-todo', name: "Today's To-Do", enabled: true },
+    { id: 'this-week', name: "This Week", enabled: true },
+    { id: 'date-time', name: 'Date & Time', enabled: true },
+    { id: 'priority-projects', name: 'Top Priority Projects', enabled: true },
+    { id: 'everyday-links', name: 'Everyday Links', enabled: true },
+    { id: 'calendar', name: 'Calendar Preview', enabled: false },
+    { id: 'recent-activity', name: 'Recent Activity', enabled: false },
+    { id: 'quick-stats', name: 'Quick Stats', enabled: true },
+  ]);
 
   const steps = [
     {
       id: 1,
-      title: "Welcome to Digital Home! 🏠",
-      subtitle: "Let's get you set up in just 3 easy steps",
-      description: "Digital Home is like having your entire life organized in one magical place. Think of it as your personal command center!",
+      title: "Welcome to Digital Home",
+      subtitle: "Your real life, organized in one place",
     },
     {
       id: 2,
-      title: "What should we call you?",
-      subtitle: "We'll use this to personalize your experience",
-      description: "Don't worry, you can always change this later in settings!",
+      title: "What's your name?",
+      subtitle: "We'll personalize your experience",
     },
     {
       id: 3,
-      title: "What do you want to organize?",
-      subtitle: "Pick the areas of your life you want to manage",
-      description: "You can always add more workspaces later, so just pick what feels right for now!",
-    },
-    {
-      id: 4,
-      title: "You're all set! 🎉",
-      subtitle: "Here's what you can do in Digital Home",
-      description: "We've prepared everything for you. Let's explore!",
+      title: "Customize your dashboard",
+      subtitle: "Select the widgets you want to see",
     },
   ];
 
-  const workspaces = [
-    { id: 'personal', name: 'Personal Projects', icon: '🏠', description: 'Like building a home or planning renovations' },
-    { id: 'trips', name: 'Trips & Travel', icon: '✈️', description: 'Vacations, weekend getaways, and adventures' },
-    { id: 'goals', name: 'Life Goals', icon: '🎯', description: 'Learning new skills, graduating, career goals' },
-  ];
-
-  const features = [
-    { icon: '📋', title: 'Daily To-Do Lists', description: 'See your tasks for today and this week' },
-    { icon: '📁', title: 'Project Workspaces', description: 'Organize everything in one place' },
-    { icon: '👥', title: 'Team Collaboration', description: 'Invite friends and family to help' },
-    { icon: '🤖', title: 'AI Assistant', description: 'Get help organizing and planning' },
-  ];
+  const toggleWidget = (id: string) => {
+    setWidgets(widgets.map(w => w.id === id ? { ...w, enabled: !w.enabled } : w));
+  };
 
   const handleNext = () => {
-    if (currentStep === 4) {
-      onComplete(userName || 'Friend');
+    if (currentStep === 3) {
+      onComplete(userName || 'Friend', widgets);
     } else {
       setCurrentStep(currentStep + 1);
     }
@@ -61,166 +59,151 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
   const canProceed = () => {
     if (currentStep === 2) return userName.trim().length > 0;
-    if (currentStep === 3) return selectedWorkspaces.length > 0;
     return true;
-  };
-
-  const toggleWorkspace = (id: string) => {
-    if (selectedWorkspaces.includes(id)) {
-      setSelectedWorkspaces(selectedWorkspaces.filter(w => w !== id));
-    } else {
-      setSelectedWorkspaces([...selectedWorkspaces, id]);
-    }
   };
 
   const step = steps[currentStep - 1];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/10 to-accent/5 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-muted-foreground">Step {currentStep} of 4</span>
-            <span className="text-sm text-muted-foreground">{Math.round((currentStep / 4) * 100)}% Complete</span>
+            <span className="text-sm font-medium text-gray-600">Step {currentStep} of 3</span>
           </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-              animate={{ width: `${(currentStep / 4) * 100}%` }}
-              transition={{ duration: 0.5 }}
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+              style={{ width: `${(currentStep / 3) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Main Card */}
-        <motion.div
-          className="bg-card rounded-3xl shadow-2xl p-8 md:p-12 border border-border"
-          layout
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="text-center mb-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">{step.title}</h1>
-                <p className="text-lg text-muted-foreground mb-2">{step.subtitle}</p>
-                <p className="text-muted-foreground text-sm">{step.description}</p>
+        <div className="bg-white rounded-3xl shadow-xl p-12">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">{step.title}</h1>
+            <p className="text-lg text-gray-600">{step.subtitle}</p>
+          </div>
+
+          {/* Step Content */}
+          <div className="mb-8">
+            {currentStep === 1 && (
+              <div className="text-center py-8 space-y-6">
+                <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl mx-auto flex items-center justify-center">
+                  <span className="text-white font-bold text-5xl">D</span>
+                </div>
+                
+                <button
+                  onClick={() => setShowVideoModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition font-medium"
+                >
+                  <Play className="w-5 h-5" />
+                  Watch Platform Tutorial (2 min)
+                </button>
               </div>
+            )}
 
-              {/* Step Content */}
-              <div className="mb-8">
-                {currentStep === 1 && (
-                  <div className="text-center py-8">
-                    <div className="w-24 h-24 bg-gradient-to-br from-primary to-primary/70 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-bounce">
-                      <Sparkles className="w-12 h-12 text-primary-foreground" />
-                    </div>
-                    <p className="text-lg text-foreground/80">Ready to organize your life? Let's go! 🚀</p>
-                  </div>
-                )}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Enter your name..."
+                  className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition"
+                  autoFocus
+                />
+              </div>
+            )}
 
-                {currentStep === 2 && (
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      placeholder="Enter your name..."
-                      className="w-full px-6 py-4 text-lg border-2 border-border rounded-xl bg-background text-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 transition placeholder:text-muted-foreground"
-                      autoFocus
-                    />
-                    {userName && (
-                      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
-                        <span className="text-2xl">👋</span>
-                        <div>
-                          <p className="font-medium text-foreground">Nice to meet you, {userName}!</p>
-                          <p className="text-sm text-muted-foreground">We'll use this to make everything feel personal</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {currentStep === 3 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {workspaces.map((workspace) => (
-                      <button
-                        key={workspace.id}
-                        onClick={() => toggleWorkspace(workspace.id)}
-                        className={`p-6 rounded-2xl border-2 transition-all text-left ${
-                          selectedWorkspaces.includes(workspace.id)
-                            ? 'border-primary bg-primary/5 shadow-lg scale-105'
-                            : 'border-border hover:border-muted-foreground/30 bg-card'
+            {currentStep === 3 && (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500 mb-4">Drag to reorder • Toggle to show/hide</p>
+                
+                {widgets.map((widget) => (
+                  <div
+                    key={widget.id}
+                    className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition"
+                  >
+                    <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+                    <span className="flex-1 font-medium text-gray-900">{widget.name}</span>
+                    <button
+                      onClick={() => toggleWidget(widget.id)}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${
+                        widget.enabled ? 'bg-orange-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                          widget.enabled ? 'translate-x-6' : 'translate-x-0'
                         }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-4xl">{workspace.icon}</span>
-                          {selectedWorkspaces.includes(workspace.id) && (
-                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                              <Check className="w-4 h-4 text-primary-foreground" />
-                            </div>
-                          )}
-                        </div>
-                        <h3 className="font-semibold text-foreground mb-1">{workspace.name}</h3>
-                        <p className="text-sm text-muted-foreground">{workspace.description}</p>
-                      </button>
-                    ))}
+                      />
+                    </button>
                   </div>
-                )}
-
-                {currentStep === 4 && (
-                  <div className="space-y-4">
-                    {features.map((feature, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-4 p-4 bg-muted/50 rounded-xl hover:bg-muted transition"
-                      >
-                        <span className="text-3xl">{feature.icon}</span>
-                        <div>
-                          <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
-                          <p className="text-sm text-muted-foreground">{feature.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                ))}
               </div>
-            </motion.div>
-          </AnimatePresence>
+            )}
+          </div>
 
-          {/* Navigation Buttons */}
+          {/* Navigation */}
           <div className="flex items-center justify-between">
-            {currentStep > 1 && currentStep < 4 ? (
+            {currentStep > 1 && (
               <button
                 onClick={() => setCurrentStep(currentStep - 1)}
-                className="px-6 py-3 text-muted-foreground hover:text-foreground font-medium transition"
+                className="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium transition"
               >
                 Back
               </button>
-            ) : <div />}
+            )}
             <button
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`px-8 py-4 rounded-xl font-semibold transition flex items-center gap-2 ${
+              className={`ml-auto px-8 py-4 rounded-xl font-semibold transition flex items-center gap-2 ${
                 canProceed()
-                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl'
-                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 shadow-lg'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {currentStep === 4 ? "Let's Go!" : 'Continue'}
+              {currentStep === 3 ? "Get Started" : 'Continue'}
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-        </motion.div>
-
-        <p className="text-center mt-6 text-muted-foreground text-sm">
-          Need help? We're here to guide you every step of the way! 💙
-        </p>
+        </div>
       </div>
+
+      {/* Video Tutorial Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Platform Tutorial</h2>
+              <button
+                onClick={() => setShowVideoModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="aspect-video bg-gray-900 rounded-xl flex items-center justify-center mb-6">
+              <div className="text-center text-white">
+                <Play className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">Video tutorial would play here</p>
+                <p className="text-sm opacity-75 mt-2">Integrate with YouTube/Vimeo/Loom</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowVideoModal(false)}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Continue Setup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
