@@ -164,7 +164,7 @@ export default function ProjectDetail() {
               <TabsList className="h-8">
                 <TabsTrigger value="board" className="text-xs">Board</TabsTrigger>
                 <TabsTrigger value="documents" className="text-xs">
-                  <FileText className="mr-1 h-3 w-3" /> Playbook
+                  <FileText className="mr-1 h-3 w-3" /> Playbooks
                 </TabsTrigger>
               </TabsList>
             </Tabs>
