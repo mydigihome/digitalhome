@@ -3,64 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { format, isToday, isTomorrow, isPast, isBefore, startOfWeek, endOfWeek, isWithinInterval, addDays, formatDistanceToNow } from "date-fns";
-import { Plus, FolderOpen, CheckCircle2, ListTodo, Sparkles, Home as HomeIcon, Briefcase, Dumbbell, Plane } from "lucide-react";
+import {
+  format, isToday, isTomorrow, isPast, isBefore, endOfWeek, addDays,
+  startOfWeek, isWithinInterval,
+} from "date-fns";
+import {
+  Plus, FolderOpen, Calendar, Clock, ExternalLink,
+  CheckCircle2, Sparkles,
+} from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import { cn } from "@/lib/utils";
 
-const typeIcons: Record<string, any> = {
-  personal: HomeIcon,
-  work: Briefcase,
-  fitness: Dumbbell,
-  travel: Plane,
-};
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "Good morning";
-  if (h >= 12 && h < 17) return "Good afternoon";
-  return "Good evening";
-}
-
-type TaskGroup = { label: string; color: string; tasks: any[] };
-
-function groupTasksByDate(tasks: any[]): TaskGroup[] {
-  const now = new Date();
-  const tomorrow = addDays(now, 1);
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
-  const groups: TaskGroup[] = [
-    { label: "Overdue", color: "bg-destructive", tasks: [] },
-    { label: "Today", color: "bg-warning", tasks: [] },
-    { label: "Tomorrow", color: "bg-primary", tasks: [] },
-    { label: "This Week", color: "bg-primary/60", tasks: [] },
-    { label: "Later", color: "bg-muted-foreground", tasks: [] },
-  ];
-
-  tasks.forEach((t) => {
-    if (!t.due_date || t.status === "done") return;
-    const d = new Date(t.due_date);
-    if (isPast(d) && !isToday(d)) groups[0].tasks.push(t);
-    else if (isToday(d)) groups[1].tasks.push(t);
-    else if (isTomorrow(d)) groups[2].tasks.push(t);
-    else if (isBefore(d, weekEnd)) groups[3].tasks.push(t);
-    else groups[4].tasks.push(t);
+function useCurrentTime() {
+  const [now, setNow] = useState(new Date());
+  // update every minute
+  useState(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
   });
-
-  return groups.filter((g) => g.tasks.length > 0);
+  return now;
 }
-
-const priorityDot: Record<string, string> = {
-  low: "bg-success",
-  medium: "bg-warning",
-  high: "bg-destructive",
-};
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -70,29 +37,37 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
+  const now = useCurrentTime();
 
   const name = profile?.full_name || "there";
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter((t) => t.status === "done").length;
-  const momentum = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-  const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  const completedThisWeek = tasks.filter(
-    (t) => t.status === "done" && isWithinInterval(new Date(t.updated_at), { start: weekStart, end: weekEnd })
-  ).length;
-
-  const agendaGroups = groupTasksByDate(tasks);
-  const agendaTaskCount = agendaGroups.reduce((n, g) => n + g.tasks.length, 0);
-
-  const activeProjects = projects.slice(0, 3).map((p) => {
-    const projectTasks = tasks.filter((t) => t.project_id === p.id);
-    const done = projectTasks.filter((t) => t.status === "done").length;
-    const total = projectTasks.length;
-    const progress = total > 0 ? Math.round((done / total) * 100) : 0;
-    return { ...p, progress, total, done };
+  // Today's tasks (due today or overdue, not done)
+  const todayTodos = tasks.filter((t) => {
+    if (t.status === "done") return false;
+    if (!t.due_date) return false;
+    const d = new Date(t.due_date);
+    return isToday(d) || isPast(d);
   });
+
+  // This week tasks (due this week, not today/overdue, not done)
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const thisWeekTasks = tasks.filter((t) => {
+    if (t.status === "done" || !t.due_date) return false;
+    const d = new Date(t.due_date);
+    return !isToday(d) && !isPast(d) && isBefore(d, addDays(weekEnd, 1));
+  });
+
+  // Priority projects (top 3 with most pending tasks)
+  const projectsWithStats = projects.map((p) => {
+    const ptasks = tasks.filter((t) => t.project_id === p.id);
+    const done = ptasks.filter((t) => t.status === "done").length;
+    const total = ptasks.length;
+    const pending = total - done;
+    return { ...p, done, total, pending };
+  });
+  const priorityProjects = [...projectsWithStats]
+    .sort((a, b) => b.pending - a.pending)
+    .slice(0, 3);
 
   const projectNameMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
@@ -100,177 +75,170 @@ export default function Dashboard() {
     updateTask.mutate({ id: taskId, status: currentStatus === "done" ? "backlog" : "done" });
   };
 
+  const statusLabel = (p: typeof priorityProjects[0]) => {
+    if (p.total === 0) return "No Tasks";
+    const pct = Math.round((p.done / p.total) * 100);
+    if (pct >= 100) return "Complete";
+    if (pct >= 50) return "In Progress";
+    return "Planning";
+  };
+
+  const projectColor = (p: typeof priorityProjects[0]) => p.color || "hsl(var(--primary))";
+
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-              {getGreeting()}, {name}
-            </h1>
-          </div>
-          {/* Momentum Score */}
-          <div className="flex flex-col items-center">
-            <div className="relative flex h-16 w-16 items-center justify-center">
-              <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
-                <defs>
-                  <linearGradient id="momentum-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" />
-                    <stop offset="100%" stopColor="hsl(225, 76%, 60%)" />
-                  </linearGradient>
-                </defs>
-                <circle cx="32" cy="32" r="28" fill="none" strokeWidth="4" className="stroke-muted" />
-                <circle
-                  cx="32" cy="32" r="28" fill="none" strokeWidth="4"
-                  stroke="url(#momentum-gradient)"
-                  strokeDasharray={`${momentum * 1.76} 176`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="absolute text-sm font-medium">{momentum}%</span>
-            </div>
-            <span className="mt-1 text-xs text-muted-foreground">Momentum</span>
-          </div>
-        </div>
+        {/* Page Title */}
+        <h1 className="mb-8 text-4xl font-bold text-foreground">Home Office</h1>
 
-        {/* Widget Grid */}
-        <div className="grid gap-5 md:grid-cols-2">
-          {/* Upcoming / Agenda */}
-          <Card className="rounded-2xl border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Upcoming</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {agendaTaskCount === 0 ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* ===== Main Content (2/3) ===== */}
+          <div className="space-y-6 lg:col-span-2">
+            {/* Today's To-Do */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-foreground">Today's To-Do</h2>
+                <button
+                  onClick={() => setTaskEditorOpen(true)}
+                  className="rounded-lg p-2 transition-colors hover:bg-secondary"
+                >
+                  <Plus className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+              {todayTodos.length === 0 ? (
                 <div className="flex flex-col items-center py-8 text-center">
                   <Sparkles className="mb-2 h-8 w-8 text-primary/40" />
                   <p className="text-sm text-muted-foreground">You're all caught up! 🎉</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {agendaGroups.slice(0, 4).map((group) => (
-                    <div key={group.label}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className={cn("h-2 w-2 rounded-full", group.color)} />
-                        <span className="text-xs font-medium text-muted-foreground">{group.label}</span>
-                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{group.tasks.length}</span>
-                      </div>
-                      {group.tasks.slice(0, 3).map((t) => (
-                        <div key={t.id} className="flex items-center gap-3 py-1.5">
-                          <Checkbox
-                            checked={t.status === "done"}
-                            onCheckedChange={() => toggleTask(t.id, t.status)}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className={cn("truncate text-sm", t.status === "done" && "text-muted-foreground line-through")}>{t.title}</p>
-                            <p className="text-xs text-muted-foreground">{projectNameMap[t.project_id] || ""}</p>
-                          </div>
-                          <div className={cn("h-2 w-2 shrink-0 rounded-full", priorityDot[t.priority])} />
-                        </div>
-                      ))}
+                <div className="space-y-1">
+                  {todayTodos.slice(0, 10).map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-lg p-3 transition-colors hover:bg-secondary/50"
+                      onClick={() => toggleTask(todo.id, todo.status)}
+                    >
+                      <Checkbox
+                        checked={todo.status === "done"}
+                        onCheckedChange={() => toggleTask(todo.id, todo.status)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        className={cn(
+                          "flex-1 text-sm",
+                          todo.status === "done" ? "text-muted-foreground line-through" : "text-foreground"
+                        )}
+                      >
+                        {todo.title}
+                      </span>
+                      {projectNameMap[todo.project_id] && (
+                        <span className="text-xs text-muted-foreground">{projectNameMap[todo.project_id]}</span>
+                      )}
                     </div>
                   ))}
-                  {agendaTaskCount > 10 && (
-                    <button onClick={() => navigate("/calendar")} className="text-xs font-medium text-primary hover:underline">
-                      View all →
-                    </button>
-                  )}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Active Projects */}
-          <Card className="rounded-2xl border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Active Projects</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {activeProjects.length === 0 ? (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <FolderOpen className="mb-2 h-8 w-8 text-muted-foreground/40" />
+            {/* This Week */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h2 className="mb-4 text-2xl font-semibold text-foreground">This Week</h2>
+              {thisWeekTasks.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">Nothing else this week</p>
+              ) : (
+                <div className="space-y-1">
+                  {thisWeekTasks.slice(0, 8).map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary/50"
+                    >
+                      <span className="text-sm text-foreground">{task.title}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {task.due_date ? format(new Date(task.due_date), "EEE, MMM d") : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ===== Sidebar Cards (1/3) ===== */}
+          <div className="space-y-4">
+            {/* Date & Time Card */}
+            <div className="rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">
+              <div className="mb-2 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                <span className="text-sm font-medium">Today</span>
+              </div>
+              <p className="mb-4 text-lg font-semibold">
+                {format(now, "EEEE, MMMM d, yyyy")}
+              </p>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                <span className="text-2xl font-bold">
+                  {format(now, "hh:mm a")}
+                </span>
+              </div>
+            </div>
+
+            {/* Top Priority Projects */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">Top Priority Projects</h3>
+              {priorityProjects.length === 0 ? (
+                <div className="flex flex-col items-center py-4 text-center">
+                  <FolderOpen className="mb-2 h-6 w-6 text-muted-foreground/40" />
                   <p className="text-sm text-muted-foreground">No projects yet</p>
                 </div>
               ) : (
-                activeProjects.map((p) => {
-                  const TypeIcon = typeIcons[p.type] || FolderOpen;
-                  return (
-                    <div key={p.id} className="cursor-pointer" onClick={() => navigate(`/project/${p.id}`)}>
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <TypeIcon className="h-4 w-4 text-primary/60" />
-                          <span className="font-medium">{p.name}</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">{p.done}/{p.total}</span>
-                      </div>
-                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary to-primary/60 transition-all"
-                          style={{ width: `${p.progress}%` }}
-                        />
-                      </div>
+                <div className="space-y-3">
+                  {priorityProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="cursor-pointer border-l-4 py-2 pl-3 transition-colors hover:bg-secondary/30"
+                      style={{ borderColor: projectColor(project) }}
+                      onClick={() => navigate(`/project/${project.id}`)}
+                    >
+                      <p className="font-medium text-foreground">{project.name}</p>
+                      {project.end_date && (
+                        <p className="text-xs text-muted-foreground">
+                          Due: {format(new Date(project.end_date), "MMM d, yyyy")}
+                        </p>
+                      )}
+                      <span className="mt-1 inline-block rounded bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
+                        {statusLabel(project)}
+                      </span>
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Quick Add */}
-          <Card className="rounded-2xl border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Quick Add</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-3">
-              <Button onClick={() => setTaskEditorOpen(true)} className="flex-1 bg-primary hover:bg-primary/90">
-                <Plus className="mr-1.5 h-4 w-4" /> New Task
-              </Button>
-              <Button variant="outline" onClick={() => setProjectModalOpen(true)} className="flex-1 border-primary/30 text-primary hover:bg-primary/5">
-                <Plus className="mr-1.5 h-4 w-4" /> New Project
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Quick Stats */}
-          <Card className="rounded-2xl border-border bg-card shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Quick Stats</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="flex items-center justify-center">
-                    <FolderOpen className="mr-1.5 h-4 w-4 text-primary/60" />
-                    <p className="text-2xl font-medium">{projects.length}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Projects</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center">
-                    <ListTodo className="mr-1.5 h-4 w-4 text-primary/60" />
-                    <p className="text-2xl font-medium">{totalTasks}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Tasks</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center">
-                    <CheckCircle2 className="mr-1.5 h-4 w-4 text-success/60" />
-                    <p className="text-2xl font-medium">{completedThisWeek}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Done this week</p>
-                </div>
+            {/* Quick Add */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <h3 className="mb-4 text-lg font-semibold text-foreground">Quick Actions</h3>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => setTaskEditorOpen(true)}
+                  className="w-full justify-start bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> New Task
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setProjectModalOpen(true)}
+                  className="w-full justify-start border-primary/30 text-primary hover:bg-primary/5"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> New Project
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </motion.div>
 
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
-      {taskEditorOpen && (
-        <TaskEditor onClose={() => setTaskEditorOpen(false)} />
-      )}
+      {taskEditorOpen && <TaskEditor onClose={() => setTaskEditorOpen(false)} />}
     </AppShell>
   );
 }
