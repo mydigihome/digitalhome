@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborators: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string
+          invited_user_id: string | null
+          project_ids: string[] | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email: string
+          invited_user_id?: string | null
+          project_ids?: string[] | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string
+          invited_user_id?: string | null
+          project_ids?: string[] | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -103,6 +139,36 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      project_templates: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          tasks: Json
+          type: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          tasks?: Json
+          type?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          tasks?: Json
+          type?: string
         }
         Relationships: []
       }
