@@ -22,9 +22,20 @@ const aiResources = [
   { id: 7, name: "Beautiful.ai", description: "Design presentations with AI-powered templates", image: "🖼️", category: "Presentations", url: "https://beautiful.ai" },
   { id: 8, name: "Descript", description: "Edit audio and video by editing text", image: "🎙️", category: "Audio/Video", url: "https://descript.com" },
   { id: 9, name: "Copy.ai", description: "Generate marketing copy and content with AI", image: "📱", category: "Marketing", url: "https://copy.ai" },
+  { id: 10, name: "TLDL", description: "Summarize long videos and podcasts with AI", image: "📹", category: "Productivity", url: "https://tldl.ai" },
+  { id: 11, name: "NotebookLM", description: "Google's AI-powered research and note-taking assistant", image: "📓", category: "Productivity", url: "https://notebooklm.google.com" },
+  { id: 12, name: "Gamma AI", description: "AI-powered presentations, documents, and webpages", image: "⚡", category: "Presentations", url: "https://gamma.app" },
+  { id: 13, name: "Gamma Waves", description: "AI-generated ambient music for focus and productivity", image: "🎵", category: "Audio/Video", url: "https://www.gammawaves.io" },
+  { id: 14, name: "Apollo AI", description: "AI-powered sales intelligence and engagement platform", image: "🚀", category: "Marketing", url: "https://apollo.io" },
+  { id: 15, name: "Truffle Pig AI", description: "AI assistant for creative strategy and content ideas", image: "🐷", category: "Writing", url: "https://trufflepig.ai" },
+  { id: 16, name: "Resume Now", description: "Build professional resumes with AI assistance", image: "📄", category: "Career", url: "https://www.resume-now.com" },
+  { id: 17, name: "Enhance CV", description: "AI-powered CV optimization and enhancement tool", image: "✨", category: "Career", url: "https://enhancv.com" },
+  { id: 18, name: "Leonardo AI", description: "Create production-quality visual assets with AI", image: "🎨", category: "Image Generation", url: "https://leonardo.ai" },
+  { id: 19, name: "Visualize AI", description: "Turn data and ideas into stunning visual graphics", image: "📊", category: "Productivity", url: "https://visualize.ai" },
+  { id: 20, name: "Speechify", description: "Turn any text into natural-sounding audio with AI", image: "🔊", category: "Audio/Video", url: "https://speechify.com" },
 ];
 
-const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Marketing", "Audio/Video", "Assistant"];
+const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Marketing", "Audio/Video", "Assistant", "Career"];
 
 export default function SettingsPage() {
   const { user, profile, signOut, updateProfile, updatePassword } = useAuth();
