@@ -4,7 +4,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Video, MapPin, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
@@ -103,6 +103,26 @@ export default function CalendarPage() {
 
         {/* Agenda View */}
         {view === "agenda" && <AgendaView tasks={tasks} projectNameMap={projectNameMap} updateTask={updateTask} />}
+
+        {/* Today's Events */}
+        <TodaysEvents />
+
+        {/* Calendar Integration CTA */}
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <div className="flex items-start gap-3">
+            <CalendarIcon className="mt-0.5 h-5 w-5 text-primary" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-foreground mb-1">Connect Your Calendars</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Sync with Google Calendar, Apple Calendar, and Outlook to see all your events in one place.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm">Connect Google Calendar</Button>
+                <Button variant="outline" size="sm">Connect Apple Calendar</Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {selectedDate && projects.length > 0 && (
@@ -304,6 +324,77 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  type: 'meeting' | 'call' | 'event' | 'task';
+  attendees?: string[];
+  location?: string;
+}
+
+const sampleEvents: CalendarEvent[] = [
+  { id: '1', title: 'Team Standup', startTime: '09:00', endTime: '09:30', type: 'meeting', attendees: ['Sarah', 'Mike', 'You'] },
+  { id: '2', title: 'Contractor Call - Home Renovation', startTime: '14:00', endTime: '15:00', type: 'call', location: 'Phone' },
+  { id: '3', title: 'French Lesson', startTime: '18:00', endTime: '19:00', type: 'event' },
+];
+
+const eventTypeConfig: Record<string, { icon: any; color: string }> = {
+  meeting: { icon: Users, color: 'bg-primary' },
+  call: { icon: Video, color: 'bg-success' },
+  event: { icon: CalendarIcon, color: 'bg-accent-foreground' },
+  task: { icon: Clock, color: 'bg-warning' },
+};
+
+function formatEventTime(time: string) {
+  const [h, m] = time.split(':');
+  const hour = parseInt(h);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${displayHour}:${m} ${ampm}`;
+}
+
+function TodaysEvents() {
+  return (
+    <div className="mt-6 space-y-3">
+      <h3 className="text-sm font-semibold text-muted-foreground">Today's Events</h3>
+      {sampleEvents.map((event) => {
+        const config = eventTypeConfig[event.type] || eventTypeConfig.task;
+        const Icon = config.icon;
+        return (
+          <div key={event.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/20 cursor-pointer">
+            <div className={cn("rounded-lg p-2", config.color)}>
+              <Icon className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-foreground mb-1">{event.title}</h4>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {formatEventTime(event.startTime)} - {formatEventTime(event.endTime)}
+                </div>
+                {event.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {event.location}
+                  </div>
+                )}
+                {event.attendees && (
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {event.attendees.length} attendees
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
