@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { DoorOpen } from 'lucide-react';
 
 interface WelcomeScreenProps {
   userName: string;
@@ -7,94 +7,51 @@ interface WelcomeScreenProps {
 }
 
 const WelcomeScreen = ({ userName, onEnter }: WelcomeScreenProps) => {
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [expanding, setExpanding] = useState(false);
+  const [isZooming, setIsZooming] = useState(false);
 
-  const handleClick = () => {
-    setDoorOpen(true);
-    setTimeout(() => setExpanding(true), 600);
-    setTimeout(() => onEnter(), 1400);
+  const handleEnter = () => {
+    setIsZooming(true);
+    setTimeout(() => {
+      onEnter();
+    }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Expanding overlay that "becomes" the dashboard */}
-      <AnimatePresence>
-        {expanding && (
-          <motion.div
-            className="absolute inset-0 bg-background z-50"
-            initial={{ clipPath: 'circle(0% at 50% 60%)' }}
-            animate={{ clipPath: 'circle(150% at 50% 60%)' }}
-            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Welcome text */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="text-center mb-12"
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center overflow-hidden">
+      <div
+        className={`text-center transition-all duration-[1500ms] ease-in-out ${
+          isZooming ? 'scale-[20] opacity-0' : 'scale-100 opacity-100'
+        }`}
       >
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-          Welcome Home, <span className="text-primary">{userName}</span>
-        </h1>
-      </motion.div>
-
-      {/* Door */}
-      <motion.button
-        onClick={handleClick}
-        disabled={doorOpen}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="relative w-32 h-48 cursor-pointer focus:outline-none group"
-        whileHover={!doorOpen ? { scale: 1.05 } : undefined}
-        whileTap={!doorOpen ? { scale: 0.98 } : undefined}
-      >
-        {/* Door frame */}
-        <div className="absolute inset-0 rounded-t-xl border-4 border-primary/30 bg-primary/5" />
-
-        {/* Door panel — pivots open from the left edge */}
-        <motion.div
-          className="absolute inset-[4px] rounded-t-lg bg-gradient-to-b from-primary to-primary/80 origin-left shadow-lg"
-          animate={doorOpen ? { rotateY: -110, opacity: 0.7 } : { rotateY: 0 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          style={{ perspective: 800, transformStyle: 'preserve-3d' }}
-        >
-          {/* Door knob */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary-foreground/80 shadow-md" />
-
-          {/* Door panels decorative */}
-          <div className="absolute inset-3 flex flex-col gap-2">
-            <div className="flex-1 rounded border border-primary-foreground/10" />
-            <div className="flex-1 rounded border border-primary-foreground/10" />
+        <div className="mb-8">
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl">
+            <span className="text-white font-bold text-4xl">D</span>
           </div>
-        </motion.div>
+          <h1 className="text-6xl font-bold text-gray-900 mb-4">
+            Welcome Home
+          </h1>
+          <p className="text-4xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            {userName}
+          </p>
+        </div>
 
-        {/* Warm glow behind the door when open */}
-        <AnimatePresence>
-          {doorOpen && (
-            <motion.div
-              className="absolute inset-[4px] rounded-t-lg bg-gradient-to-b from-amber-100/80 to-amber-50/40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-            />
-          )}
-        </AnimatePresence>
-      </motion.button>
+        <button
+          onClick={handleEnter}
+          className="group relative mt-12 px-8 py-6 bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center group-hover:from-blue-600 group-hover:to-purple-600 transition-all">
+              <DoorOpen className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm text-gray-500 font-medium">Step Inside</p>
+              <p className="text-2xl font-bold text-gray-900">Enter Your Home</p>
+            </div>
+          </div>
+        </button>
 
-      {/* Hint text */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="mt-8 text-muted-foreground text-sm"
-      >
-        {doorOpen ? 'Stepping inside…' : 'Tap the door to enter'}
-      </motion.p>
+        <p className="mt-8 text-gray-500 text-sm">Your life, organized in one place</p>
+      </div>
     </div>
   );
 };
