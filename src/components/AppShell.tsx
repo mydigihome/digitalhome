@@ -1,35 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Sparkles, Menu, X, Settings, LogOut, User } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: Home, label: "Home Office", path: "/dashboard" },
   { icon: FolderOpen, label: "Projects", path: "/projects" },
+  { icon: Calendar, label: "Calendar", path: "/calendar" },
 ];
-
-function NavBubble({ icon: Icon, label, path, active, onClick }: { icon: any; label: string; path?: string; active: boolean; onClick?: () => void }) {
-  const navigate = useNavigate();
-  return (
-    <motion.button
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick || (() => path && navigate(path))}
-      className={cn(
-        "flex h-14 w-14 items-center justify-center rounded-full border transition-all",
-        active
-          ? "border-primary/30 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20"
-          : "border-border/20 bg-card/60 backdrop-blur-md hover:border-primary/20 hover:shadow-md hover:shadow-primary/10"
-      )}
-      title={label}
-    >
-      <Icon className={cn("h-5 w-5", active ? "text-primary-foreground" : "text-muted-foreground")} />
-    </motion.button>
-  );
-}
 
 function UserDropdown() {
   const { profile, user, signOut } = useAuth();
@@ -51,7 +31,7 @@ function UserDropdown() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-md"
       >
         {initials}
       </button>
@@ -62,7 +42,7 @@ function UserDropdown() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 z-50 w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
+            className="absolute left-0 top-12 z-50 w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
           >
             <div className="px-3 py-2 text-xs text-muted-foreground">{user?.email}</div>
             <button
@@ -86,64 +66,154 @@ function UserDropdown() {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <aside className="fixed left-4 top-1/2 z-50 hidden -translate-y-1/2 flex-col gap-4 md:flex">
-        {navItems.map((item) => (
-          <NavBubble key={item.path} {...item} active={location.pathname.startsWith(item.path)} />
-        ))}
-      </aside>
+    <div className="min-h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
+          {/* Logo */}
+          <div className="flex h-20 shrink-0 items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
+                <span className="text-xl font-bold text-primary-foreground">D</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Digital Home</h1>
+                <p className="text-xs text-muted-foreground">Your life in one place</p>
+              </div>
+            </div>
+          </div>
 
-      {/* Desktop top-right avatar */}
-      <div className="fixed right-6 top-5 z-50 hidden md:block">
-        <UserDropdown />
-      </div>
+          {/* Navigation */}
+          <nav className="flex flex-1 flex-col">
+            <ul role="list" className="flex flex-1 flex-col gap-y-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname.startsWith(item.path) ||
+                  (item.path === "/projects" && location.pathname.startsWith("/project/"));
+                return (
+                  <li key={item.path}>
+                    <button
+                      onClick={() => navigate(item.path)}
+                      className={cn(
+                        "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                      )}
+                    >
+                      <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                      {item.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
-      {/* Mobile header */}
-      <div className="fixed left-0 right-0 top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md md:hidden">
-        <span className="text-base font-medium">Digital Home</span>
-        <div className="flex items-center gap-3">
-          <UserDropdown />
-          <button onClick={() => setMobileOpen(!mobileOpen)}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* User Profile at Bottom */}
+          <div className="border-t border-border pt-4">
+            <UserDropdown />
+          </div>
         </div>
       </div>
 
-      {/* Mobile nav overlay */}
-      {mobileOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm md:hidden"
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-40 flex items-center gap-x-4 border-b border-border bg-card/80 px-4 py-4 shadow-sm backdrop-blur-md lg:hidden">
+        <button
+          className="-m-2.5 p-2.5 text-muted-foreground"
+          onClick={() => setMobileOpen(true)}
         >
-          <div className="flex h-full flex-col items-center justify-center gap-6">
-            {navItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => {
-                  setMobileOpen(false);
-                  window.location.href = item.path;
-                }}
-                className={cn(
-                  "flex items-center gap-3 text-lg",
-                  location.pathname.startsWith(item.path) ? "font-medium text-primary" : "text-muted-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      )}
+          <span className="sr-only">Open sidebar</span>
+          <Menu className="h-6 w-6" aria-hidden="true" />
+        </button>
+        <div className="flex-1 text-sm font-semibold leading-6 text-foreground">
+          Digital Home
+        </div>
+        <UserDropdown />
+      </div>
 
-      {/* Main content */}
-      <main className="mx-auto w-full max-w-[1200px] px-6 py-10 md:ml-24 md:px-10">
-        <div className="mt-14 md:mt-0">{children}</div>
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="relative z-50 lg:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-foreground/80"
+              onClick={() => setMobileOpen(false)}
+            />
+            <div className="fixed inset-0 flex">
+              <motion.div
+                initial={{ x: -280 }}
+                animate={{ x: 0 }}
+                exit={{ x: -280 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative mr-16 flex w-full max-w-xs flex-1"
+              >
+                <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
+                  <button className="-m-2.5 p-2.5" onClick={() => setMobileOpen(false)}>
+                    <span className="sr-only">Close sidebar</span>
+                    <X className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4">
+                  <div className="flex h-20 shrink-0 items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
+                        <span className="text-xl font-bold text-primary-foreground">D</span>
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold text-foreground">Digital Home</h1>
+                        <p className="text-xs text-muted-foreground">Your life in one place</p>
+                      </div>
+                    </div>
+                  </div>
+                  <nav className="flex flex-1 flex-col">
+                    <ul role="list" className="flex flex-1 flex-col gap-y-2">
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = location.pathname.startsWith(item.path) ||
+                          (item.path === "/projects" && location.pathname.startsWith("/project/"));
+                        return (
+                          <li key={item.path}>
+                            <button
+                              onClick={() => {
+                                navigate(item.path);
+                                setMobileOpen(false);
+                              }}
+                              className={cn(
+                                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
+                                isActive
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-primary"
+                              )}
+                            >
+                              <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                              {item.label}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </nav>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content */}
+      <main className="lg:pl-72">
+        <div className="mx-auto max-w-[1200px] px-6 py-8">
+          {children}
+        </div>
       </main>
     </div>
   );
