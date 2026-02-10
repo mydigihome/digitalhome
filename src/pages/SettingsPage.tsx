@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Sparkles, ExternalLink } from "lucide-react";
+import { User, Sparkles, ExternalLink, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
 
@@ -44,7 +44,8 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "resources">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "appearance" | "resources">("profile");
+  const [darkMode, setDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const filteredResources = selectedCategory === "All"
@@ -96,6 +97,17 @@ export default function SettingsPage() {
               )}
             >
               <User className="h-4 w-4" /> Profile
+            </button>
+            <button
+              onClick={() => setActiveTab("appearance")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors",
+                activeTab === "appearance"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />} Appearance
             </button>
             <button
               onClick={() => setActiveTab("resources")}
@@ -173,22 +185,80 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Theme</Label>
-                  <Select defaultValue="light" disabled>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark (coming soon)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
 
             <Button variant="ghost" onClick={handleLogout} className="text-destructive hover:text-destructive">
               Log out
             </Button>
+          </div>
+        )}
+
+        {/* Appearance Tab */}
+        {activeTab === "appearance" && (
+          <div className="max-w-lg space-y-4">
+            <Card className="rounded-2xl border-border shadow-none">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">Theme</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Light Mode */}
+                  <button
+                    onClick={() => {
+                      setDarkMode(false);
+                      document.documentElement.classList.remove("dark");
+                    }}
+                    className={cn(
+                      "rounded-xl border-2 p-6 text-left transition-colors",
+                      !darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <div className="mb-3 flex items-center gap-3">
+                      <Sun className="h-6 w-6 text-amber-500" />
+                      <span className="font-semibold text-foreground">Light Mode</span>
+                    </div>
+                    <div className="rounded-lg bg-card p-4 shadow-sm border border-border">
+                      <div className="mb-2 h-2 rounded bg-secondary" />
+                      <div className="h-2 w-3/4 rounded bg-secondary" />
+                    </div>
+                  </button>
+
+                  {/* Dark Mode */}
+                  <button
+                    onClick={() => {
+                      setDarkMode(true);
+                      document.documentElement.classList.add("dark");
+                    }}
+                    className={cn(
+                      "rounded-xl border-2 p-6 text-left transition-colors",
+                      darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <div className="mb-3 flex items-center gap-3">
+                      <Moon className="h-6 w-6 text-primary" />
+                      <span className="font-semibold text-foreground">Dark Mode</span>
+                    </div>
+                    <div className="rounded-lg bg-foreground/90 p-4 shadow-sm">
+                      <div className="mb-2 h-2 rounded bg-foreground/70" />
+                      <div className="h-2 w-3/4 rounded bg-foreground/70" />
+                    </div>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-2xl border-border shadow-none">
+              <CardContent className="flex items-start gap-3 p-4">
+                <span className="text-2xl">💡</span>
+                <div>
+                  <p className="mb-1 font-medium text-foreground">Tip</p>
+                  <p className="text-sm text-muted-foreground">
+                    Dark mode reduces eye strain in low-light environments and can help save battery on OLED screens.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
