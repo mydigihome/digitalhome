@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Home, Briefcase, Dumbbell, Plane, FolderOpen, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Plus, Home, Briefcase, Plane, FolderOpen, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import AppShell from "@/components/AppShell";
@@ -37,15 +37,6 @@ const workspaceConfig = [
     textClass: "text-destructive",
     borderClass: "border-destructive",
     hoverClass: "hover:bg-destructive/5",
-  },
-  {
-    id: "fitness",
-    title: "Fitness & Goals",
-    icon: Dumbbell,
-    colorClass: "bg-primary/70",
-    textClass: "text-primary/70",
-    borderClass: "border-primary/70",
-    hoverClass: "hover:bg-primary/5",
   },
 ];
 

@@ -56,7 +56,7 @@ const types = [
   { value: "personal", label: "Personal" },
   { value: "work", label: "Work" },
   { value: "travel", label: "Travel" },
-  { value: "fitness", label: "Fitness" },
+  
 ];
 
 const views = [
