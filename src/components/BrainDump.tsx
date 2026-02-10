@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Hash, MessageSquare, StickyNote, GripVertical, Sparkles, Palette } from "lucide-react";
+import { X, Send, Hash, MessageSquare, StickyNote, GripVertical, Sparkles, Palette, Bold, Italic, Underline, Strikethrough, Heading2, Heading3, List, ListOrdered, ListChecks, Code, Image, Link2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -337,7 +338,7 @@ export default function BrainDump() {
 
             {/* Opacity slider */}
             <div className="flex items-center gap-3 border-b px-4 py-2" style={{ borderColor: "inherit" }} onClick={(e) => e.stopPropagation()}>
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Opacity</span>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Capacity</span>
               <Slider
                 value={[opacity]}
                 onValueChange={(v) => setOpacity(v[0])}
@@ -392,7 +393,13 @@ export default function BrainDump() {
                           ? "bg-primary text-primary-foreground"
                           : "border border-border bg-card"
                       )}>
-                        <p className="whitespace-pre-wrap">{m.content}</p>
+                        {m.role === "assistant" ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0.5 [&_h1]:text-sm [&_h2]:text-sm [&_h3]:text-xs [&_pre]:text-xs [&_code]:text-xs">
+                            <ReactMarkdown>{m.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="whitespace-pre-wrap">{m.content}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -428,29 +435,72 @@ export default function BrainDump() {
 
             {/* Notes (formerly Quick Capture) */}
             {mode === "capture" && (
-              <div className="flex flex-1 flex-col p-4">
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Dump your thoughts below. <span className="font-medium text-foreground">Highlight text</span> to ask AI to organize it ✨
-                </p>
-                <Textarea
-                  ref={captureRef}
-                  value={captureText}
-                  onChange={(e) => setCaptureText(e.target.value)}
-                  onMouseUp={handleTextSelect}
-                  onKeyUp={handleTextSelect}
-                  placeholder={"1. Call the dentist\n2. Research project ideas\n3. Buy groceries\n4. Review budget spreadsheet..."}
-                  className={cn("flex-1 resize-none bg-background/60 font-mono text-sm leading-relaxed", color.inputBorder)}
-                  rows={8}
-                />
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex gap-2 text-xs text-muted-foreground">
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">#task</span>
-                    <span className="rounded-full bg-muted px-2 py-0.5">#idea</span>
-                    <span className="rounded-full bg-muted px-2 py-0.5">#note</span>
+              <div className="flex flex-1 flex-col">
+                {/* Formatting toolbar */}
+                <div className={cn("flex flex-wrap items-center gap-0.5 border-b px-3 py-1.5", color.inputBorder)}>
+                  {[
+                    { icon: Bold, label: "Bold" },
+                    { icon: Italic, label: "Italic" },
+                    { icon: Underline, label: "Underline" },
+                    { icon: Strikethrough, label: "Strikethrough" },
+                  ].map(({ icon: Icon, label }) => (
+                    <button key={label} title={label} className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                    </button>
+                  ))}
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <button title="Heading 2" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <Heading2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button title="Heading 3" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <Heading3 className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <button title="Bullet List" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                  <button title="Numbered List" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <ListOrdered className="h-3.5 w-3.5" />
+                  </button>
+                  <button title="Checklist" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <ListChecks className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="mx-1 h-4 w-px bg-border" />
+                  <button title="Code" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <Code className="h-3.5 w-3.5" />
+                  </button>
+                  <button title="Image" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <Image className="h-3.5 w-3.5" />
+                  </button>
+                  <button title="Link" className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground">
+                    <Link2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-1 flex-col p-4">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Dump your thoughts below. <span className="font-medium text-foreground">Highlight text</span> to ask AI to organize it ✨
+                  </p>
+                  <Textarea
+                    ref={captureRef}
+                    value={captureText}
+                    onChange={(e) => setCaptureText(e.target.value)}
+                    onMouseUp={handleTextSelect}
+                    onKeyUp={handleTextSelect}
+                    placeholder={"1. Call the dentist\n2. Research project ideas\n3. Buy groceries\n4. Review budget spreadsheet..."}
+                    className={cn("flex-1 resize-none bg-background/60 font-mono text-sm leading-relaxed", color.inputBorder)}
+                    rows={8}
+                  />
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">#task</span>
+                      <span className="rounded-full bg-muted px-2 py-0.5">#idea</span>
+                      <span className="rounded-full bg-muted px-2 py-0.5">#note</span>
+                    </div>
+                    <Button size="sm" onClick={handleCaptureSave} disabled={!captureText.trim()}>
+                      Save
+                    </Button>
                   </div>
-                  <Button size="sm" onClick={handleCaptureSave} disabled={!captureText.trim()}>
-                    Save
-                  </Button>
                 </div>
               </div>
             )}
