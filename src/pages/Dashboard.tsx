@@ -7,27 +7,45 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
-  format, isToday, isTomorrow, isPast, isBefore, endOfWeek, addDays,
-  startOfWeek, isWithinInterval,
+  format, isToday, isPast, isBefore, endOfWeek, addDays,
 } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles,
+  CheckCircle2, Sparkles, Info, Edit2, Check,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import { cn } from "@/lib/utils";
 
+interface EverydayLink {
+  id: string;
+  name: string;
+  icon: string;
+  url: string;
+  completed: boolean;
+}
+
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
-  // update every minute
   useState(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   });
   return now;
 }
+
+const InfoTooltip = ({ text }: { text: string }) => (
+  <div className="group relative">
+    <Info className="h-4 w-4 cursor-help text-muted-foreground" />
+    <div className="absolute left-0 top-6 z-10 hidden group-hover:block">
+      <div className="w-64 rounded-lg bg-foreground p-3 text-xs text-background shadow-lg">
+        <p className="mb-1 font-semibold">Best Practice</p>
+        <p>{text}</p>
+      </div>
+    </div>
+  </div>
+);
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -37,9 +55,37 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
+  const [taskEventToggle, setTaskEventToggle] = useState<"task" | "event">("task");
+  const [editingLinks, setEditingLinks] = useState(false);
   const now = useCurrentTime();
 
-  const name = profile?.full_name || "there";
+  const [everydayLinks, setEverydayLinks] = useState<EverydayLink[]>([
+    { id: "1", name: "Check your email", icon: "📧", url: "mailto:", completed: false },
+    { id: "2", name: "Review Shopify Sales", icon: "🛍️", url: "https://shopify.com", completed: false },
+    { id: "3", name: "Check Application Status", icon: "📝", url: "#applications", completed: false },
+  ]);
+
+  const toggleLinkCompletion = (id: string) => {
+    setEverydayLinks(everydayLinks.map(link =>
+      link.id === id ? { ...link, completed: !link.completed } : link
+    ));
+  };
+
+  const addNewLink = () => {
+    setEverydayLinks([...everydayLinks, {
+      id: Date.now().toString(), name: "New Link", icon: "🔗", url: "#", completed: false,
+    }]);
+  };
+
+  const updateLink = (id: string, field: string, value: string) => {
+    setEverydayLinks(everydayLinks.map(link =>
+      link.id === id ? { ...link, [field]: value } : link
+    ));
+  };
+
+  const deleteLink = (id: string) => {
+    setEverydayLinks(everydayLinks.filter(link => link.id !== id));
+  };
 
   // Today's tasks (due today or overdue, not done)
   const todayTodos = tasks.filter((t) => {
@@ -49,7 +95,7 @@ export default function Dashboard() {
     return isToday(d) || isPast(d);
   });
 
-  // This week tasks (due this week, not today/overdue, not done)
+  // This week tasks
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
   const thisWeekTasks = tasks.filter((t) => {
     if (t.status === "done" || !t.due_date) return false;
@@ -57,7 +103,7 @@ export default function Dashboard() {
     return !isToday(d) && !isPast(d) && isBefore(d, addDays(weekEnd, 1));
   });
 
-  // Priority projects (top 3 with most pending tasks)
+  // Priority projects
   const projectsWithStats = projects.map((p) => {
     const ptasks = tasks.filter((t) => t.project_id === p.id);
     const done = ptasks.filter((t) => t.status === "done").length;
@@ -88,7 +134,6 @@ export default function Dashboard() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        {/* Page Title */}
         <h1 className="mb-8 text-4xl font-bold text-foreground">Home Office</h1>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -97,13 +142,43 @@ export default function Dashboard() {
             {/* Today's To-Do */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-semibold text-foreground">Today's To-Do</h2>
-                <button
-                  onClick={() => setTaskEditorOpen(true)}
-                  className="rounded-lg p-2 transition-colors hover:bg-secondary"
-                >
-                  <Plus className="h-5 w-5 text-muted-foreground" />
-                </button>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-semibold text-foreground">Today's To-Do</h2>
+                  <InfoTooltip text="Add your most important tasks first. Complete at least 3 before noon for momentum!" />
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Task/Event Toggle */}
+                  <div className="flex items-center gap-1 rounded-lg bg-secondary p-1">
+                    <button
+                      onClick={() => setTaskEventToggle("task")}
+                      className={cn(
+                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        taskEventToggle === "task"
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      Task
+                    </button>
+                    <button
+                      onClick={() => setTaskEventToggle("event")}
+                      className={cn(
+                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                        taskEventToggle === "event"
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      Event
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setTaskEditorOpen(true)}
+                    className="rounded-lg p-2 transition-colors hover:bg-secondary"
+                  >
+                    <Plus className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
               {todayTodos.length === 0 ? (
                 <div className="flex flex-col items-center py-8 text-center">
@@ -142,7 +217,10 @@ export default function Dashboard() {
 
             {/* This Week */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="mb-4 text-2xl font-semibold text-foreground">This Week</h2>
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="text-2xl font-semibold text-foreground">This Week</h2>
+                <InfoTooltip text="Plan your week on Sunday evening. Schedule your top 3 priorities first." />
+              </div>
               {thisWeekTasks.length === 0 ? (
                 <p className="py-4 text-center text-sm text-muted-foreground">Nothing else this week</p>
               ) : (
@@ -160,6 +238,90 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Everyday Links */}
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">Everyday Links</h3>
+                  <InfoTooltip text="Check these daily! Mark as complete to build consistent habits." />
+                </div>
+                <div className="flex items-center gap-2">
+                  {editingLinks && (
+                    <button onClick={addNewLink} className="rounded-lg p-2 transition-colors hover:bg-secondary">
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditingLinks(!editingLinks)}
+                    className="rounded-lg p-2 transition-colors hover:bg-secondary"
+                  >
+                    <Edit2 className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {everydayLinks.map((link) => (
+                  <div key={link.id} className="group flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-secondary/50">
+                    <button
+                      onClick={() => toggleLinkCompletion(link.id)}
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors",
+                        link.completed
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground/30 hover:border-primary"
+                      )}
+                    >
+                      {link.completed && <Check className="h-4 w-4 text-primary-foreground" />}
+                    </button>
+
+                    {editingLinks ? (
+                      <>
+                        <input
+                          type="text"
+                          value={link.icon}
+                          onChange={(e) => updateLink(link.id, "icon", e.target.value)}
+                          className="w-12 rounded border border-border bg-background px-2 py-1 text-center"
+                        />
+                        <input
+                          type="text"
+                          value={link.name}
+                          onChange={(e) => updateLink(link.id, "name", e.target.value)}
+                          className="flex-1 rounded border border-border bg-background px-3 py-1"
+                        />
+                        <input
+                          type="text"
+                          value={link.url}
+                          onChange={(e) => updateLink(link.id, "url", e.target.value)}
+                          className="w-40 rounded border border-border bg-background px-3 py-1 text-sm"
+                          placeholder="URL"
+                        />
+                        <button
+                          onClick={() => deleteLink(link.id)}
+                          className="rounded p-1 text-destructive hover:bg-destructive/10"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-2xl">{link.icon}</span>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn("flex-1", link.completed ? "text-muted-foreground line-through" : "text-foreground")}
+                        >
+                          {link.name}
+                        </a>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -214,7 +376,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Quick Add */}
+            {/* Quick Actions */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <h3 className="mb-4 text-lg font-semibold text-foreground">Quick Actions</h3>
               <div className="space-y-2">
