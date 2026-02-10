@@ -91,9 +91,9 @@ export default function Dashboard() {
         {/* Page Title */}
         <h1 className="mb-8 text-4xl font-bold text-foreground">Home Office</h1>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* ===== Main Content (2/3) ===== */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="space-y-6 md:col-span-2">
             {/* Today's To-Do */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
