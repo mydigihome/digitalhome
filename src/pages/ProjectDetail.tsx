@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Plus, GripVertical, FileText } from "lucide-react";
+import { ChevronLeft, Plus, GripVertical, FileText, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
 import TaskEditor from "@/components/TaskEditor";
 import DocumentsTab from "@/components/DocumentsTab";
+import AITaskGenerator from "@/components/AITaskGenerator";
 import {
   DndContext, DragEndEvent, DragOverEvent, DragStartEvent, DragOverlay,
   PointerSensor, useSensor, useSensors, closestCorners,
@@ -105,6 +106,7 @@ export default function ProjectDetail() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -169,12 +171,17 @@ export default function ProjectDetail() {
               </TabsList>
             </Tabs>
             {mainTab === "board" && (
-              <Tabs value={view} onValueChange={setView}>
-                <TabsList className="h-8">
-                  <TabsTrigger value="kanban" className="text-xs">Kanban</TabsTrigger>
-                  <TabsTrigger value="list" className="text-xs">List</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <>
+                <Tabs value={view} onValueChange={setView}>
+                  <TabsList className="h-8">
+                    <TabsTrigger value="kanban" className="text-xs">Kanban</TabsTrigger>
+                    <TabsTrigger value="list" className="text-xs">List</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <Button variant="outline" size="sm" onClick={() => setAiGeneratorOpen(true)} className="ml-auto">
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" /> AI Generate
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -271,6 +278,15 @@ export default function ProjectDetail() {
           />
         )}
       </AnimatePresence>
+
+      {id && project && (
+        <AITaskGenerator
+          open={aiGeneratorOpen}
+          onOpenChange={setAiGeneratorOpen}
+          projectId={id}
+          projectName={project.name}
+        />
+      )}
     </AppShell>
   );
 }

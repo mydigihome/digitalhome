@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { X, Calendar, Users, Settings, FileText, Check, LayoutGrid, List, Clock } from "lucide-react";
+import { X, Calendar, Users, Settings, FileText, Check, LayoutGrid, List, Clock, Sparkles, Loader2 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateProject } from "@/hooks/useProjects";
+import { useCreateTask } from "@/hooks/useTasks";
+import { useTemplates, ProjectTemplate } from "@/hooks/useTemplates";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
 const steps = [
-  { id: 1, name: "Project Title", icon: FileText },
-  { id: 2, name: "Set Dates", icon: Calendar },
-  { id: 3, name: "Project Type", icon: Settings },
-  { id: 4, name: "View Style", icon: LayoutGrid },
+  { id: 1, name: "Template", icon: Sparkles },
+  { id: 2, name: "Project Title", icon: FileText },
+  { id: 3, name: "Set Dates", icon: Calendar },
+  { id: 4, name: "Project Type", icon: Settings },
+  { id: 5, name: "View Style", icon: LayoutGrid },
 ];
 
 const types = [
@@ -45,7 +48,10 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
   const [ongoing, setOngoing] = useState(false);
   const [type, setType] = useState(defaultType || "personal");
   const [viewPref, setViewPref] = useState("kanban");
+  const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const createProject = useCreateProject();
+  const createTask = useCreateTask();
+  const { data: templates = [] } = useTemplates();
 
   const reset = () => {
     setCurrentStep(1);
@@ -56,6 +62,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
     setOngoing(false);
     setType(defaultType || "personal");
     setViewPref("kanban");
+    setSelectedTemplate(null);
   };
 
   const handleCreate = async () => {
@@ -64,7 +71,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
       return;
     }
     try {
-      await createProject.mutateAsync({
+      const project = await createProject.mutateAsync({
         name: name.trim(),
         goal: goal.trim() || undefined,
         type,
@@ -72,6 +79,19 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
         start_date: startDate || undefined,
         end_date: ongoing ? undefined : endDate || undefined,
       });
+
+      // If template selected, create tasks from template
+      if (selectedTemplate && project?.id) {
+        for (const task of selectedTemplate.tasks) {
+          await createTask.mutateAsync({
+            title: task.title,
+            project_id: project.id,
+            priority: task.priority || "medium",
+            status: task.status || "backlog",
+          });
+        }
+      }
+
       toast.success("Project created!");
       reset();
       onOpenChange(false);
@@ -81,13 +101,63 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
   };
 
   const canProceed = () => {
-    if (currentStep === 1 && !name.trim()) return false;
+    if (currentStep === 2 && !name.trim()) return false;
     return true;
+  };
+
+  const selectTemplate = (template: ProjectTemplate | null) => {
+    setSelectedTemplate(template);
+    if (template) {
+      setName(template.name);
+      setType(template.type);
+      if (template.description) setGoal(template.description);
+    }
   };
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-foreground">Choose a Template</h2>
+            <p className="text-muted-foreground">Start with a pre-built workflow or create from scratch.</p>
+            <div
+              onClick={() => selectTemplate(null)}
+              className={cn(
+                "cursor-pointer rounded-xl border-2 p-4 transition-all",
+                !selectedTemplate
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/30"
+              )}
+            >
+              <p className="font-medium text-foreground">Start from scratch</p>
+              <p className="text-sm text-muted-foreground">Create an empty project</p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {templates.map((t) => (
+                <div
+                  key={t.id}
+                  onClick={() => selectTemplate(t)}
+                  className={cn(
+                    "cursor-pointer rounded-xl border-2 p-4 transition-all",
+                    selectedTemplate?.id === t.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/30"
+                  )}
+                >
+                  <div className="mb-1 flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: t.color }} />
+                    <p className="font-medium text-foreground">{t.name}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.description}</p>
+                  <p className="mt-2 text-xs text-primary">{t.tasks.length} tasks included</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 2:
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-foreground">Project Title</h2>
@@ -116,7 +186,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
           </div>
         );
 
-      case 2:
+      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -126,22 +196,11 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start date</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-12"
-                />
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12" />
               </div>
               <div className="space-y-2">
                 <Label>Deadline</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  disabled={ongoing}
-                  className="h-12"
-                />
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} disabled={ongoing} className="h-12" />
               </div>
             </div>
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -151,7 +210,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-foreground">Project Type</h2>
@@ -175,7 +234,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-foreground">View Style</h2>
@@ -232,7 +291,7 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
                   <button
                     key={step.id}
                     onClick={() => {
-                      if (step.id === 1 || name.trim()) setCurrentStep(step.id);
+                      if (step.id <= 1 || (step.id === 2) || name.trim()) setCurrentStep(step.id);
                     }}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg p-3 text-sm transition-colors",
@@ -312,6 +371,8 @@ export default function NewProjectModal({ open, onOpenChange, defaultType }: Pro
                     ? "Continue"
                     : createProject.isPending
                     ? "Creating..."
+                    : selectedTemplate
+                    ? `Create with ${selectedTemplate.tasks.length} Tasks`
                     : "Create Project"}
                 </Button>
               </div>
