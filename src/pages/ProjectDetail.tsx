@@ -6,36 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Plus, GripVertical } from "lucide-react";
+import { ChevronLeft, Plus, GripVertical, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
 import TaskEditor from "@/components/TaskEditor";
+import DocumentsTab from "@/components/DocumentsTab";
 import {
-  DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  DragStartEvent,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
+  DndContext, DragEndEvent, DragOverEvent, DragStartEvent, DragOverlay,
+  PointerSensor, useSensor, useSensors, closestCorners,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 const columns = [
-  { id: "backlog", label: "Backlog" },
-  { id: "ready", label: "Ready" },
-  { id: "in_progress", label: "In Progress" },
-  { id: "review", label: "Review" },
-  { id: "done", label: "Done" },
+  { id: "backlog", label: "Backlog", color: "bg-muted-foreground" },
+  { id: "ready", label: "Ready", color: "bg-primary/60" },
+  { id: "in_progress", label: "In Progress", color: "bg-primary" },
+  { id: "review", label: "Review", color: "bg-warning" },
+  { id: "done", label: "Done", color: "bg-success" },
 ];
 
+const priorityBorder: Record<string, string> = {
+  low: "border-l-success",
+  medium: "border-l-warning",
+  high: "border-l-destructive",
+};
+
 const priorityDot: Record<string, string> = {
-  low: "bg-muted-foreground",
+  low: "bg-success",
   medium: "bg-warning",
   high: "bg-destructive",
 };
@@ -64,11 +64,14 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
     <div
       ref={setNodeRef}
       style={style}
-      className="cursor-grab rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30 active:cursor-grabbing"
+      className={cn(
+        "cursor-grab rounded-xl border border-border border-l-[3px] bg-card p-4 transition-all hover:shadow-md hover:-translate-y-0.5 active:cursor-grabbing",
+        priorityBorder[task.priority]
+      )}
       onClick={onClick}
     >
       <div className="flex items-start gap-2" {...attributes} {...listeners}>
-        <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50" />
+        <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{task.title}</p>
           <div className="mt-2 flex items-center gap-2">
@@ -83,11 +86,8 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
 
 function TaskCardOverlay({ task }: { task: Task }) {
   return (
-    <div className="cursor-grabbing rounded-xl border border-primary bg-card p-4 shadow-lg">
+    <div className={cn("cursor-grabbing rounded-xl border border-primary border-l-[3px] bg-card p-4 shadow-lg", priorityBorder[task.priority])}>
       <p className="text-sm font-medium">{task.title}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
-      </div>
     </div>
   );
 }
@@ -99,8 +99,8 @@ export default function ProjectDetail() {
   const project = projects.find((p) => p.id === id);
   const { data: tasks = [], isLoading } = useTasks(id);
   const updateTask = useUpdateTask();
-  const updateProject = useUpdateProject();
 
+  const [mainTab, setMainTab] = useState("board");
   const [view, setView] = useState(project?.view_preference || "kanban");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
@@ -128,18 +128,11 @@ export default function ProjectDetail() {
     setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
-
     const taskId = active.id as string;
     const overData = over.data.current;
-
-    // If dropped on a column
     let newStatus: string | undefined;
-    if (overData?.type === "column") {
-      newStatus = over.id as string;
-    } else if (overData?.type === "task") {
-      newStatus = overData.task.status;
-    }
-
+    if (overData?.type === "column") newStatus = over.id as string;
+    else if (overData?.type === "task") newStatus = overData.task.status;
     if (newStatus) {
       const currentTask = tasks.find((t) => t.id === taskId);
       if (currentTask && currentTask.status !== newStatus) {
@@ -148,9 +141,6 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleDragOver = (_event: DragOverEvent) => {};
-
-  // List view helpers
   const toggleDone = (task: Task) => {
     updateTask.mutate({ id: task.id, status: task.status === "done" ? "backlog" : "done" });
   };
@@ -160,117 +150,117 @@ export default function ProjectDetail() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {/* Header */}
         <div className="mb-6">
-          <button onClick={() => navigate("/projects")} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/projects")} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
             <ChevronLeft className="h-4 w-4" /> Projects
           </button>
           <div className="flex items-center gap-3">
-            <h1 className="text-[32px] font-semibold tracking-tight">{project?.name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{project?.name}</h1>
             {project?.type && (
               <Badge variant="secondary" className="capitalize">{project.type}</Badge>
             )}
           </div>
-          <div className="mt-3">
-            <Tabs value={view} onValueChange={setView}>
-              <TabsList>
-                <TabsTrigger value="kanban">Kanban</TabsTrigger>
-                <TabsTrigger value="list">List</TabsTrigger>
+          <div className="mt-3 flex items-center gap-3">
+            <Tabs value={mainTab} onValueChange={setMainTab}>
+              <TabsList className="h-8">
+                <TabsTrigger value="board" className="text-xs">Board</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs">
+                  <FileText className="mr-1 h-3 w-3" /> Documents
+                </TabsTrigger>
               </TabsList>
             </Tabs>
+            {mainTab === "board" && (
+              <Tabs value={view} onValueChange={setView}>
+                <TabsList className="h-8">
+                  <TabsTrigger value="kanban" className="text-xs">Kanban</TabsTrigger>
+                  <TabsTrigger value="list" className="text-xs">List</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
           </div>
         </div>
 
-        {/* Kanban View */}
-        {view === "kanban" && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-          >
-            <div className="flex gap-4 overflow-x-auto pb-4">
-              {columns.map((col) => {
-                const columnTasks = tasks.filter((t) => t.status === col.id);
-                return (
-                  <div
-                    key={col.id}
-                    className="min-w-[300px] flex-shrink-0"
-                  >
-                    <SortableContext
-                      items={columnTasks.map((t) => t.id)}
-                      strategy={verticalListSortingStrategy}
-                      id={col.id}
-                    >
-                      <DroppableColumn
-                        id={col.id}
-                        label={col.label}
-                        count={columnTasks.length}
-                        onAddTask={() => setAddingToColumn(col.id)}
-                      >
-                        {columnTasks.map((task) => (
-                          <SortableTaskCard key={task.id} task={task} onClick={() => setEditingTask(task)} />
-                        ))}
-                      </DroppableColumn>
-                    </SortableContext>
-                  </div>
-                );
-              })}
-            </div>
-            <DragOverlay>
-              {activeTask && <TaskCardOverlay task={activeTask} />}
-            </DragOverlay>
-          </DndContext>
-        )}
-
-        {/* List View */}
-        {view === "list" && (
-          <div className="space-y-6">
-            {columns.map((col) => {
-              const columnTasks = tasks.filter((t) => t.status === col.id);
-              if (columnTasks.length === 0) return null;
-              return (
-                <div key={col.id}>
-                  <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-                    {col.label} ({columnTasks.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {columnTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary/30"
-                        onClick={() => setEditingTask(task)}
-                      >
-                        <Checkbox
-                          checked={task.status === "done"}
-                          onCheckedChange={() => toggleDone(task)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <span className="flex-1 text-sm">{task.title}</span>
-                        {task.due_date && (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}
-                          </span>
-                        )}
-                        <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
+        {mainTab === "board" && (
+          <>
+            {/* Kanban View */}
+            {view === "kanban" && (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={() => {}}
+              >
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                  {columns.map((col) => {
+                    const columnTasks = tasks.filter((t) => t.status === col.id);
+                    return (
+                      <div key={col.id} className="min-w-[280px] flex-shrink-0">
+                        <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy} id={col.id}>
+                          <DroppableColumn id={col.id} label={col.label} color={col.color} count={columnTasks.length} onAddTask={() => setAddingToColumn(col.id)}>
+                            {columnTasks.map((task) => (
+                              <SortableTaskCard key={task.id} task={task} onClick={() => setEditingTask(task)} />
+                            ))}
+                          </DroppableColumn>
+                        </SortableContext>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-            {tasks.length === 0 && (
-              <div className="py-20 text-center">
-                <p className="text-muted-foreground">No tasks yet</p>
-                <Button className="mt-4" onClick={() => setAddingToColumn("backlog")}>
-                  <Plus className="mr-1.5 h-4 w-4" /> Add a task
-                </Button>
+                <DragOverlay>
+                  {activeTask && <TaskCardOverlay task={activeTask} />}
+                </DragOverlay>
+              </DndContext>
+            )}
+
+            {/* List View */}
+            {view === "list" && (
+              <div className="space-y-6">
+                {columns.map((col) => {
+                  const columnTasks = tasks.filter((t) => t.status === col.id);
+                  if (columnTasks.length === 0) return null;
+                  return (
+                    <div key={col.id}>
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className={cn("h-2 w-2 rounded-full", col.color)} />
+                        <h3 className="text-sm font-medium text-muted-foreground">{col.label} ({columnTasks.length})</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {columnTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            className={cn("flex cursor-pointer items-center gap-3 rounded-xl border border-border border-l-[3px] p-3 transition-all hover:shadow-sm", priorityBorder[task.priority])}
+                            onClick={() => setEditingTask(task)}
+                          >
+                            <Checkbox checked={task.status === "done"} onCheckedChange={() => toggleDone(task)} onClick={(e) => e.stopPropagation()} />
+                            <span className="flex-1 text-sm">{task.title}</span>
+                            {task.due_date && (
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}
+                              </span>
+                            )}
+                            <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {tasks.length === 0 && (
+                  <div className="py-20 text-center">
+                    <p className="text-muted-foreground">No tasks yet</p>
+                    <Button className="mt-4" onClick={() => setAddingToColumn("backlog")}>
+                      <Plus className="mr-1.5 h-4 w-4" /> Add a task
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
+
+        {mainTab === "documents" && id && <DocumentsTab projectId={id} />}
       </motion.div>
 
-      {/* Task Editor Panel */}
       <AnimatePresence>
         {(editingTask || addingToColumn) && (
           <TaskEditor
@@ -285,47 +275,24 @@ export default function ProjectDetail() {
   );
 }
 
-function DroppableColumn({
-  id,
-  label,
-  count,
-  onAddTask,
-  children,
-}: {
-  id: string;
-  label: string;
-  count: number;
-  onAddTask: () => void;
-  children: React.ReactNode;
+function DroppableColumn({ id, label, color, count, onAddTask, children }: {
+  id: string; label: string; color: string; count: number; onAddTask: () => void; children: React.ReactNode;
 }) {
-  const { setNodeRef, isOver } = useSortable({
-    id,
-    data: { type: "column" },
-  });
+  const { setNodeRef, isOver } = useSortable({ id, data: { type: "column" } });
 
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "min-h-[200px] rounded-xl bg-secondary/50 p-4 transition-colors",
-        isOver && "bg-primary/5"
-      )}
-    >
+    <div ref={setNodeRef} className={cn("min-h-[200px] rounded-xl bg-secondary/40 p-4 transition-colors", isOver && "bg-primary/5")}>
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <div className={cn("h-2 w-2 rounded-full", color)} />
           <span className="text-sm font-medium">{label}</span>
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">{count}</span>
         </div>
-        <button
-          onClick={onAddTask}
-          className="text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 [div:hover>&]:opacity-100"
-        >
+        <button onClick={onAddTask} className="text-muted-foreground transition-opacity hover:text-foreground">
           <Plus className="h-4 w-4" />
         </button>
       </div>
-      <div className="space-y-3">
-        {children}
-      </div>
+      <div className="space-y-3">{children}</div>
     </div>
   );
 }

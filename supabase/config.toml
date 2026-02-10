@@ -1,1 +1,4 @@
 project_id = "kelsyptcymllktidgcdb"
+
+[functions.brain-dump-chat]
+verify_jwt = false

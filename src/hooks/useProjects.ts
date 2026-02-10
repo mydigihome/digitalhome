@@ -9,6 +9,7 @@ export interface Project {
   goal: string | null;
   type: string;
   view_preference: string;
+  color: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
