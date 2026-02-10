@@ -12,6 +12,12 @@ export interface Task {
   priority: string;
   due_date: string | null;
   position: number;
+  duration: number | null;
+  min_chunk: number | null;
+  assignee: string | null;
+  labels: string[];
+  blocked_by: string[];
+  auto_scheduled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -48,7 +54,7 @@ export function useCreateTask() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (task: { title: string; project_id: string; description?: string; status?: string; priority?: string; due_date?: string | null; position?: number }) => {
+    mutationFn: async (task: { title: string; project_id: string; description?: string; status?: string; priority?: string; due_date?: string | null; position?: number; duration?: number | null; min_chunk?: number | null; assignee?: string | null; labels?: string[]; auto_scheduled?: boolean }) => {
       const { data, error } = await supabase
         .from("tasks")
         .insert({ ...task, user_id: user!.id })
@@ -66,7 +72,7 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string | null; status?: string; priority?: string; due_date?: string | null; position?: number }) => {
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string | null; status?: string; priority?: string; due_date?: string | null; position?: number; duration?: number | null; min_chunk?: number | null; assignee?: string | null; labels?: string[]; auto_scheduled?: boolean }) => {
       const { error } = await supabase.from("tasks").update(data).eq("id", id);
       if (error) throw error;
     },

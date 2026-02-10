@@ -216,10 +216,16 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assignee: string | null
+          auto_scheduled: boolean | null
+          blocked_by: string[] | null
           created_at: string
           description: string | null
           due_date: string | null
+          duration: number | null
           id: string
+          labels: string[] | null
+          min_chunk: number | null
           position: number
           priority: string
           project_id: string
@@ -229,10 +235,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignee?: string | null
+          auto_scheduled?: boolean | null
+          blocked_by?: string[] | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          duration?: number | null
           id?: string
+          labels?: string[] | null
+          min_chunk?: number | null
           position?: number
           priority?: string
           project_id: string
@@ -242,10 +254,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignee?: string | null
+          auto_scheduled?: boolean | null
+          blocked_by?: string[] | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          duration?: number | null
           id?: string
+          labels?: string[] | null
+          min_chunk?: number | null
           position?: number
           priority?: string
           project_id?: string
