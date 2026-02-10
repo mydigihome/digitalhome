@@ -76,9 +76,10 @@ export default function AIStickyNote() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 shadow-lg transition-transform hover:scale-110"
+        className="fixed bottom-24 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/20 bg-card shadow-lg transition-transform hover:scale-110"
+        title="AI Sticky Note"
       >
-        <Sparkles className="h-6 w-6 text-primary-foreground" />
+        <Sparkles className="h-5 w-5 text-primary" />
       </button>
     );
   }
