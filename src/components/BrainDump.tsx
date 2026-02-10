@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Hash, MessageSquare, StickyNote, GripVertical, Sparkles, Palette, Bold, Italic, Underline, Strikethrough, Heading2, Heading3, List, ListOrdered, ListChecks, Code, Image, Link2 } from "lucide-react";
+import { X, Send, Hash, MessageSquare, StickyNote, GripVertical, Sparkles, Palette, Bold, Italic, Underline, Strikethrough, Heading2, Heading3, List, ListOrdered, ListChecks, Code, Image, Link2, Maximize2, Minimize2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -15,16 +15,22 @@ import { cn } from "@/lib/utils";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const COLORS = [
-  { name: "Yellow", bg: "bg-amber-50", header: "bg-amber-100", border: "border-amber-200", grad: "linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%)", borderColor: "rgba(251,191,36,0.4)", darkBg: "dark:bg-amber-950/90", darkHeader: "dark:bg-amber-900/40", darkBorder: "dark:border-amber-800", inputBorder: "border-amber-200/60 dark:border-amber-800/40", tabBg: "bg-amber-100/60 dark:bg-amber-900/30" },
-  { name: "Pink", bg: "bg-pink-50", header: "bg-pink-100", border: "border-pink-200", grad: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 50%, #F472B6 100%)", borderColor: "rgba(244,114,182,0.4)", darkBg: "dark:bg-pink-950/90", darkHeader: "dark:bg-pink-900/40", darkBorder: "dark:border-pink-800", inputBorder: "border-pink-200/60 dark:border-pink-800/40", tabBg: "bg-pink-100/60 dark:bg-pink-900/30" },
-  { name: "Blue", bg: "bg-sky-50", header: "bg-sky-100", border: "border-sky-200", grad: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 50%, #38BDF8 100%)", borderColor: "rgba(56,189,248,0.4)", darkBg: "dark:bg-sky-950/90", darkHeader: "dark:bg-sky-900/40", darkBorder: "dark:border-sky-800", inputBorder: "border-sky-200/60 dark:border-sky-800/40", tabBg: "bg-sky-100/60 dark:bg-sky-900/30" },
-  { name: "Green", bg: "bg-emerald-50", header: "bg-emerald-100", border: "border-emerald-200", grad: "linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 50%, #34D399 100%)", borderColor: "rgba(52,211,153,0.4)", darkBg: "dark:bg-emerald-950/90", darkHeader: "dark:bg-emerald-900/40", darkBorder: "dark:border-emerald-800", inputBorder: "border-emerald-200/60 dark:border-emerald-800/40", tabBg: "bg-emerald-100/60 dark:bg-emerald-900/30" },
-  { name: "Purple", bg: "bg-violet-50", header: "bg-violet-100", border: "border-violet-200", grad: "linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 50%, #A78BFA 100%)", borderColor: "rgba(167,139,250,0.4)", darkBg: "dark:bg-violet-950/90", darkHeader: "dark:bg-violet-900/40", darkBorder: "dark:border-violet-800", inputBorder: "border-violet-200/60 dark:border-violet-800/40", tabBg: "bg-violet-100/60 dark:bg-violet-900/30" },
+  { name: "Yellow", bg: "bg-amber-50", header: "bg-amber-200/80", border: "border-amber-300", grad: "linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%)", borderColor: "rgba(251,191,36,0.5)", darkBg: "dark:bg-amber-950/90", darkHeader: "dark:bg-amber-900/40", darkBorder: "dark:border-amber-800", inputBorder: "border-amber-200/60 dark:border-amber-800/40", tabBg: "bg-amber-100/60 dark:bg-amber-900/30", dot: "#FBBF24" },
+  { name: "Pink", bg: "bg-pink-50", header: "bg-pink-200/80", border: "border-pink-300", grad: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 50%, #F472B6 100%)", borderColor: "rgba(244,114,182,0.5)", darkBg: "dark:bg-pink-950/90", darkHeader: "dark:bg-pink-900/40", darkBorder: "dark:border-pink-800", inputBorder: "border-pink-200/60 dark:border-pink-800/40", tabBg: "bg-pink-100/60 dark:bg-pink-900/30", dot: "#F472B6" },
+  { name: "Blue", bg: "bg-sky-50", header: "bg-sky-200/80", border: "border-sky-300", grad: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 50%, #38BDF8 100%)", borderColor: "rgba(56,189,248,0.5)", darkBg: "dark:bg-sky-950/90", darkHeader: "dark:bg-sky-900/40", darkBorder: "dark:border-sky-800", inputBorder: "border-sky-200/60 dark:border-sky-800/40", tabBg: "bg-sky-100/60 dark:bg-sky-900/30", dot: "#38BDF8" },
+  { name: "Green", bg: "bg-emerald-50", header: "bg-emerald-200/80", border: "border-emerald-300", grad: "linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 50%, #34D399 100%)", borderColor: "rgba(52,211,153,0.5)", darkBg: "dark:bg-emerald-950/90", darkHeader: "dark:bg-emerald-900/40", darkBorder: "dark:border-emerald-800", inputBorder: "border-emerald-200/60 dark:border-emerald-800/40", tabBg: "bg-emerald-100/60 dark:bg-emerald-900/30", dot: "#34D399" },
+  { name: "Purple", bg: "bg-violet-50", header: "bg-violet-200/80", border: "border-violet-300", grad: "linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 50%, #A78BFA 100%)", borderColor: "rgba(167,139,250,0.5)", darkBg: "dark:bg-violet-950/90", darkHeader: "dark:bg-violet-900/40", darkBorder: "dark:border-violet-800", inputBorder: "border-violet-200/60 dark:border-violet-800/40", tabBg: "bg-violet-100/60 dark:bg-violet-900/30", dot: "#A78BFA" },
 ];
 
 const STACK_COLORS = [
   { grad: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 100%)", border: "rgba(249,168,212,0.4)" },
   { grad: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 100%)", border: "rgba(125,211,252,0.4)" },
+];
+
+const SIZES = [
+  { label: "S", width: 380, height: 420 },
+  { label: "M", width: 500, height: 560 },
+  { label: "L", width: 640, height: 680 },
 ];
 
 export default function BrainDump() {
@@ -40,6 +46,7 @@ export default function BrainDump() {
   const [showAIAction, setShowAIAction] = useState(false);
   const [aiActionPos, setAiActionPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: -1, y: -1 });
+  const [sizeIdx, setSizeIdx] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const captureRef = useRef<HTMLTextAreaElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
@@ -57,12 +64,13 @@ export default function BrainDump() {
 
   const initPosition = useCallback(() => {
     if (position.x === -1) {
+      const sz = SIZES[sizeIdx];
       setPosition({
-        x: Math.max(16, window.innerWidth - 540),
-        y: Math.max(16, window.innerHeight - 620),
+        x: Math.max(16, window.innerWidth - sz.width - 40),
+        y: Math.max(16, window.innerHeight - sz.height - 60),
       });
     }
-  }, [position]);
+  }, [position, sizeIdx]);
 
   const handleOpen = () => {
     initPosition();
@@ -286,11 +294,11 @@ export default function BrainDump() {
             exit={{ opacity: 0, scale: 0.92, y: 30 }}
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
             className={cn(
-              "fixed z-[9999] flex w-[500px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border shadow-2xl",
+              "fixed z-[9999] flex max-w-[94vw] flex-col overflow-hidden rounded-2xl border shadow-2xl transition-[width,height] duration-200",
               isTransparent ? "backdrop-blur-lg" : "",
               color.border, color.bg, color.darkBg, color.darkBorder
             )}
-            style={{ left: position.x, top: position.y, height: "min(75vh, 560px)" }}
+            style={{ left: position.x, top: position.y, width: SIZES[sizeIdx].width, height: `min(85vh, ${SIZES[sizeIdx].height}px)` }}
             onMouseDown={handleMouseDown}
           >
             {/* Header — draggable */}
@@ -305,7 +313,7 @@ export default function BrainDump() {
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">AI Brain Dump</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {/* Color picker */}
                 <Popover>
                   <PopoverTrigger asChild>
@@ -314,6 +322,7 @@ export default function BrainDump() {
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                    <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Color</p>
                     <div className="flex gap-1.5">
                       {COLORS.map((c, i) => (
                         <button
@@ -326,6 +335,31 @@ export default function BrainDump() {
                           style={{ background: c.grad }}
                           title={c.name}
                         />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {/* Size picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-lg p-1 transition-colors hover:bg-foreground/10" onClick={(e) => e.stopPropagation()}>
+                      <Maximize2 className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                    <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Size</p>
+                    <div className="flex gap-1">
+                      {SIZES.map((s, i) => (
+                        <button
+                          key={s.label}
+                          onClick={() => setSizeIdx(i)}
+                          className={cn(
+                            "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                            sizeIdx === i ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {s.label}
+                        </button>
                       ))}
                     </div>
                   </PopoverContent>
