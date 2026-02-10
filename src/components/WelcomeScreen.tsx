@@ -37,12 +37,9 @@ const WelcomeScreen = ({ userName, onEnter }: WelcomeScreenProps) => {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="text-center mb-12"
       >
-        <h1 className="text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-          Welcome Home
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+          Welcome Home, <span className="text-primary">{userName}</span>
         </h1>
-        <p className="text-3xl md:text-4xl font-semibold text-primary mt-3">
-          {userName}
-        </p>
       </motion.div>
 
       {/* Door */}
