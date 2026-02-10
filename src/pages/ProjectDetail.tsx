@@ -14,6 +14,7 @@ import AppShell from "@/components/AppShell";
 import TaskEditor from "@/components/TaskEditor";
 import DocumentsTab from "@/components/DocumentsTab";
 import AITaskGenerator from "@/components/AITaskGenerator";
+import AIStickyNote from "@/components/AIStickyNote";
 import {
   DndContext, DragEndEvent, DragOverEvent, DragStartEvent, DragOverlay,
   PointerSensor, useSensor, useSensors, closestCorners,
@@ -310,6 +311,8 @@ export default function ProjectDetail() {
           projectName={project.name}
         />
       )}
+
+      <AIStickyNote />
     </AppShell>
   );
 }
