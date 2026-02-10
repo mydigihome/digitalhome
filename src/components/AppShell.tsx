@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Dumbbell, Plane, Users } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,7 @@ const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home },
   { id: "work", label: "Work", icon: Briefcase },
   { id: "travel", label: "Trips", icon: Plane },
-  { id: "fitness", label: "Fitness & Goals", icon: Dumbbell },
+  
 ];
 
 function UserDropdown() {
