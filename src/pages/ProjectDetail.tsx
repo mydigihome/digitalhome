@@ -161,6 +161,29 @@ export default function ProjectDetail() {
               <Badge variant="secondary" className="capitalize">{project.type}</Badge>
             )}
           </div>
+
+          {/* Overall Progress */}
+          {tasks.length > 0 && (() => {
+            const doneTasks = tasks.filter(t => t.status === "done").length;
+            const progress = Math.round((doneTasks / tasks.length) * 100);
+            return (
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-muted-foreground">Overall Progress</span>
+                  <span className="text-xs font-semibold text-foreground">{progress}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                  <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{doneTasks} of {tasks.length} tasks completed</span>
+                  <span>·</span>
+                  <span>{columns.filter(c => tasks.some(t => t.status === c.id)).length} active stages</span>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="mt-3 flex items-center gap-3">
             <Tabs value={mainTab} onValueChange={setMainTab}>
               <TabsList className="h-8">
@@ -203,7 +226,7 @@ export default function ProjectDetail() {
                     return (
                       <div key={col.id} className="min-w-[280px] flex-shrink-0">
                         <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy} id={col.id}>
-                          <DroppableColumn id={col.id} label={col.label} color={col.color} count={columnTasks.length} onAddTask={() => setAddingToColumn(col.id)}>
+                          <DroppableColumn id={col.id} label={col.label} color={col.color} count={columnTasks.length} totalTasks={tasks.length} onAddTask={() => setAddingToColumn(col.id)}>
                             {columnTasks.map((task) => (
                               <SortableTaskCard key={task.id} task={task} onClick={() => setEditingTask(task)} />
                             ))}
@@ -291,14 +314,14 @@ export default function ProjectDetail() {
   );
 }
 
-function DroppableColumn({ id, label, color, count, onAddTask, children }: {
-  id: string; label: string; color: string; count: number; onAddTask: () => void; children: React.ReactNode;
+function DroppableColumn({ id, label, color, count, totalTasks, onAddTask, children }: {
+  id: string; label: string; color: string; count: number; totalTasks: number; onAddTask: () => void; children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useSortable({ id, data: { type: "column" } });
 
   return (
     <div ref={setNodeRef} className={cn("min-h-[200px] rounded-xl bg-secondary/40 p-4 transition-colors", isOver && "bg-primary/5")}>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={cn("h-2 w-2 rounded-full", color)} />
           <span className="text-sm font-medium">{label}</span>
@@ -308,6 +331,11 @@ function DroppableColumn({ id, label, color, count, onAddTask, children }: {
           <Plus className="h-4 w-4" />
         </button>
       </div>
+      {totalTasks > 0 && (
+        <div className="mb-3 h-1 w-full rounded-full bg-secondary overflow-hidden">
+          <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${Math.round((count / totalTasks) * 100)}%` }} />
+        </div>
+      )}
       <div className="space-y-3">{children}</div>
     </div>
   );
