@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCreateTask, useUpdateTask, useDeleteTask, Task } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Clock, Tag, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const statuses = [
@@ -26,6 +27,13 @@ const priorities = [
   { value: "high", label: "High", color: "bg-destructive" },
 ];
 
+const availableLabels = [
+  { name: "Urgent", color: "bg-destructive/10 text-destructive" },
+  { name: "Important", color: "bg-warning/10 text-warning" },
+  { name: "Review", color: "bg-primary/10 text-primary" },
+  { name: "Blocked", color: "bg-muted text-muted-foreground" },
+];
+
 interface Props {
   task?: Task | null;
   projectId?: string;
@@ -40,6 +48,11 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
   const [priority, setPriority] = useState(task?.priority || "medium");
   const [dueDate, setDueDate] = useState(task?.due_date || "");
   const [selectedProject, setSelectedProject] = useState(task?.project_id || projectId || "");
+  const [duration, setDuration] = useState<number | "">(task?.duration ?? "");
+  const [minChunk, setMinChunk] = useState<number | "">(task?.min_chunk ?? "");
+  const [assignee, setAssignee] = useState(task?.assignee || "");
+  const [labels, setLabels] = useState<string[]>(task?.labels || []);
+  const [autoScheduled, setAutoScheduled] = useState(task?.auto_scheduled || false);
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -48,7 +61,6 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
 
   const isNew = !task;
 
-  // Auto-save draft to localStorage
   const draftKey = task ? `task-draft-${task.id}` : "task-draft-new";
   useEffect(() => {
     const interval = setInterval(() => {
@@ -57,7 +69,6 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
     return () => clearInterval(interval);
   }, [title, description, status, priority, dueDate, draftKey]);
 
-  // Load draft
   useEffect(() => {
     if (isNew) {
       const draft = localStorage.getItem(draftKey);
@@ -71,8 +82,21 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
     }
   }, []);
 
+  const toggleLabel = (name: string) => {
+    setLabels((prev) =>
+      prev.includes(name) ? prev.filter((l) => l !== name) : [...prev, name]
+    );
+  };
+
   const handleSave = async () => {
     if (!title.trim()) { toast.error("Title is required"); return; }
+    const extra = {
+      duration: duration || null,
+      min_chunk: minChunk || null,
+      assignee: assignee.trim() || null,
+      labels,
+      auto_scheduled: autoScheduled,
+    };
     try {
       if (isNew) {
         if (!selectedProject) { toast.error("Select a project"); return; }
@@ -83,6 +107,7 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
           priority,
           due_date: dueDate || null,
           project_id: selectedProject,
+          ...extra,
         });
         toast.success("Task created!");
       } else {
@@ -93,6 +118,7 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
           status,
           priority,
           due_date: dueDate || null,
+          ...extra,
         });
         toast.success("Task updated!");
       }
@@ -115,18 +141,23 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
     }
   };
 
+  const formatDuration = (mins: number | "") => {
+    if (!mins) return "";
+    const h = Math.floor(Number(mins) / 60);
+    const m = Number(mins) % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
+
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-foreground/10" onClick={onClose} />
 
-      {/* Panel */}
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
-        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[400px] flex-col border-l border-border bg-background"
+        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-[420px] flex-col border-l border-border bg-background"
       >
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-base font-medium">{isNew ? "New Task" : "Edit Task"}</h2>
@@ -134,15 +165,13 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
-          <div className="space-y-2">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Task title"
-              className="border-0 px-0 text-xl font-medium shadow-none focus-visible:ring-0"
-              autoFocus
-            />
-          </div>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Task title"
+            className="border-0 px-0 text-xl font-medium shadow-none focus-visible:ring-0"
+            autoFocus
+          />
 
           <div className="space-y-2">
             <Label>Description</Label>
@@ -150,7 +179,7 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add details..."
-              rows={4}
+              rows={3}
             />
           </div>
 
@@ -208,6 +237,76 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
               )}
             </div>
           </div>
+
+          {/* Duration & Min Chunk */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                Duration (min)
+              </Label>
+              <Input
+                type="number"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value ? parseInt(e.target.value) : "")}
+                placeholder="e.g. 120"
+              />
+              {duration && (
+                <p className="text-xs text-muted-foreground">{formatDuration(duration)}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Min chunk (min)</Label>
+              <Input
+                type="number"
+                value={minChunk}
+                onChange={(e) => setMinChunk(e.target.value ? parseInt(e.target.value) : "")}
+                placeholder="e.g. 60"
+              />
+            </div>
+          </div>
+
+          {/* Assignee */}
+          <div className="space-y-2">
+            <Label>Assignee</Label>
+            <Input
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="Who's responsible?"
+            />
+          </div>
+
+          {/* Labels */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+              Labels
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {availableLabels.map((l) => (
+                <button
+                  key={l.name}
+                  onClick={() => toggleLabel(l.name)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-all",
+                    l.color,
+                    labels.includes(l.name) ? "ring-2 ring-primary ring-offset-1" : "opacity-60 hover:opacity-100"
+                  )}
+                >
+                  {l.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Auto-schedule */}
+          <label className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer">
+            <Checkbox checked={autoScheduled} onCheckedChange={(c) => setAutoScheduled(!!c)} />
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">Auto-schedule this task</span>
+            </div>
+          </label>
         </div>
 
         <div className="flex items-center justify-between border-t border-border p-4">
