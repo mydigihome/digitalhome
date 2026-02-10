@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { Progress } from "@/components/ui/progress";
@@ -53,16 +53,26 @@ export default function Projects() {
   const { data: tasks = [] } = useAllTasks();
   const [modalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterType = searchParams.get("type");
+
+  const filteredWorkspaces = filterType
+    ? workspaceConfig.filter((w) => w.id === filterType)
+    : workspaceConfig;
+
+  const pageTitle = filterType
+    ? filteredWorkspaces[0]?.title || "Workspaces"
+    : "Workspaces";
 
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-4xl font-bold text-foreground">Workspaces</h1>
+          <h1 className="text-4xl font-bold text-foreground">{pageTitle}</h1>
         </div>
 
         <div className="space-y-8">
-          {workspaceConfig.map((workspace) => {
+          {filteredWorkspaces.map((workspace) => {
             const Icon = workspace.icon;
             const workspaceProjects = projects.filter((p) => p.type === workspace.id);
 

@@ -1,14 +1,15 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Dumbbell, Plane } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
-const navItems = [
-  { icon: Home, label: "Home Office", path: "/dashboard" },
-  { icon: FolderOpen, label: "Projects", path: "/projects" },
-  { icon: Calendar, label: "Calendar", path: "/calendar" },
+const projectFolders = [
+  { id: "personal", label: "Personal Projects", icon: Home },
+  { id: "work", label: "Work", icon: Briefcase },
+  { id: "travel", label: "Trips", icon: Plane },
+  { id: "fitness", label: "Fitness & Goals", icon: Dumbbell },
 ];
 
 function UserDropdown() {
@@ -64,6 +65,128 @@ function UserDropdown() {
   );
 }
 
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [projectsOpen, setProjectsOpen] = useState(
+    location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/")
+  );
+
+  const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
+  const searchParams = new URLSearchParams(location.search);
+  const activeType = searchParams.get("type");
+
+  const topItems = [
+    { icon: Home, label: "Home Office", path: "/dashboard" },
+  ];
+
+  const bottomItems = [
+    { icon: Calendar, label: "Calendar", path: "/calendar" },
+  ];
+
+  const go = (path: string) => {
+    navigate(path);
+    onNavigate?.();
+  };
+
+  return (
+    <ul role="list" className="flex flex-1 flex-col gap-y-1">
+      {/* Home */}
+      {topItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = location.pathname.startsWith(item.path);
+        return (
+          <li key={item.path}>
+            <button
+              onClick={() => go(item.path)}
+              className={cn(
+                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
+                isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
+              )}
+            >
+              <Icon className="h-6 w-6 shrink-0" />
+              {item.label}
+            </button>
+          </li>
+        );
+      })}
+
+      {/* Projects with sub-folders */}
+      <li>
+        <button
+          onClick={() => {
+            setProjectsOpen(!projectsOpen);
+            go("/projects");
+          }}
+          className={cn(
+            "group flex w-full items-center gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
+            isProjectsActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
+          )}
+        >
+          <FolderOpen className="h-6 w-6 shrink-0" />
+          <span className="flex-1 text-left">Projects</span>
+          <ChevronDown
+            className={cn("h-4 w-4 shrink-0 transition-transform", projectsOpen && "rotate-180")}
+          />
+        </button>
+
+        <AnimatePresence initial={false}>
+          {projectsOpen && (
+            <motion.ul
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {projectFolders.map((folder) => {
+                const Icon = folder.icon;
+                const isActive = location.pathname === "/projects" && activeType === folder.id;
+                return (
+                  <li key={folder.id}>
+                    <button
+                      onClick={() => go(`/projects?type=${folder.id}`)}
+                      className={cn(
+                        "flex w-full items-center gap-x-3 rounded-lg py-2 pl-12 pr-3 text-sm transition-colors",
+                        isActive
+                          ? "font-medium text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {folder.label}
+                    </button>
+                  </li>
+                );
+              })}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </li>
+
+      {/* Calendar */}
+      {bottomItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = location.pathname.startsWith(item.path);
+        return (
+          <li key={item.path}>
+            <button
+              onClick={() => go(item.path)}
+              className={cn(
+                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
+                isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
+              )}
+            >
+              <Icon className="h-6 w-6 shrink-0" />
+              {item.label}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -89,29 +212,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Navigation */}
           <nav className="flex flex-1 flex-col">
-            <ul role="list" className="flex flex-1 flex-col gap-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname.startsWith(item.path) ||
-                  (item.path === "/projects" && location.pathname.startsWith("/project/"));
-                return (
-                  <li key={item.path}>
-                    <button
-                      onClick={() => navigate(item.path)}
-                      className={cn(
-                        "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-secondary hover:text-primary"
-                      )}
-                    >
-                      <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                      {item.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <SidebarNav />
           </nav>
 
           {/* User Profile at Bottom */}
@@ -175,32 +276,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </div>
                   </div>
                   <nav className="flex flex-1 flex-col">
-                    <ul role="list" className="flex flex-1 flex-col gap-y-2">
-                      {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname.startsWith(item.path) ||
-                          (item.path === "/projects" && location.pathname.startsWith("/project/"));
-                        return (
-                          <li key={item.path}>
-                            <button
-                              onClick={() => {
-                                navigate(item.path);
-                                setMobileOpen(false);
-                              }}
-                              className={cn(
-                                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
-                                isActive
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-secondary hover:text-primary"
-                              )}
-                            >
-                              <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                              {item.label}
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <SidebarNav onNavigate={() => setMobileOpen(false)} />
                   </nav>
                 </div>
               </motion.div>
