@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      brain_dumps: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          processed: boolean | null
+          tags: string[] | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          processed?: boolean | null
+          tags?: string[] | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          processed?: boolean | null
+          tags?: string[] | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          name: string
+          project_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          name: string
+          project_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          name?: string
+          project_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -37,6 +108,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          color: string | null
           created_at: string
           end_date: string | null
           goal: string | null
@@ -49,6 +121,7 @@ export type Database = {
           view_preference: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           end_date?: string | null
           goal?: string | null
@@ -61,6 +134,7 @@ export type Database = {
           view_preference?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           end_date?: string | null
           goal?: string | null
