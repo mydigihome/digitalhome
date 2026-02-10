@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Hash, MessageSquare, StickyNote, Eye, EyeOff, GripVertical } from "lucide-react";
+import { X, Send, Hash, MessageSquare, StickyNote, GripVertical, Sparkles, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { useCreateBrainDump } from "@/hooks/useBrainDumps";
 import { useCreateTask } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
@@ -13,20 +13,40 @@ import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+const COLORS = [
+  { name: "Yellow", bg: "bg-amber-50", header: "bg-amber-100", border: "border-amber-200", grad: "linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%)", borderColor: "rgba(251,191,36,0.4)", darkBg: "dark:bg-amber-950/90", darkHeader: "dark:bg-amber-900/40", darkBorder: "dark:border-amber-800", inputBorder: "border-amber-200/60 dark:border-amber-800/40", tabBg: "bg-amber-100/60 dark:bg-amber-900/30" },
+  { name: "Pink", bg: "bg-pink-50", header: "bg-pink-100", border: "border-pink-200", grad: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 50%, #F472B6 100%)", borderColor: "rgba(244,114,182,0.4)", darkBg: "dark:bg-pink-950/90", darkHeader: "dark:bg-pink-900/40", darkBorder: "dark:border-pink-800", inputBorder: "border-pink-200/60 dark:border-pink-800/40", tabBg: "bg-pink-100/60 dark:bg-pink-900/30" },
+  { name: "Blue", bg: "bg-sky-50", header: "bg-sky-100", border: "border-sky-200", grad: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 50%, #38BDF8 100%)", borderColor: "rgba(56,189,248,0.4)", darkBg: "dark:bg-sky-950/90", darkHeader: "dark:bg-sky-900/40", darkBorder: "dark:border-sky-800", inputBorder: "border-sky-200/60 dark:border-sky-800/40", tabBg: "bg-sky-100/60 dark:bg-sky-900/30" },
+  { name: "Green", bg: "bg-emerald-50", header: "bg-emerald-100", border: "border-emerald-200", grad: "linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 50%, #34D399 100%)", borderColor: "rgba(52,211,153,0.4)", darkBg: "dark:bg-emerald-950/90", darkHeader: "dark:bg-emerald-900/40", darkBorder: "dark:border-emerald-800", inputBorder: "border-emerald-200/60 dark:border-emerald-800/40", tabBg: "bg-emerald-100/60 dark:bg-emerald-900/30" },
+  { name: "Purple", bg: "bg-violet-50", header: "bg-violet-100", border: "border-violet-200", grad: "linear-gradient(135deg, #DDD6FE 0%, #C4B5FD 50%, #A78BFA 100%)", borderColor: "rgba(167,139,250,0.4)", darkBg: "dark:bg-violet-950/90", darkHeader: "dark:bg-violet-900/40", darkBorder: "dark:border-violet-800", inputBorder: "border-violet-200/60 dark:border-violet-800/40", tabBg: "bg-violet-100/60 dark:bg-violet-900/30" },
+];
+
+const STACK_COLORS = [
+  { grad: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 100%)", border: "rgba(249,168,212,0.4)" },
+  { grad: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 100%)", border: "rgba(125,211,252,0.4)" },
+];
+
 export default function BrainDump() {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"chat" | "capture">("chat");
+  const [mode, setMode] = useState<"chat" | "capture">("capture");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [captureText, setCaptureText] = useState("");
-  const [transparent, setTransparent] = useState(false);
+  const [opacity, setOpacity] = useState(100);
+  const [colorIdx, setColorIdx] = useState(0);
+  const [selectedText, setSelectedText] = useState("");
+  const [showAIAction, setShowAIAction] = useState(false);
+  const [aiActionPos, setAiActionPos] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: -1, y: -1 });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const captureRef = useRef<HTMLTextAreaElement>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const createDump = useCreateBrainDump();
   const createTask = useCreateTask();
   const { data: projects = [] } = useProjects();
+
+  const color = COLORS[colorIdx];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -69,14 +89,39 @@ export default function BrainDump() {
     [position]
   );
 
-  const sendChat = async () => {
-    if (!input.trim() || isStreaming) return;
-    const userMsg: Msg = { role: "user", content: input.trim() };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setIsStreaming(true);
+  // Handle text selection in capture textarea
+  const handleTextSelect = () => {
+    const textarea = captureRef.current;
+    if (!textarea) return;
+    const sel = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd).trim();
+    if (sel.length > 2) {
+      setSelectedText(sel);
+      // Position AI action near the textarea
+      const rect = textarea.getBoundingClientRect();
+      setAiActionPos({ x: rect.left + rect.width / 2 - 100, y: rect.top - 44 });
+      setShowAIAction(true);
+    } else {
+      setShowAIAction(false);
+      setSelectedText("");
+    }
+  };
 
-    createDump.mutate({ type: "chat", content: userMsg.content });
+  const handleAIAction = (action: string) => {
+    setShowAIAction(false);
+    // Switch to chat and send the selected text with the action
+    const prompt = `${action}: "${selectedText}"`;
+    setMode("chat");
+    // Trigger chat with this prompt
+    const userMsg: Msg = { role: "user", content: prompt };
+    setMessages((prev) => [...prev, userMsg]);
+    setSelectedText("");
+    // Auto-send
+    streamChat([...messages, userMsg]);
+  };
+
+  const streamChat = async (allMessages: Msg[]) => {
+    setIsStreaming(true);
+    createDump.mutate({ type: "chat", content: allMessages[allMessages.length - 1].content });
 
     let assistantSoFar = "";
     try {
@@ -86,7 +131,7 @@ export default function BrainDump() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({ messages: [...messages, userMsg] }),
+        body: JSON.stringify({ messages: allMessages }),
       });
 
       if (!resp.ok) {
@@ -141,6 +186,15 @@ export default function BrainDump() {
     setIsStreaming(false);
   };
 
+  const sendChat = async () => {
+    if (!input.trim() || isStreaming) return;
+    const userMsg: Msg = { role: "user", content: input.trim() };
+    const all = [...messages, userMsg];
+    setMessages(all);
+    setInput("");
+    await streamChat(all);
+  };
+
   const handleCaptureSave = () => {
     if (!captureText.trim()) return;
     const tags = captureText.match(/#\w+/g)?.map((t) => t.slice(1)) || [];
@@ -158,9 +212,11 @@ export default function BrainDump() {
     setCaptureText("");
   };
 
+  const isTransparent = opacity < 100;
+
   return (
     <>
-      {/* ── Fun sticky-note emoji FAB ── */}
+      {/* ── Stacked sticky notes FAB with sparkle ── */}
       <AnimatePresence>
         {!open && (
           <motion.button
@@ -173,17 +229,17 @@ export default function BrainDump() {
             onClick={handleOpen}
             className="fixed bottom-6 right-6 z-[9999] flex h-16 w-16 items-center justify-center rounded-2xl shadow-xl transition-shadow hover:shadow-2xl"
             style={{
-              background: "linear-gradient(135deg, #FDE68A 0%, #FCD34D 50%, #FBBF24 100%)",
-              border: "2px solid rgba(251, 191, 36, 0.4)",
+              background: color.grad,
+              border: `2px solid ${color.borderColor}`,
             }}
             title="AI Brain Dump"
           >
-            {/* Stacked effect behind */}
+            {/* Stacked notes behind */}
             <span
               className="absolute -right-1 -top-1 h-full w-full rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, #FBCFE8 0%, #F9A8D4 100%)",
-                border: "1.5px solid rgba(249, 168, 212, 0.4)",
+                background: STACK_COLORS[0].grad,
+                border: `1.5px solid ${STACK_COLORS[0].border}`,
                 zIndex: -2,
                 transform: "rotate(8deg) translate(3px, -3px)",
               }}
@@ -191,14 +247,31 @@ export default function BrainDump() {
             <span
               className="absolute -right-0.5 -top-0.5 h-full w-full rounded-2xl"
               style={{
-                background: "linear-gradient(135deg, #BAE6FD 0%, #7DD3FC 100%)",
-                border: "1.5px solid rgba(125, 211, 252, 0.4)",
+                background: STACK_COLORS[1].grad,
+                border: `1.5px solid ${STACK_COLORS[1].border}`,
                 zIndex: -1,
                 transform: "rotate(4deg) translate(1px, -1px)",
               }}
             />
-            <span className="text-2xl select-none" role="img" aria-label="sticky note">🧠</span>
+            <Sparkles className="h-6 w-6 text-white drop-shadow-md" />
           </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* ── Floating AI action on text selection ── */}
+      <AnimatePresence>
+        {showAIAction && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            className="fixed z-[10000] flex gap-1 rounded-xl border border-border bg-card p-1 shadow-lg"
+            style={{ left: aiActionPos.x, top: aiActionPos.y }}
+          >
+            <button onClick={() => handleAIAction("Structure this into a list")} className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors hover:bg-primary/10 text-foreground">📝 Make a list</button>
+            <button onClick={() => handleAIAction("Summarize this")} className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors hover:bg-primary/10 text-foreground">✨ Summarize</button>
+            <button onClick={() => handleAIAction("Turn this into actionable tasks")} className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors hover:bg-primary/10 text-foreground">📋 Tasks</button>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -208,14 +281,13 @@ export default function BrainDump() {
           <motion.div
             key="widget"
             initial={{ opacity: 0, scale: 0.92, y: 30 }}
-            animate={{ opacity: transparent ? 0.7 : 1, scale: 1, y: 0 }}
+            animate={{ opacity: opacity / 100, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 30 }}
             transition={{ type: "spring", damping: 22, stiffness: 300 }}
             className={cn(
               "fixed z-[9999] flex w-[500px] max-w-[94vw] flex-col overflow-hidden rounded-2xl border shadow-2xl",
-              transparent
-                ? "border-amber-300/30 bg-amber-50/50 backdrop-blur-lg dark:border-amber-700/30 dark:bg-amber-950/30"
-                : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/90"
+              isTransparent ? "backdrop-blur-lg" : "",
+              color.border, color.bg, color.darkBg, color.darkBorder
             )}
             style={{ left: position.x, top: position.y, height: "min(75vh, 560px)" }}
             onMouseDown={handleMouseDown}
@@ -224,48 +296,81 @@ export default function BrainDump() {
             <div
               className={cn(
                 "drag-handle flex cursor-move items-center justify-between px-4 py-2.5",
-                transparent
-                  ? "bg-amber-200/30 dark:bg-amber-800/20"
-                  : "bg-amber-100 dark:bg-amber-900/40"
+                color.header, color.darkHeader
               )}
             >
               <div className="flex items-center gap-2">
-                <GripVertical className="h-4 w-4 text-amber-500/50" />
-                <span className="select-none text-lg" role="img">🧠</span>
+                <GripVertical className="h-4 w-4 opacity-40" />
+                <Sparkles className="h-4 w-4 text-primary" />
                 <span className="text-sm font-bold text-foreground">AI Brain Dump</span>
               </div>
               <div className="flex items-center gap-2">
-                {/* Transparency toggle */}
-                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                  {transparent ? (
-                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  )}
-                  <Switch
-                    checked={transparent}
-                    onCheckedChange={setTransparent}
-                    className="h-4 w-8 data-[state=checked]:bg-primary"
-                  />
-                </div>
+                {/* Color picker */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-lg p-1 transition-colors hover:bg-foreground/10" onClick={(e) => e.stopPropagation()}>
+                      <Palette className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="end" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex gap-1.5">
+                      {COLORS.map((c, i) => (
+                        <button
+                          key={c.name}
+                          onClick={() => setColorIdx(i)}
+                          className={cn(
+                            "h-7 w-7 rounded-full border-2 transition-transform hover:scale-110",
+                            colorIdx === i ? "border-foreground scale-110" : "border-transparent"
+                          )}
+                          style={{ background: c.grad }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <button onClick={() => setOpen(false)} className="rounded-lg p-1 transition-colors hover:bg-foreground/10">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
             </div>
 
+            {/* Opacity slider */}
+            <div className="flex items-center gap-3 border-b px-4 py-2" style={{ borderColor: "inherit" }} onClick={(e) => e.stopPropagation()}>
+              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Opacity</span>
+              <Slider
+                value={[opacity]}
+                onValueChange={(v) => setOpacity(v[0])}
+                min={30}
+                max={100}
+                step={5}
+                className="flex-1"
+              />
+              <span className="w-8 text-right text-xs tabular-nums text-muted-foreground">{opacity}%</span>
+            </div>
+
             {/* Mode tabs */}
-            <div className="border-b border-amber-200/60 px-4 py-2 dark:border-amber-800/40">
-              <Tabs value={mode} onValueChange={(v) => setMode(v as any)}>
-                <TabsList className="h-8 w-full bg-amber-100/60 dark:bg-amber-900/30">
-                  <TabsTrigger value="chat" className="flex-1 gap-1.5 text-xs">
-                    <MessageSquare className="h-3 w-3" /> Chat
-                  </TabsTrigger>
-                  <TabsTrigger value="capture" className="flex-1 gap-1.5 text-xs">
-                    <StickyNote className="h-3 w-3" /> Quick Capture
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className={cn("border-b px-4 py-2", color.inputBorder)}>
+              <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "rgba(0,0,0,0.04)" }}>
+                <button
+                  onClick={() => setMode("capture")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all",
+                    mode === "capture" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <StickyNote className="h-3 w-3" /> Notes
+                </button>
+                <button
+                  onClick={() => setMode("chat")}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-all",
+                    mode === "chat" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <MessageSquare className="h-3 w-3" /> Chat
+                </button>
+              </div>
             </div>
 
             {/* Chat mode */}
@@ -274,9 +379,9 @@ export default function BrainDump() {
                 <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
                   {messages.length === 0 && (
                     <div className="flex flex-col items-center py-8 text-center">
-                      <span className="mb-2 text-4xl select-none">💭</span>
-                      <p className="text-sm font-medium text-foreground">Dump your thoughts here...</p>
-                      <p className="mt-1 text-xs text-muted-foreground">I'll help organize them into tasks and ideas</p>
+                      <Sparkles className="mb-2 h-8 w-8 text-primary/60" />
+                      <p className="text-sm font-medium text-foreground">Ask AI anything...</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Or highlight text in Notes to send it here</p>
                     </div>
                   )}
                   {messages.map((m, i) => (
@@ -303,14 +408,14 @@ export default function BrainDump() {
                     </div>
                   )}
                 </div>
-                <div className="border-t border-amber-200/60 p-3 dark:border-amber-800/40">
+                <div className={cn("border-t p-3", color.inputBorder)}>
                   <div className="flex gap-2">
                     <Textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-                      placeholder="Dump your thoughts here..."
-                      className="min-h-[40px] resize-none border-amber-200/60 bg-background/60 dark:border-amber-800/40"
+                      placeholder="Ask AI to organize your thoughts..."
+                      className={cn("min-h-[40px] resize-none bg-background/60", color.inputBorder)}
                       rows={1}
                     />
                     <Button size="icon" onClick={sendChat} disabled={isStreaming || !input.trim()} className="shrink-0">
@@ -321,20 +426,26 @@ export default function BrainDump() {
               </>
             )}
 
-            {/* Quick Capture mode */}
+            {/* Notes (formerly Quick Capture) */}
             {mode === "capture" && (
               <div className="flex flex-1 flex-col p-4">
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Dump your thoughts below. <span className="font-medium text-foreground">Highlight text</span> to ask AI to organize it ✨
+                </p>
                 <Textarea
+                  ref={captureRef}
                   value={captureText}
                   onChange={(e) => setCaptureText(e.target.value)}
-                  placeholder="What's on your mind? Use #task, #idea, or #note ✏️"
-                  className="flex-1 resize-none border-amber-200/60 bg-background/60 dark:border-amber-800/40"
+                  onMouseUp={handleTextSelect}
+                  onKeyUp={handleTextSelect}
+                  placeholder={"1. Call the dentist\n2. Research project ideas\n3. Buy groceries\n4. Review budget spreadsheet..."}
+                  className={cn("flex-1 resize-none bg-background/60 font-mono text-sm leading-relaxed", color.inputBorder)}
                   rows={8}
                 />
                 <div className="mt-3 flex items-center justify-between">
                   <div className="flex gap-2 text-xs text-muted-foreground">
                     <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">#task</span>
-                    <span className="rounded-full bg-warning/10 px-2 py-0.5 text-warning">#idea</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5">#idea</span>
                     <span className="rounded-full bg-muted px-2 py-0.5">#note</span>
                   </div>
                   <Button size="sm" onClick={handleCaptureSave} disabled={!captureText.trim()}>
