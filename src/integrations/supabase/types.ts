@@ -238,6 +238,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          content: Json | null
+          content_preview: string | null
+          created_at: string
+          id: string
+          position: number | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          content_preview?: string | null
+          created_at?: string
+          id?: string
+          position?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          content_preview?: string | null
+          created_at?: string
+          id?: string
+          position?: number | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
