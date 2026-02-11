@@ -8,6 +8,8 @@ export interface Note {
   title: string;
   content: any;
   content_preview: string | null;
+  card_color: string | null;
+  card_opacity: number | null;
   position: number;
   created_at: string;
   updated_at: string;
@@ -34,10 +36,10 @@ export function useCreateNote() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (note: { title?: string; content?: any; content_preview?: string }) => {
+    mutationFn: async (note: { title?: string; content?: any; content_preview?: string; card_color?: string; card_opacity?: number }) => {
       const { data, error } = await supabase
         .from("notes")
-        .insert({ ...note, user_id: user!.id })
+        .insert({ ...note, user_id: user!.id } as any)
         .select()
         .single();
       if (error) throw error;
@@ -50,7 +52,7 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; title?: string; content?: any; content_preview?: string; position?: number }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; title?: string; content?: any; content_preview?: string; position?: number; card_color?: string; card_opacity?: number }) => {
       const { data, error } = await supabase
         .from("notes")
         .update(updates)
