@@ -103,33 +103,37 @@ export default function FinancePage() {
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground">Finance</h1>
-          <p className="mt-1 text-muted-foreground">Manage your wealth, investments, and applications</p>
-        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-6">
+          <h1 className="text-4xl font-bold text-foreground mb-2">💰 Finance</h1>
+          <p className="text-muted-foreground mb-6">Manage your wealth and track applications</p>
 
-        {/* Finance Tabs */}
-        <div className="mb-6 flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
-          <button
-            onClick={() => setFinanceTab("wealth")}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
-              financeTab === "wealth" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <TrendingUp className="h-4 w-4" />
-            Wealth Tracker
-          </button>
-          <button
-            onClick={() => setFinanceTab("applications")}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
-              financeTab === "applications" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <FileText className="h-4 w-4" />
-            Applications Tracker
-          </button>
+          {/* Section Toggles */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setFinanceTab("wealth")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
+                financeTab === "wealth"
+                  ? "bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg"
+                  : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+              )}
+            >
+              <DollarSign className="h-5 w-5" />
+              Wealth Tracker
+            </button>
+            <button
+              onClick={() => setFinanceTab("applications")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
+                financeTab === "applications"
+                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+                  : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+              )}
+            >
+              <FileText className="h-5 w-5" />
+              Applications Tracker
+            </button>
+          </div>
         </div>
 
         {/* Wealth Tracker */}
