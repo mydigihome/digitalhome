@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TrendingUp, Target, DollarSign, Check, X, Upload, Plus, FileText, ChevronRight } from "lucide-react";
+import ApplicationsTracker from "@/components/ApplicationsTracker";
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import { cn } from "@/lib/utils";
@@ -35,15 +36,6 @@ interface Goal {
   checkIns: { day: number; completed: boolean }[];
 }
 
-interface Application {
-  id: string;
-  name: string;
-  type: string;
-  status: "pending" | "approved" | "denied" | "in-review";
-  submittedDate: string;
-  notes: string;
-}
-
 const brokerStyles: Record<string, string> = {
   webull: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700",
   vanguard: "bg-destructive/10 text-destructive border-destructive/30",
@@ -52,12 +44,6 @@ const brokerStyles: Record<string, string> = {
   robinhood: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700",
 };
 
-const statusStyles: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-  approved: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-  denied: "bg-destructive/10 text-destructive",
-  "in-review": "bg-primary/10 text-primary",
-};
 
 export default function FinancePage() {
   const [financeTab, setFinanceTab] = useState<FinanceTab>("wealth");
@@ -103,11 +89,6 @@ export default function FinancePage() {
     },
   ]);
 
-  const [applications] = useState<Application[]>([
-    { id: "1", name: "Chase Credit Card", type: "Credit Card", status: "approved", submittedDate: "2026-01-15", notes: "Rewards card with 2% cashback" },
-    { id: "2", name: "Home Mortgage Pre-Approval", type: "Loan", status: "in-review", submittedDate: "2026-02-01", notes: "30-year fixed rate" },
-    { id: "3", name: "Auto Loan Refinance", type: "Loan", status: "pending", submittedDate: "2026-02-08", notes: "Looking for lower rate" },
-  ]);
 
   const [showInvestmentForm, setShowInvestmentForm] = useState(false);
 
@@ -489,59 +470,7 @@ export default function FinancePage() {
         )}
 
         {/* Applications Tracker */}
-        {financeTab === "applications" && (
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-                    <FileText className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">Applications</h2>
-                    <p className="text-muted-foreground">Track credit cards, loans, and financial applications</p>
-                  </div>
-                </div>
-                <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground transition hover:bg-primary/90">
-                  <Plus className="h-5 w-5" />
-                  New Application
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {applications.map((app) => (
-                  <div
-                    key={app.id}
-                    className="group flex cursor-pointer items-center gap-4 rounded-xl border border-border p-4 transition hover:bg-secondary/50"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-foreground">{app.name}</h3>
-                        <span className={cn("rounded-full px-3 py-0.5 text-xs font-medium", statusStyles[app.status])}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1).replace("-", " ")}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {app.type} • Submitted {app.submittedDate} • {app.notes}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground transition group-hover:text-foreground" />
-                  </div>
-                ))}
-              </div>
-
-              {applications.length === 0 && (
-                <div className="rounded-xl border-2 border-dashed border-border py-12 text-center">
-                  <FileText className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" />
-                  <p className="mb-4 text-muted-foreground">No applications tracked yet</p>
-                  <button className="font-medium text-primary hover:text-primary/80">
-                    Add your first application
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {financeTab === "applications" && <ApplicationsTracker />}
 
         {/* Investment Form Modal */}
         {showInvestmentForm && (
