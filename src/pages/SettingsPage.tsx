@@ -156,6 +156,8 @@ export default function SettingsPage() {
   const themeColor = prefs?.theme_color || "#8B5CF6";
   const fontSize = prefs?.font_size || "medium";
   const density = prefs?.density || "comfortable";
+  const accentData = prefs?.accent_colors as Record<string, string> | null;
+  const selectedFont = accentData?.font_family || "Inter";
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -327,7 +329,7 @@ export default function SettingsPage() {
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                       <button
-                        onClick={() => { setDarkMode(false); document.documentElement.classList.remove("dark"); }}
+                        onClick={() => { setDarkMode(false); document.documentElement.classList.remove("dark"); upsertPrefs.mutate({ sidebar_theme: "light" }); }}
                         className={cn("rounded-xl border-2 p-5 text-left transition-colors", !darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
                       >
                         <div className="mb-3 flex items-center gap-2">
@@ -340,7 +342,7 @@ export default function SettingsPage() {
                         </div>
                       </button>
                       <button
-                        onClick={() => { setDarkMode(true); document.documentElement.classList.add("dark"); }}
+                        onClick={() => { setDarkMode(true); document.documentElement.classList.add("dark"); upsertPrefs.mutate({ sidebar_theme: "dark" }); }}
                         className={cn("rounded-xl border-2 p-5 text-left transition-colors", darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
                       >
                         <div className="mb-3 flex items-center gap-2">
@@ -385,8 +387,11 @@ export default function SettingsPage() {
                       {fontOptions.map((f) => (
                         <button
                           key={f.label}
-                          onClick={() => document.documentElement.style.setProperty("--font-sans", f.value)}
-                          className="rounded-lg border-2 border-border px-4 py-3 text-sm font-medium transition-colors hover:border-muted-foreground/30"
+                          onClick={() => upsertPrefs.mutate({ accent_colors: { ...accentData, font_family: f.value } })}
+                          className={cn(
+                            "rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors",
+                            selectedFont === f.value ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
+                          )}
                           style={{ fontFamily: f.value }}
                         >
                           {f.label}
