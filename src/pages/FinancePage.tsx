@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { TrendingUp, Target, DollarSign, Check, X, Upload, Plus, FileText, ChevronRight } from "lucide-react";
+import { TrendingUp, Target, DollarSign, Check, X, Upload, Plus, FileText, ChevronRight, Sparkles } from "lucide-react";
 import ApplicationsTracker from "@/components/ApplicationsTracker";
+import AppsAndTools from "@/components/AppsAndTools";
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
 type Character = "buddie" | "innie" | "goalie";
-type FinanceTab = "wealth" | "applications";
+type FinanceTab = "wealth" | "applications" | "apps-tools";
 
 interface MonthStatus {
   month: string;
@@ -132,6 +133,18 @@ export default function FinancePage() {
             >
               <FileText className="h-5 w-5" />
               Applications Tracker
+            </button>
+            <button
+              onClick={() => setFinanceTab("apps-tools")}
+              className={cn(
+                "flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
+                financeTab === "apps-tools"
+                  ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg"
+                  : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+              )}
+            >
+              <Sparkles className="h-5 w-5" />
+              Apps & Tools
             </button>
           </div>
         </div>
@@ -475,6 +488,9 @@ export default function FinancePage() {
 
         {/* Applications Tracker */}
         {financeTab === "applications" && <ApplicationsTracker />}
+
+        {/* Apps & Tools */}
+        {financeTab === "apps-tools" && <AppsAndTools />}
 
         {/* Investment Form Modal */}
         {showInvestmentForm && (
