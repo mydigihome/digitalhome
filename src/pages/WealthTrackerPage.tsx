@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Plus, Pencil, Trash2, DollarSign, TrendingUp, Target, Lightbulb, ExternalLink, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, TrendingUp, Target, Lightbulb, ExternalLink, ChevronDown, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -458,7 +458,16 @@ export default function WealthTrackerPage() {
           <TabsContent value="investments">
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-foreground">Investment Portfolio</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-foreground">Investment Portfolio</h2>
+                  <a
+                    href="/settings?tab=resources&category=Finance"
+                    title="Check out where you can invest"
+                    className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-secondary text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </a>
+                </div>
                 <Button onClick={() => setShowInvestmentForm(true)}><Plus className="h-4 w-4 mr-1" /> Add Investment</Button>
               </div>
 
