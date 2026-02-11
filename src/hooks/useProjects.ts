@@ -12,6 +12,10 @@ export interface Project {
   color: string | null;
   start_date: string | null;
   end_date: string | null;
+  icon: string | null;
+  icon_type: string | null;
+  cover_image: string | null;
+  cover_type: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,7 +56,7 @@ export function useCreateProject() {
 export function useUpdateProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; goal?: string; type?: string; view_preference?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; goal?: string; type?: string; view_preference?: string; icon?: string; icon_type?: string; cover_image?: string; cover_type?: string }) => {
       const { error } = await supabase.from("projects").update(data).eq("id", id);
       if (error) throw error;
     },

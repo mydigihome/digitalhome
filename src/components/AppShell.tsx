@@ -4,15 +4,27 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import HouseIcon from "@/components/HouseIcon";
 
 const projectFolders = [
-  { id: "personal", label: "Personal Projects", icon: Home },
-  { id: "work", label: "Work", icon: Briefcase },
-  { id: "travel", label: "Trips", icon: Plane },
+  { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
+  { id: "work", label: "Work", icon: Briefcase, color: "text-info" },
+  { id: "travel", label: "Trips", icon: Plane, color: "text-warning" },
 ];
+
+const iconColors: Record<string, string> = {
+  "/dashboard": "text-primary",
+  "/calendar": "text-info",
+  "/projects": "text-warning",
+  "/finance": "text-success",
+  "/team": "text-muted-foreground",
+  "/settings": "text-muted-foreground",
+};
 
 function UserDropdown() {
   const { profile, user, signOut } = useAuth();
+  const { data: prefs } = useUserPreferences();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -26,14 +38,19 @@ function UserDropdown() {
   }, []);
 
   const initials = (profile?.full_name || user?.email || "U").slice(0, 2).toUpperCase();
+  const avatarUrl = prefs?.profile_photo;
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground transition-all hover:shadow-md active:scale-95"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground transition-all hover:shadow-md active:scale-95 overflow-hidden"
       >
-        {initials}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+        ) : (
+          initials
+        )}
       </button>
       <AnimatePresence>
         {open && (
@@ -101,7 +118,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" />
+        <Icon className={cn("h-[18px] w-[18px] shrink-0", iconColors[path] || "text-muted-foreground")} />
         {!collapsed && <span>{label}</span>}
       </button>
     </li>
@@ -128,7 +145,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           )}
         >
-          <FolderOpen className="h-[18px] w-[18px] shrink-0" />
+          <FolderOpen className="h-[18px] w-[18px] shrink-0 text-warning" />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Projects</span>
@@ -163,7 +180,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                         )}
                       >
-                        <Icon className="h-4 w-4 shrink-0" />
+                        <Icon className={cn("h-4 w-4 shrink-0", folder.color)} />
                         {folder.label}
                       </button>
                     </li>
@@ -198,17 +215,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex grow flex-col overflow-y-auto border-r border-border bg-card">
           {/* Logo area */}
           <div className="flex h-16 shrink-0 items-center justify-between px-4">
-            {!collapsed && (
+            {!collapsed ? (
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-primary">
-                  <span className="text-sm font-semibold text-primary-foreground">D</span>
-                </div>
+                <HouseIcon size={28} />
                 <span className="text-md font-semibold text-foreground">Digital Home</span>
               </div>
-            )}
-            {collapsed && (
-              <div className="flex h-8 w-8 mx-auto items-center justify-center rounded-md bg-gradient-primary">
-                <span className="text-sm font-semibold text-primary-foreground">D</span>
+            ) : (
+              <div className="mx-auto">
+                <HouseIcon size={24} />
               </div>
             )}
           </div>
@@ -241,7 +255,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <span className="sr-only">Open sidebar</span>
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
-        <span className="flex-1 text-sm font-semibold text-foreground">Digital Home</span>
+        <div className="flex items-center gap-2 flex-1">
+          <HouseIcon size={20} />
+          <span className="text-sm font-semibold text-foreground">Digital Home</span>
+        </div>
         <UserDropdown />
       </div>
 
@@ -274,9 +291,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex grow flex-col overflow-y-auto bg-card">
                   <div className="flex h-16 shrink-0 items-center px-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-primary">
-                        <span className="text-sm font-semibold text-primary-foreground">D</span>
-                      </div>
+                      <HouseIcon size={28} />
                       <span className="text-md font-semibold text-foreground">Digital Home</span>
                     </div>
                   </div>

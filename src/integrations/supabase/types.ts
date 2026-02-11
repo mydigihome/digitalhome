@@ -175,9 +175,13 @@ export type Database = {
       projects: {
         Row: {
           color: string | null
+          cover_image: string | null
+          cover_type: string | null
           created_at: string
           end_date: string | null
           goal: string | null
+          icon: string | null
+          icon_type: string | null
           id: string
           name: string
           start_date: string | null
@@ -188,9 +192,13 @@ export type Database = {
         }
         Insert: {
           color?: string | null
+          cover_image?: string | null
+          cover_type?: string | null
           created_at?: string
           end_date?: string | null
           goal?: string | null
+          icon?: string | null
+          icon_type?: string | null
           id?: string
           name: string
           start_date?: string | null
@@ -201,9 +209,13 @@ export type Database = {
         }
         Update: {
           color?: string | null
+          cover_image?: string | null
+          cover_type?: string | null
           created_at?: string
           end_date?: string | null
           goal?: string | null
+          icon?: string | null
+          icon_type?: string | null
           id?: string
           name?: string
           start_date?: string | null
@@ -281,6 +293,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          accent_colors: Json | null
+          bio: string | null
+          created_at: string
+          custom_folder_colors: boolean | null
+          dashboard_cover: string | null
+          dashboard_cover_type: string | null
+          dashboard_icon: string | null
+          dashboard_icon_type: string | null
+          density: string | null
+          font_size: string | null
+          id: string
+          location: string | null
+          profile_photo: string | null
+          sidebar_theme: string | null
+          theme_color: string | null
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          accent_colors?: Json | null
+          bio?: string | null
+          created_at?: string
+          custom_folder_colors?: boolean | null
+          dashboard_cover?: string | null
+          dashboard_cover_type?: string | null
+          dashboard_icon?: string | null
+          dashboard_icon_type?: string | null
+          density?: string | null
+          font_size?: string | null
+          id?: string
+          location?: string | null
+          profile_photo?: string | null
+          sidebar_theme?: string | null
+          theme_color?: string | null
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          accent_colors?: Json | null
+          bio?: string | null
+          created_at?: string
+          custom_folder_colors?: boolean | null
+          dashboard_cover?: string | null
+          dashboard_cover_type?: string | null
+          dashboard_icon?: string | null
+          dashboard_icon_type?: string | null
+          density?: string | null
+          font_size?: string | null
+          id?: string
+          location?: string | null
+          profile_photo?: string | null
+          sidebar_theme?: string | null
+          theme_color?: string | null
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

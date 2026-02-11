@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Home, Briefcase, Plane, FolderOpen, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Plus, Home, Briefcase, Plane, FolderOpen, ChevronRight, LayoutGrid, List, Dumbbell } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import AppShell from "@/components/AppShell";
@@ -16,18 +16,24 @@ const workspaceConfig = [
     title: "Personal Projects",
     icon: Home,
     dotColor: "bg-primary",
+    iconBg: "bg-accent",
+    iconColor: "text-primary",
   },
   {
     id: "work",
     title: "Work",
     icon: Briefcase,
     dotColor: "bg-info",
+    iconBg: "bg-info/10",
+    iconColor: "text-info",
   },
   {
     id: "travel",
     title: "Trips",
     icon: Plane,
     dotColor: "bg-destructive",
+    iconBg: "bg-destructive/10",
+    iconColor: "text-destructive",
   },
 ];
 
@@ -114,7 +120,9 @@ export default function Projects() {
                             className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
                           >
                             <div className="mb-3 flex items-start justify-between">
-                              <FolderOpen className="h-5 w-5 text-muted-foreground" />
+                              <div className={cn("flex h-8 w-8 items-center justify-center rounded-md", workspace.iconBg)}>
+                                <FolderOpen className={cn("h-4 w-4", workspace.iconColor)} />
+                              </div>
                               <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                             </div>
                             <h3 className="text-sm font-semibold text-foreground mb-1">{project.name}</h3>

@@ -14,6 +14,7 @@ import AppShell from "@/components/AppShell";
 import TaskEditor from "@/components/TaskEditor";
 import DocumentsTab from "@/components/DocumentsTab";
 import AITaskGenerator from "@/components/AITaskGenerator";
+import PageHeader from "@/components/PageHeader";
 
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverlay,
@@ -116,6 +117,7 @@ export default function ProjectDetail() {
   const project = projects.find((p) => p.id === id);
   const { data: tasks = [], isLoading } = useTasks(id);
   const updateTask = useUpdateTask();
+  const updateProject = useUpdateProject();
 
   const [mainTab, setMainTab] = useState("board");
   const [view, setView] = useState(project?.view_preference || "kanban");
@@ -166,18 +168,31 @@ export default function ProjectDetail() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {/* Header */}
-        <div className="mb-6">
-          <button onClick={() => navigate("/projects")} className="mb-2 flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+        {/* Page Header */}
+        <PageHeader
+          title={project?.name || "Project"}
+          icon={project?.icon || "📋"}
+          iconType={project?.icon_type || "emoji"}
+          coverImage={project?.cover_image}
+          coverType={project?.cover_type || "none"}
+          onTitleChange={(name) => id && updateProject.mutate({ id, name })}
+          onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
+          onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
+          editable
+        />
+
+        {/* Back nav */}
+        <div className="mb-4">
+          <button onClick={() => navigate("/projects")} className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
             <ChevronLeft className="h-4 w-4" /> Projects
           </button>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold text-foreground">{project?.name}</h1>
-            {project?.type && (
-              <Badge variant="secondary" className="capitalize">{project.type}</Badge>
-            )}
-          </div>
+        </div>
 
+        <div className="mb-6 flex items-center gap-3">
+          {project?.type && (
+            <Badge variant="secondary" className="capitalize">{project.type}</Badge>
+          )}
+        </div>
           {/* Progress bar */}
           {tasks.length > 0 && (() => {
             const doneTasks = tasks.filter(t => t.status === "done").length;
@@ -195,7 +210,7 @@ export default function ProjectDetail() {
             );
           })()}
 
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-3 mb-6 flex items-center gap-3">
             <Tabs value={mainTab} onValueChange={setMainTab}>
               <TabsList>
                 <TabsTrigger value="board" className="text-xs">Board</TabsTrigger>
@@ -218,7 +233,6 @@ export default function ProjectDetail() {
               </>
             )}
           </div>
-        </div>
 
         {mainTab === "board" && (
           <>

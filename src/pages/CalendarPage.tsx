@@ -63,6 +63,7 @@ export default function CalendarPage() {
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            <CalendarIcon className="h-6 w-6 text-info" />
             <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
             <Tabs value={view} onValueChange={(v) => setView(v as any)}>
               <TabsList className="h-8">
