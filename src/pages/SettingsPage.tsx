@@ -27,14 +27,19 @@ const accentColors = [
 ];
 
 const aiResources = [
-  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app" },
-  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com" },
-  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com" },
-  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so" },
-  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com" },
+  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app", clicks: 1243, signups: 312 },
+  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com", clicks: 8921, signups: 2104 },
+  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 4532, signups: 876 },
+  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so", clicks: 3210, signups: 645 },
+  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 2187, signups: 423 },
+  { id: 6, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Productivity", url: "https://zocks.ai", clicks: 987, signups: 198 },
+  { id: 7, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com", clicks: 1654, signups: 387 },
+  { id: 8, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma", clicks: 2341, signups: 512 },
+  { id: 9, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip", clicks: 876, signups: 156 },
+  { id: 10, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 1432, signups: 298 },
 ];
 
-const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Assistant"];
+const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Assistant", "Finance", "Events"];
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -362,6 +367,11 @@ export default function SettingsPage() {
             {/* AI Resources Tab */}
             {activeTab === "resources" && (
               <div>
+                <div className="mb-8">
+                  <h2 className="text-xl font-semibold text-foreground">AI Resources & Integrations</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Connect your favorite tools to enhance your workflow</p>
+                </div>
+
                 <div className="mb-4 flex flex-wrap gap-2">
                   {categories.map((cat) => (
                     <button
@@ -376,24 +386,28 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {filteredResources.map((resource) => (
                     <a
                       key={resource.id}
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                      className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl">{resource.image}</span>
-                        <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-3xl">{resource.image}</span>
+                        <div className="flex-1">
                           <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
                           <span className="text-xs text-muted-foreground">{resource.category}</span>
                         </div>
-                        <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
-                      <p className="text-xs text-muted-foreground">{resource.description}</p>
+                      <p className="text-xs text-muted-foreground mb-3">{resource.description}</p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
+                        <span>{resource.clicks.toLocaleString()} clicks</span>
+                        <span>{resource.signups.toLocaleString()} signups</span>
+                      </div>
                     </a>
                   ))}
                 </div>
