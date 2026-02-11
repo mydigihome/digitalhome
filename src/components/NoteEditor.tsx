@@ -173,15 +173,15 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
             { icon: Bold, action: () => editor?.chain().focus().toggleBold().run(), active: editor?.isActive("bold") },
             { icon: Italic, action: () => editor?.chain().focus().toggleItalic().run(), active: editor?.isActive("italic") },
             { icon: List, action: () => editor?.chain().focus().toggleBulletList().run(), active: editor?.isActive("bulletList") },
-          ].map(({ icon: Icon, action, active }, i) => (
-            <button
-              key={i}
-              onClick={action}
-              className={cn("flex h-7 w-7 items-center justify-center rounded-md transition-colors", active ? "bg-black/10" : "hover:bg-black/5")}
-            >
-              <Icon className="h-3.5 w-3.5" style={{ color: "rgba(0,0,0,0.6)" }} />
-            </button>
-          ))}
+           ].map(({ icon: Icon, action, active }, i) => (
+             <button
+               key={i}
+               onMouseDown={(e) => { e.preventDefault(); action(); }}
+               className={cn("flex h-7 w-7 items-center justify-center rounded-md transition-colors", active ? "bg-black/10" : "hover:bg-black/5")}
+             >
+               <Icon className="h-3.5 w-3.5" style={{ color: "rgba(0,0,0,0.6)" }} />
+             </button>
+           ))}
         </div>
 
         {/* Editor */}
