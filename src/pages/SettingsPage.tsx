@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { Button } from "@/components/ui/button";
@@ -35,33 +35,30 @@ type ResourceItem = {
   iconColor?: string;
   category: string;
   url: string;
-  clicks: number;
-  signups: number;
   isIntegration?: boolean;
 };
 
 const aiResources: ResourceItem[] = [
-  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app", clicks: 1243, signups: 312 },
-  { id: 2, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 4532, signups: 876 },
-  { id: 3, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 2187, signups: 423 },
-  { id: 4, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Finance", url: "https://zocks.ai", clicks: 987, signups: 198 },
-  { id: 5, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com", clicks: 1654, signups: 387 },
-  { id: 6, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma", clicks: 2341, signups: 512 },
-  { id: 7, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip", clicks: 876, signups: 156 },
-  { id: 8, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 1432, signups: 298 },
-  // Integrations
-  { id: 100, name: "Claude AI", description: "Power your AI Brain Dump with Claude's advanced reasoning", image: "", icon: Brain, iconColor: "text-purple-500", category: "AI", url: "https://anthropic.com", clicks: 1247, signups: 892, isIntegration: true },
-  { id: 101, name: "ChatGPT", description: "Alternative AI assistant for task suggestions and planning", image: "", icon: Sparkles, iconColor: "text-blue-500", category: "AI", url: "https://chat.openai.com", clicks: 856, signups: 634, isIntegration: true },
-  { id: 102, name: "Notion", description: "Sync your projects and tasks with Notion workspaces", image: "", icon: FileText, iconColor: "text-foreground", category: "Productivity", url: "https://notion.so", clicks: 2103, signups: 1456, isIntegration: true },
-  { id: 103, name: "Google Calendar", description: "Two-way sync with your Google Calendar events", image: "", icon: Calendar, iconColor: "text-red-500", category: "Productivity", url: "https://calendar.google.com", clicks: 3421, signups: 2891, isIntegration: true },
-  { id: 104, name: "Slack", description: "Get task reminders and updates in your Slack channels", image: "", icon: MessageSquare, iconColor: "text-purple-500", category: "Communication", url: "https://slack.com", clicks: 1678, signups: 1203, isIntegration: true },
-  { id: 105, name: "Zapier", description: "Connect to 5,000+ apps with automated workflows", image: "", icon: Zap, iconColor: "text-orange-500", category: "Automation", url: "https://zapier.com", clicks: 945, signups: 712, isIntegration: true },
-  { id: 106, name: "Make", description: "Build complex automation scenarios visually", image: "", icon: Workflow, iconColor: "text-blue-500", category: "Automation", url: "https://make.com", clicks: 623, signups: 478, isIntegration: true },
-  { id: 107, name: "Figma", description: "Import design files and link to project tasks", image: "", icon: Layers, iconColor: "text-pink-500", category: "Design", url: "https://figma.com", clicks: 1892, signups: 1345, isIntegration: true },
-  { id: 108, name: "GitHub", description: "Track issues and pull requests as project tasks", image: "", icon: Github, iconColor: "text-foreground", category: "Development", url: "https://github.com", clicks: 2567, signups: 1987, isIntegration: true },
-  { id: 109, name: "Linear", description: "Sync engineering tasks and sprint planning", image: "", icon: TrendingUp, iconColor: "text-purple-500", category: "Development", url: "https://linear.app", clicks: 1234, signups: 923, isIntegration: true },
-  { id: 110, name: "Asana", description: "Import existing Asana projects and workflows", image: "", icon: CheckCircle, iconColor: "text-pink-500", category: "Productivity", url: "https://asana.com", clicks: 876, signups: 654, isIntegration: true },
-  { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", clicks: 1456, signups: 1098, isIntegration: true },
+  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app" },
+  { id: 2, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com" },
+  { id: 3, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com" },
+  { id: 4, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Finance", url: "https://zocks.ai" },
+  { id: 5, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com" },
+  { id: 6, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma" },
+  { id: 7, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip" },
+  { id: 8, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com" },
+  { id: 100, name: "Claude AI", description: "Power your AI Brain Dump with Claude's advanced reasoning", image: "", icon: Brain, iconColor: "text-purple-500", category: "AI", url: "https://anthropic.com", isIntegration: true },
+  { id: 101, name: "ChatGPT", description: "Alternative AI assistant for task suggestions and planning", image: "", icon: Sparkles, iconColor: "text-blue-500", category: "AI", url: "https://chat.openai.com", isIntegration: true },
+  { id: 102, name: "Notion", description: "Sync your projects and tasks with Notion workspaces", image: "", icon: FileText, iconColor: "text-foreground", category: "Productivity", url: "https://notion.so", isIntegration: true },
+  { id: 103, name: "Google Calendar", description: "Two-way sync with your Google Calendar events", image: "", icon: Calendar, iconColor: "text-red-500", category: "Productivity", url: "https://calendar.google.com", isIntegration: true },
+  { id: 104, name: "Slack", description: "Get task reminders and updates in your Slack channels", image: "", icon: MessageSquare, iconColor: "text-purple-500", category: "Communication", url: "https://slack.com", isIntegration: true },
+  { id: 105, name: "Zapier", description: "Connect to 5,000+ apps with automated workflows", image: "", icon: Zap, iconColor: "text-orange-500", category: "Automation", url: "https://zapier.com", isIntegration: true },
+  { id: 106, name: "Make", description: "Build complex automation scenarios visually", image: "", icon: Workflow, iconColor: "text-blue-500", category: "Automation", url: "https://make.com", isIntegration: true },
+  { id: 107, name: "Figma", description: "Import design files and link to project tasks", image: "", icon: Layers, iconColor: "text-pink-500", category: "Design", url: "https://figma.com", isIntegration: true },
+  { id: 108, name: "GitHub", description: "Track issues and pull requests as project tasks", image: "", icon: Github, iconColor: "text-foreground", category: "Development", url: "https://github.com", isIntegration: true },
+  { id: 109, name: "Linear", description: "Sync engineering tasks and sprint planning", image: "", icon: TrendingUp, iconColor: "text-purple-500", category: "Development", url: "https://linear.app", isIntegration: true },
+  { id: 110, name: "Asana", description: "Import existing Asana projects and workflows", image: "", icon: CheckCircle, iconColor: "text-pink-500", category: "Productivity", url: "https://asana.com", isIntegration: true },
+  { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", isIntegration: true },
 ];
 
 const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events"];
@@ -92,6 +89,42 @@ export default function SettingsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
+
+  // Fetch engagement counts from database
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const { data } = await supabase
+        .from("resource_engagements")
+        .select("resource_id, engagement_type");
+      if (!data) return;
+      const counts: Record<number, { clicks: number; signups: number }> = {};
+      data.forEach((row: any) => {
+        if (!counts[row.resource_id]) counts[row.resource_id] = { clicks: 0, signups: 0 };
+        if (row.engagement_type === "click") counts[row.resource_id].clicks++;
+        else if (row.engagement_type === "signup") counts[row.resource_id].signups++;
+      });
+      setEngagementCounts(counts);
+    };
+    fetchCounts();
+  }, []);
+
+  const trackClick = async (resource: ResourceItem) => {
+    if (!user) return;
+    await supabase.from("resource_engagements").insert({
+      resource_id: resource.id,
+      resource_name: resource.name,
+      engagement_type: "click",
+      user_id: user.id,
+    });
+    setEngagementCounts((prev) => ({
+      ...prev,
+      [resource.id]: {
+        clicks: (prev[resource.id]?.clicks || 0) + 1,
+        signups: prev[resource.id]?.signups || 0,
+      },
+    }));
+  };
 
   const filteredResources = selectedCategory === "All"
     ? aiResources : aiResources.filter((r) => r.category === selectedCategory);
@@ -414,10 +447,15 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   {filteredResources.map((resource) => {
                     const IconComp = resource.icon;
+                    const counts = engagementCounts[resource.id] || { clicks: 0, signups: 0 };
                     return (
                       <div
                         key={resource.id}
-                        className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+                        onClick={() => {
+                          trackClick(resource);
+                          if (!resource.isIntegration) window.open(resource.url, "_blank");
+                        }}
+                        className="group cursor-pointer rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="flex items-center gap-3 mb-3">
                           {IconComp ? (
@@ -432,19 +470,17 @@ export default function SettingsPage() {
                             <span className="text-xs text-muted-foreground">{resource.category}</span>
                           </div>
                           {resource.isIntegration ? (
-                            <Button variant="outline" size="sm" className="text-xs h-8">
+                            <Button variant="outline" size="sm" className="text-xs h-8" onClick={(e) => e.stopPropagation()}>
                               Connect
                             </Button>
                           ) : (
-                            <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                            </a>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground mb-3">{resource.description}</p>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
-                          <span>{resource.clicks.toLocaleString()} clicks</span>
-                          <span>{resource.signups.toLocaleString()} signups</span>
+                          <span>{counts.clicks.toLocaleString()} clicks</span>
+                          <span>{counts.signups.toLocaleString()} signups</span>
                         </div>
                       </div>
                     );
