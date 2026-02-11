@@ -1,42 +1,39 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap");
+/* Import DM Sans font from Figma design */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* Base colors from Figma theme */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 243 75% 58%;
-    --primary-foreground: 225 100% 96%;
+    /* Primary purple from Figma */
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 250 100% 97%;
-    --accent-foreground: 258 89% 66%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
@@ -44,29 +41,27 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 243 75% 58%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262 83% 58%;
 
-    --radius: 1.25rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 243 75% 58%;
-    --sidebar-primary-foreground: 225 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 243 75% 58%;
-    --chart-1: 234 89% 73%;
-    --chart-2: 255 91% 76%;
-    --chart-3: 270 95% 75%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 262 83% 58%;
+
+    --chart-1: 262 83% 58%;
+    --chart-2: 270 95% 75%;
+    --chart-3: 255 91% 76%;
     --chart-4: 238 83% 66%;
     --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Lato', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'EB Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -75,34 +70,32 @@
     --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
     --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
     --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 234 89% 73%;
-    --primary-foreground: 243 47% 20%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 261 72% 22%;
-    --accent-foreground: 255 91% 76%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
@@ -110,24 +103,25 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 234 89% 73%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262 83% 58%;
 
     --sidebar-background: 240 10% 4%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 234 89% 73%;
-    --sidebar-primary-foreground: 243 47% 20%;
-    --sidebar-accent: 255 91% 76%;
-    --sidebar-accent-foreground: 261 72% 22%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 234 89% 73%;
-    --chart-1: 229 93% 81%;
-    --chart-2: 252 94% 85%;
-    --chart-3: 269 97% 85%;
-    --chart-4: 234 89% 73%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 262 83% 58%;
+
+    --chart-1: 262 83% 68%;
+    --chart-2: 270 95% 80%;
+    --chart-3: 255 91% 80%;
+    --chart-4: 238 83% 73%;
+    --chart-5: 0 0% 55%;
+
     --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
     --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -146,9 +140,143 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
+    @apply bg-gradient-to-br from-gray-50 via-violet-50/30 to-purple-50/30 text-foreground;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Button styles matching Figma design */
+  .btn-primary {
+    @apply bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-medium shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/60 transition-all duration-300 hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-violet-600 px-6 py-3 rounded-2xl font-medium border border-violet-200 hover:bg-violet-50 transition-all duration-300;
+  }
+
+  /* Card styles from Figma */
+  .card-figma {
+    @apply bg-white rounded-3xl p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02];
+  }
+
+  .card-colored {
+    @apply rounded-3xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02];
+  }
+
+  /* Input styles */
+  .input-figma {
+    @apply w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all duration-200;
+  }
+
+  /* Badge/Pill styles */
+  .badge-figma {
+    @apply px-3 py-1 rounded-full text-sm font-bold inline-flex items-center;
+  }
+
+  /* Section headers */
+  .section-header {
+    @apply text-2xl font-bold text-gray-900 mb-4;
+  }
+
+  /* Gradient backgrounds from Figma */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600;
+  }
+
+  .gradient-card-blue {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100;
+  }
+
+  .gradient-card-rose {
+    @apply bg-gradient-to-br from-rose-50 to-rose-100;
+  }
+
+  .gradient-card-orange {
+    @apply bg-gradient-to-br from-orange-50 to-orange-100;
+  }
+
+  .gradient-card-yellow {
+    @apply bg-gradient-to-br from-yellow-50 to-yellow-100;
+  }
+
+  /* Icon containers from Figma */
+  .icon-container {
+    @apply p-4 rounded-2xl flex items-center justify-center;
+  }
+
+  /* Progress bar from Figma */
+  .progress-bar {
+    @apply relative w-full h-2 bg-white/50 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out;
+  }
+}
+
+@layer utilities {
+  /* Text gradients */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent;
+  }
+
+  /* Glassmorphism effects */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/80 backdrop-blur-xl;
+  }
+
+  /* Animated gradients */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+}
+
+/* Root styles */
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* Scrollbar styling to match theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
 }
