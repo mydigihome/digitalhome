@@ -22,7 +22,7 @@ interface OrganizedResult {
   mood: string;
 }
 
-const NOTE_COLORS = ["#8B5CF6", "#3B82F6", "#EC4899", "#F59E0B"];
+const NOTE_COLORS = ["#C4B5FD", "#BFDBFE", "#FBCFE8", "#FED7AA"];
 
 function hexToRgba(hex: string, opacity: number) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -48,7 +48,7 @@ export default function BrainDump() {
   const [timer, setTimer] = useState(0);
   const [organizing, setOrganizing] = useState(false);
   const [result, setResult] = useState<OrganizedResult | null>(null);
-  const [cardColor, setCardColor] = useState("#8B5CF6");
+  const [cardColor, setCardColor] = useState("#C4B5FD");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
