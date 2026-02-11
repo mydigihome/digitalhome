@@ -28,6 +28,7 @@ export function useProjects() {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .eq("archived", false)
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data as Project[];
@@ -56,7 +57,7 @@ export function useCreateProject() {
 export function useUpdateProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; name?: string; goal?: string; type?: string; view_preference?: string; icon?: string; icon_type?: string; cover_image?: string; cover_type?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; goal?: string; type?: string; view_preference?: string; icon?: string; icon_type?: string; cover_image?: string; cover_type?: string; archived?: boolean }) => {
       const { error } = await supabase.from("projects").update(data).eq("id", id);
       if (error) throw error;
     },

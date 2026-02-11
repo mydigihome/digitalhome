@@ -174,6 +174,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          archived: boolean
           color: string | null
           cover_image: string | null
           cover_type: string | null
@@ -191,6 +192,7 @@ export type Database = {
           view_preference: string
         }
         Insert: {
+          archived?: boolean
           color?: string | null
           cover_image?: string | null
           cover_type?: string | null
@@ -208,6 +210,7 @@ export type Database = {
           view_preference?: string
         }
         Update: {
+          archived?: boolean
           color?: string | null
           cover_image?: string | null
           cover_type?: string | null
