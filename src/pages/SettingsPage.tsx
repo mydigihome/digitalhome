@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
-import ThemePreview from "@/components/ThemePreview";
+
 
 const accentColors = [
   { label: "Purple", value: "#8B5CF6" },
@@ -324,13 +324,6 @@ export default function SettingsPage() {
             {/* Appearance Tab */}
             {activeTab === "appearance" && (
               <div className="space-y-6">
-                {/* Theme Preview */}
-                <ThemePreview
-                  accentColor={themeColor}
-                  fontSize={fontSize}
-                  fontFamily={selectedFont}
-                  density={density}
-                />
                 {/* Theme */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">Theme</CardTitle></CardHeader>
