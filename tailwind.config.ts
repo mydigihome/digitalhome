@@ -104,7 +104,7 @@ export default {
   		},
   		fontFamily: {
   			sans: [
-  				'DM Sans',
+  				'Lato',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -117,7 +117,7 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Crimson Pro',
+  				'EB Garamond',
   				'ui-serif',
   				'Georgia',
   				'Cambria',
@@ -126,7 +126,7 @@ export default {
   				'serif'
   			],
   			mono: [
-  				'SF Mono',
+  				'Fira Code',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
