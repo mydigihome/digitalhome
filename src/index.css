@@ -279,23 +279,3 @@
   padding: 0;
   text-align: left;
 }
-
-/* Scrollbar styling to match theme */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #7c3aed, #9333ea);
-}
