@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AppShell from "@/components/AppShell";
-import { useExpenses, useCreateExpense, useDeleteExpense } from "@/hooks/useExpenses";
+import { useExpenses, useCreateExpense, useDeleteExpense, useUpdateExpense } from "@/hooks/useExpenses";
 import { useWealthGoals, useCreateWealthGoal, useUpdateWealthGoal, useDeleteWealthGoal } from "@/hooks/useWealthGoals";
 import { useInvestments, useCreateInvestment, useDeleteInvestment } from "@/hooks/useInvestments";
 import { useProjects } from "@/hooks/useProjects";
@@ -71,6 +71,7 @@ export default function WealthTrackerPage() {
   const { data: expenses = [] } = useExpenses();
   const createExpense = useCreateExpense();
   const deleteExpense = useDeleteExpense();
+  const updateExpense = useUpdateExpense();
   const { data: goals = [] } = useWealthGoals();
   const createGoal = useCreateWealthGoal();
   const updateGoal = useUpdateWealthGoal();
@@ -81,11 +82,14 @@ export default function WealthTrackerPage() {
   const { data: projects = [] } = useProjects();
 
   const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [showInvestmentForm, setShowInvestmentForm] = useState(false);
   const [showBannerMenu, setShowBannerMenu] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [completedGoals, setCompletedGoals] = useState(false);
+  const [spendingGoal, setSpendingGoal] = useState<number | "">("");
+  const [goalPeriod, setGoalPeriod] = useState<"monthly" | "yearly">("monthly");
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   // Expense form state
@@ -132,10 +136,29 @@ export default function WealthTrackerPage() {
 
   const handleAddExpense = async () => {
     if (!expForm.description || !expForm.amount) { toast.error("Fill required fields"); return; }
-    await createExpense.mutateAsync({ ...expForm, amount: Number(expForm.amount) } as any);
+    if (editingExpense) {
+      await updateExpense.mutateAsync({ id: editingExpense.id, ...expForm, amount: Number(expForm.amount) } as any);
+      setEditingExpense(null);
+      toast.success("Expense updated");
+    } else {
+      await createExpense.mutateAsync({ ...expForm, amount: Number(expForm.amount) } as any);
+      toast.success("Expense added");
+    }
     setExpForm({ description: "", category: "Other", amount: "", frequency: "monthly", priority: "medium", expense_date: format(new Date(), "yyyy-MM-dd") });
     setShowExpenseForm(false);
-    toast.success("Expense added");
+  };
+
+  const handleEditExpense = (exp: any) => {
+    setExpForm({
+      description: exp.description,
+      category: exp.category,
+      amount: String(exp.amount),
+      frequency: exp.frequency,
+      priority: exp.priority,
+      expense_date: exp.expense_date,
+    });
+    setEditingExpense(exp);
+    setShowExpenseForm(true);
   };
 
   const handleAddGoal = async () => {
@@ -336,12 +359,105 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3"><span className={cn("inline-block h-2 w-2 rounded-full", priorityColors[exp.priority])} /></td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">{exp.expense_date}</td>
                           <td className="px-4 py-3">
+                            <button onClick={() => handleEditExpense(exp)} className="p-1 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
                             <button onClick={() => deleteExpense.mutate(exp.id)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Spending Goal Section */}
+              {expenses.length > 0 && (
+                <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="text-lg font-semibold text-foreground">Spending Goal</h3>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Label className="whitespace-nowrap">I want to spend</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 3000"
+                        value={spendingGoal}
+                        onChange={e => setSpendingGoal(e.target.value ? Number(e.target.value) : "")}
+                        className="w-32"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      {(["monthly", "yearly"] as const).map(p => (
+                        <button
+                          key={p}
+                          onClick={() => setGoalPeriod(p)}
+                          className={cn(
+                            "rounded-md px-3 py-1.5 text-sm font-medium transition-colors capitalize",
+                            goalPeriod === p ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {spendingGoal && Number(spendingGoal) > 0 && (() => {
+                    const goalAmount = Number(spendingGoal);
+                    const currentSpend = goalPeriod === "monthly" ? totalMonthly : totalMonthly * 12;
+                    const overspend = currentSpend - goalAmount;
+                    const sortedExpenses = [...chartData].sort((a, b) => b.value - a.value);
+                    
+                    // Find what to cut
+                    let remaining = overspend;
+                    const suggestions: { name: string; amount: number; cut: number }[] = [];
+                    if (overspend > 0) {
+                      for (const exp of sortedExpenses) {
+                        if (remaining <= 0) break;
+                        const expAmount = goalPeriod === "yearly" ? exp.value * 12 : exp.value;
+                        const cutAmount = Math.min(expAmount * 0.5, remaining);
+                        suggestions.push({ name: exp.name, amount: expAmount, cut: cutAmount });
+                        remaining -= cutAmount;
+                      }
+                    }
+
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-muted-foreground">Current: ${currentSpend.toFixed(0)}</span>
+                              <span className={cn("font-medium", overspend > 0 ? "text-destructive" : "text-success")}>
+                                Goal: ${goalAmount.toFixed(0)}
+                              </span>
+                            </div>
+                            <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
+                              <div
+                                className={cn("h-full rounded-full transition-all", overspend > 0 ? "bg-destructive" : "bg-success")}
+                                style={{ width: `${Math.min((currentSpend / goalAmount) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {overspend > 0 ? (
+                          <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 space-y-2">
+                            <p className="text-sm font-medium text-warning">💡 You're ${overspend.toFixed(0)} over your {goalPeriod} goal. Consider cutting:</p>
+                            {suggestions.map((s, i) => (
+                              <div key={i} className="flex justify-between text-sm">
+                                <span className="text-foreground">{s.name}</span>
+                                <span className="text-muted-foreground">
+                                  Cut ~${s.cut.toFixed(0)} (from ${s.amount.toFixed(0)})
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+                            <p className="text-sm font-medium text-success">✅ You're ${Math.abs(overspend).toFixed(0)} under your {goalPeriod} goal!</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -583,9 +699,9 @@ export default function WealthTrackerPage() {
         {/* MODALS */}
         {/* Expense Form Modal */}
         {showExpenseForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={() => setShowExpenseForm(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4" onClick={() => { setShowExpenseForm(false); setEditingExpense(null); }}>
             <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold text-foreground">Add Expense</h3>
+              <h3 className="text-lg font-semibold text-foreground">{editingExpense ? "Edit Expense" : "Add Expense"}</h3>
               <div className="space-y-3">
                 <div className="space-y-1"><Label>Description</Label><Input value={expForm.description} onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))} /></div>
                 <div className="space-y-1"><Label>Category</Label>
@@ -609,8 +725,10 @@ export default function WealthTrackerPage() {
                 <div className="space-y-1"><Label>Date</Label><Input type="date" value={expForm.expense_date} onChange={e => setExpForm(p => ({ ...p, expense_date: e.target.value }))} /></div>
               </div>
               <div className="flex gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowExpenseForm(false)} className="flex-1">Cancel</Button>
-                <Button onClick={handleAddExpense} disabled={createExpense.isPending} className="flex-1">{createExpense.isPending ? "Saving..." : "Save"}</Button>
+                <Button variant="outline" onClick={() => { setShowExpenseForm(false); setEditingExpense(null); }} className="flex-1">Cancel</Button>
+                <Button onClick={handleAddExpense} disabled={createExpense.isPending || updateExpense.isPending} className="flex-1">
+                  {(createExpense.isPending || updateExpense.isPending) ? "Saving..." : editingExpense ? "Update" : "Save"}
+                </Button>
               </div>
             </div>
           </div>

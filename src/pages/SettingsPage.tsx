@@ -258,10 +258,10 @@ export default function SettingsPage() {
           subtitle="Manage your profile, appearance, and account"
         />
 
-        <div className="flex gap-8">
+        <div className="flex gap-8 min-h-0">
           {/* Sidebar */}
           <div className="hidden md:block w-[200px] shrink-0">
-            <nav className="space-y-1 sticky top-24">
+            <nav className="space-y-1 sticky top-8">
               {settingsTabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
