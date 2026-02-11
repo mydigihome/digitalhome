@@ -133,6 +133,23 @@ export default function SettingsPage() {
     }));
   };
 
+  const trackSignup = async (resource: ResourceItem) => {
+    if (!user) return;
+    await supabase.from("resource_engagements").insert({
+      resource_id: resource.id,
+      resource_name: resource.name,
+      engagement_type: "signup",
+      user_id: user.id,
+    });
+    setEngagementCounts((prev) => ({
+      ...prev,
+      [resource.id]: {
+        clicks: prev[resource.id]?.clicks || 0,
+        signups: (prev[resource.id]?.signups || 0) + 1,
+      },
+    }));
+  };
+
   const filteredResources = selectedCategory === "All"
     ? aiResources : aiResources.filter((r) => r.category === selectedCategory);
 
@@ -490,7 +507,10 @@ export default function SettingsPage() {
                             <span className="text-xs text-muted-foreground">{resource.category}</span>
                           </div>
                           {resource.isIntegration ? (
-                            <Button variant="outline" size="sm" className="text-xs h-8" onClick={(e) => e.stopPropagation()}>
+                            <Button variant="outline" size="sm" className="text-xs h-8" onClick={(e) => {
+                              e.stopPropagation();
+                              trackSignup(resource);
+                            }}>
                               Connect
                             </Button>
                           ) : (
