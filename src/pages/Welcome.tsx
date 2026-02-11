@@ -10,7 +10,7 @@ export default function Welcome() {
   const hasName = !!profile?.full_name;
   const [onboarded, setOnboarded] = useState(hasName);
 
-  const handleOnboardingComplete = async (userName: string, _widgets: { id: string; name: string; enabled: boolean }[]) => {
+  const handleOnboardingComplete = async (userName: string) => {
     await updateProfile({ full_name: userName });
     setOnboarded(true);
   };
