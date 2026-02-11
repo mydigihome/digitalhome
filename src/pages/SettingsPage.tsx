@@ -13,27 +13,26 @@ import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
 
 const aiResources = [
-  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app" },
-  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com" },
-  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com" },
-  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so" },
-  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com" },
-  { id: 6, name: "Jasper", description: "AI copywriting and content creation assistant", image: "✍️", category: "Writing", url: "https://jasper.ai" },
-  { id: 7, name: "Beautiful.ai", description: "Design presentations with AI-powered templates", image: "🖼️", category: "Presentations", url: "https://beautiful.ai" },
-  { id: 8, name: "Descript", description: "Edit audio and video by editing text", image: "🎙️", category: "Audio/Video", url: "https://descript.com" },
-  { id: 9, name: "Copy.ai", description: "Generate marketing copy and content with AI", image: "📱", category: "Marketing", url: "https://copy.ai" },
-  { id: 10, name: "TLDL", description: "Summarize long videos and podcasts with AI", image: "📹", category: "Productivity", url: "https://tldl.ai" },
-  { id: 11, name: "NotebookLM", description: "Google's AI-powered research and note-taking assistant", image: "📓", category: "Productivity", url: "https://notebooklm.google.com" },
-  { id: 12, name: "Gamma AI", description: "AI-powered presentations, documents, and webpages", image: "⚡", category: "Presentations", url: "https://gamma.app" },
-  { id: 13, name: "Gamma Waves", description: "AI-generated ambient music for focus and productivity", image: "🎵", category: "Audio/Video", url: "https://www.gammawaves.io" },
-  { id: 14, name: "Apollo AI", description: "AI-powered sales intelligence and engagement platform", image: "🚀", category: "Marketing", url: "https://apollo.io" },
-  { id: 15, name: "Truffle Pig AI", description: "AI assistant for creative strategy and content ideas", image: "🐷", category: "Writing", url: "https://trufflepig.ai" },
-  { id: 16, name: "Resume Now", description: "Build professional resumes with AI assistance", image: "📄", category: "Career", url: "https://www.resume-now.com" },
-  { id: 17, name: "Enhance CV", description: "AI-powered CV optimization and enhancement tool", image: "✨", category: "Career", url: "https://enhancv.com" },
-  { id: 18, name: "Leonardo AI", description: "Create production-quality visual assets with AI", image: "🎨", category: "Image Generation", url: "https://leonardo.ai" },
-  { id: 19, name: "Visualize AI", description: "Turn data and ideas into stunning visual graphics", image: "📊", category: "Productivity", url: "https://visualize.ai" },
-  { id: 20, name: "Speechify", description: "Turn any text into natural-sounding audio with AI", image: "🔊", category: "Audio/Video", url: "https://speechify.com" },
-  // Apps & Tools with referral tracking
+  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app", clicks: 0, signups: 0 },
+  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com", clicks: 0, signups: 0 },
+  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 0, signups: 0 },
+  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so", clicks: 0, signups: 0 },
+  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 0, signups: 0 },
+  { id: 6, name: "Jasper", description: "AI copywriting and content creation assistant", image: "✍️", category: "Writing", url: "https://jasper.ai", clicks: 0, signups: 0 },
+  { id: 7, name: "Beautiful.ai", description: "Design presentations with AI-powered templates", image: "🖼️", category: "Presentations", url: "https://beautiful.ai", clicks: 0, signups: 0 },
+  { id: 8, name: "Descript", description: "Edit audio and video by editing text", image: "🎙️", category: "Audio/Video", url: "https://descript.com", clicks: 0, signups: 0 },
+  { id: 9, name: "Copy.ai", description: "Generate marketing copy and content with AI", image: "📱", category: "Marketing", url: "https://copy.ai", clicks: 0, signups: 0 },
+  { id: 10, name: "TLDL", description: "Summarize long videos and podcasts with AI", image: "📹", category: "Productivity", url: "https://tldl.ai", clicks: 0, signups: 0 },
+  { id: 11, name: "NotebookLM", description: "Google's AI-powered research and note-taking assistant", image: "📓", category: "Productivity", url: "https://notebooklm.google.com", clicks: 0, signups: 0 },
+  { id: 12, name: "Gamma AI", description: "AI-powered presentations, documents, and webpages", image: "⚡", category: "Presentations", url: "https://gamma.app", clicks: 0, signups: 0 },
+  { id: 13, name: "Gamma Waves", description: "AI-generated ambient music for focus and productivity", image: "🎵", category: "Audio/Video", url: "https://www.gammawaves.io", clicks: 0, signups: 0 },
+  { id: 14, name: "Apollo AI", description: "AI-powered sales intelligence and engagement platform", image: "🚀", category: "Marketing", url: "https://apollo.io", clicks: 0, signups: 0 },
+  { id: 15, name: "Truffle Pig AI", description: "AI assistant for creative strategy and content ideas", image: "🐷", category: "Writing", url: "https://trufflepig.ai", clicks: 0, signups: 0 },
+  { id: 16, name: "Resume Now", description: "Build professional resumes with AI assistance", image: "📄", category: "Career", url: "https://www.resume-now.com", clicks: 0, signups: 0 },
+  { id: 17, name: "Enhance CV", description: "AI-powered CV optimization and enhancement tool", image: "✨", category: "Career", url: "https://enhancv.com", clicks: 0, signups: 0 },
+  { id: 18, name: "Leonardo AI", description: "Create production-quality visual assets with AI", image: "🎨", category: "Image Generation", url: "https://leonardo.ai", clicks: 0, signups: 0 },
+  { id: 19, name: "Visualize AI", description: "Turn data and ideas into stunning visual graphics", image: "📊", category: "Productivity", url: "https://visualize.ai", clicks: 0, signups: 0 },
+  { id: 20, name: "Speechify", description: "Turn any text into natural-sounding audio with AI", image: "🔊", category: "Audio/Video", url: "https://speechify.com", clicks: 0, signups: 0 },
   { id: 21, name: "Zocks", description: "Financial advisors platform for smart wealth management", image: "💼", category: "Wealth", url: "https://zocks.com", clicks: 42, signups: 8 },
   { id: 22, name: "Monarch Money", description: "Complete wealth tracker for all your financial goals", image: "👑", category: "Wealth", url: "https://monarchmoney.com", clicks: 67, signups: 12 },
   { id: 23, name: "Luma", description: "Beautiful event planning and calendar management", image: "🌙", category: "Events", url: "https://lu.ma", clicks: 38, signups: 15 },
@@ -314,12 +313,10 @@ export default function SettingsPage() {
                     </div>
                     <h3 className="mb-2 text-xl font-semibold text-foreground">{resource.name}</h3>
                     <p className="mb-4 text-sm text-muted-foreground">{resource.description}</p>
-                    {('clicks' in resource) && (
-                      <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="rounded-md bg-secondary px-2 py-1 font-medium"># clicks: {(resource as any).clicks}</span>
-                        <span className="rounded-md bg-secondary px-2 py-1 font-medium"># signups: {(resource as any).signups}</span>
-                      </div>
-                    )}
+                    <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+                      <span className="rounded-md bg-secondary px-2 py-1 font-medium"># clicks: {resource.clicks}</span>
+                      <span className="rounded-md bg-secondary px-2 py-1 font-medium"># signups: {resource.signups}</span>
+                    </div>
                     <a
                       href={resource.url}
                       target="_blank"
