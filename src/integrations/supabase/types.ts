@@ -226,6 +226,33 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_engagements: {
+        Row: {
+          created_at: string
+          engagement_type: string
+          id: string
+          resource_id: number
+          resource_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          engagement_type: string
+          id?: string
+          resource_id: number
+          resource_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          engagement_type?: string
+          id?: string
+          resource_id?: number
+          resource_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           assignee: string | null
