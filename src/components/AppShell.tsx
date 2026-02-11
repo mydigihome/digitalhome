@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users, DollarSign } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users, DollarSign, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -96,8 +96,12 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
     { icon: Home, label: "Home", path: "/dashboard" },
   ];
 
+  const [financeOpen, setFinanceOpen] = useState(
+    location.pathname.startsWith("/finance")
+  );
+  const isFinanceActive = location.pathname.startsWith("/finance");
+
   const bottomItems = [
-    { icon: DollarSign, label: "Finance", path: "/finance" },
     { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: Users, label: "Team", path: "/team" },
   ];
@@ -186,6 +190,74 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                     </li>
                   );
                 })}
+              </motion.ul>
+            )}
+          </AnimatePresence>
+        )}
+      </li>
+
+      {/* Finance with sub-folders */}
+      <li>
+        <button
+          onClick={() => {
+            if (collapsed) { go("/finance/wealth"); return; }
+            setFinanceOpen(!financeOpen);
+            if (!isFinanceActive) go("/finance/wealth");
+          }}
+          className={cn(
+            "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
+            isFinanceActive
+              ? "bg-accent text-accent-foreground shadow-xs"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+        >
+          <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: "#F59E0B" }} />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">Finance</span>
+              <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", financeOpen && "rotate-180")} />
+            </>
+          )}
+        </button>
+
+        {!collapsed && (
+          <AnimatePresence initial={false}>
+            {financeOpen && (
+              <motion.ul
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <li>
+                  <button
+                    onClick={() => go("/finance/wealth")}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
+                      location.pathname === "/finance/wealth"
+                        ? "font-medium text-accent-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )}
+                  >
+                    <TrendingUp className="h-4 w-4 shrink-0" style={{ color: "#10B981" }} />
+                    Wealth Tracker
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => go("/finance/applications")}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
+                      location.pathname === "/finance/applications"
+                        ? "font-medium text-accent-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )}
+                  >
+                    <Briefcase className="h-4 w-4 shrink-0" style={{ color: "#3B82F6" }} />
+                    Applications Tracker
+                  </button>
+                </li>
               </motion.ul>
             )}
           </AnimatePresence>
