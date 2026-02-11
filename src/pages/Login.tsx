@@ -31,21 +31,24 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.25 }}
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <h1 className="text-[32px] font-semibold tracking-tight">Welcome back</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Sign in to your Digital Home</p>
+          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
+            <span className="text-sm font-semibold text-primary-foreground">D</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-foreground">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Sign in to your Digital Home</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -56,8 +59,8 @@ export default function Login() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
             <Input
               id="password"
               type="password"

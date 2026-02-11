@@ -1,19 +1,5 @@
-/* Import DM Sans font from Figma design */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Lora&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap");
+/* Inter font - primary typeface */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -21,135 +7,140 @@
 
 @layer base {
   :root {
-    /* Base colors from Figma theme */
-    --background: 240 4% 95%;
-    --foreground: 240 5% 10%;
+    /* Notion-inspired warm palette */
+    --background: 40 7% 98%;       /* #FBFBFA */
+    --foreground: 30 15% 20%;      /* #37352F */
 
-    --card: 0 0% 98%;
-    --card-foreground: 240 5% 10%;
+    --card: 0 0% 100%;             /* #FFFFFF */
+    --card-foreground: 30 15% 20%;
 
-    --popover: 240 5% 90%;
-    --popover-foreground: 240 5% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 15% 20%;
 
-    /* Primary purple from Figma */
-    --primary: 258 89% 66%;
-    --primary-foreground: 250 100% 97%;
+    /* Brand purple */
+    --primary: 258 89% 66%;        /* #8B5CF6 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 12.1951% 83.9216%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 40 3% 93%;        /* #EFEFEF */
+    --secondary-foreground: 30 15% 20%;
 
-    --muted: 240 4% 83%;
-    --muted-foreground: 240 5% 10%;
+    --muted: 40 3% 93%;
+    --muted-foreground: 30 3% 47%; /* #787774 */
 
-    --accent: 269 100% 98%;
-    --accent-foreground: 270 91% 65%;
+    --accent: 258 89% 93%;         /* #DDD6FE */
+    --accent-foreground: 263 70% 50%; /* #6D28D9 */
 
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 65% 55%;      /* #E03E3E */
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 168 80% 27%;        /* #0F7B6C */
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 36 100% 57%;        /* #FFB224 */
+    --warning-foreground: 30 15% 20%;
 
-    --border: 240 4% 83%;
-    --input: 240 4% 83%;
+    --info: 206 52% 55%;           /* #529CCA */
+    --info-foreground: 0 0% 100%;
+
+    --border: 40 5% 90%;           /* #E3E3E0 */
+    --input: 40 5% 90%;
     --ring: 258 89% 66%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 5% 10%;
+    --sidebar-foreground: 30 15% 20%;
     --sidebar-primary: 258 89% 66%;
-    --sidebar-primary-foreground: 250 100% 97%;
-    --sidebar-accent: 240 5% 33%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 4% 83%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 89% 93%;
+    --sidebar-accent-foreground: 263 70% 50%;
+    --sidebar-border: 40 7% 94%;
     --sidebar-ring: 258 89% 66%;
 
-    --chart-1: 255 91% 76%;
-    --chart-2: 270 95% 75%;
-    --chart-3: 234 89% 73%;
-    --chart-4: 258 89% 66%;
-    --chart-5: 240 3% 46%;
+    --chart-1: 258 89% 66%;
+    --chart-2: 263 70% 50%;
+    --chart-3: 206 52% 55%;
+    --chart-4: 168 80% 27%;
+    --chart-5: 36 100% 57%;
 
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --sidebar: 0 0% 98%;
-    --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-    --font-serif: "Cormorant Garamond", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    /* Notion-style shadows */
+    --shadow-2xs: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
+    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08);
+    --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.15);
+
+    --sidebar: 0 0% 100%;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 240 5% 10%;
-    --foreground: 0 0% 98%;
+    --background: 220 10% 10%;
+    --foreground: 0 0% 95%;
 
-    --card: 240 3% 15%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 10% 13%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 240 5% 26%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 10% 15%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 255 91% 76%;
-    --primary-foreground: 261 72% 22%;
+    --primary: 258 89% 70%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3% 46%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 220 8% 20%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 240 3% 46%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 220 8% 20%;
+    --muted-foreground: 220 5% 60%;
 
-    --accent: 273 86% 20%;
-    --accent-foreground: 270 95% 75%;
+    --accent: 258 40% 22%;
+    --accent-foreground: 258 89% 75%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 84% 39%;
+    --success: 168 80% 35%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 36 100% 57%;
+    --warning-foreground: 30 15% 20%;
 
-    --border: 240 5% 33%;
-    --input: 240 5% 33%;
-    --ring: 255 91% 76%;
+    --info: 206 52% 55%;
+    --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 240 10% 4%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 255 91% 76%;
-    --sidebar-primary-foreground: 261 72% 22%;
-    --sidebar-accent: 270 95% 75%;
-    --sidebar-accent-foreground: 273 86% 20%;
-    --sidebar-border: 240 5% 33%;
-    --sidebar-ring: 255 91% 76%;
+    --border: 220 8% 22%;
+    --input: 220 8% 22%;
+    --ring: 258 89% 70%;
 
-    --chart-1: 252 94% 85%;
-    --chart-2: 269 97% 85%;
-    --chart-3: 229 93% 81%;
-    --chart-4: 255 91% 76%;
-    --chart-5: 240 3% 46%;
+    --sidebar-background: 220 10% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 258 89% 70%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 40% 22%;
+    --sidebar-accent-foreground: 258 89% 75%;
+    --sidebar-border: 220 8% 22%;
+    --sidebar-ring: 258 89% 70%;
 
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --radius: 0rem;
-    --sidebar: 240 3% 15%;
+    --chart-1: 258 89% 70%;
+    --chart-2: 258 70% 60%;
+    --chart-3: 206 52% 55%;
+    --chart-4: 168 80% 35%;
+    --chart-5: 36 100% 57%;
+
+    --shadow-2xs: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
+    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.3);
+    --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.4);
+
+    --radius: 0.5rem;
+    --sidebar: 220 10% 13%;
   }
 }
 
@@ -159,9 +150,13 @@
   }
 
   body {
-    @apply bg-gradient-to-br from-gray-50 via-violet-50/30 to-purple-50/30 text-foreground;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html {
@@ -170,82 +165,7 @@
 }
 
 @layer components {
-  /* Button styles matching Figma design */
-  .btn-primary {
-    @apply bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-medium shadow-lg shadow-violet-500/50 hover:shadow-xl hover:shadow-violet-500/60 transition-all duration-300 hover:scale-105;
-  }
-
-  .btn-secondary {
-    @apply bg-white text-violet-600 px-6 py-3 rounded-2xl font-medium border border-violet-200 hover:bg-violet-50 transition-all duration-300;
-  }
-
-  /* Card styles from Figma */
-  .card-figma {
-    @apply bg-white rounded-3xl p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:scale-[1.02];
-  }
-
-  .card-colored {
-    @apply rounded-3xl p-6 hover:shadow-xl transition-all duration-300 hover:scale-[1.02];
-  }
-
-  /* Input styles */
-  .input-figma {
-    @apply w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all duration-200;
-  }
-
-  /* Badge/Pill styles */
-  .badge-figma {
-    @apply px-3 py-1 rounded-full text-sm font-bold inline-flex items-center;
-  }
-
-  /* Section headers */
-  .section-header {
-    @apply text-2xl font-bold text-gray-900 mb-4;
-  }
-
-  /* Gradient backgrounds from Figma */
-  .gradient-primary {
-    @apply bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600;
-  }
-
-  .gradient-card-blue {
-    @apply bg-gradient-to-br from-blue-50 to-blue-100;
-  }
-
-  .gradient-card-rose {
-    @apply bg-gradient-to-br from-rose-50 to-rose-100;
-  }
-
-  .gradient-card-orange {
-    @apply bg-gradient-to-br from-orange-50 to-orange-100;
-  }
-
-  .gradient-card-yellow {
-    @apply bg-gradient-to-br from-yellow-50 to-yellow-100;
-  }
-
-  /* Icon containers from Figma */
-  .icon-container {
-    @apply p-4 rounded-2xl flex items-center justify-center;
-  }
-
-  /* Progress bar from Figma */
-  .progress-bar {
-    @apply relative w-full h-2 bg-white/50 rounded-full overflow-hidden;
-  }
-
-  .progress-fill {
-    @apply absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out;
-  }
-}
-
-@layer utilities {
-  /* Text gradients */
-  .text-gradient-primary {
-    @apply bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent;
-  }
-
-  /* Glassmorphism effects */
+  /* Notion-style glass effect */
   .glass {
     @apply bg-white/80 backdrop-blur-xl;
   }
@@ -254,21 +174,37 @@
     @apply bg-gray-900/80 backdrop-blur-xl;
   }
 
-  /* Animated gradients */
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
+  /* Progress bar */
+  .progress-bar {
+    @apply relative w-full h-2 bg-secondary rounded-full overflow-hidden;
   }
 
-  @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+  .progress-fill {
+    @apply absolute left-0 top-0 h-full rounded-full transition-all duration-1000 ease-out;
+  }
+}
+
+@layer utilities {
+  /* Text gradient */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
+  }
+
+  /* Skeleton shimmer */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, hsl(var(--secondary)) 25%, hsl(var(--muted)) 50%, hsl(var(--secondary)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 
   /* Smooth transitions */
   .transition-smooth {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)];
   }
 }
 
