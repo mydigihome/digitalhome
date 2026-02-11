@@ -1,69 +1,85 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Sparkles, ExternalLink, Moon, Sun } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
+import PageHeader from "@/components/PageHeader";
 
-const aiResources = [
-  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app", clicks: 0, signups: 0 },
-  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com", clicks: 0, signups: 0 },
-  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 0, signups: 0 },
-  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so", clicks: 0, signups: 0 },
-  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 0, signups: 0 },
-  { id: 6, name: "Jasper", description: "AI copywriting and content creation assistant", image: "✍️", category: "Writing", url: "https://jasper.ai", clicks: 0, signups: 0 },
-  { id: 7, name: "Beautiful.ai", description: "Design presentations with AI-powered templates", image: "🖼️", category: "Presentations", url: "https://beautiful.ai", clicks: 0, signups: 0 },
-  { id: 8, name: "Descript", description: "Edit audio and video by editing text", image: "🎙️", category: "Audio/Video", url: "https://descript.com", clicks: 0, signups: 0 },
-  { id: 9, name: "Copy.ai", description: "Generate marketing copy and content with AI", image: "📱", category: "Marketing", url: "https://copy.ai", clicks: 0, signups: 0 },
-  { id: 10, name: "TLDL", description: "Summarize long videos and podcasts with AI", image: "📹", category: "Productivity", url: "https://tldl.ai", clicks: 0, signups: 0 },
-  { id: 11, name: "NotebookLM", description: "Google's AI-powered research and note-taking assistant", image: "📓", category: "Productivity", url: "https://notebooklm.google.com", clicks: 0, signups: 0 },
-  { id: 12, name: "Gamma AI", description: "AI-powered presentations, documents, and webpages", image: "⚡", category: "Presentations", url: "https://gamma.app", clicks: 0, signups: 0 },
-  { id: 13, name: "Gamma Waves", description: "AI-generated ambient music for focus and productivity", image: "🎵", category: "Audio/Video", url: "https://www.gammawaves.io", clicks: 0, signups: 0 },
-  { id: 14, name: "Apollo AI", description: "AI-powered sales intelligence and engagement platform", image: "🚀", category: "Marketing", url: "https://apollo.io", clicks: 0, signups: 0 },
-  { id: 15, name: "Truffle Pig AI", description: "AI assistant for creative strategy and content ideas", image: "🐷", category: "Writing", url: "https://trufflepig.ai", clicks: 0, signups: 0 },
-  { id: 16, name: "Resume Now", description: "Build professional resumes with AI assistance", image: "📄", category: "Career", url: "https://www.resume-now.com", clicks: 0, signups: 0 },
-  { id: 17, name: "Enhance CV", description: "AI-powered CV optimization and enhancement tool", image: "✨", category: "Career", url: "https://enhancv.com", clicks: 0, signups: 0 },
-  { id: 18, name: "Leonardo AI", description: "Create production-quality visual assets with AI", image: "🎨", category: "Image Generation", url: "https://leonardo.ai", clicks: 0, signups: 0 },
-  { id: 19, name: "Visualize AI", description: "Turn data and ideas into stunning visual graphics", image: "📊", category: "Productivity", url: "https://visualize.ai", clicks: 0, signups: 0 },
-  { id: 20, name: "Speechify", description: "Turn any text into natural-sounding audio with AI", image: "🔊", category: "Audio/Video", url: "https://speechify.com", clicks: 0, signups: 0 },
-  { id: 21, name: "Zocks", description: "Financial advisors platform for smart wealth management", image: "💼", category: "Wealth", url: "https://zocks.com", clicks: 42, signups: 8 },
-  { id: 22, name: "Monarch Money", description: "Complete wealth tracker for all your financial goals", image: "👑", category: "Wealth", url: "https://monarchmoney.com", clicks: 67, signups: 12 },
-  { id: 23, name: "Luma", description: "Beautiful event planning and calendar management", image: "🌙", category: "Events", url: "https://lu.ma", clicks: 38, signups: 15 },
-  { id: 24, name: "Posh VIP", description: "Premium event experiences and exclusive access", image: "✨", category: "Events", url: "https://poshvip.com", clicks: 29, signups: 6 },
-  { id: 25, name: "Partiful", description: "Social event planning made simple and fun", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 51, signups: 19 },
+const accentColors = [
+  { label: "Purple", value: "#8B5CF6" },
+  { label: "Blue", value: "#3B82F6" },
+  { label: "Green", value: "#10B981" },
+  { label: "Orange", value: "#F59E0B" },
+  { label: "Pink", value: "#EC4899" },
+  { label: "Red", value: "#EF4444" },
+  { label: "Teal", value: "#14B8A6" },
+  { label: "Indigo", value: "#6366F1" },
 ];
 
-const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Marketing", "Audio/Video", "Assistant", "Career", "Wealth", "Events"];
+const aiResources = [
+  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app" },
+  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com" },
+  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com" },
+  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so" },
+  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com" },
+];
+
+const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Assistant"];
+
+const settingsTabs = [
+  { id: "profile", label: "Profile", icon: User },
+  { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "account", label: "Account", icon: Shield },
+  { id: "resources", label: "AI Resources", icon: Sparkles },
+] as const;
+
+type SettingsTab = typeof settingsTabs[number]["id"];
 
 export default function SettingsPage() {
   const { user, profile, signOut, updateProfile, updatePassword } = useAuth();
+  const { data: prefs } = useUserPreferences();
+  const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile?.full_name || "");
+  const [bio, setBio] = useState(prefs?.bio || "");
+  const [location, setLocation] = useState(prefs?.location || "");
+  const [website, setWebsite] = useState(prefs?.website || "");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "appearance" | "resources">("profile");
-  const [darkMode, setDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+  const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains("dark"));
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const filteredResources = selectedCategory === "All"
-    ? aiResources
-    : aiResources.filter((r) => r.category === selectedCategory);
+    ? aiResources : aiResources.filter((r) => r.category === selectedCategory);
 
-  const handleSaveName = async () => {
-    if (!fullName.trim()) { toast.error("Name cannot be empty"); return; }
+  const themeColor = prefs?.theme_color || "#8B5CF6";
+  const fontSize = prefs?.font_size || "medium";
+  const density = prefs?.density || "comfortable";
+
+  const handleSaveProfile = async () => {
     setSaving(true);
     const { error } = await updateProfile({ full_name: fullName.trim() });
+    if (!error) {
+      await upsertPrefs.mutateAsync({ bio, location, website });
+      toast.success("Profile saved");
+    } else {
+      toast.error("Failed to save profile");
+    }
     setSaving(false);
-    if (error) toast.error("Failed to update name");
-    else toast.success("Name updated");
   };
 
   const handleChangePassword = async () => {
@@ -73,6 +89,20 @@ export default function SettingsPage() {
     setChangingPw(false);
     if (error) toast.error(error.message);
     else { toast.success("Password updated"); setNewPassword(""); }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error("Max 2MB"); return; }
+    setUploadingPhoto(true);
+    const path = `${user.id}/profile/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("user-assets").upload(path, file);
+    if (error) { toast.error("Upload failed"); setUploadingPhoto(false); return; }
+    const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
+    await upsertPrefs.mutateAsync({ profile_photo: publicUrl });
+    setUploadingPhoto(false);
+    toast.success("Photo updated");
   };
 
   const handleLogout = async () => {
@@ -85,253 +115,292 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        {/* Header */}
-        <div className="mb-6 rounded-2xl border border-border bg-card shadow-sm">
-          <div className="border-b border-border p-6">
-            <h1 className="mb-1 text-4xl font-bold text-foreground">Settings</h1>
-            <p className="text-muted-foreground">Manage your profile and discover AI tools</p>
-          </div>
-          <div className="flex border-b border-border">
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={cn(
-                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors",
-                activeTab === "profile"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <User className="h-4 w-4" /> Profile
-            </button>
-            <button
-              onClick={() => setActiveTab("appearance")}
-              className={cn(
-                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors",
-                activeTab === "appearance"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />} Appearance
-            </button>
-            <button
-              onClick={() => setActiveTab("resources")}
-              className={cn(
-                "flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors",
-                activeTab === "resources"
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Sparkles className="h-4 w-4" /> AI Resources
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Settings"
+          icon="⚙️"
+          editable={false}
+          subtitle="Manage your profile, appearance, and account"
+        />
 
-        {/* Profile Tab */}
-        {activeTab === "profile" && (
-          <div className="max-w-lg space-y-4">
-            <Card className="rounded-2xl border-border shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-2xl font-bold text-primary-foreground">
-                    {initials}
-                  </div>
-                  <Button variant="outline" size="sm">Change Photo</Button>
-                </div>
-                <div className="space-y-2">
-                  <Label>Full name</Label>
-                  <div className="flex gap-2">
-                    <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                    <Button onClick={handleSaveName} disabled={saving} size="sm">
-                      {saving ? "Saving..." : "Save"}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input value={user?.email || ""} disabled className="bg-muted" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-2xl border-border shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Security</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>New password</Label>
-                  <div className="flex gap-2">
-                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
-                    <Button onClick={handleChangePassword} disabled={changingPw} size="sm">
-                      {changingPw ? "Updating..." : "Update"}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-2xl border-border shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Default view</Label>
-                  <Select defaultValue="kanban">
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="kanban">Kanban</SelectItem>
-                      <SelectItem value="list">List</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button variant="ghost" onClick={handleLogout} className="text-destructive hover:text-destructive">
-              Log out
-            </Button>
-          </div>
-        )}
-
-        {/* Appearance Tab */}
-        {activeTab === "appearance" && (
-          <div className="max-w-lg space-y-4">
-            <Card className="rounded-2xl border-border shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Theme</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Light Mode */}
+        <div className="flex gap-8">
+          {/* Sidebar */}
+          <div className="hidden md:block w-[200px] shrink-0">
+            <nav className="space-y-1 sticky top-24">
+              {settingsTabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
                   <button
-                    onClick={() => {
-                      setDarkMode(false);
-                      document.documentElement.classList.remove("dark");
-                    }}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      "rounded-xl border-2 p-6 text-left transition-colors",
-                      !darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                      "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      activeTab === tab.id
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <div className="mb-3 flex items-center gap-3">
-                      <Sun className="h-6 w-6 text-amber-500" />
-                      <span className="font-semibold text-foreground">Light Mode</span>
-                    </div>
-                    <div className="rounded-lg bg-card p-4 shadow-sm border border-border">
-                      <div className="mb-2 h-2 rounded bg-secondary" />
-                      <div className="h-2 w-3/4 rounded bg-secondary" />
-                    </div>
+                    <Icon className="h-4 w-4" /> {tab.label}
                   </button>
+                );
+              })}
+            </nav>
+          </div>
 
-                  {/* Dark Mode */}
-                  <button
-                    onClick={() => {
-                      setDarkMode(true);
-                      document.documentElement.classList.add("dark");
-                    }}
-                    className={cn(
-                      "rounded-xl border-2 p-6 text-left transition-colors",
-                      darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                    )}
-                  >
-                    <div className="mb-3 flex items-center gap-3">
-                      <Moon className="h-6 w-6 text-primary" />
-                      <span className="font-semibold text-foreground">Dark Mode</span>
-                    </div>
-                    <div className="rounded-lg bg-foreground/90 p-4 shadow-sm">
-                      <div className="mb-2 h-2 rounded bg-foreground/70" />
-                      <div className="h-2 w-3/4 rounded bg-foreground/70" />
-                    </div>
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Mobile tabs */}
+          <div className="flex md:hidden mb-4 gap-1 overflow-x-auto -mx-4 px-4 w-[calc(100%+2rem)]">
+            {settingsTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors",
+                    activeTab === tab.id ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-            <Card className="rounded-2xl border-border shadow-none">
-              <CardContent className="flex items-start gap-3 p-4">
-                <span className="text-2xl">💡</span>
-                <div>
-                  <p className="mb-1 font-medium text-foreground">Tip</p>
-                  <p className="text-sm text-muted-foreground">
-                    Dark mode reduces eye strain in low-light environments and can help save battery on OLED screens.
+          {/* Content */}
+          <div className="flex-1 max-w-2xl">
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <div className="space-y-6">
+                {/* Avatar */}
+                <div className="flex flex-col items-center">
+                  <div className="relative group">
+                    <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-card shadow-md overflow-hidden bg-gradient-primary">
+                      {prefs?.profile_photo ? (
+                        <img src={prefs.profile_photo} alt="Profile" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-4xl font-bold text-primary-foreground">{initials}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
+                    >
+                      <Camera className="h-6 w-6 text-primary-foreground" />
+                    </button>
+                    <input ref={photoInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoUpload} />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {uploadingPhoto ? "Uploading..." : "Click to change photo"}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
-        {/* AI Resources Tab */}
-        {activeTab === "resources" && (
-          <div>
-            {/* Category Filter */}
-            <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={cn(
-                      "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                      selectedCategory === cat
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Resources Grid */}
-            {filteredResources.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-12 text-center shadow-sm">
-                <Sparkles className="mx-auto mb-3 h-12 w-12 text-muted-foreground/30" />
-                <p className="text-muted-foreground">No resources found in this category</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredResources.map((resource) => (
-                  <div
-                    key={resource.id}
-                    className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
-                  >
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 text-3xl">
-                        {resource.image}
+                <Card>
+                  <CardContent className="space-y-4 pt-6">
+                    <div className="space-y-2">
+                      <Label>Full name</Label>
+                      <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input value={user?.email || ""} disabled className="bg-muted" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bio</Label>
+                      <Textarea
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="A short bio about yourself"
+                        className="min-h-[80px]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Location</Label>
+                        <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
                       </div>
-                      <span className="rounded-full bg-secondary px-2.5 py-1 text-xs text-muted-foreground">
-                        {resource.category}
-                      </span>
+                      <div className="space-y-2">
+                        <Label>Website</Label>
+                        <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+                      </div>
                     </div>
-                    <h3 className="mb-2 text-xl font-semibold text-foreground">{resource.name}</h3>
-                    <p className="mb-4 text-sm text-muted-foreground">{resource.description}</p>
-                    <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="rounded-md bg-secondary px-2 py-1 font-medium"># clicks: {resource.clicks}</span>
-                      <span className="rounded-md bg-secondary px-2 py-1 font-medium"># signups: {resource.signups}</span>
+                    <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+                      {saving ? "Saving..." : "Save Profile"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Appearance Tab */}
+            {activeTab === "appearance" && (
+              <div className="space-y-6">
+                {/* Theme */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Theme</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => { setDarkMode(false); document.documentElement.classList.remove("dark"); }}
+                        className={cn("rounded-xl border-2 p-5 text-left transition-colors", !darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
+                      >
+                        <div className="mb-3 flex items-center gap-2">
+                          <Sun className="h-5 w-5 text-warning" />
+                          <span className="font-medium text-foreground">Light</span>
+                        </div>
+                        <div className="rounded-lg bg-card p-3 shadow-sm border border-border">
+                          <div className="mb-1.5 h-2 rounded bg-secondary" />
+                          <div className="h-2 w-3/4 rounded bg-secondary" />
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => { setDarkMode(true); document.documentElement.classList.add("dark"); }}
+                        className={cn("rounded-xl border-2 p-5 text-left transition-colors", darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
+                      >
+                        <div className="mb-3 flex items-center gap-2">
+                          <Moon className="h-5 w-5 text-primary" />
+                          <span className="font-medium text-foreground">Dark</span>
+                        </div>
+                        <div className="rounded-lg bg-foreground/90 p-3">
+                          <div className="mb-1.5 h-2 rounded bg-foreground/70" />
+                          <div className="h-2 w-3/4 rounded bg-foreground/70" />
+                        </div>
+                      </button>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Accent Color */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Accent color</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {accentColors.map((c) => (
+                        <button
+                          key={c.value}
+                          onClick={() => upsertPrefs.mutate({ theme_color: c.value })}
+                          className={cn(
+                            "h-10 w-10 rounded-full transition-all hover:scale-110",
+                            themeColor === c.value && "ring-2 ring-offset-2 ring-foreground/30"
+                          )}
+                          style={{ backgroundColor: c.value }}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Font Size */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Font size</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      {["small", "medium", "large"].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => upsertPrefs.mutate({ font_size: size })}
+                          className={cn(
+                            "flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium capitalize transition-colors",
+                            fontSize === size ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Density */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Spacing</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="flex gap-2">
+                      {["compact", "comfortable", "spacious"].map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => upsertPrefs.mutate({ density: d })}
+                          className={cn(
+                            "flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium capitalize transition-colors",
+                            density === d ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
+                          )}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Account Tab */}
+            {activeTab === "account" && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Change password</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>New password</Label>
+                      <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+                    </div>
+                    <Button onClick={handleChangePassword} disabled={changingPw}>
+                      {changingPw ? "Updating..." : "Update Password"}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-destructive/30">
+                  <CardHeader><CardTitle className="text-base text-destructive">Danger zone</CardTitle></CardHeader>
+                  <CardContent>
+                    <Button variant="destructive" onClick={handleLogout}>Log out</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* AI Resources Tab */}
+            {activeTab === "resources" && (
+              <div>
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                        selectedCategory === cat ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {filteredResources.map((resource) => (
                     <a
+                      key={resource.id}
                       href={resource.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-medium text-primary transition-all group-hover:gap-3"
+                      className="group rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                     >
-                      Visit Platform
-                      <ExternalLink className="h-4 w-4" />
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{resource.image}</span>
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
+                          <span className="text-xs text-muted-foreground">{resource.category}</span>
+                        </div>
+                        <ExternalLink className="ml-auto h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{resource.description}</p>
                     </a>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        )}
+        </div>
       </motion.div>
     </AppShell>
   );

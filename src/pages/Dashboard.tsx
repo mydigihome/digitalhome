@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -11,11 +12,13 @@ import {
 } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles, Edit2, Check,
+  CheckCircle2, Sparkles, Edit2, Check, Search,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
+import PageHeader from "@/components/PageHeader";
+import HouseIcon from "@/components/HouseIcon";
 import { cn } from "@/lib/utils";
 
 interface EverydayLink {
@@ -39,6 +42,8 @@ export default function Dashboard() {
   const { profile } = useAuth();
   const { data: projects = [] } = useProjects();
   const { data: tasks = [] } = useAllTasks();
+  const { data: prefs } = useUserPreferences();
+  const upsertPrefs = useUpsertPreferences();
   const updateTask = useUpdateTask();
   const navigate = useNavigate();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -94,17 +99,6 @@ export default function Dashboard() {
     { label: "This week", dotColor: "bg-muted-foreground", items: thisWeekTasks },
   ].filter(g => g.items.length > 0);
 
-  // Priority projects
-  const projectsWithStats = projects.map((p) => {
-    const ptasks = tasks.filter((t) => t.project_id === p.id);
-    const done = ptasks.filter((t) => t.status === "done").length;
-    const total = ptasks.length;
-    return { ...p, done, total, pending: total - done };
-  });
-  const priorityProjects = [...projectsWithStats]
-    .sort((a, b) => b.pending - a.pending)
-    .slice(0, 3);
-
   const projectNameMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
   const toggleTask = (taskId: string, currentStatus: string) => {
@@ -115,20 +109,59 @@ export default function Dashboard() {
   const totalDone = tasks.filter(t => t.status === "done").length;
   const momentumPct = tasks.length > 0 ? Math.round((totalDone / tasks.length) * 100) : 0;
 
+  const projectsWithStats = projects.map((p) => {
+    const ptasks = tasks.filter((t) => t.project_id === p.id);
+    const done = ptasks.filter((t) => t.status === "done").length;
+    const total = ptasks.length;
+    return { ...p, done, total, pending: total - done };
+  });
+  const priorityProjects = [...projectsWithStats]
+    .sort((a, b) => b.pending - a.pending)
+    .slice(0, 3);
+
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {/* Header */}
-        <div className="mb-8">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
-            {format(now, "EEEE, MMMM d, yyyy")}
-          </p>
-          <h1 className="text-3xl font-semibold text-foreground">
-            {profile?.full_name ? `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${profile.full_name.split(' ')[0]}` : 'Home Office'}
-          </h1>
+        {/* Page Header */}
+        <PageHeader
+          title="Home"
+          icon={prefs?.dashboard_icon || "🏠"}
+          iconType={prefs?.dashboard_icon_type || "emoji"}
+          coverImage={prefs?.dashboard_cover}
+          coverType={prefs?.dashboard_cover_type || "none"}
+          onIconChange={(icon, type) => upsertPrefs.mutate({ dashboard_icon: icon, dashboard_icon_type: type })}
+          onCoverChange={(cover, type) => upsertPrefs.mutate({ dashboard_cover: cover, dashboard_cover_type: type })}
+          editable
+        />
+
+        {/* Welcome Section */}
+        <div className="mb-8 rounded-xl border border-border bg-card p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <HouseIcon size={32} />
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground">
+                  {profile?.full_name
+                    ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
+                    : "Digital Home"}
+                </h2>
+                <p className="text-sm text-muted-foreground" style={{ letterSpacing: "0.3px" }}>
+                  Your life in one place
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setTaskEditorOpen(true)} size="sm">
+                <Plus className="mr-1.5 h-4 w-4" /> New Task
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
+                <Plus className="mr-1.5 h-4 w-4" /> New Project
+              </Button>
+            </div>
+          </div>
 
           {/* Momentum bar */}
-          <div className="mt-4 max-w-md">
+          <div className="mt-5 max-w-lg">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-2xl font-medium text-foreground">{momentumPct}%</span>
             </div>
@@ -144,10 +177,13 @@ export default function Dashboard() {
 
         {/* Widget Grid */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {/* Agenda Widget (takes 2 cols on xl) */}
+          {/* Agenda Widget */}
           <div className="xl:col-span-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Agenda</h2>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground">Agenda</h2>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-0.5 rounded-sm bg-secondary p-0.5">
                   <button
@@ -210,7 +246,7 @@ export default function Dashboard() {
                             onClick={(e) => e.stopPropagation()}
                             className="h-4 w-4 rounded"
                           />
-                          <div className={cn("h-1.5 w-1.5 rounded-full", {
+                          <div className={cn("h-2 w-2 rounded-full", {
                             "bg-destructive": task.priority === "high",
                             "bg-warning": task.priority === "medium",
                             "bg-success": task.priority === "low",
@@ -259,7 +295,10 @@ export default function Dashboard() {
             {/* Top Priority Projects */}
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
               <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">Priority Projects</h3>
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-warning" />
+                  <h3 className="text-lg font-semibold text-foreground">Priority Projects</h3>
+                </div>
                 <button
                   onClick={() => navigate("/projects")}
                   className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
@@ -301,7 +340,10 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Quick Actions</h3>
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
+              </div>
               <div className="space-y-2">
                 <Button
                   onClick={() => setTaskEditorOpen(true)}
@@ -320,7 +362,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Everyday Links - full width */}
+          {/* Everyday Links */}
           <div className="xl:col-span-3 md:col-span-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-foreground">Everyday Links</h3>
@@ -392,7 +434,13 @@ export default function Dashboard() {
       </motion.div>
 
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
-      {taskEditorOpen && <TaskEditor onClose={() => setTaskEditorOpen(false)} />}
+      {taskEditorOpen && projects.length > 0 && (
+        <TaskEditor
+          projectId={projects[0].id}
+          defaultStatus="backlog"
+          onClose={() => setTaskEditorOpen(false)}
+        />
+      )}
     </AppShell>
   );
 }
