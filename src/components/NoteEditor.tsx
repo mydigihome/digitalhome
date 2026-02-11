@@ -94,9 +94,10 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
     setSaving(false);
   };
 
-  const initialPos = useRef({
-    x: Math.floor(window.innerWidth / 2 - 200),
-    y: Math.floor(window.innerHeight / 2 - 175),
+  // Recalculate position each time modal opens
+  const getInitialPos = () => ({
+    x: Math.max(0, Math.floor((window.innerWidth - 400) / 2)),
+    y: Math.max(20, Math.floor((window.innerHeight - 400) / 2)),
   });
 
   const stickyContent = (
@@ -242,30 +243,27 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
             </motion.div>
           ) : (
             /* Desktop: draggable modal */
-            <Draggable
-              handle=".drag-handle-note"
-              bounds="parent"
-              nodeRef={nodeRef as any}
-              defaultPosition={initialPos.current}
-            >
-              <motion.div
-                ref={nodeRef}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="fixed z-[10000] flex flex-col overflow-hidden"
-                style={{
-                  width: 400,
-                  minHeight: 350,
-                  maxHeight: 600,
-                  borderRadius: 16,
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
-                }}
+            <div className="fixed inset-0 z-[10000] pointer-events-none">
+              <Draggable
+                handle=".drag-handle-note"
+                nodeRef={nodeRef as any}
+                defaultPosition={getInitialPos()}
               >
-                {stickyContent}
-              </motion.div>
-            </Draggable>
+                <div
+                  ref={nodeRef}
+                  className="pointer-events-auto absolute flex flex-col overflow-hidden"
+                  style={{
+                    width: 400,
+                    minHeight: 350,
+                    maxHeight: 600,
+                    borderRadius: 16,
+                    boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  {stickyContent}
+                </div>
+              </Draggable>
+            </div>
           )}
         </>
       )}
