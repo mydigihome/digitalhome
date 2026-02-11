@@ -9,19 +9,13 @@ import TaskItem from "@tiptap/extension-task-item";
 import Draggable from "react-draggable";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, Bold, Italic, Underline as UnderlineIcon, List, Link2,
-  GripHorizontal, Palette, SlidersHorizontal,
+  X, Bold, Italic, List, GripHorizontal,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useCreateNote, useUpdateNote, type Note } from "@/hooks/useNotes";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const NOTE_COLORS = [
-  "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B",
-  "#EC4899", "#EF4444", "#14B8A6", "#6366F1",
-];
+const NOTE_COLORS = ["#8B5CF6", "#3B82F6", "#EC4899", "#F59E0B"];
 
 function hexToRgba(hex: string, opacity: number) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -37,19 +31,13 @@ interface NoteEditorProps {
 }
 
 export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
-  const { data: prefs } = useUserPreferences();
-  const defaultColor = prefs?.theme_color || "#8B5CF6";
   const [title, setTitle] = useState(note?.title || "");
-  const [cardColor, setCardColor] = useState(note?.card_color || defaultColor);
-  const [cardOpacity, setCardOpacity] = useState(note?.card_opacity ?? 92);
+  const [cardColor, setCardColor] = useState(note?.card_color || "#8B5CF6");
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showOpacity, setShowOpacity] = useState(false);
   const [saving, setSaving] = useState(false);
   const createNote = useCreateNote();
   const updateNote = useUpdateNote();
   const nodeRef = useRef<HTMLDivElement>(null);
-
-  const allColors = [defaultColor, ...NOTE_COLORS.filter((c) => c !== defaultColor)].slice(0, 8);
 
   const editor = useEditor({
     extensions: [
@@ -75,9 +63,8 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
 
   useEffect(() => {
     setTitle(note?.title || "");
-    setCardColor(note?.card_color || defaultColor);
-    setCardOpacity(note?.card_opacity ?? 92);
-  }, [note?.id, defaultColor]);
+    setCardColor(note?.card_color || "#8B5CF6");
+  }, [note?.id]);
 
   const getPreview = useCallback(() => {
     if (!editor) return "";
@@ -93,9 +80,9 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
 
     try {
       if (note?.id) {
-        await updateNote.mutateAsync({ id: note.id, title: noteTitle, content, content_preview, card_color: cardColor, card_opacity: cardOpacity });
+        await updateNote.mutateAsync({ id: note.id, title: noteTitle, content, content_preview, card_color: cardColor, card_opacity: 92 });
       } else {
-        await createNote.mutateAsync({ title: noteTitle, content, content_preview, card_color: cardColor, card_opacity: cardOpacity });
+        await createNote.mutateAsync({ title: noteTitle, content, content_preview, card_color: cardColor, card_opacity: 92 });
       }
       toast.success("Note saved!");
       onClose();
@@ -105,10 +92,9 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
     setSaving(false);
   };
 
-  // Random initial position
   const initialPos = useRef({
-    x: Math.floor(window.innerWidth * 0.1 + Math.random() * window.innerWidth * 0.4),
-    y: Math.floor(window.innerHeight * 0.1 + Math.random() * window.innerHeight * 0.3),
+    x: Math.floor(window.innerWidth / 2 - 200),
+    y: Math.floor(window.innerHeight / 2 - 175),
   });
 
   return (
@@ -123,7 +109,7 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
             onClick={onClose}
           />
           <Draggable
-            handle=".drag-handle"
+            handle=".drag-handle-note"
             bounds="parent"
             nodeRef={nodeRef as any}
             defaultPosition={initialPos.current}
@@ -134,71 +120,53 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.3 }}
-              className="fixed z-[9999] flex flex-col overflow-hidden shadow-2xl"
+              className="fixed z-[10000] flex flex-col overflow-hidden"
               style={{
-                width: 380,
-                minHeight: 320,
+                width: 400,
+                minHeight: 350,
                 maxHeight: 600,
                 borderRadius: 16,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
               }}
             >
               {/* Header - drag handle */}
               <div
-                className="drag-handle flex items-center justify-between px-4 cursor-grab active:cursor-grabbing"
+                className="drag-handle-note flex items-center justify-between px-4 cursor-grab active:cursor-grabbing select-none"
                 style={{
-                  height: 48,
+                  height: 52,
                   background: cardColor,
                   borderRadius: "16px 16px 0 0",
                 }}
               >
-                <GripHorizontal className="h-[18px] w-[18px]" style={{ color: "rgba(0,0,0,0.3)" }} />
+                <GripHorizontal className="h-5 w-5" style={{ color: "rgba(0,0,0,0.3)" }} />
                 <div className="flex items-center gap-2">
-                  {/* Color picker toggle */}
+                  {/* Color picker */}
                   <div className="relative">
                     <button
-                      onClick={() => { setShowColorPicker(!showColorPicker); setShowOpacity(false); }}
-                      className="flex h-6 w-6 rounded-full border-2 border-white/50 transition-transform hover:scale-110"
-                      style={{ background: cardColor }}
+                      onClick={() => setShowColorPicker(!showColorPicker)}
+                      className="flex h-7 w-7 rounded-full transition-transform hover:scale-110"
+                      style={{ background: cardColor, border: "2px solid rgba(0,0,0,0.1)" }}
                     />
                     {showColorPicker && (
-                      <div className="absolute right-0 top-8 z-10 grid grid-cols-4 gap-2 rounded-xl bg-card p-3 shadow-lg border border-border" style={{ width: 160 }}>
-                        {allColors.map((c) => (
+                      <div
+                        className="absolute right-0 top-9 z-10 grid grid-cols-2 gap-2 rounded-xl bg-white p-3"
+                        style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 128 }}
+                      >
+                        {NOTE_COLORS.map((c) => (
                           <button
                             key={c}
                             onClick={() => { setCardColor(c); setShowColorPicker(false); }}
-                            className={cn("h-8 w-8 rounded-full transition-transform hover:scale-110", c === cardColor && "ring-2 ring-white ring-offset-2")}
-                            style={{ background: c }}
+                            className="h-12 w-12 rounded-full transition-all hover:scale-110 hover:-translate-y-0.5"
+                            style={{
+                              background: c,
+                              border: c === cardColor ? "3px solid rgba(0,0,0,0.3)" : "3px solid white",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            }}
                           />
                         ))}
                       </div>
                     )}
                   </div>
-
-                  {/* Opacity toggle */}
-                  <div className="relative">
-                    <button
-                      onClick={() => { setShowOpacity(!showOpacity); setShowColorPicker(false); }}
-                      className="flex h-6 w-6 items-center justify-center rounded-lg transition-colors hover:bg-white/20"
-                    >
-                      <SlidersHorizontal className="h-4 w-4" style={{ color: "rgba(0,0,0,0.4)" }} />
-                    </button>
-                    {showOpacity && (
-                      <div className="absolute right-0 top-8 z-10 flex flex-col gap-2 rounded-xl bg-card p-3 shadow-lg border border-border" style={{ width: 180 }}>
-                        <span className="text-xs text-muted-foreground">Opacity: {cardOpacity}%</span>
-                        <input
-                          type="range"
-                          min={70}
-                          max={100}
-                          value={cardOpacity}
-                          onChange={(e) => setCardOpacity(Number(e.target.value))}
-                          className="w-full accent-primary"
-                        />
-                        <div className="h-8 rounded-lg" style={{ background: hexToRgba(cardColor, cardOpacity) }} />
-                      </div>
-                    )}
-                  </div>
-
                   <button onClick={onClose} className="flex h-6 w-6 items-center justify-center rounded-lg transition-colors hover:bg-white/20">
                     <X className="h-4 w-4" style={{ color: "rgba(0,0,0,0.4)" }} />
                   </button>
@@ -209,7 +177,7 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
               <div
                 className="flex flex-1 flex-col"
                 style={{
-                  background: hexToRgba(cardColor, cardOpacity),
+                  background: hexToRgba(cardColor, 85),
                   borderRadius: "0 0 16px 16px",
                 }}
               >
@@ -221,7 +189,7 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Note title..."
                     className="w-full bg-transparent text-lg font-semibold outline-none placeholder:opacity-40"
-                    style={{ color: "rgba(0,0,0,0.85)" }}
+                    style={{ color: "rgba(0,0,0,0.9)" }}
                     autoFocus
                   />
                 </div>
@@ -249,11 +217,11 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 pb-4 pt-2">
+                <div className="px-5 pb-5 pt-2">
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="w-full rounded-lg py-2.5 text-sm font-medium transition-colors"
+                    className="w-full rounded-xl py-3 text-sm font-medium transition-colors disabled:opacity-50"
                     style={{
                       background: "rgba(0,0,0,0.08)",
                       color: "rgba(0,0,0,0.7)",

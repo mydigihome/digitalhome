@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface IconDef {
@@ -11,26 +11,26 @@ export interface IconDef {
 export const ICONS: IconDef[] = [
   {
     name: "house",
-    url: "https://nbblxjnnihsgftqbfmfr.supabase.co/storage/v1/object/public/Icons/IMG_3333-removebg-preview.png",
-    label: "Home",
+    url: "https://nbblxjnnihsgftqbfmfr.supabase.co/storage/v1/object/public/Icons/image-removebg-preview-3.png",
+    label: "House",
     glowColor: "rgba(139,168,163,0.5)",
   },
   {
     name: "coffee",
     url: "https://nbblxjnnihsgftqbfmfr.supabase.co/storage/v1/object/public/Icons/image-removebg-preview-2.png",
-    label: "Coffee Break",
+    label: "Coffee",
     glowColor: "rgba(218,180,141,0.5)",
   },
   {
     name: "bread",
     url: "https://nbblxjnnihsgftqbfmfr.supabase.co/storage/v1/object/public/Icons/image-removebg-preview.png",
-    label: "Fresh Bread",
+    label: "Bread",
     glowColor: "rgba(234,169,110,0.5)",
   },
   {
     name: "ramen",
     url: "https://nbblxjnnihsgftqbfmfr.supabase.co/storage/v1/object/public/Icons/IMG_3343-removebg-preview.png",
-    label: "Ramen Bowl",
+    label: "Ramen",
     glowColor: "rgba(255,160,80,0.5)",
   },
   {
@@ -41,42 +41,32 @@ export const ICONS: IconDef[] = [
   },
 ];
 
-export function getTimeBasedIcon(hour: number): IconDef {
-  if (hour >= 5 && hour < 9) return ICONS[4]; // lamp (morning)
-  if (hour >= 9 && hour < 12) return ICONS[1]; // coffee (late morning)
-  if (hour >= 12 && hour < 15) return ICONS[2]; // bread (lunch)
-  if (hour >= 15 && hour < 18) return ICONS[0]; // house (afternoon)
-  if (hour >= 18 && hour < 22) return ICONS[3]; // ramen (dinner)
-  return ICONS[4]; // lamp (night)
-}
-
 export function useAnimatedIcon() {
-  const [currentIcon, setCurrentIcon] = useState<IconDef>(() =>
-    getTimeBasedIcon(new Date().getHours())
-  );
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const hour = new Date().getHours();
-      setCurrentIcon(getTimeBasedIcon(hour));
+      setCurrentIndex((prev) => (prev + 1) % ICONS.length);
     }, 15000);
     return () => clearInterval(interval);
   }, []);
 
-  return currentIcon;
+  return { icon: ICONS[currentIndex], index: currentIndex };
 }
 
 export function AnimatedIconImage({
   icon,
   size = 64,
+  index,
 }: {
   icon: IconDef;
   size?: number;
+  index?: number;
 }) {
   return (
     <AnimatePresence mode="wait">
       <motion.img
-        key={icon.name}
+        key={index ?? icon.name}
         src={icon.url}
         alt={icon.label}
         width={size}
@@ -85,6 +75,7 @@ export function AnimatedIconImage({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         transition={{ duration: 0.3 }}
+        className="icon-float"
         style={{ objectFit: "contain" }}
         draggable={false}
       />
