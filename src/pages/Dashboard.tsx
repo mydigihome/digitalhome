@@ -12,13 +12,15 @@ import {
 } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon,
+  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon, StickyNote,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import PageHeader from "@/components/PageHeader";
 import HouseIcon from "@/components/HouseIcon";
+import NotesWidget from "@/components/NotesWidget";
+import NoteEditor from "@/components/NoteEditor";
 import { cn } from "@/lib/utils";
 
 interface EverydayLink {
@@ -60,6 +62,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false);
   const [taskEventToggle, setTaskEventToggle] = useState<"task" | "event">("task");
   const [editingLinks, setEditingLinks] = useState(false);
   const now = useCurrentTime();
@@ -163,6 +166,9 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => setNoteEditorOpen(true)}>
+                <StickyNote className="mr-1.5 h-4 w-4" /> Add Note
+              </Button>
               <Button onClick={() => setTaskEditorOpen(true)} size="sm">
                 <Plus className="mr-1.5 h-4 w-4" /> New Task
               </Button>
@@ -472,10 +478,16 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+
+          {/* Notes Widget */}
+          <div className="xl:col-span-3 md:col-span-2">
+            <NotesWidget onAddNote={() => setNoteEditorOpen(true)} />
+          </div>
         </div>
       </motion.div>
 
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
+      <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor
           projectId={projects[0].id}
