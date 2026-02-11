@@ -84,7 +84,7 @@ export default function PageHeader({
   return (
     <div className="mb-8">
       {/* Cover Image */}
-      <div className="group relative h-[280px] rounded-t-xl overflow-hidden" style={coverStyle}>
+      <div className="group relative h-[200px] rounded-t-xl overflow-hidden" style={coverStyle}>
         {editable && (
           <div className="absolute right-3 top-3 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
             <button
