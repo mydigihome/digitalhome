@@ -60,6 +60,7 @@ export type Database = {
         Row: {
           ai_title: string | null
           card_color: string | null
+          card_opacity: number | null
           content: string
           created_at: string
           id: string
@@ -73,6 +74,7 @@ export type Database = {
         Insert: {
           ai_title?: string | null
           card_color?: string | null
+          card_opacity?: number | null
           content: string
           created_at?: string
           id?: string
@@ -86,6 +88,7 @@ export type Database = {
         Update: {
           ai_title?: string | null
           card_color?: string | null
+          card_opacity?: number | null
           content?: string
           created_at?: string
           id?: string
@@ -252,6 +255,8 @@ export type Database = {
       }
       notes: {
         Row: {
+          card_color: string | null
+          card_opacity: number | null
           content: Json | null
           content_preview: string | null
           created_at: string
@@ -262,6 +267,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          card_color?: string | null
+          card_opacity?: number | null
           content?: Json | null
           content_preview?: string | null
           created_at?: string
@@ -272,6 +279,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          card_color?: string | null
+          card_opacity?: number | null
           content?: Json | null
           content_preview?: string | null
           created_at?: string

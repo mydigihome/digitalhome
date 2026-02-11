@@ -1,17 +1,19 @@
 import { Sparkles, ListTodo } from "lucide-react";
 import { useBrainDumps, BrainDump } from "@/hooks/useBrainDumps";
 import { formatDistanceToNow, format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { useLocation } from "react-router-dom";
-import { RamenIcon, HouseAnimIcon, LampIcon } from "@/components/AnimatedIcons";
-import { getActiveIcon } from "@/components/BrainDump";
+import { useAnimatedIcon, AnimatedIconImage } from "@/components/AnimatedIcons";
+
+function hexToRgba(hex: string, opacity: number) {
+  if (!hex || !hex.startsWith("#")) return undefined;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${opacity / 100})`;
+}
 
 export default function BrainDumpWidget() {
   const { data: dumps = [] } = useBrainDumps();
-  const location = useLocation();
-  const hour = new Date().getHours();
-  const activeIcon = getActiveIcon(hour, location.pathname);
-  const IconComponent = activeIcon === "ramen" ? RamenIcon : activeIcon === "house" ? HouseAnimIcon : LampIcon;
+  const currentIcon = useAnimatedIcon();
 
   const recentDumps = dumps.slice(0, 5);
 
@@ -24,7 +26,7 @@ export default function BrainDumpWidget() {
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="text-base font-semibold text-foreground">Brain Dump</h3>
         </div>
-        <IconComponent size={24} />
+        <AnimatedIconImage icon={currentIcon} size={24} />
       </div>
 
       <div className="space-y-2">
@@ -33,29 +35,29 @@ export default function BrainDumpWidget() {
           const taskCount = structured?.tasks?.length || 0;
           const title = dump.ai_title || dump.content.slice(0, 40);
           const summary = dump.summary || dump.content.slice(0, 80);
-          const time = formatDistanceToNow(new Date(dump.created_at), { addSuffix: true });
           const timeLabel = format(new Date(dump.created_at), "h:mma").toLowerCase();
+          const bgColor = hexToRgba(dump.card_color || "#8B5CF6", (dump as any).card_opacity ?? 92);
 
           return (
             <div
               key={dump.id}
-              className="flex items-start gap-3 rounded-lg p-3 transition-all duration-100 hover:bg-secondary cursor-default"
-              style={{ borderLeft: `3px solid ${dump.card_color || "hsl(var(--primary))"}` }}
+              className="flex items-start gap-3 rounded-lg p-3 transition-all duration-100 hover:shadow-sm hover:-translate-y-0.5 cursor-default"
+              style={{ borderLeft: `3px solid ${dump.card_color || "hsl(var(--primary))"}`, background: bgColor }}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground truncate">{title}</span>
-                  <span className="text-xs text-muted-foreground shrink-0">
+                  <span className="text-sm font-medium truncate" style={{ color: "rgba(0,0,0,0.85)" }}>{title}</span>
+                  <span className="text-xs shrink-0" style={{ color: "rgba(0,0,0,0.4)" }}>
                     {format(new Date(dump.created_at), "MMM d")}
                   </span>
                   {taskCount > 0 && (
-                    <span className="flex items-center gap-0.5 text-xs text-muted-foreground shrink-0">
+                    <span className="flex items-center gap-0.5 text-xs shrink-0" style={{ color: "rgba(0,0,0,0.4)" }}>
                       <ListTodo className="h-3 w-3" /> {taskCount}
                     </span>
                   )}
-                  <span className="text-xs text-muted-foreground ml-auto shrink-0">{timeLabel}</span>
+                  <span className="text-xs ml-auto shrink-0" style={{ color: "rgba(0,0,0,0.35)" }}>{timeLabel}</span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{summary}</p>
+                <p className="text-xs truncate mt-0.5" style={{ color: "rgba(0,0,0,0.5)" }}>{summary}</p>
               </div>
             </div>
           );
