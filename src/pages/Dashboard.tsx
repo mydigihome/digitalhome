@@ -124,7 +124,8 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         {/* Page Header */}
         <PageHeader
-          title="Home"
+          title="Digital Home"
+          subtitle="Your life in one place"
           icon={prefs?.dashboard_icon || "🏠"}
           iconType={prefs?.dashboard_icon_type || "emoji"}
           coverImage={prefs?.dashboard_cover}
@@ -134,44 +135,25 @@ export default function Dashboard() {
           editable
         />
 
-        {/* Welcome Section */}
-        <div className="mb-8 rounded-xl border border-border bg-card p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <HouseIcon size={32} />
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground">
-                  {profile?.full_name
-                    ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
-                    : "Digital Home"}
-                </h2>
-                <p className="text-sm text-muted-foreground" style={{ letterSpacing: "0.3px" }}>
-                  Your life in one place
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={() => setTaskEditorOpen(true)} size="sm">
-                <Plus className="mr-1.5 h-4 w-4" /> New Task
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" /> New Project
-              </Button>
-            </div>
+        {/* Quick Actions + Momentum */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setTaskEditorOpen(true)} size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> New Task
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" /> New Project
+            </Button>
           </div>
-
-          {/* Momentum bar */}
-          <div className="mt-5 max-w-lg">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-2xl font-medium text-foreground">{momentumPct}%</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+          <div className="flex items-center gap-3 min-w-[200px]">
+            <span className="text-sm font-medium text-foreground">{momentumPct}%</span>
+            <div className="h-2 flex-1 rounded-full bg-secondary overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-primary transition-all duration-1000 ease-out"
                 style={{ width: `${momentumPct}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Momentum score · {totalDone} of {tasks.length} tasks complete</p>
+            <span className="text-xs text-muted-foreground">{totalDone}/{tasks.length}</span>
           </div>
         </div>
 
