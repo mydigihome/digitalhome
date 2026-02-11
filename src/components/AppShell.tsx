@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users, DollarSign } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -81,6 +81,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   ];
 
   const bottomItems = [
+    { icon: DollarSign, label: "Finance", path: "/finance" },
     { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: Users, label: "Team", path: "/team" },
   ];
