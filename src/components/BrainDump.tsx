@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateBrainDump } from "@/hooks/useBrainDumps";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
 import { RamenIcon, HouseAnimIcon, LampIcon } from "@/components/AnimatedIcons";
@@ -13,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 type ActiveIcon = "ramen" | "house" | "lamp";
 
-function getActiveIcon(hour: number, pathname: string): ActiveIcon {
+export function getActiveIcon(hour: number, pathname: string): ActiveIcon {
   if (pathname === "/dashboard" || pathname === "/") {
     if (hour >= 5 && hour < 12) return "lamp";
     if (hour >= 12 && hour < 17) return "house";
@@ -68,6 +67,8 @@ export default function BrainDump() {
   const [timer, setTimer] = useState(0);
   const [organizing, setOrganizing] = useState(false);
   const [result, setResult] = useState<OrganizedResult | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notifColor, setNotifColor] = useState("#8B5CF6");
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const createDump = useCreateBrainDump();
@@ -92,7 +93,7 @@ export default function BrainDump() {
       setResult(data as OrganizedResult);
     } catch (e: any) {
       console.error(e);
-      toast.error(e?.message || "Failed to organize thoughts");
+      // Show inline error instead of toast
     } finally {
       setOrganizing(false);
     }
@@ -102,16 +103,27 @@ export default function BrainDump() {
     const content = currentContent.trim();
     if (!content) return;
     const tags = content.match(/#\w+/g)?.map((t) => t.slice(1)) || [];
+    
     createDump.mutate({
       type: mode === "text" ? "note" : "voice",
       content,
       tags,
+      ...(result ? {
+        ai_title: result.title,
+        summary: result.summary,
+        structured_data: result as any,
+        processed: true,
+      } : {}),
     });
-    toast.success("Brain dump saved!");
+
+    // Show success notification
+    setOpen(false);
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 2500);
+
     setText("");
     setTranscription("");
     setResult(null);
-    setOpen(false);
   };
 
   const handleClose = () => {
@@ -121,10 +133,7 @@ export default function BrainDump() {
 
   const startRecording = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error("Speech recognition not supported in this browser");
-      return;
-    }
+    if (!SpeechRecognition) return;
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -135,10 +144,7 @@ export default function BrainDump() {
         .join("");
       setTranscription(transcript);
     };
-    recognition.onerror = () => {
-      setRecording(false);
-      toast.error("Recording error");
-    };
+    recognition.onerror = () => setRecording(false);
     recognition.start();
     recognitionRef.current = recognition;
     setRecording(true);
@@ -163,9 +169,25 @@ export default function BrainDump() {
 
   return (
     <>
+      {/* Success notification */}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 z-[10000] -translate-x-1/2 flex items-center gap-2 rounded-2xl bg-card px-5 py-3 shadow-lg"
+            style={{ borderLeft: `4px solid ${notifColor}` }}
+          >
+            <IconComponent size={16} />
+            <span className="text-sm font-medium text-foreground">Saved to Brain Dump ✓</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Floating animated icon button */}
       <AnimatePresence>
-        {!open && (
+        {!open && !showNotification && (
           <Tooltip>
             <TooltipTrigger asChild>
               <motion.button
@@ -267,12 +289,11 @@ export default function BrainDump() {
                       exit={{ opacity: 0, y: -10 }}
                       className="space-y-4"
                     >
-                      {/* AI Result */}
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5 text-primary" />
                         <h3 className="text-base font-semibold text-foreground">{result.title}</h3>
                         <span
-                          className="ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          className="ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium text-primary-foreground"
                           style={{ backgroundColor: MOOD_COLORS[result.mood] || MOOD_COLORS.neutral }}
                         >
                           {result.mood}
@@ -301,7 +322,7 @@ export default function BrainDump() {
                           </div>
                           {result.ideas.map((idea, i) => (
                             <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500" />
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                               {idea}
                             </div>
                           ))}
@@ -315,7 +336,7 @@ export default function BrainDump() {
                           </div>
                           {result.goals.map((g, i) => (
                             <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
                               {g}
                             </div>
                           ))}
@@ -329,7 +350,7 @@ export default function BrainDump() {
                           </div>
                           {result.reminders.map((r, i) => (
                             <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
                               {r}
                             </div>
                           ))}
@@ -406,7 +427,6 @@ export default function BrainDump() {
 
               {/* Footer */}
               <div className="flex items-center justify-between gap-2 border-t border-border px-6 py-3">
-                {/* Organize button */}
                 <Button
                   variant="default"
                   onClick={handleOrganize}

@@ -21,6 +21,7 @@ import PageHeader from "@/components/PageHeader";
 import HouseIcon from "@/components/HouseIcon";
 import NotesWidget from "@/components/NotesWidget";
 import NoteEditor from "@/components/NoteEditor";
+import BrainDumpWidget from "@/components/BrainDumpWidget";
 import { cn } from "@/lib/utils";
 
 interface EverydayLink {
@@ -477,6 +478,11 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Brain Dump Widget */}
+          <div className="xl:col-span-3 md:col-span-2">
+            <BrainDumpWidget />
           </div>
 
           {/* Notes Widget */}
