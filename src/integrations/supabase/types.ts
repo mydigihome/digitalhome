@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          application_date: string
+          application_url: string | null
+          category: string
+          company_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          position_title: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_date?: string
+          application_url?: string | null
+          category?: string
+          company_name: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_title: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_date?: string
+          application_url?: string | null
+          category?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_title?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       brain_dumps: {
         Row: {
           content: string
@@ -120,6 +162,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          frequency: string
+          id: string
+          priority: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          description: string
+          expense_date?: string
+          frequency?: string
+          id?: string
+          priority?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          frequency?: string
+          id?: string
+          priority?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          created_at: string
+          current_price: number | null
+          id: string
+          purchase_date: string
+          purchase_price: number
+          quantity: number
+          ticker_symbol: string | null
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type?: string
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          purchase_date?: string
+          purchase_price: number
+          quantity: number
+          ticker_symbol?: string | null
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          purchase_date?: string
+          purchase_price?: number
+          quantity?: number
+          ticker_symbol?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -256,6 +373,50 @@ export type Database = {
         }
         Relationships: []
       }
+      resumes: {
+        Row: {
+          application_id: string | null
+          created_at: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          notes: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          application_id?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          notes?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          application_id?: string | null
+          created_at?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          notes?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resumes_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null
@@ -327,6 +488,8 @@ export type Database = {
       user_preferences: {
         Row: {
           accent_colors: Json | null
+          app_banner_text: string | null
+          app_banner_url: string | null
           bio: string | null
           created_at: string
           custom_folder_colors: boolean | null
@@ -343,10 +506,15 @@ export type Database = {
           theme_color: string | null
           updated_at: string
           user_id: string
+          wealth_banner_text: string | null
+          wealth_banner_text_color: string | null
+          wealth_banner_url: string | null
           website: string | null
         }
         Insert: {
           accent_colors?: Json | null
+          app_banner_text?: string | null
+          app_banner_url?: string | null
           bio?: string | null
           created_at?: string
           custom_folder_colors?: boolean | null
@@ -363,10 +531,15 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string
           user_id: string
+          wealth_banner_text?: string | null
+          wealth_banner_text_color?: string | null
+          wealth_banner_url?: string | null
           website?: string | null
         }
         Update: {
           accent_colors?: Json | null
+          app_banner_text?: string | null
+          app_banner_url?: string | null
           bio?: string | null
           created_at?: string
           custom_folder_colors?: boolean | null
@@ -383,9 +556,59 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string
           user_id?: string
+          wealth_banner_text?: string | null
+          wealth_banner_text_color?: string | null
+          wealth_banner_url?: string | null
           website?: string | null
         }
         Relationships: []
+      }
+      wealth_goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          is_completed: boolean | null
+          linked_project_id: string | null
+          progress: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          is_completed?: boolean | null
+          linked_project_id?: string | null
+          progress?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          is_completed?: boolean | null
+          linked_project_id?: string | null
+          progress?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wealth_goals_linked_project_id_fkey"
+            columns: ["linked_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

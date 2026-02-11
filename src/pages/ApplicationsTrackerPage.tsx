@@ -1,0 +1,335 @@
+import { useState, useRef } from "react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Building, Calendar, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { format, formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import AppShell from "@/components/AppShell";
+import { useApplications, useCreateApplication, useUpdateApplication, useDeleteApplication } from "@/hooks/useApplications";
+import { useResumes, useCreateResume, useDeleteResume } from "@/hooks/useResumes";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+type AppCategory = "all" | "job" | "internship" | "fellowship" | "brand_collab";
+
+const categoryLabels: Record<string, string> = {
+  job: "Job", internship: "Internship", fellowship: "Fellowship", brand_collab: "Brand Collab",
+};
+const categoryColors: Record<string, string> = {
+  job: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  internship: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  fellowship: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  brand_collab: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+};
+const statusColors: Record<string, string> = {
+  applied: "bg-secondary text-muted-foreground",
+  interview_scheduled: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  interviewed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  offer: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  rejected: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  withdrawn: "bg-secondary text-muted-foreground",
+};
+const statusLabels: Record<string, string> = {
+  applied: "Applied", interview_scheduled: "Interview Scheduled", interviewed: "Interviewed",
+  offer: "Offer Received", rejected: "Rejected", withdrawn: "Withdrawn",
+};
+
+const gradientPresets = [
+  "linear-gradient(135deg, #DBEAFE 0%, #93C5FD 50%, #60A5FA 100%)",
+  "linear-gradient(135deg, #EDE9FE 0%, #C4B5FD 50%, #A78BFA 100%)",
+  "linear-gradient(135deg, #FEF3C7 0%, #FCD34D 50%, #FBBF24 100%)",
+  "linear-gradient(135deg, #FCE7F3 0%, #F9A8D4 50%, #F472B6 100%)",
+  "linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 50%, #6EE7B7 100%)",
+  "linear-gradient(135deg, #CFFAFE 0%, #67E8F9 50%, #22D3EE 100%)",
+  "linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 50%, #F87171 100%)",
+  "linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 50%, #9CA3AF 100%)",
+];
+
+export default function ApplicationsTrackerPage() {
+  const { user } = useAuth();
+  const { data: prefs } = useUserPreferences();
+  const upsertPrefs = useUpsertPreferences();
+  const { data: applications = [] } = useApplications();
+  const createApp = useCreateApplication();
+  const updateApp = useUpdateApplication();
+  const deleteApp = useDeleteApplication();
+  const { data: resumes = [] } = useResumes();
+  const createResume = useCreateResume();
+  const deleteResume = useDeleteResume();
+
+  const [activeCategory, setActiveCategory] = useState<AppCategory>("all");
+  const [showForm, setShowForm] = useState(false);
+  const [showResumeUpload, setShowResumeUpload] = useState(false);
+  const [editingApp, setEditingApp] = useState<string | null>(null);
+  const [showBannerMenu, setShowBannerMenu] = useState(false);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+
+  const [form, setForm] = useState({
+    company_name: "", position_title: "", category: "job", status: "applied",
+    application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "",
+  });
+
+  const filtered = activeCategory === "all" ? applications : applications.filter(a => a.category === activeCategory);
+  const counts = {
+    all: applications.length,
+    job: applications.filter(a => a.category === "job").length,
+    internship: applications.filter(a => a.category === "internship").length,
+    fellowship: applications.filter(a => a.category === "fellowship").length,
+    brand_collab: applications.filter(a => a.category === "brand_collab").length,
+  };
+
+  const bannerUrl = (prefs as any)?.app_banner_url;
+
+  const handleSubmit = async () => {
+    if (!form.company_name || !form.position_title) { toast.error("Fill required fields"); return; }
+    if (editingApp) {
+      await updateApp.mutateAsync({ id: editingApp, ...form });
+      toast.success("Application updated");
+    } else {
+      await createApp.mutateAsync(form as any);
+      toast.success("Application added");
+    }
+    setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" });
+    setShowForm(false);
+    setEditingApp(null);
+  };
+
+  const handleEdit = (app: any) => {
+    setForm({ company_name: app.company_name, position_title: app.position_title, category: app.category, status: app.status, application_date: app.application_date, application_url: app.application_url || "", notes: app.notes || "" });
+    setEditingApp(app.id);
+    setShowForm(true);
+  };
+
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 10 * 1024 * 1024) { toast.error("Max 10MB"); return; }
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["pdf", "docx", "doc", "txt"].includes(ext || "")) { toast.error("Supported: PDF, DOCX, DOC, TXT"); return; }
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("resumes").upload(path, file);
+    if (error) { toast.error("Upload failed"); return; }
+    const { data } = await supabase.storage.from("resumes").createSignedUrl(path, 3600);
+    await createResume.mutateAsync({
+      title: file.name.replace(/\.[^/.]+$/, ""),
+      file_url: path,
+      file_type: ext || "pdf",
+      file_size: file.size,
+      notes: null,
+      application_id: null,
+    });
+    toast.success("Resume uploaded");
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    const path = `${user.id}/app-tracker-${Date.now()}`;
+    const { error } = await supabase.storage.from("banners").upload(path, file);
+    if (error) { toast.error("Upload failed"); return; }
+    const { data: { publicUrl } } = supabase.storage.from("banners").getPublicUrl(path);
+    await upsertPrefs.mutateAsync({ app_banner_url: publicUrl } as any);
+    setShowBannerMenu(false);
+    toast.success("Banner updated");
+  };
+
+  return (
+    <AppShell>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        {/* Banner */}
+        <div
+          className="relative w-full h-[280px] rounded-2xl overflow-hidden mb-6 group"
+          style={{
+            background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
+              : !bannerUrl ? "linear-gradient(135deg, #DBEAFE 0%, #93C5FD 50%, #60A5FA 100%)" : undefined,
+            backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
+            backgroundSize: "cover", backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center">
+            <h1 className="text-4xl font-bold uppercase text-center px-8" style={{ color: "#1E3A5F", letterSpacing: "2px", textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+              {(prefs as any)?.app_banner_text || "TRACK YOUR CAREER"}
+            </h1>
+          </div>
+          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="relative">
+              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)}>Change cover</Button>
+              {showBannerMenu && (
+                <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border border-border bg-card p-2 shadow-lg">
+                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Gradients</div>
+                  <div className="grid grid-cols-4 gap-1 px-3 pb-2">
+                    {gradientPresets.map((g, i) => (
+                      <button key={i} onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: g } as any); setShowBannerMenu(false); toast.success("Banner updated"); }} className="h-8 w-full rounded" style={{ background: g }} />
+                    ))}
+                  </div>
+                  <button onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: null } as any); setShowBannerMenu(false); toast.success("Banner reset"); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
+                </div>
+              )}
+            </div>
+          </div>
+          <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
+        </div>
+
+        {/* Title */}
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-3xl">📋</span>
+          <h1 className="text-3xl font-bold text-foreground">Applications Tracker</h1>
+        </div>
+
+        {/* Category Toggles + Add Button */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {(["all", "job", "internship", "fellowship", "brand_collab"] as AppCategory[]).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "h-9 px-4 rounded-lg text-sm font-medium border transition-all duration-150",
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-transparent border-border text-muted-foreground hover:border-primary"
+                )}
+              >
+                {cat === "all" ? "All Applications" : categoryLabels[cat]} ({counts[cat]})
+              </button>
+            ))}
+          </div>
+          <Button onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-1" /> Add Application
+          </Button>
+        </div>
+
+        {/* Application Cards Grid */}
+        {filtered.length === 0 ? (
+          <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
+            <Building className="mx-auto h-12 w-12 text-muted-foreground/40 mb-3" />
+            <p className="text-muted-foreground">No applications yet. Click "Add Application" to get started.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+            {filtered.map(app => {
+              const appResumes = resumes.filter(r => r.application_id === app.id);
+              return (
+                <div key={app.id} className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-foreground shrink-0">
+                      {app.company_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-foreground truncate">{app.company_name}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{app.position_title}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", categoryColors[app.category])}>
+                      {categoryLabels[app.category] || app.category}
+                    </span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", statusColors[app.status])}>
+                      {statusLabels[app.status] || app.status}
+                    </span>
+                    {appResumes.length > 0 && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Applied {formatDistanceToNow(new Date(app.application_date), { addSuffix: true })}
+                  </p>
+                  <div className="flex items-center gap-2 border-t border-border pt-3">
+                    {app.application_url && (
+                      <a href={app.application_url.startsWith("http") ? app.application_url : `https://${app.application_url}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-muted-foreground hover:text-primary"><ExternalLink className="h-4 w-4" /></a>
+                    )}
+                    <button onClick={() => handleEdit(app)} className="p-1.5 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => { deleteApp.mutate(app.id); toast.success("Deleted"); }} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Resumes Section */}
+        <div className="rounded-xl border border-border bg-card shadow-sm">
+          <div className="p-6 border-b border-border flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-semibold text-foreground">📎 Resumes</h3>
+              <p className="text-sm text-muted-foreground">Upload and store your resumes—and other files—here.</p>
+            </div>
+            <Button variant="outline" onClick={() => resumeInputRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-1" /> Upload
+            </Button>
+            <input ref={resumeInputRef} type="file" accept=".pdf,.docx,.doc,.txt" className="hidden" onChange={handleResumeUpload} />
+          </div>
+          <div className="p-6 space-y-3">
+            {resumes.length === 0 && (
+              <div className="rounded-lg border-2 border-dashed border-border p-8 text-center cursor-pointer hover:border-primary transition" onClick={() => resumeInputRef.current?.click()}>
+                <Upload className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">Drag & drop or click to upload (PDF, DOCX, DOC, TXT — max 10MB)</p>
+              </div>
+            )}
+            {resumes.map(r => (
+              <div key={r.id} className="flex items-center gap-3 rounded-lg border border-border p-4 hover:shadow-md transition">
+                <Paperclip className="h-5 w-5 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-foreground truncate">{r.title}</p>
+                  <p className="text-xs text-muted-foreground">{r.file_type.toUpperCase()} • {r.file_size ? `${(r.file_size / 1024).toFixed(0)} KB` : ""} • {format(new Date(r.created_at), "MMM d, yyyy")}</p>
+                </div>
+                <button onClick={() => { deleteResume.mutate(r.id); toast.success("Resume deleted"); }} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Application Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
+            <div className="w-full max-w-[600px] rounded-2xl bg-card p-8 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-foreground">{editingApp ? "Edit Application" : "Add Application"}</h3>
+                <button onClick={() => setShowForm(false)} className="p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Position Title *</Label><Input value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label>Category *</Label>
+                    <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                      <option value="job">Job</option>
+                      <option value="internship">Internship</option>
+                      <option value="fellowship">Fellowship</option>
+                      <option value="brand_collab">Brand Collab</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1"><Label>Status</Label>
+                    <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                      <option value="applied">Applied</option>
+                      <option value="interview_scheduled">Interview Scheduled</option>
+                      <option value="interviewed">Interviewed</option>
+                      <option value="offer">Offer Received</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="withdrawn">Withdrawn</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-1"><Label>Application Date</Label><Input type="date" value={form.application_date} onChange={e => setForm(p => ({ ...p, application_date: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Application URL (optional)</Label><Input value={form.application_url} onChange={e => setForm(p => ({ ...p, application_url: e.target.value }))} placeholder="https://..." /></div>
+                <div className="space-y-1"><Label>Notes (optional)</Label><Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
+                <Button onClick={handleSubmit} disabled={createApp.isPending || updateApp.isPending} className="flex-1">
+                  {(createApp.isPending || updateApp.isPending) ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </AppShell>
+  );
+}
