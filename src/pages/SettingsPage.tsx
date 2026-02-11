@@ -22,8 +22,15 @@ const accentColors = [
   { label: "Orange", value: "#F59E0B" },
   { label: "Pink", value: "#EC4899" },
   { label: "Red", value: "#EF4444" },
-  { label: "Teal", value: "#14B8A6" },
-  { label: "Indigo", value: "#6366F1" },
+  { label: "Black", value: "#1A1A1A" },
+  { label: "Brown", value: "#6B4226" },
+];
+
+const fontOptions = [
+  { label: "Inter", value: "Inter" },
+  { label: "Georgia", value: "Georgia" },
+  { label: "Mono", value: "ui-monospace, monospace" },
+  { label: "System", value: "system-ui, sans-serif" },
 ];
 
 type ResourceItem = {
@@ -353,10 +360,23 @@ export default function SettingsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Font Size */}
+                {/* Font Family */}
                 <Card>
-                  <CardHeader><CardTitle className="text-base">Font size</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base">Font</CardTitle></CardHeader>
                   <CardContent>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {fontOptions.map((f) => (
+                        <button
+                          key={f.label}
+                          onClick={() => document.documentElement.style.setProperty("--font-sans", f.value)}
+                          className="rounded-lg border-2 border-border px-4 py-3 text-sm font-medium transition-colors hover:border-muted-foreground/30"
+                          style={{ fontFamily: f.value }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Size</p>
                     <div className="flex gap-2">
                       {["small", "medium", "large"].map((size) => (
                         <button
