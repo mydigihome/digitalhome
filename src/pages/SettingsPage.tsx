@@ -33,9 +33,15 @@ const aiResources = [
   { id: 18, name: "Leonardo AI", description: "Create production-quality visual assets with AI", image: "🎨", category: "Image Generation", url: "https://leonardo.ai" },
   { id: 19, name: "Visualize AI", description: "Turn data and ideas into stunning visual graphics", image: "📊", category: "Productivity", url: "https://visualize.ai" },
   { id: 20, name: "Speechify", description: "Turn any text into natural-sounding audio with AI", image: "🔊", category: "Audio/Video", url: "https://speechify.com" },
+  // Apps & Tools with referral tracking
+  { id: 21, name: "Zocks", description: "Financial advisors platform for smart wealth management", image: "💼", category: "Wealth", url: "https://zocks.com", clicks: 42, signups: 8 },
+  { id: 22, name: "Monarch Money", description: "Complete wealth tracker for all your financial goals", image: "👑", category: "Wealth", url: "https://monarchmoney.com", clicks: 67, signups: 12 },
+  { id: 23, name: "Luma", description: "Beautiful event planning and calendar management", image: "🌙", category: "Events", url: "https://lu.ma", clicks: 38, signups: 15 },
+  { id: 24, name: "Posh VIP", description: "Premium event experiences and exclusive access", image: "✨", category: "Events", url: "https://poshvip.com", clicks: 29, signups: 6 },
+  { id: 25, name: "Partiful", description: "Social event planning made simple and fun", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 51, signups: 19 },
 ];
 
-const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Marketing", "Audio/Video", "Assistant", "Career"];
+const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Marketing", "Audio/Video", "Assistant", "Career", "Wealth", "Events"];
 
 export default function SettingsPage() {
   const { user, profile, signOut, updateProfile, updatePassword } = useAuth();
@@ -308,6 +314,12 @@ export default function SettingsPage() {
                     </div>
                     <h3 className="mb-2 text-xl font-semibold text-foreground">{resource.name}</h3>
                     <p className="mb-4 text-sm text-muted-foreground">{resource.description}</p>
+                    {('clicks' in resource) && (
+                      <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="rounded-md bg-secondary px-2 py-1 font-medium"># clicks: {(resource as any).clicks}</span>
+                        <span className="rounded-md bg-secondary px-2 py-1 font-medium"># signups: {(resource as any).signups}</span>
+                      </div>
+                    )}
                     <a
                       href={resource.url}
                       target="_blank"
