@@ -82,7 +82,7 @@ export default function PageHeader({
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 relative">
       {/* Cover Image */}
       <div className="group relative h-[200px] rounded-t-xl overflow-hidden" style={coverStyle}>
         {/* Centered upload prompt when no cover */}
@@ -115,35 +115,36 @@ export default function PageHeader({
           </div>
         )}
 
-        {/* Cover Picker Dropdown */}
-        {showCoverPicker && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute right-3 top-12 z-50 w-72 rounded-lg border border-border bg-card p-4 shadow-xl"
-          >
-            <p className="mb-3 text-xs font-medium text-muted-foreground">Gradients</p>
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              {gradientPresets.map((g) => (
-                <button
-                  key={g.id}
-                  onClick={() => { onCoverChange?.(g.value, "gradient"); setShowCoverPicker(false); }}
-                  className="h-12 rounded-md transition-transform hover:scale-105"
-                  style={{ background: g.value }}
-                  title={g.label}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => coverInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-border p-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary"
-            >
-              <Upload className="h-3.5 w-3.5" /> Upload image
-            </button>
-            <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-          </motion.div>
-        )}
+        <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       </div>
+
+      {/* Cover Picker Dropdown - outside overflow-hidden container */}
+      {showCoverPicker && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute right-11 top-[56px] z-50 w-72 rounded-lg border border-border bg-card p-4 shadow-xl"
+        >
+          <p className="mb-3 text-xs font-medium text-muted-foreground">Gradients</p>
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {gradientPresets.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => { onCoverChange?.(g.value, "gradient"); setShowCoverPicker(false); }}
+                className="h-12 rounded-md transition-transform hover:scale-105"
+                style={{ background: g.value }}
+                title={g.label}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="flex w-full items-center justify-center gap-2 rounded-md border border-border p-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary"
+          >
+            <Upload className="h-3.5 w-3.5" /> Upload image
+          </button>
+        </motion.div>
+      )}
 
       {/* Icon & Title */}
       <div className="relative px-8 -mt-10">
