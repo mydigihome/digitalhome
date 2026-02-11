@@ -64,6 +64,8 @@ export type Database = {
           created_at: string
           id: string
           processed: boolean | null
+          structured_data: Json | null
+          summary: string | null
           tags: string[] | null
           type: string
           user_id: string
@@ -75,6 +77,8 @@ export type Database = {
           created_at?: string
           id?: string
           processed?: boolean | null
+          structured_data?: Json | null
+          summary?: string | null
           tags?: string[] | null
           type: string
           user_id: string
@@ -86,6 +90,8 @@ export type Database = {
           created_at?: string
           id?: string
           processed?: boolean | null
+          structured_data?: Json | null
+          summary?: string | null
           tags?: string[] | null
           type?: string
           user_id?: string

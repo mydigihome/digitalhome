@@ -10,6 +10,10 @@ export interface BrainDump {
   tags: string[] | null;
   processed: boolean;
   created_at: string;
+  card_color: string | null;
+  ai_title: string | null;
+  summary: string | null;
+  structured_data: Record<string, any> | null;
 }
 
 export function useBrainDumps() {
@@ -33,10 +37,19 @@ export function useCreateBrainDump() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (dump: { type: string; content: string; tags?: string[] }) => {
+    mutationFn: async (dump: {
+      type: string;
+      content: string;
+      tags?: string[];
+      card_color?: string;
+      ai_title?: string;
+      summary?: string;
+      structured_data?: Record<string, any>;
+      processed?: boolean;
+    }) => {
       const { data, error } = await supabase
         .from("brain_dumps")
-        .insert({ ...dump, user_id: user!.id })
+        .insert({ ...dump, user_id: user!.id } as any)
         .select()
         .single();
       if (error) throw error;
