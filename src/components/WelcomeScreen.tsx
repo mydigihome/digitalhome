@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DoorOpen } from 'lucide-react';
+import doorImage from '@/assets/wooden-door.png';
 
 interface WelcomeScreenProps {
   userName: string;
@@ -7,21 +7,22 @@ interface WelcomeScreenProps {
 }
 
 const WelcomeScreen = ({ userName, onEnter }: WelcomeScreenProps) => {
-  const [isZooming, setIsZooming] = useState(false);
+  const [isBlurring, setIsBlurring] = useState(false);
 
   const handleEnter = () => {
-    setIsZooming(true);
+    setIsBlurring(true);
     setTimeout(() => {
       onEnter();
-    }, 1500);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center overflow-hidden">
-      <div
-        className={`text-center transition-all duration-[1500ms] ease-in-out ${
-          isZooming ? 'scale-[20] opacity-0' : 'scale-100 opacity-100'
-        }`}
+    <div 
+      className={`min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center transition-all duration-1000 ${
+        isBlurring ? 'blur-xl opacity-0' : 'blur-0 opacity-100'
+      }`}
+    >
+      <div className="text-center"
       >
         <div className="mb-8">
           <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl">
@@ -40,8 +41,8 @@ const WelcomeScreen = ({ userName, onEnter }: WelcomeScreenProps) => {
           className="group relative mt-12 px-8 py-6 bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
         >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center group-hover:from-blue-600 group-hover:to-purple-600 transition-all">
-              <DoorOpen className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden">
+              <img src={doorImage} alt="Wooden door" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div className="text-left">
               <p className="text-sm text-gray-500 font-medium">Step Inside</p>
