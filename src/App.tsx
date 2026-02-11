@@ -16,6 +16,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import CalendarPage from "./pages/CalendarPage";
 import TeamPage from "./pages/TeamPage";
 import SettingsPage from "./pages/SettingsPage";
+import FinancePage from "./pages/FinancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /><BrainDump /></ProtectedRoute>} />
             <Route path="/calendar" element={<ProtectedRoute><CalendarPage /><BrainDump /></ProtectedRoute>} />
             <Route path="/team" element={<ProtectedRoute><TeamPage /><BrainDump /></ProtectedRoute>} />
+            <Route path="/finance" element={<ProtectedRoute><FinancePage /><BrainDump /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
