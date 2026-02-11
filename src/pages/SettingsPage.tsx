@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
+import { useArchivedProjects, useRestoreProject, useDeleteArchivedProject } from "@/hooks/useArchivedProjects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,11 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import PageHeader from "@/components/PageHeader";
+
 
 
 const accentColors = [
@@ -88,6 +90,7 @@ const settingsTabs = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "account", label: "Account", icon: Shield },
   { id: "resources", label: "AI Resources", icon: Sparkles },
+  { id: "archived", label: "Archived Projects", icon: Archive },
 ] as const;
 
 type SettingsTab = typeof settingsTabs[number]["id"];
@@ -97,6 +100,9 @@ export default function SettingsPage() {
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
+  const { data: archivedProjects = [] } = useArchivedProjects();
+  const restoreProject = useRestoreProject();
+  const deleteArchivedProject = useDeleteArchivedProject();
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [bio, setBio] = useState(prefs?.bio || "");
   const [location, setLocation] = useState(prefs?.location || "");
@@ -110,6 +116,7 @@ export default function SettingsPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
+  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
   // Fetch engagement counts from database
   useEffect(() => {
@@ -161,6 +168,21 @@ export default function SettingsPage() {
         signups: (prev[resource.id]?.signups || 0) + 1,
       },
     }));
+  };
+
+  const handleRestoreProject = async (projectId: string) => {
+    await restoreProject.mutateAsync(projectId);
+    toast.success("Project restored to active projects");
+  };
+
+  const handleDeleteArchivedProject = async (projectId: string) => {
+    const project = archivedProjects?.find(p => p.id === projectId);
+    if (!project) return;
+    
+    if (confirm(`Permanently delete "${project.name}"? This cannot be undone.`)) {
+      await deleteArchivedProject.mutateAsync(projectId);
+      toast.success("Project permanently deleted");
+    }
   };
 
   const filteredResources = selectedCategory === "All"
@@ -567,6 +589,159 @@ export default function SettingsPage() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Archived Projects Tab */}
+            {activeTab === "archived" && (
+              <div>
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Archive size={32} />
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">Archived Projects</h2>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        View and manage your archived projects. Restore them to continue working or permanently delete them.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                {archivedProjects && archivedProjects.length > 0 && (
+                  <Card className="mb-6">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Archived Projects</p>
+                          <p className="text-3xl font-bold text-foreground">{archivedProjects.length}</p>
+                        </div>
+                        <Archive size={40} className="text-muted-foreground/20" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Empty state */}
+                {!archivedProjects || archivedProjects.length === 0 ? (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Archive size={48} className="text-muted-foreground/30 mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No Archived Projects</h3>
+                      <p className="text-sm text-muted-foreground">You haven't archived any projects yet.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {archivedProjects.map((project) => (
+                      <Card key={project.id}>
+                        <div className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Archive size={18} className="text-muted-foreground/60" />
+                                <h3 className="text-lg font-semibold text-foreground">
+                                  {project.name}
+                                </h3>
+                              </div>
+                              {project.goal && (
+                                <p className="text-sm text-muted-foreground mb-2">{project.goal}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                Archived on {new Date(project.updated_at).toLocaleDateString('en-US', { 
+                                  year: 'numeric', 
+                                  month: 'long', 
+                                  day: 'numeric' 
+                                })}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-3 pt-4 border-t border-border">
+                            <Button
+                              onClick={() => handleRestoreProject(project.id)}
+                              className="flex-1"
+                              disabled={restoreProject.isPending}
+                            >
+                              <RotateCcw size={16} className="mr-2" />
+                              {restoreProject.isPending ? "Restoring..." : "Restore"}
+                            </Button>
+
+                            <button
+                              onClick={() => setExpandedProject(expandedProject === project.id ? null : project.id)}
+                              className={cn(
+                                "px-4 py-2 rounded-lg border transition-colors text-sm font-medium",
+                                "border-border bg-secondary hover:bg-secondary/80 text-foreground"
+                              )}
+                            >
+                              {expandedProject === project.id ? "Hide Details" : "View Details"}
+                            </button>
+
+                            <Button
+                              onClick={() => handleDeleteArchivedProject(project.id)}
+                              variant="outline"
+                              disabled={deleteArchivedProject.isPending}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+
+                          {/* Expanded Details */}
+                          {expandedProject === project.id && (
+                            <div className="border-t border-border mt-4 pt-4">
+                              <h4 className="font-semibold text-foreground mb-3">Project Information</h4>
+                              <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Project ID:</span>
+                                  <span className="text-foreground font-mono">{project.id}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Status:</span>
+                                  <span className="text-orange-600 font-medium">Archived</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Type:</span>
+                                  <span className="text-foreground capitalize">{project.type}</span>
+                                </div>
+                                {project.start_date && (
+                                  <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Start Date:</span>
+                                    <span className="text-foreground">{new Date(project.start_date).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                                {project.end_date && (
+                                  <div className="flex justify-between">
+                                    <span className="text-muted-foreground">End Date:</span>
+                                    <span className="text-foreground">{new Date(project.end_date).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-4 p-3 bg-secondary rounded-lg border border-border">
+                                <p className="text-xs text-muted-foreground">
+                                  💡 All project data is safely stored. You can restore this project at any time.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Info Box */}
+                {archivedProjects && archivedProjects.length > 0 && (
+                  <div className="mt-8 bg-secondary rounded-lg border border-border p-4">
+                    <h4 className="font-semibold text-foreground mb-2">About Archived Projects</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Archived projects are stored safely and don't count toward your active project list</li>
+                      <li>• You can restore an archived project at any time to continue working on it</li>
+                      <li>• Permanently deleting an archived project cannot be undone</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
