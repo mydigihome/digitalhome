@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles, Edit2, Check, Search,
+  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
@@ -27,6 +27,18 @@ interface EverydayLink {
   icon: string;
   url: string;
   completed: boolean;
+  image?: string;
+}
+
+function getFaviconUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+    if (parsed.protocol === "mailto:") return null;
+    if (parsed.hostname === "" || parsed.hash) return null;
+    return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=64`;
+  } catch {
+    return null;
+  }
 }
 
 function useCurrentTime() {
@@ -396,14 +408,45 @@ export default function Dashboard() {
                     {link.completed && <Check className="h-3 w-3 text-primary-foreground" />}
                   </button>
 
+                  {/* Link thumbnail */}
+                  {(() => {
+                    const imgSrc = link.image || getFaviconUrl(link.url);
+                    return (
+                      <div className="relative h-8 w-8 flex-shrink-0 rounded-md bg-secondary overflow-hidden flex items-center justify-center">
+                        {imgSrc ? (
+                          <img
+                            src={imgSrc}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <span className="text-sm">{link.icon}</span>
+                        )}
+                        {editingLinks && (
+                          <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-foreground/40 opacity-0 transition-opacity hover:opacity-100">
+                            <ImageIcon className="h-3.5 w-3.5 text-primary-foreground" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => updateLink(link.id, "image", ev.target?.result as string);
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   {editingLinks ? (
                     <>
-                      <input
-                        type="text"
-                        value={link.icon}
-                        onChange={(e) => updateLink(link.id, "icon", e.target.value)}
-                        className="w-10 rounded-sm border border-border bg-background px-1.5 py-1 text-center text-sm"
-                      />
                       <input
                         type="text"
                         value={link.name}
@@ -414,7 +457,6 @@ export default function Dashboard() {
                     </>
                   ) : (
                     <>
-                      <span className="text-lg">{link.icon}</span>
                       <a
                         href={link.url}
                         target="_blank"
