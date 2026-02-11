@@ -9,7 +9,6 @@ const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home },
   { id: "work", label: "Work", icon: Briefcase },
   { id: "travel", label: "Trips", icon: Plane },
-  
 ];
 
 function UserDropdown() {
@@ -32,29 +31,29 @@ function UserDropdown() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-md"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground transition-all hover:shadow-md active:scale-95"
       >
         {initials}
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-12 z-50 w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
+            className="absolute left-0 top-10 z-50 w-52 rounded-lg border border-border bg-card p-1.5 shadow-lg"
           >
-            <div className="px-3 py-2 text-xs text-muted-foreground">{user?.email}</div>
+            <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user?.email}</div>
             <button
               onClick={() => { setOpen(false); navigate("/settings"); }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-secondary"
+              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-secondary"
             >
               <Settings className="h-4 w-4 text-muted-foreground" /> Settings
             </button>
             <button
               onClick={async () => { await signOut(); navigate("/login"); }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4" /> Log out
             </button>
@@ -65,7 +64,7 @@ function UserDropdown() {
   );
 }
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [projectsOpen, setProjectsOpen] = useState(
@@ -77,7 +76,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const activeType = searchParams.get("type");
 
   const topItems = [
-    { icon: Home, label: "Home Office", path: "/dashboard" },
+    { icon: Home, label: "Home", path: "/dashboard" },
   ];
 
   const bottomItems = [
@@ -91,151 +90,158 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.();
   };
 
+  const NavItem = ({ icon: Icon, label, path, isActive }: { icon: any; label: string; path: string; isActive: boolean }) => (
+    <li>
+      <button
+        onClick={() => go(path)}
+        className={cn(
+          "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
+          isActive
+            ? "bg-accent text-accent-foreground shadow-xs"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        )}
+      >
+        <Icon className="h-[18px] w-[18px] shrink-0" />
+        {!collapsed && <span>{label}</span>}
+      </button>
+    </li>
+  );
+
   return (
-    <ul role="list" className="flex flex-1 flex-col gap-y-1">
-      {/* Home */}
-      {topItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = location.pathname.startsWith(item.path);
-        return (
-          <li key={item.path}>
-            <button
-              onClick={() => go(item.path)}
-              className={cn(
-                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
-                isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
-              )}
-            >
-              <Icon className="h-6 w-6 shrink-0" />
-              {item.label}
-            </button>
-          </li>
-        );
-      })}
+    <ul role="list" className="flex flex-1 flex-col gap-y-0.5">
+      {topItems.map((item) => (
+        <NavItem key={item.path} {...item} isActive={location.pathname.startsWith(item.path)} />
+      ))}
 
       {/* Projects with sub-folders */}
       <li>
         <button
           onClick={() => {
+            if (collapsed) { go("/projects"); return; }
             setProjectsOpen(!projectsOpen);
-            go("/projects");
+            if (!isProjectsActive) go("/projects");
           }}
           className={cn(
-            "group flex w-full items-center gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
-            isProjectsActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
+            "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
+            isProjectsActive
+              ? "bg-accent text-accent-foreground shadow-xs"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           )}
         >
-          <FolderOpen className="h-6 w-6 shrink-0" />
-          <span className="flex-1 text-left">Projects</span>
-          <ChevronDown
-            className={cn("h-4 w-4 shrink-0 transition-transform", projectsOpen && "rotate-180")}
-          />
+          <FolderOpen className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">Projects</span>
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", projectsOpen && "rotate-180")}
+              />
+            </>
+          )}
         </button>
 
-        <AnimatePresence initial={false}>
-          {projectsOpen && (
-            <motion.ul
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              {projectFolders.map((folder) => {
-                const Icon = folder.icon;
-                const isActive = location.pathname === "/projects" && activeType === folder.id;
-                return (
-                  <li key={folder.id}>
-                    <button
-                      onClick={() => go(`/projects?type=${folder.id}`)}
-                      className={cn(
-                        "flex w-full items-center gap-x-3 rounded-lg py-2 pl-12 pr-3 text-sm transition-colors",
-                        isActive
-                          ? "font-medium text-primary"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {folder.label}
-                    </button>
-                  </li>
-                );
-              })}
-            </motion.ul>
-          )}
-        </AnimatePresence>
+        {!collapsed && (
+          <AnimatePresence initial={false}>
+            {projectsOpen && (
+              <motion.ul
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                {projectFolders.map((folder) => {
+                  const Icon = folder.icon;
+                  const isActive = location.pathname === "/projects" && activeType === folder.id;
+                  return (
+                    <li key={folder.id}>
+                      <button
+                        onClick={() => go(`/projects?type=${folder.id}`)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
+                          isActive
+                            ? "font-medium text-accent-foreground"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {folder.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </motion.ul>
+            )}
+          </AnimatePresence>
+        )}
       </li>
 
-      {/* Calendar */}
-      {bottomItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = location.pathname.startsWith(item.path);
-        return (
-          <li key={item.path}>
-            <button
-              onClick={() => go(item.path)}
-              className={cn(
-                "group flex w-full gap-x-3 rounded-xl p-3 text-sm font-semibold leading-6 transition-colors",
-                isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-primary"
-              )}
-            >
-              <Icon className="h-6 w-6 shrink-0" />
-              {item.label}
-            </button>
-          </li>
-        );
-      })}
+      {bottomItems.map((item) => (
+        <NavItem key={item.path} {...item} isActive={location.pathname.startsWith(item.path)} />
+      ))}
     </ul>
   );
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
-          {/* Logo */}
-          <div className="flex h-20 shrink-0 items-center">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
-                <span className="text-xl font-bold text-primary-foreground">D</span>
+      <div
+        className={cn(
+          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-200",
+          collapsed ? "lg:w-[60px]" : "lg:w-[240px]"
+        )}
+      >
+        <div className="flex grow flex-col overflow-y-auto border-r border-border bg-card">
+          {/* Logo area */}
+          <div className="flex h-16 shrink-0 items-center justify-between px-4">
+            {!collapsed && (
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-primary">
+                  <span className="text-sm font-semibold text-primary-foreground">D</span>
+                </div>
+                <span className="text-md font-semibold text-foreground">Digital Home</span>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Digital Home</h1>
-                <p className="text-xs text-muted-foreground">Your life in one place</p>
+            )}
+            {collapsed && (
+              <div className="flex h-8 w-8 mx-auto items-center justify-center rounded-md bg-gradient-primary">
+                <span className="text-sm font-semibold text-primary-foreground">D</span>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Navigation */}
-          <nav className="flex flex-1 flex-col">
-            <SidebarNav />
+          <nav className="flex flex-1 flex-col px-2 py-2">
+            <SidebarNav collapsed={collapsed} />
           </nav>
 
-          {/* User Profile at Bottom */}
-          <div className="border-t border-border pt-4">
+          {/* Bottom section */}
+          <div className="border-t border-border px-3 py-3 flex items-center justify-between">
             <UserDropdown />
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <ChevronDown className={cn("h-4 w-4 transition-transform", collapsed ? "-rotate-90" : "rotate-90")} />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Mobile Header */}
-      <div className="sticky top-0 z-40 flex items-center gap-x-4 border-b border-border bg-card/80 px-4 py-4 shadow-sm backdrop-blur-md lg:hidden">
+      <div className="sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-sm lg:hidden">
         <button
-          className="-m-2.5 p-2.5 text-muted-foreground"
+          className="p-1.5 text-muted-foreground hover:text-foreground"
           onClick={() => setMobileOpen(true)}
         >
           <span className="sr-only">Open sidebar</span>
-          <Menu className="h-6 w-6" aria-hidden="true" />
+          <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
-        <div className="flex-1 text-sm font-semibold leading-6 text-foreground">
-          Digital Home
-        </div>
+        <span className="flex-1 text-sm font-semibold text-foreground">Digital Home</span>
         <UserDropdown />
       </div>
 
@@ -247,7 +253,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/80"
+              className="fixed inset-0 bg-foreground/40 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
             <div className="fixed inset-0 flex">
@@ -256,28 +262,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 animate={{ x: 0 }}
                 exit={{ x: -280 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative mr-16 flex w-full max-w-xs flex-1"
+                className="relative mr-16 flex w-full max-w-[240px] flex-1"
               >
-                <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
-                  <button className="-m-2.5 p-2.5" onClick={() => setMobileOpen(false)}>
+                <div className="absolute left-full top-0 flex w-16 justify-center pt-3">
+                  <button className="p-1.5" onClick={() => setMobileOpen(false)}>
                     <span className="sr-only">Close sidebar</span>
-                    <X className="h-6 w-6 text-primary-foreground" aria-hidden="true" />
+                    <X className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
                   </button>
                 </div>
 
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4">
-                  <div className="flex h-20 shrink-0 items-center">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80">
-                        <span className="text-xl font-bold text-primary-foreground">D</span>
+                <div className="flex grow flex-col overflow-y-auto bg-card">
+                  <div className="flex h-16 shrink-0 items-center px-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-primary">
+                        <span className="text-sm font-semibold text-primary-foreground">D</span>
                       </div>
-                      <div>
-                        <h1 className="text-xl font-bold text-foreground">Digital Home</h1>
-                        <p className="text-xs text-muted-foreground">Your life in one place</p>
-                      </div>
+                      <span className="text-md font-semibold text-foreground">Digital Home</span>
                     </div>
                   </div>
-                  <nav className="flex flex-1 flex-col">
+                  <nav className="flex flex-1 flex-col px-2 py-2">
                     <SidebarNav onNavigate={() => setMobileOpen(false)} />
                   </nav>
                 </div>
@@ -288,8 +291,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="lg:pl-72">
-        <div className="mx-auto max-w-[1200px] px-6 py-8">
+      <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>
+        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
           {children}
         </div>
       </main>
