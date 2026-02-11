@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -26,20 +26,45 @@ const accentColors = [
   { label: "Indigo", value: "#6366F1" },
 ];
 
-const aiResources = [
+type ResourceItem = {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconColor?: string;
+  category: string;
+  url: string;
+  clicks: number;
+  signups: number;
+  isIntegration?: boolean;
+};
+
+const aiResources: ResourceItem[] = [
   { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app", clicks: 1243, signups: 312 },
-  { id: 2, name: "ChatGPT", description: "AI assistant for writing, research, and brainstorming", image: "💬", category: "Assistant", url: "https://chat.openai.com", clicks: 8921, signups: 2104 },
-  { id: 3, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 4532, signups: 876 },
-  { id: 4, name: "Notion AI", description: "AI-powered workspace for notes and documentation", image: "📝", category: "Productivity", url: "https://notion.so", clicks: 3210, signups: 645 },
-  { id: 5, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 2187, signups: 423 },
-  { id: 6, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Productivity", url: "https://zocks.ai", clicks: 987, signups: 198 },
-  { id: 7, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com", clicks: 1654, signups: 387 },
-  { id: 8, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma", clicks: 2341, signups: 512 },
-  { id: 9, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip", clicks: 876, signups: 156 },
-  { id: 10, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 1432, signups: 298 },
+  { id: 2, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com", clicks: 4532, signups: 876 },
+  { id: 3, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com", clicks: 2187, signups: 423 },
+  { id: 4, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Finance", url: "https://zocks.ai", clicks: 987, signups: 198 },
+  { id: 5, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com", clicks: 1654, signups: 387 },
+  { id: 6, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma", clicks: 2341, signups: 512 },
+  { id: 7, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip", clicks: 876, signups: 156 },
+  { id: 8, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com", clicks: 1432, signups: 298 },
+  // Integrations
+  { id: 100, name: "Claude AI", description: "Power your AI Brain Dump with Claude's advanced reasoning", image: "", icon: Brain, iconColor: "text-purple-500", category: "AI", url: "https://anthropic.com", clicks: 1247, signups: 892, isIntegration: true },
+  { id: 101, name: "ChatGPT", description: "Alternative AI assistant for task suggestions and planning", image: "", icon: Sparkles, iconColor: "text-blue-500", category: "AI", url: "https://chat.openai.com", clicks: 856, signups: 634, isIntegration: true },
+  { id: 102, name: "Notion", description: "Sync your projects and tasks with Notion workspaces", image: "", icon: FileText, iconColor: "text-foreground", category: "Productivity", url: "https://notion.so", clicks: 2103, signups: 1456, isIntegration: true },
+  { id: 103, name: "Google Calendar", description: "Two-way sync with your Google Calendar events", image: "", icon: Calendar, iconColor: "text-red-500", category: "Productivity", url: "https://calendar.google.com", clicks: 3421, signups: 2891, isIntegration: true },
+  { id: 104, name: "Slack", description: "Get task reminders and updates in your Slack channels", image: "", icon: MessageSquare, iconColor: "text-purple-500", category: "Communication", url: "https://slack.com", clicks: 1678, signups: 1203, isIntegration: true },
+  { id: 105, name: "Zapier", description: "Connect to 5,000+ apps with automated workflows", image: "", icon: Zap, iconColor: "text-orange-500", category: "Automation", url: "https://zapier.com", clicks: 945, signups: 712, isIntegration: true },
+  { id: 106, name: "Make", description: "Build complex automation scenarios visually", image: "", icon: Workflow, iconColor: "text-blue-500", category: "Automation", url: "https://make.com", clicks: 623, signups: 478, isIntegration: true },
+  { id: 107, name: "Figma", description: "Import design files and link to project tasks", image: "", icon: Layers, iconColor: "text-pink-500", category: "Design", url: "https://figma.com", clicks: 1892, signups: 1345, isIntegration: true },
+  { id: 108, name: "GitHub", description: "Track issues and pull requests as project tasks", image: "", icon: Github, iconColor: "text-foreground", category: "Development", url: "https://github.com", clicks: 2567, signups: 1987, isIntegration: true },
+  { id: 109, name: "Linear", description: "Sync engineering tasks and sprint planning", image: "", icon: TrendingUp, iconColor: "text-purple-500", category: "Development", url: "https://linear.app", clicks: 1234, signups: 923, isIntegration: true },
+  { id: 110, name: "Asana", description: "Import existing Asana projects and workflows", image: "", icon: CheckCircle, iconColor: "text-pink-500", category: "Productivity", url: "https://asana.com", clicks: 876, signups: 654, isIntegration: true },
+  { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", clicks: 1456, signups: 1098, isIntegration: true },
 ];
 
-const categories = ["All", "Presentations", "Writing", "Image Generation", "Video", "Productivity", "Assistant", "Finance", "Events"];
+const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events"];
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -387,29 +412,43 @@ export default function SettingsPage() {
                   ))}
                 </div>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {filteredResources.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-3xl">{resource.image}</span>
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
-                          <span className="text-xs text-muted-foreground">{resource.category}</span>
+                  {filteredResources.map((resource) => {
+                    const IconComp = resource.icon;
+                    return (
+                      <div
+                        key={resource.id}
+                        className="group rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          {IconComp ? (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                              <IconComp className={cn("h-5 w-5", resource.iconColor)} />
+                            </div>
+                          ) : (
+                            <span className="text-3xl">{resource.image}</span>
+                          )}
+                          <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
+                            <span className="text-xs text-muted-foreground">{resource.category}</span>
+                          </div>
+                          {resource.isIntegration ? (
+                            <Button variant="outline" size="sm" className="text-xs h-8">
+                              Connect
+                            </Button>
+                          ) : (
+                            <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                            </a>
+                          )}
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        <p className="text-xs text-muted-foreground mb-3">{resource.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
+                          <span>{resource.clicks.toLocaleString()} clicks</span>
+                          <span>{resource.signups.toLocaleString()} signups</span>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-3">{resource.description}</p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
-                        <span>{resource.clicks.toLocaleString()} clicks</span>
-                        <span>{resource.signups.toLocaleString()} signups</span>
-                      </div>
-                    </a>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
