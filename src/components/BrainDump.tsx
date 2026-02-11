@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Mic, MicOff, Type } from "lucide-react";
+import { X, Mic, MicOff, Type, Sparkles, Loader2, CheckCircle2, ListTodo, Lightbulb, Target, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateBrainDump } from "@/hooks/useBrainDumps";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useLocation } from "react-router-dom";
@@ -40,6 +41,24 @@ const HEADER_BG: Record<ActiveIcon, string> = {
   lamp: "rgba(212,169,106,0.05)",
 };
 
+interface OrganizedResult {
+  title: string;
+  summary: string;
+  tasks: string[];
+  ideas: string[];
+  goals: string[];
+  reminders: string[];
+  mood: string;
+}
+
+const MOOD_COLORS: Record<string, string> = {
+  productive: "hsl(var(--primary))",
+  reflective: "hsl(210, 60%, 50%)",
+  stressed: "hsl(0, 70%, 55%)",
+  excited: "hsl(45, 90%, 50%)",
+  neutral: "hsl(var(--muted-foreground))",
+};
+
 export default function BrainDump() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"text" | "voice">("text");
@@ -47,6 +66,8 @@ export default function BrainDump() {
   const [recording, setRecording] = useState(false);
   const [transcription, setTranscription] = useState("");
   const [timer, setTimer] = useState(0);
+  const [organizing, setOrganizing] = useState(false);
+  const [result, setResult] = useState<OrganizedResult | null>(null);
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const createDump = useCreateBrainDump();
@@ -54,20 +75,48 @@ export default function BrainDump() {
 
   const hour = new Date().getHours();
   const activeIcon = getActiveIcon(hour, location.pathname);
-
   const IconComponent = activeIcon === "ramen" ? RamenIcon : activeIcon === "house" ? HouseAnimIcon : LampIcon;
 
-  const charCount = mode === "text" ? text.length : transcription.length;
+  const currentContent = mode === "text" ? text : transcription;
+  const charCount = currentContent.length;
+
+  const handleOrganize = async () => {
+    const content = currentContent.trim();
+    if (!content) return;
+    setOrganizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("organize-brain-dump", {
+        body: { content },
+      });
+      if (error) throw error;
+      setResult(data as OrganizedResult);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || "Failed to organize thoughts");
+    } finally {
+      setOrganizing(false);
+    }
+  };
 
   const handleSave = () => {
-    const content = mode === "text" ? text.trim() : transcription.trim();
+    const content = currentContent.trim();
     if (!content) return;
     const tags = content.match(/#\w+/g)?.map((t) => t.slice(1)) || [];
-    createDump.mutate({ type: mode === "text" ? "note" : "voice", content, tags });
+    createDump.mutate({
+      type: mode === "text" ? "note" : "voice",
+      content,
+      tags,
+    });
     toast.success("Brain dump saved!");
     setText("");
     setTranscription("");
+    setResult(null);
     setOpen(false);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setResult(null);
   };
 
   const startRecording = () => {
@@ -159,7 +208,7 @@ export default function BrainDump() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[9998] bg-foreground/30 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
+              onClick={handleClose}
             />
             <motion.div
               initial={{ opacity: 0, y: 60 }}
@@ -170,10 +219,7 @@ export default function BrainDump() {
               style={{ minHeight: 400, maxHeight: "75vh" }}
             >
               {/* Header */}
-              <div
-                className="flex items-center justify-between px-6 py-4"
-                style={{ background: HEADER_BG[activeIcon] }}
-              >
+              <div className="flex items-center justify-between px-6 py-4" style={{ background: HEADER_BG[activeIcon] }}>
                 <div className="flex items-center gap-3">
                   <IconComponent size={32} />
                   <div>
@@ -181,37 +227,120 @@ export default function BrainDump() {
                     <p className="text-xs text-muted-foreground">Drop everything on your mind</p>
                   </div>
                 </div>
-                <button onClick={() => setOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-secondary">
+                <button onClick={handleClose} className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-secondary">
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
               </div>
 
               {/* Mode tabs */}
-              <div className="flex gap-1 px-6 py-3 border-b border-border">
-                <button
-                  onClick={() => setMode("text")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all",
-                    mode === "text" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  <Type className="h-3.5 w-3.5" /> Text
-                </button>
-                <button
-                  onClick={() => setMode("voice")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all",
-                    mode === "voice" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  <Mic className="h-3.5 w-3.5" /> Voice
-                </button>
-              </div>
+              {!result && (
+                <div className="flex gap-1 px-6 py-3 border-b border-border">
+                  <button
+                    onClick={() => setMode("text")}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all",
+                      mode === "text" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <Type className="h-3.5 w-3.5" /> Text
+                  </button>
+                  <button
+                    onClick={() => setMode("voice")}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all",
+                      mode === "voice" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <Mic className="h-3.5 w-3.5" /> Voice
+                  </button>
+                </div>
+              )}
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto p-6">
                 <AnimatePresence mode="wait">
-                  {mode === "text" ? (
+                  {result ? (
+                    <motion.div
+                      key="result"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                      {/* AI Result */}
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <h3 className="text-base font-semibold text-foreground">{result.title}</h3>
+                        <span
+                          className="ml-auto rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          style={{ backgroundColor: MOOD_COLORS[result.mood] || MOOD_COLORS.neutral }}
+                        >
+                          {result.mood}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{result.summary}</p>
+
+                      {result.tasks.length > 0 && (
+                        <div className="rounded-xl border border-border p-3 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
+                            <ListTodo className="h-3.5 w-3.5" /> Tasks
+                          </div>
+                          {result.tasks.map((t, i) => (
+                            <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                              {t}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {result.ideas.length > 0 && (
+                        <div className="rounded-xl border border-border p-3 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
+                            <Lightbulb className="h-3.5 w-3.5" /> Ideas
+                          </div>
+                          {result.ideas.map((idea, i) => (
+                            <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500" />
+                              {idea}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {result.goals.length > 0 && (
+                        <div className="rounded-xl border border-border p-3 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
+                            <Target className="h-3.5 w-3.5" /> Goals
+                          </div>
+                          {result.goals.map((g, i) => (
+                            <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                              {g}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {result.reminders.length > 0 && (
+                        <div className="rounded-xl border border-border p-3 space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground uppercase tracking-wide">
+                            <Bell className="h-3.5 w-3.5" /> Reminders
+                          </div>
+                          {result.reminders.map((r, i) => (
+                            <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
+                              {r}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <Button variant="outline" size="sm" onClick={() => setResult(null)} className="w-full">
+                        ← Back to editing
+                      </Button>
+                    </motion.div>
+                  ) : mode === "text" ? (
                     <motion.div
                       key="text"
                       initial={{ opacity: 0, x: -10 }}
@@ -276,15 +405,39 @@ export default function BrainDump() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+              <div className="flex items-center justify-between gap-2 border-t border-border px-6 py-3">
+                {/* Organize button */}
                 <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={(mode === "text" && !text.trim()) || (mode === "voice" && !transcription.trim())}
+                  variant="default"
+                  onClick={handleOrganize}
+                  disabled={organizing || !currentContent.trim() || !!result}
+                  className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 >
-                  Save Dump
+                  {organizing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      AI is organizing...
+                    </>
+                  ) : (
+                    <>
+                      <motion.div whileHover={{ rotate: 15, scale: 1.1 }} transition={{ duration: 0.2 }}>
+                        <Sparkles className="h-4 w-4" />
+                      </motion.div>
+                      Organize my thoughts ✨
+                    </>
+                  )}
                 </Button>
+
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleClose}>Cancel</Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={(mode === "text" && !text.trim()) || (mode === "voice" && !transcription.trim())}
+                  >
+                    Save Dump
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </>

@@ -58,6 +58,8 @@ export type Database = {
       }
       brain_dumps: {
         Row: {
+          ai_title: string | null
+          card_color: string | null
           content: string
           created_at: string
           id: string
@@ -67,6 +69,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_title?: string | null
+          card_color?: string | null
           content: string
           created_at?: string
           id?: string
@@ -76,6 +80,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_title?: string | null
+          card_color?: string | null
           content?: string
           created_at?: string
           id?: string
