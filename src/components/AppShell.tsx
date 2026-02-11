@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import HouseIcon from "@/components/HouseIcon";
+
 
 const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
@@ -294,12 +294,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex h-16 shrink-0 items-center justify-between px-4">
             {!collapsed ? (
               <div className="flex items-center gap-2.5">
-                <HouseIcon size={28} />
                 <span className="text-md font-semibold text-foreground">Digital Home</span>
               </div>
             ) : (
               <div className="mx-auto">
-                <HouseIcon size={24} />
+                <span className="text-sm font-bold text-foreground">DH</span>
               </div>
             )}
           </div>
@@ -333,7 +332,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
         <div className="flex items-center gap-2 flex-1">
-          <HouseIcon size={20} />
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
         </div>
         <UserDropdown />
@@ -368,7 +366,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="flex grow flex-col overflow-y-auto bg-card">
                   <div className="flex h-16 shrink-0 items-center px-4">
                     <div className="flex items-center gap-2.5">
-                      <HouseIcon size={28} />
                       <span className="text-md font-semibold text-foreground">Digital Home</span>
                     </div>
                   </div>

@@ -154,12 +154,29 @@ export default function ProjectDetail() {
     const taskId = active.id as string;
     const overData = over.data.current;
     let newStatus: string | undefined;
-    if (overData?.type === "column") newStatus = over.id as string;
-    else if (overData?.type === "task") newStatus = overData.task.status;
+    let newPosition: number | undefined;
+
+    if (overData?.type === "column") {
+      newStatus = over.id as string;
+    } else if (overData?.type === "task") {
+      newStatus = overData.task.status;
+      // Calculate new position based on the target task's position
+      const targetTask = overData.task as Task;
+      const columnTasks = tasks
+        .filter((t) => t.status === targetTask.status)
+        .sort((a, b) => a.position - b.position);
+      const targetIndex = columnTasks.findIndex((t) => t.id === targetTask.id);
+      newPosition = targetIndex;
+    }
+
     if (newStatus) {
       const currentTask = tasks.find((t) => t.id === taskId);
-      if (currentTask && currentTask.status !== newStatus) {
-        updateTask.mutate({ id: taskId, status: newStatus });
+      if (currentTask && (currentTask.status !== newStatus || newPosition !== undefined)) {
+        const updates: any = { id: taskId, status: newStatus };
+        if (newPosition !== undefined) {
+          updates.position = newPosition;
+        }
+        updateTask.mutate(updates);
       }
     }
   };
@@ -250,7 +267,7 @@ export default function ProjectDetail() {
               >
                 <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
                   {columns.map((col) => {
-                    const columnTasks = tasks.filter((t) => t.status === col.id);
+                    const columnTasks = tasks.filter((t) => t.status === col.id).sort((a, b) => a.position - b.position);
                     return (
                       <div key={col.id} className="min-w-[320px] flex-shrink-0">
                         <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy} id={col.id}>

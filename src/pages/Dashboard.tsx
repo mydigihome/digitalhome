@@ -18,7 +18,7 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import PageHeader from "@/components/PageHeader";
-import HouseIcon from "@/components/HouseIcon";
+
 import NotesWidget from "@/components/NotesWidget";
 import NoteEditor from "@/components/NoteEditor";
 import BrainDumpWidget from "@/components/BrainDumpWidget";
@@ -154,7 +154,6 @@ export default function Dashboard() {
         <div className="mb-8 rounded-xl border border-border bg-card p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <HouseIcon size={32} />
               <div>
                 <h2 className="text-2xl font-semibold text-foreground">
                   {profile?.full_name
