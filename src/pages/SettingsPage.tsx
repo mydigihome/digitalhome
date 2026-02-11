@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -44,6 +44,18 @@ type ResourceItem = {
   category: string;
   url: string;
   isIntegration?: boolean;
+  customImage?: string;
+};
+
+const getFaviconUrl = (url: string): string | null => {
+  try {
+    const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+    if (parsed.protocol === "mailto:") return null;
+    if (parsed.hostname === "" || parsed.hash) return null;
+    return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=64`;
+  } catch {
+    return null;
+  }
 };
 
 const aiResources: ResourceItem[] = [
@@ -501,13 +513,36 @@ export default function SettingsPage() {
                         className="group cursor-pointer rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="flex items-center gap-3 mb-3">
-                          {IconComp ? (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                              <IconComp className={cn("h-5 w-5", resource.iconColor)} />
-                            </div>
-                          ) : (
-                            <span className="text-3xl">{resource.image}</span>
-                          )}
+                          {(() => {
+                            const faviconUrl = getFaviconUrl(resource.url);
+                            const imgSrc = resource.customImage || faviconUrl;
+                            
+                            if (resource.icon) {
+                              // For integrations with custom icons
+                              const IconComp = resource.icon;
+                              return (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                                  <IconComp className={cn("h-5 w-5", resource.iconColor)} />
+                                </div>
+                              );
+                            } else if (imgSrc) {
+                              // For resources with favicon
+                              return (
+                                <div className="relative h-10 w-10 flex-shrink-0 rounded-lg bg-secondary overflow-hidden flex items-center justify-center">
+                                  <img
+                                    src={imgSrc}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                  />
+                                  {!imgSrc && <AlertCircle className="h-5 w-5 text-muted-foreground" />}
+                                </div>
+                              );
+                            } else {
+                              // Fallback emoji
+                              return <span className="text-2xl">{resource.image}</span>;
+                            }
+                          })()}
                           <div className="flex-1">
                             <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
                             <span className="text-xs text-muted-foreground">{resource.category}</span>
