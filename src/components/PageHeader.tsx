@@ -85,6 +85,17 @@ export default function PageHeader({
     <div className="mb-8">
       {/* Cover Image */}
       <div className="group relative h-[200px] rounded-t-xl overflow-hidden" style={coverStyle}>
+        {/* Centered upload prompt when no cover */}
+        {editable && !hasCover && (
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground/50 transition-colors hover:text-muted-foreground/80"
+          >
+            <Upload className="h-8 w-8" />
+            <span className="text-xs font-medium">Click to add a cover image</span>
+          </button>
+        )}
+
         {editable && (
           <div className="absolute right-3 top-3 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
             <button
@@ -195,13 +206,13 @@ export default function PageHeader({
               />
             ) : (
               <h1
-                onClick={() => editable && setIsEditingTitle(true)}
+                onClick={() => editable && onTitleChange && setIsEditingTitle(true)}
                 className={cn(
                   "text-3xl font-semibold text-foreground",
-                  editable && "cursor-text hover:bg-secondary/50 rounded-md px-1 -mx-1 transition-colors"
+                  editable && onTitleChange && "cursor-text hover:bg-secondary/50 rounded-md px-1 -mx-1 transition-colors"
                 )}
               >
-                {title || "Untitled"}
+                {title}
               </h1>
             )}
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
