@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const NOTE_COLORS = ["#8B5CF6", "#3B82F6", "#EC4899", "#F59E0B"];
+const NOTE_COLORS = ["#C4B5FD", "#BFDBFE", "#FBCFE8", "#FED7AA"];
 
 function hexToRgba(hex: string, opacity: number) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -33,7 +33,7 @@ interface NoteEditorProps {
 
 export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title || "");
-  const [cardColor, setCardColor] = useState(note?.card_color || "#8B5CF6");
+  const [cardColor, setCardColor] = useState(note?.card_color || "#C4B5FD");
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const createNote = useCreateNote();
@@ -65,7 +65,7 @@ export default function NoteEditor({ open, onClose, note }: NoteEditorProps) {
 
   useEffect(() => {
     setTitle(note?.title || "");
-    setCardColor(note?.card_color || "#8B5CF6");
+    setCardColor(note?.card_color || "#C4B5FD");
   }, [note?.id]);
 
   const getPreview = useCallback(() => {
