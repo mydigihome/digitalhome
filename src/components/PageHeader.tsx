@@ -192,31 +192,33 @@ export default function PageHeader({
           </div>
 
           {/* Title + Subtitle */}
-          <div className="flex-1 pb-1">
-            {isEditingTitle && editable ? (
-              <input
-                ref={titleRef}
-                value={titleValue}
-                onChange={(e) => setTitleValue(e.target.value)}
-                onBlur={handleTitleBlur}
-                onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
-                autoFocus
-                className="w-full bg-transparent text-3xl font-semibold text-foreground outline-none placeholder:text-muted-foreground"
-                placeholder="Untitled"
-              />
-            ) : (
-              <h1
-                onClick={() => editable && onTitleChange && setIsEditingTitle(true)}
-                className={cn(
-                  "text-3xl font-semibold text-foreground",
-                  editable && onTitleChange && "cursor-text hover:bg-secondary/50 rounded-md px-1 -mx-1 transition-colors"
-                )}
-              >
-                {title}
-              </h1>
-            )}
-            {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
-          </div>
+          {(title || onTitleChange) && (
+            <div className="flex-1 pb-1">
+              {isEditingTitle && editable ? (
+                <input
+                  ref={titleRef}
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={handleTitleBlur}
+                  onKeyDown={(e) => e.key === "Enter" && handleTitleBlur()}
+                  autoFocus
+                  className="w-full bg-transparent text-3xl font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+                  placeholder="Untitled"
+                />
+              ) : (
+                <h1
+                  onClick={() => editable && onTitleChange && setIsEditingTitle(true)}
+                  className={cn(
+                    "text-3xl font-semibold text-foreground",
+                    editable && onTitleChange && "cursor-text hover:bg-secondary/50 rounded-md px-1 -mx-1 transition-colors"
+                  )}
+                >
+                  {title}
+                </h1>
+              )}
+              {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+            </div>
+          )}
 
           {/* Actions */}
           {actions && <div className="flex items-center gap-2 pb-1">{actions}</div>}

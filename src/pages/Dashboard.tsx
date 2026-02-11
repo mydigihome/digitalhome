@@ -124,7 +124,7 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
         {/* Page Header */}
         <PageHeader
-          title="Home"
+          title=""
           icon={prefs?.dashboard_icon || "🏠"}
           iconType={prefs?.dashboard_icon_type || "emoji"}
           coverImage={prefs?.dashboard_cover}
