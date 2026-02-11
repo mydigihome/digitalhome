@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useProjects, useUpdateProject } from "@/hooks/useProjects";
+import { useProjects, useUpdateProject, useDeleteProject } from "@/hooks/useProjects";
 import { useTasks, useUpdateTask, Task } from "@/hooks/useTasks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Plus, GripVertical, FileText, Sparkles, Calendar, Clock, User, Tag, Link2 } from "lucide-react";
+import { ChevronLeft, Plus, GripVertical, FileText, Sparkles, Calendar, Clock, User, Tag, Link2, Trash2, Archive, AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, differenceInDays, isPast, isToday, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -118,6 +118,7 @@ export default function ProjectDetail() {
   const { data: tasks = [], isLoading } = useTasks(id);
   const updateTask = useUpdateTask();
   const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
 
   const [mainTab, setMainTab] = useState("board");
   const [view, setView] = useState(project?.view_preference || "kanban");
@@ -125,6 +126,8 @@ export default function ProjectDetail() {
   const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [aiGeneratorOpen, setAiGeneratorOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmChecked, setConfirmChecked] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -310,6 +313,18 @@ export default function ProjectDetail() {
         )}
 
         {mainTab === "documents" && id && <DocumentsTab projectId={id} />}
+
+        {/* Delete / Archive Project */}
+        <div className="mt-12 border-t border-border pt-8 pb-4">
+          <div className="flex justify-center">
+            <Button
+              variant="destructive"
+              onClick={() => { setShowDeleteModal(true); setConfirmChecked(false); }}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" /> Delete Project
+            </Button>
+          </div>
+        </div>
       </motion.div>
 
       <AnimatePresence>
@@ -330,6 +345,96 @@ export default function ProjectDetail() {
           projectId={id}
           projectName={project.name}
         />
+      )}
+
+      {/* Delete / Archive Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl"
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Are you sure?
+                </h3>
+              </div>
+              <button onClick={() => setShowDeleteModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Warning */}
+            <div className="mb-5 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+              <p className="text-sm font-medium text-destructive mb-1">⚠️ This action will permanently delete your project</p>
+              <p className="text-xs text-muted-foreground">All project data, tasks, and files will be lost forever. You can choose to archive instead.</p>
+            </div>
+
+            <div className="mb-5 rounded-lg border border-border bg-secondary/50 p-3">
+              <p className="text-xs text-muted-foreground">Project</p>
+              <p className="text-sm font-medium text-foreground">{project?.name}</p>
+            </div>
+
+            {/* Checkbox */}
+            <label className="mb-5 flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={confirmChecked}
+                onChange={(e) => setConfirmChecked(e.target.checked)}
+                className="h-4 w-4 rounded border-border text-destructive focus:ring-destructive"
+              />
+              <span className="text-sm text-foreground">Yes, please delete</span>
+            </label>
+
+            {/* Actions */}
+            {confirmChecked ? (
+              <div className="space-y-2">
+                <div className="mb-3 h-px bg-border" />
+                <p className="text-xs text-muted-foreground mb-3">Choose an action:</p>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => {
+                    if (id) {
+                      deleteProject.mutate(id, {
+                        onSuccess: () => navigate("/projects"),
+                      });
+                    }
+                  }}
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" /> Permanently Delete
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    if (id) {
+                      updateProject.mutate({ id, archived: true }, {
+                        onSuccess: () => navigate("/projects"),
+                      });
+                    }
+                  }}
+                >
+                  <Archive className="mr-1.5 h-4 w-4" /> Archive Project
+                </Button>
+                <p className="text-center text-xs text-muted-foreground mt-2">
+                  Archived projects can be restored from Settings → Archived
+                </p>
+              </div>
+            ) : (
+              <div className="flex justify-end">
+                <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+              </div>
+            )}
+          </motion.div>
+        </div>
       )}
     </AppShell>
   );
