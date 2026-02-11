@@ -42,8 +42,6 @@ export function useUploadDocument() {
         .upload(path, file);
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from("project-documents").getPublicUrl(path);
-
       const { data, error } = await supabase
         .from("documents")
         .insert({

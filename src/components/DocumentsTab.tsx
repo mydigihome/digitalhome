@@ -82,15 +82,17 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
   );
 
   const handleDownload = async (fileUrl: string, name: string) => {
-    const { data } = await supabase.storage.from("project-documents").download(fileUrl);
-    if (data) {
-      const url = URL.createObjectURL(data);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(url);
+    const { data: signedData, error } = await supabase.storage
+      .from("project-documents")
+      .createSignedUrl(fileUrl, 3600);
+    if (error || !signedData?.signedUrl) {
+      toast.error("Failed to generate download link");
+      return;
     }
+    const a = document.createElement("a");
+    a.href = signedData.signedUrl;
+    a.download = name;
+    a.click();
   };
 
   // Stats
