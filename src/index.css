@@ -247,3 +247,13 @@
 .tiptap ul[data-type="taskList"] li label input[type="checkbox"] {
   accent-color: hsl(var(--primary));
 }
+
+/* Animated icon float */
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.icon-float {
+  animation: iconFloat 3s ease-in-out infinite;
+}
