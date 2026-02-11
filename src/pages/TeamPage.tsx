@@ -90,18 +90,16 @@ export default function TeamPage() {
         transition={{ duration: 0.3 }}
       >
         {/* Header */}
-        <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="mb-1 text-4xl font-bold text-foreground">Team</h1>
-              <p className="text-muted-foreground">
-                Invite friends, family, or team members to collaborate on your projects
-              </p>
-            </div>
-            <Button onClick={() => setShowInvite(true)}>
-              <UserPlus className="mr-2 h-4 w-4" /> Invite Collaborator
-            </Button>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="mb-1 text-4xl font-bold text-foreground">Team</h1>
+            <p className="text-muted-foreground">
+              Invite friends, family, or team members to collaborate on your projects
+            </p>
           </div>
+          <Button onClick={() => setShowInvite(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Invite Collaborator
+          </Button>
         </div>
 
         {/* Stats */}
