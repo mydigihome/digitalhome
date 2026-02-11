@@ -148,9 +148,9 @@ export default function BrainDump() {
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
-  const initialPos = useRef({
-    x: Math.floor(window.innerWidth / 2 - 200),
-    y: Math.floor(window.innerHeight / 2 - 200),
+  const getInitialPos = () => ({
+    x: Math.max(0, Math.floor((window.innerWidth - 400) / 2)),
+    y: Math.max(20, Math.floor((window.innerHeight - 400) / 2)),
   });
 
   const stickyContent = (
@@ -409,25 +409,26 @@ export default function BrainDump() {
               </motion.div>
             ) : (
               /* Desktop: draggable modal */
-              <Draggable
-                handle=".drag-handle-bd"
-                bounds="parent"
-                nodeRef={nodeRef as any}
-                defaultPosition={initialPos.current}
-              >
-                <div
-                  ref={nodeRef}
-                  className="fixed z-[10000] flex flex-col overflow-hidden"
-                  style={{
-                    width: 400,
-                    minHeight: 350,
-                    borderRadius: 16,
-                    boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
-                  }}
+              <div className="fixed inset-0 z-[10000] pointer-events-none">
+                <Draggable
+                  handle=".drag-handle-bd"
+                  nodeRef={nodeRef as any}
+                  defaultPosition={getInitialPos()}
                 >
-                  {stickyContent}
-                </div>
-              </Draggable>
+                  <div
+                    ref={nodeRef}
+                    className="pointer-events-auto absolute flex flex-col overflow-hidden"
+                    style={{
+                      width: 400,
+                      minHeight: 350,
+                      borderRadius: 16,
+                      boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {stickyContent}
+                  </div>
+                </Draggable>
+              </div>
             )}
           </>
         )}
