@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Plus, GripVertical, FileText, Sparkles } from "lucide-react";
+import { ChevronLeft, Plus, GripVertical, FileText, Sparkles, Calendar, Clock, User, Tag, Link2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, differenceInDays, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -50,6 +50,12 @@ function DueDateLabel({ date }: { date: string }) {
   return null;
 }
 
+const priorityLabel: Record<string, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+
 function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -62,24 +68,98 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const durationLabel = task.duration ? (task.duration >= 60 ? `${Math.floor(task.duration / 60)}h${task.duration % 60 ? ` ${task.duration % 60}m` : ""}` : `${task.duration}m`) : null;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "cursor-grab rounded-xl border border-border border-l-[3px] bg-card p-4 transition-all hover:shadow-md hover:-translate-y-0.5 active:cursor-grabbing",
+        "cursor-grab rounded-xl border border-border border-l-[3px] bg-card p-3 transition-all hover:shadow-md hover:-translate-y-0.5 active:cursor-grabbing",
         priorityBorder[task.priority]
       )}
       onClick={onClick}
     >
+      {/* Title row */}
       <div className="flex items-start gap-2" {...attributes} {...listeners}>
         <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/40" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{task.title}</p>
-          <div className="mt-2 flex items-center gap-2">
-            <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
-            {task.due_date && <DueDateLabel date={task.due_date} />}
+        <p className="min-w-0 flex-1 text-sm font-medium leading-snug">{task.title}</p>
+      </div>
+
+      {/* Detail rows */}
+      <div className="mt-2.5 ml-6 space-y-1.5 text-xs text-muted-foreground">
+        {/* Start & Deadline */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {task.due_date ? (
+            <>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-warning" />
+                <span className="font-medium text-warning">Start</span>
+                <span>+0d</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-destructive" />
+                <span className="font-medium text-destructive">Deadline</span>
+                <DueDateLabel date={task.due_date} />
+              </span>
+            </>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-muted-foreground/60">
+              <Calendar className="h-3 w-3" /> No date set
+            </span>
+          )}
+        </div>
+
+        {/* Status, Duration */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1">
+            <span className={cn("h-1.5 w-1.5 rounded-full", task.status === "done" ? "bg-success" : "bg-muted-foreground/50")} />
+            <span className="capitalize">{task.status.replace("_", " ")}</span>
+          </span>
+          {durationLabel && (
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {durationLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Priority & Assignee */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1">
+            <span className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
+            <span className="font-medium">{priorityLabel[task.priority]}</span>
+          </span>
+          {task.assignee && (
+            <span className="inline-flex items-center gap-1 text-primary">
+              <User className="h-3 w-3" />
+              {task.assignee}
+            </span>
+          )}
+        </div>
+
+        {/* Labels */}
+        {task.labels && task.labels.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Tag className="h-3 w-3" />
+            {task.labels.map((label, i) => (
+              <span key={i} className="rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-medium text-accent-foreground">{label}</span>
+            ))}
           </div>
+        )}
+
+        {/* Auto-scheduled & Blocked */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {task.auto_scheduled && (
+            <span className="inline-flex items-center gap-1 text-primary">
+              <Sparkles className="h-3 w-3" /> Auto-scheduled
+            </span>
+          )}
+          {task.blocked_by && task.blocked_by.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-destructive">
+              <Link2 className="h-3 w-3" /> Blocked by {task.blocked_by.length}
+            </span>
+          )}
         </div>
       </div>
     </div>
