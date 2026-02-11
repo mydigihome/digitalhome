@@ -13,13 +13,14 @@ const projectFolders = [
   { id: "travel", label: "Trips", icon: Plane, color: "text-warning" },
 ];
 
-const iconColors: Record<string, string> = {
-  "/dashboard": "text-primary",
-  "/calendar": "text-info",
-  "/projects": "text-warning",
-  "/finance": "text-success",
-  "/team": "text-muted-foreground",
-  "/settings": "text-muted-foreground",
+const defaultIconColors: Record<string, string> = {
+  home: "#8B5CF6",
+  projects: "#F59E0B",
+  finance: "#F59E0B",
+  finance_wealth: "#10B981",
+  finance_apps: "#3B82F6",
+  calendar: "#3B82F6",
+  team: "#6B7280",
 };
 
 function UserDropdown() {
@@ -84,6 +85,10 @@ function UserDropdown() {
 function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: prefs } = useUserPreferences();
+  const iconColors = (prefs?.accent_colors as any)?.icon_colors || {};
+  const getIconColor = (key: string) => iconColors[key] || defaultIconColors[key] || "#6B7280";
+
   const [projectsOpen, setProjectsOpen] = useState(
     location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/")
   );
@@ -93,7 +98,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const activeType = searchParams.get("type");
 
   const topItems = [
-    { icon: Home, label: "Home", path: "/dashboard" },
+    { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
   ];
 
   const [financeOpen, setFinanceOpen] = useState(
@@ -102,8 +107,8 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const isFinanceActive = location.pathname.startsWith("/finance");
 
   const bottomItems = [
-    { icon: Calendar, label: "Calendar", path: "/calendar" },
-    { icon: Users, label: "Team", path: "/team" },
+    { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
+    { icon: Users, label: "Team", path: "/team", colorKey: "team" },
   ];
 
   const go = (path: string) => {
@@ -111,7 +116,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
     onNavigate?.();
   };
 
-  const NavItem = ({ icon: Icon, label, path, isActive }: { icon: any; label: string; path: string; isActive: boolean }) => (
+  const NavItem = ({ icon: Icon, label, path, isActive, colorKey }: { icon: any; label: string; path: string; isActive: boolean; colorKey: string }) => (
     <li>
       <button
         onClick={() => go(path)}
@@ -122,7 +127,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
-        <Icon className={cn("h-[18px] w-[18px] shrink-0", iconColors[path] || "text-muted-foreground")} />
+        <Icon className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor(colorKey) }} />
         {!collapsed && <span>{label}</span>}
       </button>
     </li>
@@ -149,7 +154,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           )}
         >
-          <FolderOpen className="h-[18px] w-[18px] shrink-0 text-warning" />
+          <FolderOpen className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("projects") }} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Projects</span>
@@ -211,7 +216,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           )}
         >
-          <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: "#F59E0B" }} />
+          <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("finance") }} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Finance</span>
@@ -240,7 +245,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <TrendingUp className="h-4 w-4 shrink-0" style={{ color: "#10B981" }} />
+                    <TrendingUp className="h-4 w-4 shrink-0" style={{ color: getIconColor("finance_wealth") }} />
                     Wealth Tracker
                   </button>
                 </li>
@@ -254,7 +259,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Briefcase className="h-4 w-4 shrink-0" style={{ color: "#3B82F6" }} />
+                    <Briefcase className="h-4 w-4 shrink-0" style={{ color: getIconColor("finance_apps") }} />
                     Applications Tracker
                   </button>
                 </li>

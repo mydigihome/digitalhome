@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,9 +81,17 @@ const aiResources: ResourceItem[] = [
   { id: 109, name: "Linear", description: "Sync engineering tasks and sprint planning", image: "", icon: TrendingUp, iconColor: "text-purple-500", category: "Development", url: "https://linear.app", isIntegration: true },
   { id: 110, name: "Asana", description: "Import existing Asana projects and workflows", image: "", icon: CheckCircle, iconColor: "text-pink-500", category: "Productivity", url: "https://asana.com", isIntegration: true },
   { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", isIntegration: true },
+  // College
+  { id: 112, name: "AppTrack", description: "AI-powered application tracking for students and job seekers", image: "🎓", category: "College", url: "https://www.apptrack.ai/" },
+  // Finance - Brokerages
+  { id: 113, name: "Robinhood", description: "Commission-free stock, ETF, and crypto trading", image: "💹", category: "Finance", url: "https://robinhood.com" },
+  { id: 114, name: "Vanguard", description: "Low-cost index funds and retirement investing", image: "📈", category: "Finance", url: "https://vanguard.com" },
+  { id: 115, name: "Webull", description: "Advanced trading platform with extended hours and analytics", image: "📊", category: "Finance", url: "https://webull.com" },
+  { id: 116, name: "Charles Schwab", description: "Full-service brokerage with research and advisory tools", image: "🏦", category: "Finance", url: "https://schwab.com" },
+  { id: 117, name: "Fidelity", description: "Investing, retirement planning, and wealth management", image: "💼", category: "Finance", url: "https://fidelity.com" },
 ];
 
-const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events"];
+const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events", "College"];
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -100,6 +108,7 @@ export default function SettingsPage() {
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: archivedProjects = [] } = useArchivedProjects();
   const restoreProject = useRestoreProject();
   const deleteArchivedProject = useDeleteArchivedProject();
@@ -110,9 +119,12 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    const tab = searchParams.get("tab");
+    return (tab && settingsTabs.some(t => t.id === tab) ? tab : "profile") as SettingsTab;
+  });
   const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains("dark"));
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get("category") || "All");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
@@ -410,6 +422,55 @@ export default function SettingsPage() {
                           title={c.label}
                         />
                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Sidebar Icon Colors */}
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Sidebar icon colors</CardTitle></CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground mb-4">Customize each sidebar icon color individually</p>
+                    <div className="space-y-3">
+                      {([
+                        { key: "home", label: "Home", defaultColor: "#8B5CF6" },
+                        { key: "projects", label: "Projects", defaultColor: "#F59E0B" },
+                        { key: "finance", label: "Finance", defaultColor: "#F59E0B" },
+                        { key: "finance_wealth", label: "Wealth Tracker", defaultColor: "#10B981" },
+                        { key: "finance_apps", label: "Applications Tracker", defaultColor: "#3B82F6" },
+                        { key: "calendar", label: "Calendar", defaultColor: "#3B82F6" },
+                        { key: "team", label: "Team", defaultColor: "#6B7280" },
+                      ] as const).map((item) => {
+                        const iconColorsData = (accentData as any)?.icon_colors || {};
+                        const currentColor = iconColorsData[item.key] || item.defaultColor;
+                        return (
+                          <div key={item.key} className="flex items-center justify-between">
+                            <span className="text-sm text-foreground">{item.label}</span>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={currentColor}
+                                onChange={(e) => {
+                                  const newIconColors = { ...iconColorsData, [item.key]: e.target.value };
+                                  upsertPrefs.mutate({ accent_colors: { ...accentData, icon_colors: newIconColors } });
+                                }}
+                                className="h-8 w-8 rounded-full cursor-pointer border border-border"
+                              />
+                              <button
+                                onClick={() => {
+                                  const newIconColors = { ...iconColorsData };
+                                  delete newIconColors[item.key];
+                                  upsertPrefs.mutate({ accent_colors: { ...accentData, icon_colors: newIconColors } });
+                                }}
+                                className="text-xs text-muted-foreground hover:text-foreground"
+                                title="Reset to default"
+                              >
+                                Reset
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
