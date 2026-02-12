@@ -55,21 +55,22 @@ const getFaviconUrl = (url: string): string | null => {
     const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
     if (parsed.protocol === "mailto:") return null;
     if (parsed.hostname === "" || parsed.hash) return null;
-    return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=64`;
+    // Try multiple favicon sources with fallback
+    return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=128`;
   } catch {
     return null;
   }
 };
 
 const aiResources: ResourceItem[] = [
-  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "🎨", category: "Presentations", url: "https://gamma.app" },
-  { id: 2, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "🎭", category: "Image Generation", url: "https://midjourney.com" },
-  { id: 3, name: "Runway", description: "AI video generation and editing tools", image: "🎬", category: "Video", url: "https://runwayml.com" },
-  { id: 4, name: "Zocks", description: "AI-powered meeting notes and action items", image: "🎙️", category: "Finance", url: "https://zocks.ai" },
-  { id: 5, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "💰", category: "Finance", url: "https://monarchmoney.com" },
-  { id: 6, name: "Luma", description: "Beautiful event pages and calendar management", image: "✨", category: "Events", url: "https://lu.ma" },
-  { id: 7, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "🎫", category: "Events", url: "https://posh.vip" },
-  { id: 8, name: "Partiful", description: "Fun and easy party planning and invitations", image: "🎉", category: "Events", url: "https://partiful.com" },
+  { id: 1, name: "Gamma", description: "Make a pitch deck/powerpoint in minutes", image: "", category: "Presentations", url: "https://gamma.app" },
+  { id: 2, name: "Midjourney", description: "Create stunning AI-generated images and art", image: "", category: "Image Generation", url: "https://midjourney.com" },
+  { id: 3, name: "Runway", description: "AI video generation and editing tools", image: "", category: "Video", url: "https://runwayml.com" },
+  { id: 4, name: "Zocks", description: "AI-powered meeting notes and action items", image: "", category: "Finance", url: "https://zocks.ai" },
+  { id: 5, name: "Monarch Money", description: "Smart financial tracking and budgeting with AI insights", image: "", category: "Finance", url: "https://monarchmoney.com" },
+  { id: 6, name: "Luma", description: "Beautiful event pages and calendar management", image: "", category: "Events", url: "https://lu.ma" },
+  { id: 7, name: "Posh VIP", description: "Premium event hosting and ticketing platform", image: "", category: "Events", url: "https://posh.vip" },
+  { id: 8, name: "Partiful", description: "Fun and easy party planning and invitations", image: "", category: "Events", url: "https://partiful.com" },
   { id: 100, name: "Claude AI", description: "Power your AI Brain Dump with Claude's advanced reasoning", image: "", icon: Brain, iconColor: "text-purple-500", category: "AI", url: "https://anthropic.com", isIntegration: true },
   { id: 101, name: "ChatGPT", description: "Alternative AI assistant for task suggestions and planning", image: "", icon: Sparkles, iconColor: "text-blue-500", category: "AI", url: "https://chat.openai.com", isIntegration: true },
   { id: 102, name: "Notion", description: "Sync your projects and tasks with Notion workspaces", image: "", icon: FileText, iconColor: "text-foreground", category: "Productivity", url: "https://notion.so", isIntegration: true },
@@ -641,14 +642,14 @@ export default function SettingsPage() {
                               window.open(resource.url, "_blank");
                             }}
                           >
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-                                {resource.image ? (
-                                  <span className="text-xl">{resource.image}</span>
+                            <div className="flex items-start gap-4 mb-3">
+                              <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {faviconUrl ? (
+                                  <img src={faviconUrl} alt={resource.name} className="w-full h-full object-cover" onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }} />
                                 ) : Icon ? (
-                                  <Icon className={cn("h-5 w-5", resource.iconColor || "text-primary")} />
-                                ) : faviconUrl ? (
-                                  <img src={faviconUrl} alt={resource.name} className="h-5 w-5 rounded" />
+                                  <Icon className={cn("h-6 w-6", resource.iconColor || "text-primary")} />
                                 ) : null}
                               </div>
                               <div className="flex-1 min-w-0">
