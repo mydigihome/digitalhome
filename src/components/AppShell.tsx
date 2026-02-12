@@ -1,11 +1,10 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, Plane, Users, DollarSign, TrendingUp } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-
 
 const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
@@ -23,7 +22,7 @@ const defaultIconColors: Record<string, string> = {
   team: "#6B7280",
 };
 
-function UserDropdown() {
+function NotionProfileMenu({ collapsed }: { collapsed?: boolean }) {
   const { profile, user, signOut } = useAuth();
   const { data: prefs } = useUserPreferences();
   const navigate = useNavigate();
@@ -38,42 +37,65 @@ function UserDropdown() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const initials = (profile?.full_name || user?.email || "U").slice(0, 2).toUpperCase();
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+  const initials = displayName.charAt(0).toUpperCase();
   const avatarUrl = prefs?.profile_photo;
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary text-xs font-medium text-primary-foreground transition-all hover:shadow-md active:scale-95 overflow-hidden"
+        className="flex w-full items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-secondary"
       >
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-        ) : (
-          initials
+        {/* Avatar */}
+        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-primary text-sm font-semibold text-primary-foreground">
+              {initials}
+            </div>
+          )}
+        </div>
+        {!collapsed && (
+          <>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="truncate text-sm font-medium text-foreground">{displayName}</div>
+              <div className="truncate text-xs text-muted-foreground">{user?.email}</div>
+            </div>
+            <ChevronUp
+              className={cn(
+                "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                !open && "rotate-180"
+              )}
+            />
+          </>
         )}
       </button>
+
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            initial={{ opacity: 0, y: 4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-0 top-10 z-50 w-52 rounded-lg border border-border bg-card p-1.5 shadow-lg"
+            className="absolute bottom-full left-0 right-0 z-[1000] mb-2 rounded-xl border border-border bg-card p-1.5 shadow-lg"
           >
-            <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user?.email}</div>
             <button
               onClick={() => { setOpen(false); navigate("/settings"); }}
-              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm transition-colors hover:bg-secondary"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
             >
-              <Settings className="h-4 w-4 text-muted-foreground" /> Settings
+              <Settings className="h-[18px] w-[18px] text-muted-foreground" />
+              Settings
             </button>
+            <div className="mx-2 my-1 h-px bg-border" />
             <button
-              onClick={async () => { await signOut(); navigate("/login"); }}
-              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+              onClick={async () => { setOpen(false); await signOut(); navigate("/login"); }}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
             >
-              <LogOut className="h-4 w-4" /> Log out
+              <LogOut className="h-[18px] w-[18px]" />
+              Log out
             </button>
           </motion.div>
         )}
@@ -109,7 +131,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const bottomItems = [
     { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
-    { icon: Settings, label: "Settings", path: "/settings", colorKey: "settings" },
   ];
 
   const go = (path: string) => {
@@ -143,18 +164,18 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       {/* Projects with sub-folders */}
       <li>
        <button
-           onClick={() => {
-             if (collapsed) { go("/projects"); return; }
-             setProjectsOpen(!projectsOpen);
-             if (!isProjectsActive) go("/projects");
-           }}
-           className={cn(
-             "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
-             isProjectsActive
-               ? "bg-accent text-accent-foreground shadow-xs"
-               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-           )}
-         >
+            onClick={() => {
+              if (collapsed) { go("/projects"); return; }
+              setProjectsOpen(!projectsOpen);
+              if (!isProjectsActive) go("/projects");
+            }}
+            className={cn(
+              "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+              isProjectsActive
+                ? "bg-accent text-accent-foreground shadow-xs"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
           <FolderOpen className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("projects") }} />
           {!collapsed && (
             <>
@@ -205,18 +226,18 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       {/* Finance with sub-folders */}
       <li>
        <button
-           onClick={() => {
-             if (collapsed) { go("/finance/wealth"); return; }
-             setFinanceOpen(!financeOpen);
-             if (!isFinanceActive) go("/finance/wealth");
-           }}
-           className={cn(
-             "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
-             isFinanceActive
-               ? "bg-accent text-accent-foreground shadow-xs"
-               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-           )}
-         >
+            onClick={() => {
+              if (collapsed) { go("/finance/wealth"); return; }
+              setFinanceOpen(!financeOpen);
+              if (!isFinanceActive) go("/finance/wealth");
+            }}
+            className={cn(
+              "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+              isFinanceActive
+                ? "bg-accent text-accent-foreground shadow-xs"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+          >
           <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("finance") }} />
           {!collapsed && (
             <>
@@ -309,16 +330,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <SidebarNav collapsed={collapsed} />
           </nav>
 
-          {/* Bottom section - always visible */}
-          <div className="shrink-0 border-t border-border px-3 py-3 flex items-center justify-between">
-            <UserDropdown />
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              <ChevronDown className={cn("h-4 w-4 transition-transform", collapsed ? "-rotate-90" : "rotate-90")} />
-            </button>
+          {/* Bottom profile section - Notion style */}
+          <div className="shrink-0 border-t border-border px-2 py-2">
+            <div className="flex items-center gap-1">
+              <div className="flex-1 min-w-0">
+                <NotionProfileMenu collapsed={collapsed} />
+              </div>
+              {!collapsed && (
+                <button
+                  onClick={() => setCollapsed(!collapsed)}
+                  className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Collapse sidebar"
+                >
+                  <ChevronDown className="h-4 w-4 rotate-90 transition-transform" />
+                </button>
+              )}
+            </div>
+            {collapsed && (
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className="mt-1 flex w-full justify-center rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-label="Expand sidebar"
+              >
+                <ChevronDown className="h-4 w-4 -rotate-90 transition-transform" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -335,7 +371,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2 flex-1">
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
         </div>
-        <UserDropdown />
+        <NotionProfileMenu collapsed />
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -373,6 +409,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <nav className="flex flex-1 flex-col px-2 py-2">
                     <SidebarNav onNavigate={() => setMobileOpen(false)} />
                   </nav>
+                  <div className="shrink-0 border-t border-border px-2 py-2">
+                    <NotionProfileMenu />
+                  </div>
                 </div>
               </motion.div>
             </div>
