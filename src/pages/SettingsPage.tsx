@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings } from "lucide-react";
@@ -24,6 +23,20 @@ const accentColors = [
   { label: "Black", value: "#1A1A1A" },
   { label: "Brown", value: "#6B4226" },
 ];
+
+const sidebarIconItems = [
+  { label: "Home", defaultColor: "#8B5CF6" },
+  { label: "Projects", defaultColor: "#F59E0B" },
+  { label: "Finance", defaultColor: "#F59E0B" },
+  { label: "Wealth Tracker", defaultColor: "#10B981" },
+  { label: "Applications Tracker", defaultColor: "#3B82F6" },
+  { label: "Calendar", defaultColor: "#3B82F6" },
+  { label: "Team", defaultColor: "#6B7280" },
+];
+
+const fontOptions = ["Inter", "Georgia", "Mono", "System"];
+const sizeOptions = ["Small", "Medium", "Large"];
+const spacingOptions = ["Compact", "Comfortable", "Spacious"];
 
 type ResourceItem = {
   id: number;
@@ -71,7 +84,7 @@ const aiResources: ResourceItem[] = [
   { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", isIntegration: true },
 ];
 
-const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events"];
+const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events", "College"];
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -108,6 +121,27 @@ export default function SettingsPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
+  const [selectedFont, setSelectedFont] = useState("Inter");
+  const [selectedSize, setSelectedSize] = useState("Medium");
+  const [selectedSpacing, setSelectedSpacing] = useState("Comfortable");
+  const [sidebarColors, setSidebarColors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (profile?.full_name) setFullName(profile.full_name);
+  }, [profile?.full_name]);
+
+  useEffect(() => {
+    if (prefs) {
+      setBio(prefs.bio || "");
+      setLocation(prefs.location || "");
+      setWebsite(prefs.website || "");
+      if (prefs.font_size) setSelectedSize(prefs.font_size);
+      if (prefs.density) setSelectedSpacing(prefs.density);
+      const accColors = prefs.accent_colors as any;
+      if (accColors?.sidebarColors) setSidebarColors(accColors.sidebarColors);
+      if (accColors?.font) setSelectedFont(accColors.font);
+    }
+  }, [prefs]);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -168,7 +202,6 @@ export default function SettingsPage() {
   const handleDeleteArchivedProject = async (projectId: string) => {
     const project = archivedProjects?.find(p => p.id === projectId);
     if (!project) return;
-    
     if (confirm(`Permanently delete "${project.name}"? This cannot be undone.`)) {
       await deleteArchivedProject.mutateAsync(projectId);
       toast.success("Project permanently deleted");
@@ -215,6 +248,37 @@ export default function SettingsPage() {
     toast.success("Photo updated");
   };
 
+  const handleSidebarColorChange = (label: string, color: string) => {
+    const newColors = { ...sidebarColors, [label]: color };
+    setSidebarColors(newColors);
+    const accColors = (prefs?.accent_colors as any) || {};
+    upsertPrefs.mutate({ accent_colors: { ...accColors, sidebarColors: newColors } } as any);
+  };
+
+  const handleResetSidebarColor = (label: string) => {
+    const newColors = { ...sidebarColors };
+    delete newColors[label];
+    setSidebarColors(newColors);
+    const accColors = (prefs?.accent_colors as any) || {};
+    upsertPrefs.mutate({ accent_colors: { ...accColors, sidebarColors: newColors } } as any);
+  };
+
+  const handleFontChange = (font: string) => {
+    setSelectedFont(font);
+    const accColors = (prefs?.accent_colors as any) || {};
+    upsertPrefs.mutate({ accent_colors: { ...accColors, font } } as any);
+  };
+
+  const handleSizeChange = (size: string) => {
+    setSelectedSize(size);
+    upsertPrefs.mutate({ font_size: size } as any);
+  };
+
+  const handleSpacingChange = (spacing: string) => {
+    setSelectedSpacing(spacing);
+    upsertPrefs.mutate({ density: spacing } as any);
+  };
+
   const initials = (profile?.full_name || user?.email || "U").slice(0, 1).toUpperCase();
 
   return (
@@ -226,12 +290,12 @@ export default function SettingsPage() {
         </div>
 
         {/* MAIN CONTENT */}
-        <div className="max-w-[1200px] mx-auto -mt-10 px-6 md:px-10 pb-20 relative">
+        <div className="max-w-[1200px] mx-auto px-6 md:px-10 pb-20 relative" style={{ marginTop: '-40px' }}>
           {/* PAGE HEADER */}
-          <div className="bg-card rounded-2xl p-8 mb-8 shadow-sm border border-border">
+          <div className="bg-card rounded-2xl p-6 px-10 mb-8 shadow-sm border border-border">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
-                <Settings size={24} className="text-muted-foreground" />
+              <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center">
+                <Settings size={20} className="text-muted-foreground" />
               </div>
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
@@ -267,26 +331,26 @@ export default function SettingsPage() {
             </div>
 
             {/* RIGHT CONTENT AREA */}
-            <div className="bg-card rounded-xl border border-border p-8">
-              {/* Profile Tab */}
+            <div className="space-y-6">
+              {/* ==================== PROFILE TAB ==================== */}
               {activeTab === "profile" && (
-                <div className="space-y-6">
-                  {/* Avatar */}
-                  <div className="flex flex-col items-center">
+                <>
+                  {/* Avatar section */}
+                  <div className="flex flex-col items-center mb-10">
                     <div className="relative group">
-                      <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-card shadow-md overflow-hidden bg-gradient-primary">
+                      <div className="flex h-[120px] w-[120px] items-center justify-center rounded-full border-4 border-card shadow-md overflow-hidden" style={{ background: `linear-gradient(135deg, ${themeColor}, ${themeColor}dd)` }}>
                         {prefs?.profile_photo ? (
                           <img src={prefs.profile_photo} alt="Profile" className="h-full w-full object-cover" />
                         ) : (
-                          <span className="text-4xl font-bold text-primary-foreground">{initials}</span>
+                          <span className="text-4xl font-bold text-white">{initials}</span>
                         )}
                       </div>
                       <button
                         onClick={() => photoInputRef.current?.click()}
                         disabled={uploadingPhoto}
-                        className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
+                        className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <Camera className="h-6 w-6 text-primary-foreground" />
+                        <Camera className="h-6 w-6 text-white" />
                       </button>
                       <input ref={photoInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoUpload} />
                     </div>
@@ -295,15 +359,16 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <Card>
-                    <CardContent className="space-y-4 pt-6">
+                  {/* Form fields */}
+                  <div className="max-w-[600px] mx-auto">
+                    <div className="bg-card rounded-xl border border-border p-8 shadow-sm space-y-5">
                       <div className="space-y-2">
                         <Label>Full name</Label>
                         <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
                         <Label>Email</Label>
-                        <Input value={user?.email || ""} disabled className="bg-muted" />
+                        <Input value={user?.email || ""} disabled className="bg-muted opacity-60" />
                       </div>
                       <div className="space-y-2">
                         <Label>Bio</Label>
@@ -341,90 +406,218 @@ export default function SettingsPage() {
                       <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
                         {saving ? "Saving..." : "Save Profile"}
                       </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {/* Appearance Tab */}
-              {activeTab === "appearance" && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Theme</h3>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Accent Color</Label>
-                        <div className="grid grid-cols-4 gap-3">
-                          {accentColors.map((color) => (
-                            <button
-                              key={color.value}
-                              onClick={() => upsertPrefs.mutate({ theme_color: color.value } as any)}
-                              className={cn(
-                                "w-12 h-12 rounded-lg border-2 transition-all",
-                                themeColor === color.value ? "border-foreground" : "border-transparent"
-                              )}
-                              style={{ backgroundColor: color.value }}
-                              title={color.label}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Dark Mode</Label>
-                        <button
-                          onClick={() => {
-                            document.documentElement.classList.toggle("dark");
-                            setDarkMode(!darkMode);
-                          }}
-                          className="flex items-center gap-3"
-                        >
-                          {darkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                          <span>{darkMode ? "Dark" : "Light"}</span>
-                        </button>
-                      </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
 
-              {/* Account Tab */}
+              {/* ==================== APPEARANCE TAB ==================== */}
+              {activeTab === "appearance" && (
+                <>
+                  {/* Theme toggle */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Theme</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => { document.documentElement.classList.remove("dark"); setDarkMode(false); }}
+                        className={cn(
+                          "rounded-xl border-2 p-4 text-left transition-all",
+                          !darkMode ? "border-primary" : "border-border hover:border-muted-foreground/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <Sun size={16} className="text-muted-foreground" />
+                          <span className="font-medium text-sm">Light</span>
+                        </div>
+                        <div className="h-8 rounded bg-gray-200" />
+                      </button>
+                      <button
+                        onClick={() => { document.documentElement.classList.add("dark"); setDarkMode(true); }}
+                        className={cn(
+                          "rounded-xl border-2 p-4 text-left transition-all",
+                          darkMode ? "border-primary" : "border-border hover:border-muted-foreground/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <Moon size={16} className="text-muted-foreground" />
+                          <span className="font-medium text-sm">Dark</span>
+                        </div>
+                        <div className="h-8 rounded bg-gray-800" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Accent color */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Accent color</h3>
+                    <div className="flex gap-3 flex-wrap">
+                      {accentColors.map((color) => (
+                        <button
+                          key={color.value}
+                          onClick={() => upsertPrefs.mutate({ theme_color: color.value } as any)}
+                          className={cn(
+                            "w-12 h-12 rounded-full border-3 transition-all",
+                            themeColor === color.value ? "ring-2 ring-offset-2 ring-foreground" : "border-transparent hover:scale-110"
+                          )}
+                          style={{ backgroundColor: color.value }}
+                          title={color.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sidebar icon colors */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">Sidebar icon colors</h3>
+                    <p className="text-sm text-muted-foreground mb-5">Customize each sidebar icon color individually</p>
+                    <div className="space-y-3">
+                      {sidebarIconItems.map((item) => {
+                        const currentColor = sidebarColors[item.label] || item.defaultColor;
+                        return (
+                          <div key={item.label} className="flex items-center justify-between py-1">
+                            <span className="text-sm text-foreground">{item.label}</span>
+                            <div className="flex items-center gap-2">
+                              <label className="relative">
+                                <input
+                                  type="color"
+                                  value={currentColor}
+                                  onChange={(e) => handleSidebarColorChange(item.label, e.target.value)}
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-8 h-8"
+                                />
+                                <div
+                                  className="w-8 h-8 rounded-md border border-border cursor-pointer"
+                                  style={{ backgroundColor: currentColor }}
+                                />
+                              </label>
+                              <button
+                                onClick={() => handleResetSidebarColor(item.label)}
+                                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Reset
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Font */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Font</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {fontOptions.map((font) => (
+                        <button
+                          key={font}
+                          onClick={() => handleFontChange(font)}
+                          className={cn(
+                            "rounded-xl border-2 px-6 py-4 text-sm font-medium transition-all",
+                            selectedFont === font ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                          )}
+                          style={{ fontFamily: font === "Mono" ? "monospace" : font === "System" ? "system-ui" : font === "Georgia" ? "Georgia, serif" : "Inter, sans-serif" }}
+                        >
+                          {font}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Size */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Size</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      {sizeOptions.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => handleSizeChange(size)}
+                          className={cn(
+                            "rounded-xl border-2 px-6 py-4 text-sm font-medium transition-all",
+                            selectedSize === size ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Spacing */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Spacing</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      {spacingOptions.map((spacing) => (
+                        <button
+                          key={spacing}
+                          onClick={() => handleSpacingChange(spacing)}
+                          className={cn(
+                            "rounded-xl border-2 px-6 py-4 text-sm font-medium transition-all",
+                            selectedSpacing === spacing ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                          )}
+                        >
+                          {spacing}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ==================== ACCOUNT TAB ==================== */}
               {activeTab === "account" && (
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Change Password</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                <>
+                  {/* Change password */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Change password</h3>
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label>New Password</Label>
+                        <Label className="font-medium">New password</Label>
                         <Input
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="At least 6 characters"
+                          placeholder="Min 6 characters"
                         />
                       </div>
-                      <Button onClick={handleChangePassword} disabled={changingPw} className="w-full">
+                      <Button onClick={handleChangePassword} disabled={changingPw}>
                         {changingPw ? "Updating..." : "Update Password"}
                       </Button>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </div>
+
+                  {/* Danger zone */}
+                  <div className="rounded-xl border-2 border-red-200 p-8">
+                    <h3 className="text-lg font-semibold text-red-600 mb-4">Danger zone</h3>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => { await signOut(); navigate("/login"); }}
+                    >
+                      Log out
+                    </Button>
+                  </div>
+                </>
               )}
 
-              {/* AI Resources Tab */}
+              {/* ==================== AI RESOURCES TAB ==================== */}
               {activeTab === "resources" && (
-                <div className="space-y-6">
-                  <div>
-                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                <>
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <div className="flex items-start gap-4 mb-6">
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">AI Resources & Integrations</h3>
+                        <p className="text-sm text-muted-foreground">Connect your favorite tools to enhance your workflow</p>
+                      </div>
+                    </div>
+
+                    {/* Category filters */}
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2 flex-wrap">
                       {categories.map((cat) => (
                         <button
                           key={cat}
                           onClick={() => setSelectedCategory(cat)}
                           className={cn(
-                            "px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors",
+                            "px-4 py-1.5 rounded-full whitespace-nowrap text-sm font-medium transition-colors",
                             selectedCategory === cat
-                              ? "bg-accent text-accent-foreground"
+                              ? "bg-primary text-primary-foreground"
                               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                           )}
                         >
@@ -432,120 +625,136 @@ export default function SettingsPage() {
                         </button>
                       ))}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                    {/* Resource cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {filteredResources.map((resource) => {
                         const Icon = resource.icon;
                         const faviconUrl = getFaviconUrl(resource.url);
                         const count = engagementCounts[resource.id] || { clicks: 0, signups: 0 };
                         return (
-                          <Card key={resource.id} className="flex flex-col hover:shadow-md transition-shadow cursor-pointer" onClick={() => trackClick(resource)}>
-                            <CardContent className="p-4 flex-1">
-                              <div className="flex items-start gap-3 mb-3">
+                          <div
+                            key={resource.id}
+                            className="bg-card rounded-xl border border-border p-5 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => {
+                              trackClick(resource);
+                              window.open(resource.url, "_blank");
+                            }}
+                          >
+                            <div className="flex items-start gap-3 mb-3">
+                              <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
                                 {resource.image ? (
-                                  <span className="text-2xl">{resource.image}</span>
+                                  <span className="text-xl">{resource.image}</span>
                                 ) : Icon ? (
-                                  <Icon className={cn("h-6 w-6", resource.iconColor || "text-primary")} />
+                                  <Icon className={cn("h-5 w-5", resource.iconColor || "text-primary")} />
                                 ) : faviconUrl ? (
-                                  <img src={faviconUrl} alt={resource.name} className="h-6 w-6 rounded" />
+                                  <img src={faviconUrl} alt={resource.name} className="h-5 w-5 rounded" />
                                 ) : null}
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-sm">{resource.name}</h4>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">{resource.description}</p>
-                                </div>
                               </div>
-                              {(count.clicks > 0 || count.signups > 0) && (
-                                <div className="text-xs text-muted-foreground space-y-1">
-                                  {count.clicks > 0 && <p>Clicks: {count.clicks}</p>}
-                                  {count.signups > 0 && <p>Signups: {count.signups}</p>}
-                                </div>
-                              )}
-                            </CardContent>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(resource.url, "_blank");
-                                if (resource.isIntegration) trackSignup(resource);
-                              }}
-                              variant="outline"
-                              className="w-full"
-                              size="sm"
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2" />
-                              {resource.isIntegration ? "Integrate" : "Explore"}
-                            </Button>
-                          </Card>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm text-foreground">{resource.name}</h4>
+                                <p className="text-xs text-muted-foreground">{resource.category}</p>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-3">{resource.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {count.clicks} clicks&nbsp;&nbsp;{count.signups} signups
+                            </p>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
-                </div>
+                </>
               )}
 
-              {/* Archived Projects Tab */}
+              {/* ==================== ARCHIVED PROJECTS TAB ==================== */}
               {activeTab === "archived" && (
-                <div className="space-y-6">
+                <>
+                  {/* Header */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <div className="flex items-start gap-4 mb-2">
+                      <Archive size={28} className="text-muted-foreground mt-1" />
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">Archived Projects</h3>
+                        <p className="text-sm text-muted-foreground">View and manage your archived projects. Restore them to continue working or permanently delete them.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Count card */}
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Archived Projects</p>
+                        <p className="text-3xl font-bold text-foreground">{archivedProjects?.length || 0}</p>
+                      </div>
+                      <Archive size={32} className="text-muted-foreground/30" />
+                    </div>
+                  </div>
+
+                  {/* Project list */}
                   {!archivedProjects || archivedProjects.length === 0 ? (
-                    <div className="text-center py-12">
+                    <div className="bg-card rounded-xl border border-border p-12 text-center shadow-sm">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                       <p className="text-muted-foreground">No archived projects yet</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {archivedProjects.map((project) => (
-                        <Card key={project.id} className="overflow-hidden">
-                          <div className="p-4 space-y-4">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-foreground">{project.name}</h3>
-                            </div>
-                            {project.goal && (
-                              <p className="text-sm text-muted-foreground mb-2">{project.goal}</p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              Archived on {new Date(project.updated_at).toLocaleDateString('en-US', { 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                              })}
-                            </p>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-3 pt-4 border-t border-border">
-                              <Button
-                                onClick={() => handleRestoreProject(project.id)}
-                                className="flex-1"
-                                disabled={restoreProject.isPending}
-                              >
-                                <RotateCcw size={16} className="mr-2" />
-                                {restoreProject.isPending ? "Restoring..." : "Restore"}
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteArchivedProject(project.id)}
-                                variant="destructive"
-                                className="flex-1"
-                                disabled={deleteArchivedProject.isPending}
-                              >
-                                <Trash2 size={16} className="mr-2" />
-                                {deleteArchivedProject.isPending ? "Deleting..." : "Delete"}
-                              </Button>
-                            </div>
+                        <div key={project.id} className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Archive size={16} className="text-muted-foreground" />
+                            <h4 className="font-semibold text-foreground">{project.name}</h4>
                           </div>
-                        </Card>
+                          {project.goal && (
+                            <p className="text-sm text-muted-foreground mb-1">{project.goal}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mb-4">
+                            Archived on {new Date(project.updated_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                          <div className="flex gap-3 items-center">
+                            <Button
+                              onClick={() => handleRestoreProject(project.id)}
+                              className="flex-1"
+                              disabled={restoreProject.isPending}
+                            >
+                              <RotateCcw size={16} className="mr-2" />
+                              Restore
+                            </Button>
+                            <Button
+                              onClick={() => navigate(`/projects/${project.id}`)}
+                              variant="outline"
+                            >
+                              View Details
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteArchivedProject(project.id)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              disabled={deleteArchivedProject.isPending}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Info Box */}
-                  {archivedProjects && archivedProjects.length > 0 && (
-                    <div className="mt-8 bg-secondary rounded-lg border border-border p-4">
-                      <h4 className="font-semibold text-foreground mb-2">About Archived Projects</h4>
-                      <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• Archived projects are stored safely and don't count toward your active project list</li>
-                        <li>• You can restore an archived project at any time to continue working on it</li>
-                        <li>• Permanently deleting an archived project cannot be undone</li>
-                      </ul>
-                    </div>
-                  )}
-                </div>
+                  {/* Info box */}
+                  <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                    <h4 className="font-semibold text-foreground mb-2">About Archived Projects</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Archived projects are stored safely and don't count toward your active project list</li>
+                      <li>• You can restore an archived project at any time to continue working on it</li>
+                      <li>• Permanently deleting an archived project cannot be undone</li>
+                    </ul>
+                  </div>
+                </>
               )}
             </div>
           </div>
