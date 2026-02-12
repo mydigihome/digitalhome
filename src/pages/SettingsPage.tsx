@@ -357,6 +357,19 @@ export default function SettingsPage() {
                         <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label>I am a:</Label>
+                      <select
+                        value={(prefs as any)?.user_type || "other"}
+                        onChange={(e) => upsertPrefs.mutate({ user_type: e.target.value } as any)}
+                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                      >
+                        <option value="student">Student</option>
+                        <option value="professional">Professional</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground">This controls which features are visible (e.g., College Applications tracker)</p>
+                    </div>
                     <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
                       {saving ? "Saving..." : "Save Profile"}
                     </Button>

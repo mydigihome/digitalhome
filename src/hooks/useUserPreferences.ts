@@ -19,6 +19,7 @@ export interface UserPreferences {
   font_size: string | null;
   density: string | null;
   custom_folder_colors: boolean | null;
+  user_type: string | null;
   created_at: string;
   updated_at: string;
 }

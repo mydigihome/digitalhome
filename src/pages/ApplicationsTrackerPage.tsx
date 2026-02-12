@@ -14,8 +14,9 @@ import { useResumes, useCreateResume, useDeleteResume } from "@/hooks/useResumes
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import CollegeApplicationsTab from "@/components/CollegeApplicationsTab";
 
-type AppCategory = "all" | "job" | "internship" | "fellowship" | "brand_collab";
+type AppCategory = "all" | "job" | "internship" | "fellowship" | "brand_collab" | "college";
 
 const categoryLabels: Record<string, string> = {
   job: "Job", internship: "Internship", fellowship: "Fellowship", brand_collab: "Brand Collab",
@@ -63,6 +64,8 @@ export default function ApplicationsTrackerPage() {
   const deleteResume = useDeleteResume();
 
   const [activeCategory, setActiveCategory] = useState<AppCategory>("all");
+  const isStudent = (prefs as any)?.user_type === "student";
+  const [showStudentPrompt, setShowStudentPrompt] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showResumeUpload, setShowResumeUpload] = useState(false);
   const [editingApp, setEditingApp] = useState<string | null>(null);
@@ -201,11 +204,42 @@ export default function ApplicationsTrackerPage() {
                 {cat === "all" ? "All Applications" : categoryLabels[cat]} ({counts[cat]})
               </button>
             ))}
+            {isStudent && (
+              <button
+                onClick={() => setActiveCategory("college")}
+                className={cn(
+                  "h-9 px-4 rounded-lg text-sm font-medium border transition-all duration-150",
+                  activeCategory === "college"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-transparent border-border text-muted-foreground hover:border-primary"
+                )}
+              >
+                🎓 College Applications
+              </button>
+            )}
+            {!isStudent && (
+              <button
+                onClick={() => setShowStudentPrompt(true)}
+                className="h-9 px-4 rounded-lg text-sm font-medium border border-dashed border-border text-muted-foreground hover:border-primary transition-all duration-150"
+              >
+                🎓 College Apps
+              </button>
+            )}
           </div>
-          <Button onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Add Application
-          </Button>
+          {activeCategory !== "college" && (
+            <Button onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Add Application
+            </Button>
+          )}
         </div>
+
+        {/* College Applications Tab */}
+        {activeCategory === "college" && isStudent && <CollegeApplicationsTab />}
+
+        {/* Regular Applications */}
+        {activeCategory !== "college" && (
+        <>
+
 
         {/* Application Cards Grid */}
         {filtered.length === 0 ? (
@@ -325,6 +359,22 @@ export default function ApplicationsTrackerPage() {
                 <Button onClick={handleSubmit} disabled={createApp.isPending || updateApp.isPending} className="flex-1">
                   {(createApp.isPending || updateApp.isPending) ? "Saving..." : "Save"}
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* Student Prompt Modal */}
+        {showStudentPrompt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setShowStudentPrompt(false)}>
+            <div className="w-full max-w-[360px] rounded-2xl bg-card p-6 shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+              <p className="text-lg font-semibold text-foreground mb-2">🎓 Are you a student?</p>
+              <p className="text-sm text-muted-foreground mb-6">Enable the College Applications tracker to manage your college journey.</p>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setShowStudentPrompt(false)} className="flex-1">No</Button>
+                <Button onClick={() => { upsertPrefs.mutate({ user_type: "student" } as any); setShowStudentPrompt(false); setActiveCategory("college"); toast.success("College tracker enabled!"); }} className="flex-1">Yes, I'm a student</Button>
               </div>
             </div>
           </div>
