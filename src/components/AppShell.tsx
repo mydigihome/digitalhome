@@ -122,7 +122,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       <button
         onClick={() => go(path)}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
+          "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
           isActive
             ? "bg-accent text-accent-foreground shadow-xs"
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -142,19 +142,19 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
 
       {/* Projects with sub-folders */}
       <li>
-        <button
-          onClick={() => {
-            if (collapsed) { go("/projects"); return; }
-            setProjectsOpen(!projectsOpen);
-            if (!isProjectsActive) go("/projects");
-          }}
-          className={cn(
-            "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
-            isProjectsActive
-              ? "bg-accent text-accent-foreground shadow-xs"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-          )}
-        >
+       <button
+           onClick={() => {
+             if (collapsed) { go("/projects"); return; }
+             setProjectsOpen(!projectsOpen);
+             if (!isProjectsActive) go("/projects");
+           }}
+           className={cn(
+             "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+             isProjectsActive
+               ? "bg-accent text-accent-foreground shadow-xs"
+               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+           )}
+         >
           <FolderOpen className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("projects") }} />
           {!collapsed && (
             <>
@@ -204,19 +204,19 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
 
       {/* Finance with sub-folders */}
       <li>
-        <button
-          onClick={() => {
-            if (collapsed) { go("/finance/wealth"); return; }
-            setFinanceOpen(!financeOpen);
-            if (!isFinanceActive) go("/finance/wealth");
-          }}
-          className={cn(
-            "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-all duration-150",
-            isFinanceActive
-              ? "bg-accent text-accent-foreground shadow-xs"
-              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-          )}
-        >
+       <button
+           onClick={() => {
+             if (collapsed) { go("/finance/wealth"); return; }
+             setFinanceOpen(!financeOpen);
+             if (!isFinanceActive) go("/finance/wealth");
+           }}
+           className={cn(
+             "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+             isFinanceActive
+               ? "bg-accent text-accent-foreground shadow-xs"
+               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+           )}
+         >
           <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("finance") }} />
           {!collapsed && (
             <>
@@ -305,7 +305,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Scrollable navigation */}
-          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5">
             <SidebarNav collapsed={collapsed} />
           </nav>
 
