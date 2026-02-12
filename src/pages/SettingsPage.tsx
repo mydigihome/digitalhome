@@ -8,15 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
-import PageHeader from "@/components/PageHeader";
-
-
 
 const accentColors = [
   { label: "Purple", value: "#8B5CF6" },
@@ -29,13 +25,6 @@ const accentColors = [
   { label: "Brown", value: "#6B4226" },
 ];
 
-const fontOptions = [
-  { label: "Inter", value: "Inter" },
-  { label: "Georgia", value: "Georgia" },
-  { label: "Mono", value: "ui-monospace, monospace" },
-  { label: "System", value: "system-ui, sans-serif" },
-];
-
 type ResourceItem = {
   id: number;
   name: string;
@@ -46,7 +35,6 @@ type ResourceItem = {
   category: string;
   url: string;
   isIntegration?: boolean;
-  customImage?: string;
 };
 
 const getFaviconUrl = (url: string): string | null => {
@@ -81,17 +69,9 @@ const aiResources: ResourceItem[] = [
   { id: 109, name: "Linear", description: "Sync engineering tasks and sprint planning", image: "", icon: TrendingUp, iconColor: "text-purple-500", category: "Development", url: "https://linear.app", isIntegration: true },
   { id: 110, name: "Asana", description: "Import existing Asana projects and workflows", image: "", icon: CheckCircle, iconColor: "text-pink-500", category: "Productivity", url: "https://asana.com", isIntegration: true },
   { id: 111, name: "Trello", description: "Migrate your Trello boards to Digital Home", image: "", icon: Columns, iconColor: "text-blue-500", category: "Productivity", url: "https://trello.com", isIntegration: true },
-  // College
-  { id: 112, name: "AppTrack", description: "AI-powered application tracking for students and job seekers", image: "🎓", category: "College", url: "https://www.apptrack.ai/" },
-  // Finance - Brokerages
-  { id: 113, name: "Robinhood", description: "Commission-free stock, ETF, and crypto trading", image: "💹", category: "Finance", url: "https://robinhood.com" },
-  { id: 114, name: "Vanguard", description: "Low-cost index funds and retirement investing", image: "📈", category: "Finance", url: "https://vanguard.com" },
-  { id: 115, name: "Webull", description: "Advanced trading platform with extended hours and analytics", image: "📊", category: "Finance", url: "https://webull.com" },
-  { id: 116, name: "Charles Schwab", description: "Full-service brokerage with research and advisory tools", image: "🏦", category: "Finance", url: "https://schwab.com" },
-  { id: 117, name: "Fidelity", description: "Investing, retirement planning, and wealth management", image: "💼", category: "Finance", url: "https://fidelity.com" },
 ];
 
-const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events", "College"];
+const categories = ["All", "AI", "Productivity", "Automation", "Development", "Design", "Communication", "Presentations", "Image Generation", "Video", "Finance", "Events"];
 
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -128,9 +108,7 @@ export default function SettingsPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
-  const [expandedProject, setExpandedProject] = useState<string | null>(null);
 
-  // Fetch engagement counts from database
   useEffect(() => {
     const fetchCounts = async () => {
       const { data } = await supabase
@@ -201,10 +179,6 @@ export default function SettingsPage() {
     ? aiResources : aiResources.filter((r) => r.category === selectedCategory);
 
   const themeColor = prefs?.theme_color || "#8B5CF6";
-  const fontSize = prefs?.font_size || "medium";
-  const density = prefs?.density || "comfortable";
-  const accentData = prefs?.accent_colors as Record<string, string> | null;
-  const selectedFont = accentData?.font_family || "Inter";
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -241,584 +215,427 @@ export default function SettingsPage() {
     toast.success("Photo updated");
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/login");
-  };
-
   const initials = (profile?.full_name || user?.email || "U").slice(0, 1).toUpperCase();
 
   return (
     <AppShell>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">⚙️ Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
+      <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#FAFBFC' }}>
+        {/* SLIM GRADIENT BANNER - Top decorative strip */}
+        <div style={{
+          width: '100%',
+          height: '120px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          position: 'relative'
+        }}>
+          {/* Subtle pattern overlay */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+            pointerEvents: 'none'
+          }} />
         </div>
 
-        <div className="flex gap-8 min-h-0">
-          {/* Sidebar */}
-          <div className="hidden md:block w-[200px] shrink-0">
-            <nav className="space-y-1 sticky top-8">
-              {settingsTabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                      activeTab === tab.id
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" /> {tab.label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Mobile tabs */}
-          <div className="flex md:hidden mb-4 gap-1 overflow-x-auto -mx-4 px-4 w-[calc(100%+2rem)]">
-            {settingsTabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors",
-                    activeTab === tab.id ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" /> {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 max-w-2xl">
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <div className="space-y-6">
-                {/* Avatar */}
-                <div className="flex flex-col items-center">
-                  <div className="relative group">
-                    <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-card shadow-md overflow-hidden bg-gradient-primary">
-                      {prefs?.profile_photo ? (
-                        <img src={prefs.profile_photo} alt="Profile" className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-4xl font-bold text-primary-foreground">{initials}</span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => photoInputRef.current?.click()}
-                      disabled={uploadingPhoto}
-                      className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
-                    >
-                      <Camera className="h-6 w-6 text-primary-foreground" />
-                    </button>
-                    <input ref={photoInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoUpload} />
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {uploadingPhoto ? "Uploading..." : "Click to change photo"}
-                  </p>
-                </div>
-
-                <Card>
-                  <CardContent className="space-y-4 pt-6">
-                    <div className="space-y-2">
-                      <Label>Full name</Label>
-                      <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input value={user?.email || ""} disabled className="bg-muted" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Bio</Label>
-                      <Textarea
-                        value={bio}
-                        onChange={(e) => setBio(e.target.value)}
-                        placeholder="A short bio about yourself"
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Location</Label>
-                        <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Website</Label>
-                        <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>I am a:</Label>
-                      <select
-                        value={(prefs as any)?.user_type || "other"}
-                        onChange={(e) => upsertPrefs.mutate({ user_type: e.target.value } as any)}
-                        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                      >
-                        <option value="student">Student</option>
-                        <option value="professional">Professional</option>
-                        <option value="other">Other</option>
-                      </select>
-                      <p className="text-xs text-muted-foreground">This controls which features are visible (e.g., College Applications tracker)</p>
-                    </div>
-                    <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
-                      {saving ? "Saving..." : "Save Profile"}
-                    </Button>
-                  </CardContent>
-                </Card>
+        {/* MAIN CONTENT CONTAINER */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '-40px auto 0',
+          padding: '0 40px 80px',
+          position: 'relative'
+        }}>
+          {/* PAGE HEADER */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            marginBottom: '32px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                backgroundColor: '#F3F4F6',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Settings size={24} style={{ color: '#6B7280' }} />
               </div>
-            )}
 
-            {/* Appearance Tab */}
-            {activeTab === "appearance" && (
-              <div className="space-y-6">
-                {/* Theme */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Theme</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h1 style={{
+                  fontSize: '28px',
+                  fontWeight: '600',
+                  color: '#1F2937',
+                  marginBottom: '4px'
+                }}>
+                  Settings
+                </h1>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#6B7280'
+                }}>
+                  Manage your account settings and preferences
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* TWO-COLUMN LAYOUT - PROPERLY ALIGNED */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '240px 1fr',
+            gap: '32px',
+            alignItems: 'start'
+          }}>
+            {/* LEFT SIDEBAR - Section Navigation */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '8px',
+              border: '1px solid #E5E7EB',
+              position: 'sticky',
+              top: '24px'
+            }}>
+              <nav>
+                {settingsTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 12px',
+                        backgroundColor: activeTab === tab.id ? '#F3F4F6' : 'transparent',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: activeTab === tab.id ? '500' : '400',
+                        color: activeTab === tab.id ? '#1F2937' : '#6B7280',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        marginBottom: '2px',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (activeTab !== tab.id) {
+                          e.currentTarget.style.backgroundColor = '#F9FAFB';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (activeTab !== tab.id) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      <Icon size={18} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* RIGHT CONTENT AREA - ALIGNED WITH SIDEBAR */}
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              border: '1px solid #E5E7EB',
+              padding: '32px'
+            }}>
+              {/* Profile Tab */}
+              {activeTab === "profile" && (
+                <div className="space-y-6">
+                  {/* Avatar */}
+                  <div className="flex flex-col items-center">
+                    <div className="relative group">
+                      <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-card shadow-md overflow-hidden bg-gradient-primary">
+                        {prefs?.profile_photo ? (
+                          <img src={prefs.profile_photo} alt="Profile" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-4xl font-bold text-primary-foreground">{initials}</span>
+                        )}
+                      </div>
                       <button
-                        onClick={() => { setDarkMode(false); document.documentElement.classList.remove("dark"); upsertPrefs.mutate({ sidebar_theme: "light" }); }}
-                        className={cn("rounded-xl border-2 p-5 text-left transition-colors", !darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
                       >
-                        <div className="mb-3 flex items-center gap-2">
-                          <Sun className="h-5 w-5 text-warning" />
-                          <span className="font-medium text-foreground">Light</span>
-                        </div>
-                        <div className="rounded-lg bg-card p-3 shadow-sm border border-border">
-                          <div className="mb-1.5 h-2 rounded bg-secondary" />
-                          <div className="h-2 w-3/4 rounded bg-secondary" />
-                        </div>
+                        <Camera className="h-6 w-6 text-primary-foreground" />
                       </button>
-                      <button
-                        onClick={() => { setDarkMode(true); document.documentElement.classList.add("dark"); upsertPrefs.mutate({ sidebar_theme: "dark" }); }}
-                        className={cn("rounded-xl border-2 p-5 text-left transition-colors", darkMode ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30")}
-                      >
-                        <div className="mb-3 flex items-center gap-2">
-                          <Moon className="h-5 w-5 text-primary" />
-                          <span className="font-medium text-foreground">Dark</span>
-                        </div>
-                        <div className="rounded-lg bg-foreground/90 p-3">
-                          <div className="mb-1.5 h-2 rounded bg-foreground/70" />
-                          <div className="h-2 w-3/4 rounded bg-foreground/70" />
-                        </div>
-                      </button>
+                      <input ref={photoInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handlePhotoUpload} />
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {uploadingPhoto ? "Uploading..." : "Click to change photo"}
+                    </p>
+                  </div>
 
-                {/* Accent Color */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Accent color</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-3">
-                      {accentColors.map((c) => (
-                        <button
-                          key={c.value}
-                          onClick={() => upsertPrefs.mutate({ theme_color: c.value })}
-                          className={cn(
-                            "h-10 w-10 rounded-full transition-all hover:scale-110",
-                            themeColor === c.value && "ring-2 ring-offset-2 ring-foreground/30"
-                          )}
-                          style={{ backgroundColor: c.value }}
-                          title={c.label}
+                  <Card>
+                    <CardContent className="space-y-4 pt-6">
+                      <div className="space-y-2">
+                        <Label>Full name</Label>
+                        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input value={user?.email || ""} disabled className="bg-muted" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Bio</Label>
+                        <Textarea
+                          value={bio}
+                          onChange={(e) => setBio(e.target.value)}
+                          placeholder="A short bio about yourself"
+                          className="min-h-[80px]"
                         />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Location</Label>
+                          <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, Country" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Website</Label>
+                          <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>I am a:</Label>
+                        <select
+                          value={(prefs as any)?.user_type || "other"}
+                          onChange={(e) => upsertPrefs.mutate({ user_type: e.target.value } as any)}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="student">Student</option>
+                          <option value="parent">Parent</option>
+                          <option value="professional">Professional</option>
+                          <option value="entrepreneur">Entrepreneur</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+                        {saving ? "Saving..." : "Save Profile"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Appearance Tab */}
+              {activeTab === "appearance" && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Theme</h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Accent Color</Label>
+                        <div className="grid grid-cols-4 gap-3">
+                          {accentColors.map((color) => (
+                            <button
+                              key={color.value}
+                              onClick={() => upsertPrefs.mutate({ theme_color: color.value } as any)}
+                              className={cn(
+                                "w-12 h-12 rounded-lg border-2 transition-all",
+                                themeColor === color.value ? "border-foreground" : "border-transparent"
+                              )}
+                              style={{ backgroundColor: color.value }}
+                              title={color.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Dark Mode</Label>
+                        <button
+                          onClick={() => {
+                            document.documentElement.classList.toggle("dark");
+                            setDarkMode(!darkMode);
+                          }}
+                          className="flex items-center gap-3"
+                        >
+                          {darkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                          <span>{darkMode ? "Dark" : "Light"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Account Tab */}
+              {activeTab === "account" && (
+                <div className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Change Password</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>New Password</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="At least 6 characters"
+                        />
+                      </div>
+                      <Button onClick={handleChangePassword} disabled={changingPw} className="w-full">
+                        {changingPw ? "Updating..." : "Update Password"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* AI Resources Tab */}
+              {activeTab === "resources" && (
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => setSelectedCategory(cat)}
+                          className={cn(
+                            "px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors",
+                            selectedCategory === cat
+                              ? "bg-accent text-accent-foreground"
+                              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          )}
+                        >
+                          {cat}
+                        </button>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Sidebar Icon Colors */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Sidebar icon colors</CardTitle></CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground mb-4">Customize each sidebar icon color individually</p>
-                    <div className="space-y-3">
-                      {([
-                        { key: "home", label: "Home", defaultColor: "#8B5CF6" },
-                        { key: "projects", label: "Projects", defaultColor: "#F59E0B" },
-                        { key: "finance", label: "Finance", defaultColor: "#F59E0B" },
-                        { key: "finance_wealth", label: "Wealth Tracker", defaultColor: "#10B981" },
-                        { key: "finance_apps", label: "Applications Tracker", defaultColor: "#3B82F6" },
-                        { key: "calendar", label: "Calendar", defaultColor: "#3B82F6" },
-                        { key: "team", label: "Team", defaultColor: "#6B7280" },
-                      ] as const).map((item) => {
-                        const iconColorsData = (accentData as any)?.icon_colors || {};
-                        const currentColor = iconColorsData[item.key] || item.defaultColor;
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredResources.map((resource) => {
+                        const Icon = resource.icon;
+                        const faviconUrl = getFaviconUrl(resource.url);
+                        const count = engagementCounts[resource.id] || { clicks: 0, signups: 0 };
                         return (
-                          <div key={item.key} className="flex items-center justify-between">
-                            <span className="text-sm text-foreground">{item.label}</span>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="color"
-                                value={currentColor}
-                                onChange={(e) => {
-                                  const newIconColors = { ...iconColorsData, [item.key]: e.target.value };
-                                  upsertPrefs.mutate({ accent_colors: { ...accentData, icon_colors: newIconColors } });
-                                }}
-                                className="h-8 w-8 rounded-full cursor-pointer border border-border"
-                              />
-                              <button
-                                onClick={() => {
-                                  const newIconColors = { ...iconColorsData };
-                                  delete newIconColors[item.key];
-                                  upsertPrefs.mutate({ accent_colors: { ...accentData, icon_colors: newIconColors } });
-                                }}
-                                className="text-xs text-muted-foreground hover:text-foreground"
-                                title="Reset to default"
-                              >
-                                Reset
-                              </button>
-                            </div>
-                          </div>
+                          <Card key={resource.id} className="flex flex-col hover:shadow-md transition-shadow cursor-pointer" onClick={() => trackClick(resource)}>
+                            <CardContent className="p-4 flex-1">
+                              <div className="flex items-start gap-3 mb-3">
+                                {resource.image ? (
+                                  <span className="text-2xl">{resource.image}</span>
+                                ) : Icon ? (
+                                  <Icon className={cn("h-6 w-6", resource.iconColor || "text-primary")} />
+                                ) : faviconUrl ? (
+                                  <img src={faviconUrl} alt={resource.name} className="h-6 w-6 rounded" />
+                                ) : null}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-sm">{resource.name}</h4>
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{resource.description}</p>
+                                </div>
+                              </div>
+                              {(count.clicks > 0 || count.signups > 0) && (
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                  {count.clicks > 0 && <p>Clicks: {count.clicks}</p>}
+                                  {count.signups > 0 && <p>Signups: {count.signups}</p>}
+                                </div>
+                              )}
+                            </CardContent>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(resource.url, "_blank");
+                                if (resource.isIntegration) trackSignup(resource);
+                              }}
+                              variant="outline"
+                              className="w-full"
+                              size="sm"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              {resource.isIntegration ? "Integrate" : "Explore"}
+                            </Button>
+                          </Card>
                         );
                       })}
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Font Family */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Font</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {fontOptions.map((f) => (
-                        <button
-                          key={f.label}
-                          onClick={() => upsertPrefs.mutate({ accent_colors: { ...accentData, font_family: f.value } })}
-                          className={cn(
-                            "rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors",
-                            selectedFont === f.value ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
-                          )}
-                          style={{ fontFamily: f.value }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2">Size</p>
-                    <div className="flex gap-2">
-                      {["small", "medium", "large"].map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => upsertPrefs.mutate({ font_size: size })}
-                          className={cn(
-                            "flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium capitalize transition-colors",
-                            fontSize === size ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
-                          )}
-                        >
-                          {size}
-                        </button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Density */}
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Spacing</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="flex gap-2">
-                      {["compact", "comfortable", "spacious"].map((d) => (
-                        <button
-                          key={d}
-                          onClick={() => upsertPrefs.mutate({ density: d })}
-                          className={cn(
-                            "flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium capitalize transition-colors",
-                            density === d ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground hover:border-muted-foreground/30"
-                          )}
-                        >
-                          {d}
-                        </button>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Account Tab */}
-            {activeTab === "account" && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader><CardTitle className="text-base">Change password</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>New password</Label>
-                      <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
-                    </div>
-                    <Button onClick={handleChangePassword} disabled={changingPw}>
-                      {changingPw ? "Updating..." : "Update Password"}
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-destructive/30">
-                  <CardHeader><CardTitle className="text-base text-destructive">Danger zone</CardTitle></CardHeader>
-                  <CardContent>
-                    <Button variant="destructive" onClick={handleLogout}>Log out</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* AI Resources Tab */}
-            {activeTab === "resources" && (
-              <div>
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold text-foreground">AI Resources & Integrations</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Connect your favorite tools to enhance your workflow</p>
-                </div>
-
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={cn(
-                        "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                        selectedCategory === cat ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {filteredResources.map((resource) => {
-                    const IconComp = resource.icon;
-                    const counts = engagementCounts[resource.id] || { clicks: 0, signups: 0 };
-                    return (
-                      <div
-                        key={resource.id}
-                        onClick={() => {
-                          trackClick(resource);
-                          if (!resource.isIntegration) window.open(resource.url, "_blank");
-                        }}
-                        className="group cursor-pointer rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          {(() => {
-                            const faviconUrl = getFaviconUrl(resource.url);
-                            const imgSrc = resource.customImage || faviconUrl;
-                            
-                            if (resource.icon) {
-                              // For integrations with custom icons
-                              const IconComp = resource.icon;
-                              return (
-                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
-                                  <IconComp className={cn("h-5 w-5", resource.iconColor)} />
-                                </div>
-                              );
-                            } else if (imgSrc) {
-                              // For resources with favicon
-                              return (
-                                <div className="relative h-10 w-10 flex-shrink-0 rounded-lg bg-secondary overflow-hidden flex items-center justify-center">
-                                  <img
-                                    src={imgSrc}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                  />
-                                  {!imgSrc && <AlertCircle className="h-5 w-5 text-muted-foreground" />}
-                                </div>
-                              );
-                            } else {
-                              // Fallback emoji
-                              return <span className="text-2xl">{resource.image}</span>;
-                            }
-                          })()}
-                          <div className="flex-1">
-                            <h3 className="text-sm font-semibold text-foreground">{resource.name}</h3>
-                            <span className="text-xs text-muted-foreground">{resource.category}</span>
-                          </div>
-                          {resource.isIntegration ? (
-                            <Button variant="outline" size="sm" className="text-xs h-8" onClick={(e) => {
-                              e.stopPropagation();
-                              trackSignup(resource);
-                            }}>
-                              Connect
-                            </Button>
-                          ) : (
-                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-3">{resource.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
-                          <span>{counts.clicks.toLocaleString()} clicks</span>
-                          <span>{counts.signups.toLocaleString()} signups</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Archived Projects Tab */}
-            {activeTab === "archived" && (
-              <div>
-                <div className="mb-8">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Archive size={32} />
-                    <div>
-                      <h2 className="text-2xl font-bold text-foreground">Archived Projects</h2>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        View and manage your archived projects. Restore them to continue working or permanently delete them.
-                      </p>
-                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* Stats */}
-                {archivedProjects && archivedProjects.length > 0 && (
-                  <Card className="mb-6">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Total Archived Projects</p>
-                          <p className="text-3xl font-bold text-foreground">{archivedProjects.length}</p>
-                        </div>
-                        <Archive size={40} className="text-muted-foreground/20" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Empty state */}
-                {!archivedProjects || archivedProjects.length === 0 ? (
-                  <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
-                      <Archive size={48} className="text-muted-foreground/30 mb-4" />
-                      <h3 className="text-lg font-semibold text-foreground mb-2">No Archived Projects</h3>
-                      <p className="text-sm text-muted-foreground">You haven't archived any projects yet.</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {archivedProjects.map((project) => (
-                      <Card key={project.id}>
-                        <div className="p-6">
-                          <div className="flex items-start justify-between mb-4">
+              {/* Archived Projects Tab */}
+              {activeTab === "archived" && (
+                <div className="space-y-6">
+                  {!archivedProjects || archivedProjects.length === 0 ? (
+                    <div className="text-center py-12">
+                      <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No archived projects yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {archivedProjects.map((project) => (
+                        <Card key={project.id} className="overflow-hidden">
+                          <div className="p-4 space-y-4">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Archive size={18} className="text-muted-foreground/60" />
-                                <h3 className="text-lg font-semibold text-foreground">
-                                  {project.name}
-                                </h3>
-                              </div>
-                              {project.goal && (
-                                <p className="text-sm text-muted-foreground mb-2">{project.goal}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground">
-                                Archived on {new Date(project.updated_at).toLocaleDateString('en-US', { 
-                                  year: 'numeric', 
-                                  month: 'long', 
-                                  day: 'numeric' 
-                                })}
-                              </p>
+                              <h3 className="font-semibold text-foreground">{project.name}</h3>
+                            </div>
+                            {project.goal && (
+                              <p className="text-sm text-muted-foreground mb-2">{project.goal}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              Archived on {new Date(project.updated_at).toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4 border-t border-border">
+                              <Button
+                                onClick={() => handleRestoreProject(project.id)}
+                                className="flex-1"
+                                disabled={restoreProject.isPending}
+                              >
+                                <RotateCcw size={16} className="mr-2" />
+                                {restoreProject.isPending ? "Restoring..." : "Restore"}
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteArchivedProject(project.id)}
+                                variant="destructive"
+                                className="flex-1"
+                                disabled={deleteArchivedProject.isPending}
+                              >
+                                <Trash2 size={16} className="mr-2" />
+                                {deleteArchivedProject.isPending ? "Deleting..." : "Delete"}
+                              </Button>
                             </div>
                           </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-3 pt-4 border-t border-border">
-                            <Button
-                              onClick={() => handleRestoreProject(project.id)}
-                              className="flex-1"
-                              disabled={restoreProject.isPending}
-                            >
-                              <RotateCcw size={16} className="mr-2" />
-                              {restoreProject.isPending ? "Restoring..." : "Restore"}
-                            </Button>
-
-                            <button
-                              onClick={() => setExpandedProject(expandedProject === project.id ? null : project.id)}
-                              className={cn(
-                                "px-4 py-2 rounded-lg border transition-colors text-sm font-medium",
-                                "border-border bg-secondary hover:bg-secondary/80 text-foreground"
-                              )}
-                            >
-                              {expandedProject === project.id ? "Hide Details" : "View Details"}
-                            </button>
-
-                            <Button
-                              onClick={() => handleDeleteArchivedProject(project.id)}
-                              variant="outline"
-                              disabled={deleteArchivedProject.isPending}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-
-                          {/* Expanded Details */}
-                          {expandedProject === project.id && (
-                            <div className="border-t border-border mt-4 pt-4">
-                              <h4 className="font-semibold text-foreground mb-3">Project Information</h4>
-                              <div className="space-y-2 text-sm">
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Project ID:</span>
-                                  <span className="text-foreground font-mono">{project.id}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Status:</span>
-                                  <span className="text-orange-600 font-medium">Archived</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Type:</span>
-                                  <span className="text-foreground capitalize">{project.type}</span>
-                                </div>
-                                {project.start_date && (
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Start Date:</span>
-                                    <span className="text-foreground">{new Date(project.start_date).toLocaleDateString()}</span>
-                                  </div>
-                                )}
-                                {project.end_date && (
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">End Date:</span>
-                                    <span className="text-foreground">{new Date(project.end_date).toLocaleDateString()}</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="mt-4 p-3 bg-secondary rounded-lg border border-border">
-                                <p className="text-xs text-muted-foreground">
-                                  💡 All project data is safely stored. You can restore this project at any time.
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-
-                {/* Info Box */}
-                {archivedProjects && archivedProjects.length > 0 && (
-                  <div className="mt-8 bg-secondary rounded-lg border border-border p-4">
-                    <h4 className="font-semibold text-foreground mb-2">About Archived Projects</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Archived projects are stored safely and don't count toward your active project list</li>
-                      <li>• You can restore an archived project at any time to continue working on it</li>
-                      <li>• Permanently deleting an archived project cannot be undone</li>
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
+                  {/* Info Box */}
+                  {archivedProjects && archivedProjects.length > 0 && (
+                    <div className="mt-8 bg-secondary rounded-lg border border-border p-4">
+                      <h4 className="font-semibold text-foreground mb-2">About Archived Projects</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Archived projects are stored safely and don't count toward your active project list</li>
+                        <li>• You can restore an archived project at any time to continue working on it</li>
+                        <li>• Permanently deleting an archived project cannot be undone</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </AppShell>
   );
 }
