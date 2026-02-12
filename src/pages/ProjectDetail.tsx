@@ -17,10 +17,10 @@ import AITaskGenerator from "@/components/AITaskGenerator";
 import PageHeader from "@/components/PageHeader";
 
 import {
-  DndContext, DragEndEvent, DragStartEvent, DragOverlay,
-  PointerSensor, useSensor, useSensors, closestCorners,
+  DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay,
+  PointerSensor, useSensor, useSensors, closestCorners, useDroppable,
 } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 const columns = [
@@ -147,37 +147,47 @@ export default function ProjectDetail() {
     setActiveTask(task || null);
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    // This enables cross-column dragging visual feedback
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
+    
     const taskId = active.id as string;
+    const currentTask = tasks.find((t) => t.id === taskId);
+    if (!currentTask) return;
+
+    const overId = over.id as string;
     const overData = over.data.current;
-    let newStatus: string | undefined;
-    let newPosition: number | undefined;
+
+    // Determine target status and position
+    let targetStatus: string;
+    let targetPosition: number;
 
     if (overData?.type === "column") {
-      newStatus = over.id as string;
+      // Dropped on empty column area
+      targetStatus = overId;
+      const columnTasks = tasks.filter((t) => t.status === targetStatus && t.id !== taskId);
+      targetPosition = columnTasks.length; // add to end
     } else if (overData?.type === "task") {
-      newStatus = overData.task.status;
-      // Calculate new position based on the target task's position
-      const targetTask = overData.task as Task;
+      // Dropped on another task
+      const overTask = overData.task as Task;
+      targetStatus = overTask.status;
       const columnTasks = tasks
-        .filter((t) => t.status === targetTask.status)
+        .filter((t) => t.status === targetStatus && t.id !== taskId)
         .sort((a, b) => a.position - b.position);
-      const targetIndex = columnTasks.findIndex((t) => t.id === targetTask.id);
-      newPosition = targetIndex;
+      const overIndex = columnTasks.findIndex((t) => t.id === overTask.id);
+      targetPosition = overIndex >= 0 ? overIndex : columnTasks.length;
+    } else {
+      return;
     }
 
-    if (newStatus) {
-      const currentTask = tasks.find((t) => t.id === taskId);
-      if (currentTask && (currentTask.status !== newStatus || newPosition !== undefined)) {
-        const updates: any = { id: taskId, status: newStatus };
-        if (newPosition !== undefined) {
-          updates.position = newPosition;
-        }
-        updateTask.mutate(updates);
-      }
+    // Only update if something actually changed
+    if (currentTask.status !== targetStatus || currentTask.position !== targetPosition) {
+      updateTask.mutate({ id: taskId, status: targetStatus, position: targetPosition });
     }
   };
 
@@ -263,7 +273,7 @@ export default function ProjectDetail() {
                 collisionDetection={closestCorners}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                onDragOver={() => {}}
+                onDragOver={handleDragOver}
               >
                 <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
                   {columns.map((col) => {
@@ -460,7 +470,7 @@ export default function ProjectDetail() {
 function DroppableColumn({ id, label, color, count, onAddTask, children }: {
   id: string; label: string; color: string; count: number; onAddTask: () => void; children: React.ReactNode;
 }) {
-  const { setNodeRef, isOver } = useSortable({ id, data: { type: "column" } });
+  const { setNodeRef, isOver } = useDroppable({ id, data: { type: "column" } });
 
   return (
     <div ref={setNodeRef} className={cn("min-h-[400px] rounded-lg bg-background p-4 transition-colors", isOver && "bg-primary/5")}>

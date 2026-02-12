@@ -251,12 +251,10 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <PageHeader
-          title="Settings"
-          icon="⚙️"
-          editable={false}
-          subtitle="Manage your profile, appearance, and account"
-        />
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">⚙️ Settings</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
+        </div>
 
         <div className="flex gap-8 min-h-0">
           {/* Sidebar */}
