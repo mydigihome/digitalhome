@@ -22,6 +22,7 @@ import PageHeader from "@/components/PageHeader";
 import NotesWidget from "@/components/NotesWidget";
 import NoteEditor from "@/components/NoteEditor";
 import BrainDumpWidget from "@/components/BrainDumpWidget";
+import HabitTrackerWidget from "@/components/HabitTrackerWidget";
 import { cn } from "@/lib/utils";
 
 interface EverydayLink {
@@ -378,6 +379,9 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
+
+            {/* Habit Tracker Widget */}
+            <HabitTrackerWidget />
           </div>
 
           {/* Everyday Links */}

@@ -137,6 +137,60 @@ export type Database = {
         }
         Relationships: []
       }
+      college_applications: {
+        Row: {
+          college_name: string
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          early_action_date: string | null
+          final_deadline: string
+          id: string
+          notes: string | null
+          open_house_date: string | null
+          position: number | null
+          rec_letters: string | null
+          school_link: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          college_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          early_action_date?: string | null
+          final_deadline: string
+          id?: string
+          notes?: string | null
+          open_house_date?: string | null
+          position?: number | null
+          rec_letters?: string | null
+          school_link?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          college_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          early_action_date?: string | null
+          final_deadline?: string
+          id?: string
+          notes?: string | null
+          open_house_date?: string | null
+          position?: number | null
+          rec_letters?: string | null
+          school_link?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -210,6 +264,65 @@ export type Database = {
           frequency?: string
           id?: string
           priority?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_logs: {
+        Row: {
+          created_at: string
+          habit_id: string
+          hours: number
+          id: string
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id: string
+          hours: number
+          id?: string
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: string
+          hours?: number
+          id?: string
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string
+          id: string
+          is_custom: boolean | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_custom?: boolean | null
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_custom?: boolean | null
+          name?: string
           user_id?: string
         }
         Relationships: []
@@ -560,6 +673,7 @@ export type Database = {
           theme_color: string | null
           updated_at: string
           user_id: string
+          user_type: string | null
           wealth_banner_text: string | null
           wealth_banner_text_color: string | null
           wealth_banner_url: string | null
@@ -585,6 +699,7 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string
           user_id: string
+          user_type?: string | null
           wealth_banner_text?: string | null
           wealth_banner_text_color?: string | null
           wealth_banner_url?: string | null
@@ -610,6 +725,7 @@ export type Database = {
           theme_color?: string | null
           updated_at?: string
           user_id?: string
+          user_type?: string | null
           wealth_banner_text?: string | null
           wealth_banner_text_color?: string | null
           wealth_banner_url?: string | null
