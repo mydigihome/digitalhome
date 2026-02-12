@@ -219,124 +219,44 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <div style={{ width: '100%', minHeight: '100vh', backgroundColor: '#FAFBFC' }}>
-        {/* SLIM GRADIENT BANNER - Top decorative strip */}
-        <div style={{
-          width: '100%',
-          height: '120px',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          position: 'relative'
-        }}>
-          {/* Subtle pattern overlay */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)',
-            pointerEvents: 'none'
-          }} />
+      <div className="w-full min-h-screen bg-background">
+        {/* SLIM GRADIENT BANNER */}
+        <div className="w-full h-[120px] relative" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)' }} />
         </div>
 
-        {/* MAIN CONTENT CONTAINER */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '-40px auto 0',
-          padding: '0 40px 80px',
-          position: 'relative'
-        }}>
+        {/* MAIN CONTENT */}
+        <div className="max-w-[1200px] mx-auto -mt-10 px-6 md:px-10 pb-20 relative">
           {/* PAGE HEADER */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            marginBottom: '32px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                backgroundColor: '#F3F4F6',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Settings size={24} style={{ color: '#6B7280' }} />
+          <div className="bg-card rounded-2xl p-8 mb-8 shadow-sm border border-border">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
+                <Settings size={24} className="text-muted-foreground" />
               </div>
-
               <div>
-                <h1 style={{
-                  fontSize: '28px',
-                  fontWeight: '600',
-                  color: '#1F2937',
-                  marginBottom: '4px'
-                }}>
-                  Settings
-                </h1>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#6B7280'
-                }}>
-                  Manage your account settings and preferences
-                </p>
+                <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
+                <p className="text-sm text-muted-foreground">Manage your account settings and preferences</p>
               </div>
             </div>
           </div>
 
-          {/* TWO-COLUMN LAYOUT - PROPERLY ALIGNED */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '240px 1fr',
-            gap: '32px',
-            alignItems: 'start'
-          }}>
-            {/* LEFT SIDEBAR - Section Navigation */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '8px',
-              border: '1px solid #E5E7EB',
-              position: 'sticky',
-              top: '24px'
-            }}>
-              <nav>
+          {/* TWO-COLUMN LAYOUT */}
+          <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8 items-start">
+            {/* LEFT SIDEBAR */}
+            <div className="bg-card rounded-xl p-2 border border-border sticky top-6">
+              <nav className="space-y-0.5">
                 {settingsTabs.map((tab) => {
                   const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 12px',
-                        backgroundColor: activeTab === tab.id ? '#F3F4F6' : 'transparent',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: activeTab === tab.id ? '500' : '400',
-                        color: activeTab === tab.id ? '#1F2937' : '#6B7280',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        marginBottom: '2px',
-                        transition: 'all 0.15s'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (activeTab !== tab.id) {
-                          e.currentTarget.style.backgroundColor = '#F9FAFB';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (activeTab !== tab.id) {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left",
+                        activeTab === tab.id
+                          ? "bg-secondary font-medium text-foreground"
+                          : "text-muted-foreground hover:bg-secondary/50"
+                      )}
                     >
                       <Icon size={18} />
                       <span>{tab.label}</span>
@@ -346,13 +266,8 @@ export default function SettingsPage() {
               </nav>
             </div>
 
-            {/* RIGHT CONTENT AREA - ALIGNED WITH SIDEBAR */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              border: '1px solid #E5E7EB',
-              padding: '32px'
-            }}>
+            {/* RIGHT CONTENT AREA */}
+            <div className="bg-card rounded-xl border border-border p-8">
               {/* Profile Tab */}
               {activeTab === "profile" && (
                 <div className="space-y-6">
