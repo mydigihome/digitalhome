@@ -290,7 +290,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           collapsed ? "lg:w-[60px]" : "lg:w-[240px]"
         )}
       >
-        <div className="flex h-full flex-col overflow-hidden border-r border-border bg-card">
+        <div className="flex grow flex-col border-r border-border bg-card">
           {/* Logo area */}
           <div className="flex h-16 shrink-0 items-center justify-between px-4">
             {!collapsed ? (
@@ -305,7 +305,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Scrollable navigation */}
-          <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <SidebarNav collapsed={collapsed} />
           </nav>
 
