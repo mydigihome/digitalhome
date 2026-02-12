@@ -109,6 +109,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const bottomItems = [
     { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
+    { icon: Settings, label: "Settings", path: "/settings", colorKey: "settings" },
   ];
 
   const go = (path: string) => {
@@ -289,7 +290,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           collapsed ? "lg:w-[60px]" : "lg:w-[240px]"
         )}
       >
-        <div className="flex grow flex-col overflow-y-auto border-r border-border bg-card">
+        <div className="flex grow flex-col border-r border-border bg-card">
           {/* Logo area */}
           <div className="flex h-16 shrink-0 items-center justify-between px-4">
             {!collapsed ? (
@@ -303,13 +304,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="flex flex-1 flex-col px-2 py-2">
+          {/* Scrollable navigation */}
+          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2">
             <SidebarNav collapsed={collapsed} />
           </nav>
 
-          {/* Bottom section */}
-          <div className="border-t border-border px-3 py-3 flex items-center justify-between">
+          {/* Bottom section - always visible */}
+          <div className="shrink-0 border-t border-border px-3 py-3 flex items-center justify-between">
             <UserDropdown />
             <button
               onClick={() => setCollapsed(!collapsed)}
