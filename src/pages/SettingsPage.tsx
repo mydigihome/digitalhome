@@ -221,7 +221,7 @@ export default function SettingsPage() {
     <AppShell>
       <div className="w-full min-h-screen bg-background">
         {/* SLIM GRADIENT BANNER */}
-        <div className="w-full h-[120px] relative" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+        <div className="w-full h-[100px] relative" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)' }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%)' }} />
         </div>
 
@@ -235,7 +235,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">Settings</h1>
-                <p className="text-sm text-muted-foreground">Manage your account settings and preferences</p>
+                <p className="text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
               </div>
             </div>
           </div>
