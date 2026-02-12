@@ -250,11 +250,16 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-foreground">⚙️ Settings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
+      {/* Settings Page Banner */}
+      <div className="w-full bg-background border-b border-border">
+        <div className="px-8 py-8 md:px-12">
+          <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Manage your account settings and preferences</p>
         </div>
+      </div>
+
+      {/* Settings Content */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="px-8 md:px-12 py-8">
 
         <div className="flex gap-8 min-h-0">
           {/* Sidebar */}
