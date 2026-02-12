@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, ImagePlus, X as XIcon } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -129,10 +129,6 @@ export default function SettingsPage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [engagementCounts, setEngagementCounts] = useState<Record<number, { clicks: number; signups: number }>>({});
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
-  const [showBannerMenu, setShowBannerMenu] = useState(false);
-  const [showTextEditor, setShowTextEditor] = useState(false);
-  const [bannerText, setBannerText] = useState((prefs as any)?.app_banner_text || "SETTINGS");
-  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch engagement counts from database
   useEffect(() => {
@@ -250,128 +246,14 @@ export default function SettingsPage() {
     navigate("/login");
   };
 
-  const settingsBannerUrl = (prefs as any)?.app_banner_url;
-  const settingsBannerBg = settingsBannerUrl
-    ? settingsBannerUrl.startsWith("linear-gradient") ? settingsBannerUrl : undefined
-    : "linear-gradient(135deg, hsl(var(--primary)/0.15) 0%, hsl(var(--primary)/0.05) 100%)";
-
-  const settingsGradientPresets = [
-    "linear-gradient(135deg, #EDE9FE 0%, #C4B5FD 50%, #A78BFA 100%)",
-    "linear-gradient(135deg, #DBEAFE 0%, #93C5FD 50%, #60A5FA 100%)",
-    "linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 50%, #6EE7B7 100%)",
-    "linear-gradient(135deg, #FEF3C7 0%, #FCD34D 50%, #FBBF24 100%)",
-    "linear-gradient(135deg, #FCE7F3 0%, #F9A8D4 50%, #F472B6 100%)",
-    "linear-gradient(135deg, #CFFAFE 0%, #67E8F9 50%, #22D3EE 100%)",
-    "linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 50%, #F87171 100%)",
-    "linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 50%, #9CA3AF 100%)",
-  ];
-
-  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
-    const path = `${user.id}/settings-banner-${Date.now()}`;
-    const { error } = await supabase.storage.from("banners").upload(path, file);
-    if (error) { toast.error("Upload failed"); return; }
-    const { data: { publicUrl } } = supabase.storage.from("banners").getPublicUrl(path);
-    await upsertPrefs.mutateAsync({ app_banner_url: publicUrl } as any);
-    setShowBannerMenu(false);
-    toast.success("Banner updated");
-  };
-
-  const handleSetSettingsGradient = async (gradient: string) => {
-    await upsertPrefs.mutateAsync({ app_banner_url: gradient } as any);
-    setShowBannerMenu(false);
-    toast.success("Banner updated");
-  };
-
-  const handleSaveSettingsBannerText = async () => {
-    await upsertPrefs.mutateAsync({ app_banner_text: bannerText } as any);
-    setShowTextEditor(false);
-    toast.success("Banner text updated");
-  };
-
-  const handleResetSettingsBanner = async () => {
-    await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: "SETTINGS" } as any);
-    setShowBannerMenu(false);
-    toast.success("Banner reset");
-  };
-
   const initials = (profile?.full_name || user?.email || "U").slice(0, 1).toUpperCase();
 
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        {/* Settings Banner */}
-        <div
-          className="relative w-full h-[280px] rounded-2xl overflow-hidden mb-6 group"
-          style={{
-            background: settingsBannerUrl?.startsWith("linear-gradient") ? settingsBannerUrl : settingsBannerBg,
-            backgroundImage: settingsBannerUrl && !settingsBannerUrl.startsWith("linear-gradient") ? `url(${settingsBannerUrl})` : undefined,
-            backgroundSize: "cover", backgroundPosition: "center",
-          }}
-        >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <h1
-              className="text-5xl font-bold uppercase text-center px-8"
-              style={{
-                color: "hsl(var(--foreground)/0.7)",
-                letterSpacing: "2px",
-                textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-            >
-              {(prefs as any)?.app_banner_text || "SETTINGS"}
-            </h1>
-          </div>
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="relative">
-              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)}>
-                Change cover
-              </Button>
-              {showBannerMenu && (
-                <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border border-border bg-card p-2 shadow-lg">
-                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Gradients</div>
-                  <div className="grid grid-cols-4 gap-1 px-3 pb-2">
-                    {settingsGradientPresets.map((g, i) => (
-                      <button key={i} onClick={() => handleSetSettingsGradient(g)} className="h-8 w-full rounded" style={{ background: g }} />
-                    ))}
-                  </div>
-                  <button onClick={() => { setShowTextEditor(true); setShowBannerMenu(false); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary">Edit text</button>
-                  <button onClick={handleResetSettingsBanner} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
-                </div>
-              )}
-            </div>
-          </div>
-          <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
-        </div>
-
-        {/* Banner Text Editor Modal */}
-        {showTextEditor && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl space-y-4">
-              <h3 className="text-lg font-semibold text-foreground">Edit Banner Text</h3>
-              <div className="space-y-2">
-                <Label>Text</Label>
-                <Input value={bannerText} onChange={(e) => setBannerText(e.target.value)} />
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowTextEditor(false)} className="flex-1">Cancel</Button>
-                <Button onClick={handleSaveSettingsBannerText} className="flex-1">Save</Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Page Icon & Title */}
-        <div className="flex items-center gap-4 mb-10">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary border border-border">
-            <Settings className="h-7 w-7 text-muted-foreground" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">⚙️ Settings</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your profile, appearance, and account</p>
         </div>
 
         <div className="flex gap-8 min-h-0">
