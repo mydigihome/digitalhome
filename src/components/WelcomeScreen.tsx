@@ -1,58 +1,76 @@
 import { useState } from 'react';
-import doorImage from '@/assets/wooden-door.png';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import ModernDoor from '@/components/doors/ModernDoor';
+import TraditionalDoor from '@/components/doors/TraditionalDoor';
+import EarthyDoor from '@/components/doors/EarthyDoor';
 
-interface WelcomeScreenProps {
-  userName: string;
-  onEnter: () => void;
-}
+const WelcomeScreen = () => {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { data: prefs } = useUserPreferences();
+  const [isEntering, setIsEntering] = useState(false);
 
-const WelcomeScreen = ({ userName, onEnter }: WelcomeScreenProps) => {
-  const [isBlurring, setIsBlurring] = useState(false);
+  const homeStyle = (prefs as any)?.home_style || 'modern';
+  const firstName = profile?.full_name?.split(' ')[0] || 'there';
+
+  const getBackground = () => {
+    switch (homeStyle) {
+      case 'modern': return 'linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(0 0% 100%) 100%)';
+      case 'earthy': return 'linear-gradient(180deg, hsl(30 30% 96%) 0%, hsl(30 25% 93%) 100%)';
+      case 'traditional': return 'linear-gradient(180deg, hsl(40 10% 97%) 0%, hsl(40 8% 92%) 100%)';
+      default: return 'linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--secondary)) 100%)';
+    }
+  };
+
+  const getDoorComponent = () => {
+    const props = { isOpen: isEntering, size: 'large' as const };
+    switch (homeStyle) {
+      case 'modern': return <ModernDoor {...props} />;
+      case 'traditional': return <TraditionalDoor {...props} />;
+      case 'earthy': return <EarthyDoor {...props} />;
+      default: return <ModernDoor {...props} />;
+    }
+  };
 
   const handleEnter = () => {
-    setIsBlurring(true);
-    setTimeout(() => {
-      onEnter();
-    }, 1000);
+    setIsEntering(true);
+    setTimeout(() => navigate('/dashboard'), 1200);
   };
 
   return (
-    <div 
-      className={`min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center transition-all duration-1000 ${
-        isBlurring ? 'blur-xl opacity-0' : 'blur-0 opacity-100'
-      }`}
+    <div
+      onClick={handleEnter}
+      className="min-h-screen flex flex-col items-center justify-center cursor-pointer select-none"
+      style={{ background: getBackground() }}
     >
-      <div className="text-center"
+      <motion.div
+        animate={!isEntering ? { scale: [0.98, 1, 0.98] } : {}}
+        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        className={`transition-all duration-1000 ${isEntering ? 'scale-110 opacity-0' : ''}`}
       >
-        <div className="mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-2xl">
-            <span className="text-white font-bold text-4xl">D</span>
-          </div>
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">
-            Welcome Home
-          </h1>
-          <p className="text-4xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-            {userName}
-          </p>
-        </div>
+        {getDoorComponent()}
+      </motion.div>
 
-        <button
-          onClick={handleEnter}
-          className="group relative mt-12 px-8 py-6 bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden">
-              <img src={doorImage} alt="Wooden door" className="w-full h-full object-cover rounded-xl" />
-            </div>
-            <div className="text-left">
-              <p className="text-sm text-gray-500 font-medium">Step Inside</p>
-              <p className="text-2xl font-bold text-gray-900">Enter Your Home</p>
-            </div>
-          </div>
-        </button>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: isEntering ? 0 : 1, y: isEntering ? -10 : 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="mt-10 text-xl font-medium text-foreground"
+      >
+        Welcome home, {firstName}.
+      </motion.p>
 
-        <p className="mt-8 text-gray-500 text-sm">Your life, organized in one place</p>
-      </div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isEntering ? 0 : 0.5 }}
+        transition={{ delay: 0.8, duration: 0.5 }}
+        className="mt-4 text-sm text-muted-foreground"
+      >
+        Click anywhere to enter
+      </motion.p>
     </div>
   );
 };

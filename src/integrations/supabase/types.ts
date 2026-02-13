@@ -666,8 +666,12 @@ export type Database = {
           dashboard_icon_type: string | null
           density: string | null
           font_size: string | null
+          home_name: string | null
+          home_style: string | null
           id: string
           location: string | null
+          onboarding_completed: boolean | null
+          onboarding_focus: string | null
           profile_photo: string | null
           sidebar_theme: string | null
           theme_color: string | null
@@ -692,8 +696,12 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          home_name?: string | null
+          home_style?: string | null
           id?: string
           location?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_focus?: string | null
           profile_photo?: string | null
           sidebar_theme?: string | null
           theme_color?: string | null
@@ -718,8 +726,12 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          home_name?: string | null
+          home_style?: string | null
           id?: string
           location?: string | null
+          onboarding_completed?: boolean | null
+          onboarding_focus?: string | null
           profile_photo?: string | null
           sidebar_theme?: string | null
           theme_color?: string | null
