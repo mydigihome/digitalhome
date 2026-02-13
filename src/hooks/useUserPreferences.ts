@@ -20,6 +20,10 @@ export interface UserPreferences {
   density: string | null;
   custom_folder_colors: boolean | null;
   user_type: string | null;
+  home_name: string | null;
+  home_style: string | null;
+  onboarding_focus: string | null;
+  onboarding_completed: boolean | null;
   created_at: string;
   updated_at: string;
 }
