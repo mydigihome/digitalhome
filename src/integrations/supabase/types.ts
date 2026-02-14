@@ -754,6 +754,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vision_boards: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          elements: Json
+          id: string
+          name: string
+          thumbnail: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          elements?: Json
+          id?: string
+          name: string
+          thumbnail?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          elements?: Json
+          id?: string
+          name?: string
+          thumbnail?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wealth_goals: {
         Row: {
           completed_at: string | null
