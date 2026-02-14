@@ -1,284 +1,714 @@
-import { useState, useRef, useEffect } from 'react';
-import { Pencil, Eraser, Type, Image as ImageIcon, Move, Undo, Plus, Save, Sparkles, Download } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Pencil, Type, Plus, ImageIcon, MoreHorizontal, Trash2, Copy, ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2, GripVertical } from 'lucide-react';
 import AppShell from '@/components/AppShell';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-interface DrawingElement {
+// ── Types ──────────────────────────────────────────────────
+interface CollageElement {
   id: string;
-  type: 'path' | 'text' | 'image';
-  data: any;
+  type: 'image' | 'text' | 'drawing';
   x: number;
   y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  src?: string;
+  text?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  fill?: string;
+  points?: number[];
+  stroke?: string;
+  strokeWidth?: number;
 }
 
-interface VisionBoard {
-  id: string;
-  name: string;
-  elements: DrawingElement[];
-  createdAt: string;
-  thumbnail?: string;
-}
+const genId = () => `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
-const VisionRoom = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentTool, setCurrentTool] = useState<'draw' | 'erase' | 'text' | 'image' | 'move'>('draw');
-  const [elements, setElements] = useState<DrawingElement[]>([]);
-  const [boards, setBoards] = useState<VisionBoard[]>([]);
-  const [currentBoardId, setCurrentBoardId] = useState('board-1');
-  const [showInspirationPanel, setShowInspirationPanel] = useState(false);
-  const [showFirstDream, setShowFirstDream] = useState(true);
-  const [imageSearchQuery, setImageSearchQuery] = useState('');
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+// ── Resizable/Draggable Element ────────────────────────────
+const CollageItem = ({
+  el,
+  isSelected,
+  onSelect,
+  onChange,
+  boardRef,
+}: {
+  el: CollageElement;
+  isSelected: boolean;
+  onSelect: () => void;
+  onChange: (attrs: Partial<CollageElement>) => void;
+  boardRef: React.RefObject<HTMLDivElement>;
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, elX: 0, elY: 0 });
+  const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, corner: '' });
+  const rotateStart = useRef({ angle: 0, startAngle: 0 });
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [particles, setParticles] = useState<{ x: number; y: number; opacity: number }[]>([]);
-
-  useEffect(() => {
-    const particleCount = 15;
-    const newParticles = Array.from({ length: particleCount }, () => ({
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      opacity: Math.random() * 0.3 + 0.1,
-    }));
-    setParticles(newParticles);
-
-    const interval = setInterval(() => {
-      setParticles(prev => prev.map(p => ({
-        x: (p.x + Math.random() * 0.5 - 0.25) % 100,
-        y: (p.y + Math.random() * 0.5 - 0.25) % 100,
-        opacity: (p.opacity + Math.random() * 0.05 - 0.025) % 0.5,
-      })));
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const tools = [
-    { id: 'draw', icon: Pencil, label: 'Draw' },
-    { id: 'erase', icon: Eraser, label: 'Erase' },
-    { id: 'text', icon: Type, label: 'Text' },
-    { id: 'image', icon: ImageIcon, label: 'Image' },
-    { id: 'move', icon: Move, label: 'Move' },
-  ];
-
-  const handleSaveAndNewBoard = () => {
-    const currentBoard: VisionBoard = {
-      id: currentBoardId,
-      name: `Vision ${boards.length + 1}`,
-      elements: elements,
-      createdAt: new Date().toISOString(),
-    };
-
-    setBoards([...boards, currentBoard]);
-
-    const newBoardId = `board-${Date.now()}`;
-    setCurrentBoardId(newBoardId);
-    setElements([]);
-    setShowFirstDream(true);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isEditing) return;
+    e.stopPropagation();
+    onSelect();
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, elX: el.x, elY: el.y };
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setUploadedImages([...uploadedImages, imageUrl]);
-      };
-      reader.readAsDataURL(file);
+  const handleResizeStart = (e: React.MouseEvent, corner: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStart.current = { x: e.clientX, y: e.clientY, w: el.width, h: el.height, corner };
+  };
+
+  const handleRotateStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsRotating(true);
+    const rect = boardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const cx = el.x + el.width / 2;
+    const cy = el.y + el.height / 2;
+    const startAngle = Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx) * (180 / Math.PI);
+    rotateStart.current = { angle: el.rotation, startAngle };
+  };
+
+  useEffect(() => {
+    if (!isDragging && !isResizing && !isRotating) return;
+
+    const handleMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const dx = e.clientX - dragStart.current.x;
+        const dy = e.clientY - dragStart.current.y;
+        onChange({ x: dragStart.current.elX + dx, y: dragStart.current.elY + dy });
+      }
+      if (isResizing) {
+        const dx = e.clientX - resizeStart.current.x;
+        const dy = e.clientY - resizeStart.current.y;
+        const { corner, w, h } = resizeStart.current;
+        let newW = w, newH = h;
+        if (corner.includes('right')) newW = Math.max(40, w + dx);
+        if (corner.includes('left')) newW = Math.max(40, w - dx);
+        if (corner.includes('bottom')) newH = Math.max(40, h + dy);
+        if (corner.includes('top')) newH = Math.max(40, h - dy);
+
+        const updates: Partial<CollageElement> = { width: newW, height: newH };
+        if (corner.includes('left')) updates.x = el.x + (el.width - newW);
+        if (corner.includes('top')) updates.y = el.y + (el.height - newH);
+        onChange(updates);
+      }
+      if (isRotating) {
+        const rect = boardRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const cx = el.x + el.width / 2;
+        const cy = el.y + el.height / 2;
+        const angle = Math.atan2(e.clientY - rect.top - cy, e.clientX - rect.left - cx) * (180 / Math.PI);
+        const diff = angle - rotateStart.current.startAngle;
+        onChange({ rotation: rotateStart.current.angle + diff });
+      }
+    };
+
+    const handleUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+      setIsRotating(false);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+  }, [isDragging, isResizing, isRotating]);
+
+  const handleDoubleClick = () => {
+    if (el.type === 'text') setIsEditing(true);
+  };
+
+  const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+
+  return (
+    <div
+      className="absolute group"
+      style={{
+        left: el.x,
+        top: el.y,
+        width: el.width,
+        height: el.height,
+        transform: `rotate(${el.rotation}deg)`,
+        zIndex: isSelected ? 50 : 1,
+        cursor: isDragging ? 'grabbing' : 'grab',
+      }}
+      onMouseDown={handleMouseDown}
+      onDoubleClick={handleDoubleClick}
+    >
+      {/* Content */}
+      {el.type === 'image' && el.src && (
+        <img
+          src={el.src}
+          alt=""
+          className="w-full h-full object-cover rounded-lg pointer-events-none select-none"
+          draggable={false}
+          style={{ boxShadow: isSelected ? '0 0 0 2px hsl(258 89% 66%)' : '0 2px 8px rgba(0,0,0,0.1)' }}
+        />
+      )}
+
+      {el.type === 'text' && !isEditing && (
+        <div
+          className="w-full h-full flex items-center justify-center p-2 select-none"
+          style={{
+            fontSize: el.fontSize || 24,
+            fontFamily: el.fontFamily || 'Georgia, serif',
+            color: el.fill || '#37352F',
+            outline: isSelected ? '2px solid hsl(258 89% 66%)' : 'none',
+            borderRadius: 8,
+            background: isSelected ? 'hsl(258 89% 66% / 0.05)' : 'transparent',
+          }}
+        >
+          {el.text || 'Double-click to edit'}
+        </div>
+      )}
+
+      {el.type === 'text' && isEditing && (
+        <textarea
+          autoFocus
+          defaultValue={el.text || ''}
+          className="w-full h-full p-2 resize-none border-2 rounded-lg bg-card outline-none"
+          style={{
+            fontSize: el.fontSize || 24,
+            fontFamily: el.fontFamily || 'Georgia, serif',
+            color: el.fill || '#37352F',
+            borderColor: 'hsl(258 89% 66%)',
+          }}
+          onBlur={(e) => {
+            setIsEditing(false);
+            onChange({ text: e.target.value });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setIsEditing(false);
+              onChange({ text: (e.target as HTMLTextAreaElement).value });
+            }
+          }}
+        />
+      )}
+
+      {el.type === 'drawing' && el.points && (
+        <svg className="w-full h-full pointer-events-none" viewBox={`0 0 ${el.width} ${el.height}`}>
+          <polyline
+            points={el.points.reduce((acc, val, i) => {
+              if (i % 2 === 0) return acc + (i > 0 ? ' ' : '') + val;
+              return acc + ',' + val;
+            }, '')}
+            fill="none"
+            stroke={el.stroke || '#37352F'}
+            strokeWidth={el.strokeWidth || 3}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+
+      {/* Selection handles */}
+      {isSelected && !isEditing && (
+        <>
+          {corners.map((corner) => (
+            <div
+              key={corner}
+              className="absolute w-3 h-3 bg-card border-2 rounded-full z-50"
+              style={{
+                borderColor: 'hsl(258 89% 66%)',
+                top: corner.includes('top') ? -6 : undefined,
+                bottom: corner.includes('bottom') ? -6 : undefined,
+                left: corner.includes('left') ? -6 : undefined,
+                right: corner.includes('right') ? -6 : undefined,
+                cursor: corner === 'top-left' || corner === 'bottom-right' ? 'nwse-resize' : 'nesw-resize',
+              }}
+              onMouseDown={(e) => handleResizeStart(e, corner)}
+            />
+          ))}
+
+          {/* Rotate handle */}
+          <div
+            className="absolute -top-8 left-1/2 -translate-x-1/2 w-5 h-5 bg-card border-2 rounded-full flex items-center justify-center z-50"
+            style={{ borderColor: 'hsl(258 89% 66%)', cursor: 'grab' }}
+            onMouseDown={handleRotateStart}
+          >
+            <RotateCcw size={10} className="text-primary" />
+          </div>
+          <div className="absolute -top-4 left-1/2 w-px h-4 z-40" style={{ background: 'hsl(258 89% 66%)' }} />
+        </>
+      )}
+    </div>
+  );
+};
+
+// ── Main Component ─────────────────────────────────────────
+const VisionRoom = () => {
+  const { user } = useAuth();
+  const boardRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [elements, setElements] = useState<CollageElement[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tool, setTool] = useState<'select' | 'draw' | 'text'>('select');
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawingPoints, setDrawingPoints] = useState<number[]>([]);
+  const [history, setHistory] = useState<CollageElement[][]>([[]]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [showMore, setShowMore] = useState(false);
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── History helpers ───────────────────────────────────
+  const pushHistory = useCallback(
+    (next: CollageElement[]) => {
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(next);
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+    },
+    [history, historyIndex],
+  );
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setElements(history[historyIndex - 1]);
+    }
+  };
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setElements(history[historyIndex + 1]);
     }
   };
 
-  const handlePlaceFirstDream = () => {
-    setShowFirstDream(false);
-    setCurrentTool('draw');
+  // ── Auto-save ─────────────────────────────────────────
+  const saveBoard = useCallback(
+    async (els: CollageElement[]) => {
+      if (!user) return;
+      if (boardId) {
+        await supabase
+          .from('vision_boards')
+          .update({ elements: els as any, updated_at: new Date().toISOString() })
+          .eq('id', boardId);
+      } else {
+        const { data } = await supabase
+          .from('vision_boards')
+          .insert({
+            user_id: user.id,
+            name: `Vision ${new Date().toLocaleDateString()}`,
+            elements: els as any,
+          })
+          .select('id')
+          .single();
+        if (data) setBoardId(data.id);
+      }
+    },
+    [user, boardId],
+  );
+
+  useEffect(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => saveBoard(elements), 2000);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [elements, saveBoard]);
+
+  // ── Load board ────────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('vision_boards')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setBoardId(data.id);
+        setElements((data.elements as any) || []);
+        setHistory([(data.elements as any) || []]);
+      }
+    })();
+  }, [user]);
+
+  // ── Element CRUD ──────────────────────────────────────
+  const updateElement = (id: string, attrs: Partial<CollageElement>) => {
+    const next = elements.map((el) => (el.id === id ? { ...el, ...attrs } : el));
+    setElements(next);
+    pushHistory(next);
   };
+
+  const deleteSelected = () => {
+    if (!selectedId) return;
+    const next = elements.filter((el) => el.id !== selectedId);
+    setElements(next);
+    pushHistory(next);
+    setSelectedId(null);
+  };
+
+  const duplicateSelected = () => {
+    const el = elements.find((e) => e.id === selectedId);
+    if (!el) return;
+    const dup = { ...el, id: genId(), x: el.x + 20, y: el.y + 20 };
+    const next = [...elements, dup];
+    setElements(next);
+    pushHistory(next);
+    setSelectedId(dup.id);
+  };
+
+  const moveLayer = (dir: 'up' | 'down') => {
+    const idx = elements.findIndex((e) => e.id === selectedId);
+    if (idx === -1) return;
+    const next = [...elements];
+    const target = dir === 'up' ? idx + 1 : idx - 1;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setElements(next);
+    pushHistory(next);
+  };
+
+  // ── Add image ─────────────────────────────────────────
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    const ext = file.name.split('.').pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('vision-images').upload(path, file);
+    if (error) { console.error('Upload error:', error); return; }
+
+    const { data: urlData } = supabase.storage.from('vision-images').getPublicUrl(path);
+    const src = urlData.publicUrl;
+
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(400 / img.width, 400 / img.height, 1);
+      const boardRect = boardRef.current?.getBoundingClientRect();
+      const newEl: CollageElement = {
+        id: genId(),
+        type: 'image',
+        x: (boardRect ? boardRect.width / 2 : 400) - (img.width * scale) / 2,
+        y: (boardRect ? boardRect.height / 2 : 300) - (img.height * scale) / 2,
+        width: img.width * scale,
+        height: img.height * scale,
+        rotation: 0,
+        src,
+      };
+      const next = [...elements, newEl];
+      setElements(next);
+      pushHistory(next);
+      setSelectedId(newEl.id);
+      setTool('select');
+    };
+    img.src = URL.createObjectURL(file);
+    e.target.value = '';
+  };
+
+  // ── Add text ──────────────────────────────────────────
+  const addText = () => {
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    const newEl: CollageElement = {
+      id: genId(),
+      type: 'text',
+      x: (boardRect ? boardRect.width / 2 : 400) - 125,
+      y: (boardRect ? boardRect.height / 2 : 300) - 20,
+      width: 250,
+      height: 60,
+      rotation: 0,
+      text: 'Your dream here',
+      fontSize: 28,
+      fontFamily: 'Georgia, serif',
+      fill: '#37352F',
+    };
+    const next = [...elements, newEl];
+    setElements(next);
+    pushHistory(next);
+    setSelectedId(newEl.id);
+    setTool('select');
+  };
+
+  // ── Drawing on canvas ────────────────────────────────
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (tool !== 'draw') return;
+    setIsDrawing(true);
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setDrawingPoints([x, y]);
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || tool !== 'draw') return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setDrawingPoints((prev) => [...prev, x, y]);
+
+    // Draw preview
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.beginPath();
+    ctx.strokeStyle = '#37352F';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const pts = [...drawingPoints, x, y];
+    for (let i = 0; i < pts.length; i += 2) {
+      if (i === 0) ctx.moveTo(pts[i], pts[i + 1]);
+      else ctx.lineTo(pts[i], pts[i + 1]);
+    }
+    ctx.stroke();
+  };
+
+  const handleCanvasMouseUp = () => {
+    if (!isDrawing) return;
+    setIsDrawing(false);
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    if (drawingPoints.length < 4) { setDrawingPoints([]); return; }
+
+    // Compute bounding box
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (let i = 0; i < drawingPoints.length; i += 2) {
+      minX = Math.min(minX, drawingPoints[i]);
+      minY = Math.min(minY, drawingPoints[i + 1]);
+      maxX = Math.max(maxX, drawingPoints[i]);
+      maxY = Math.max(maxY, drawingPoints[i + 1]);
+    }
+    const pad = 10;
+    const w = maxX - minX + pad * 2;
+    const h = maxY - minY + pad * 2;
+    const normalizedPoints = drawingPoints.map((v, i) => i % 2 === 0 ? v - minX + pad : v - minY + pad);
+
+    const newEl: CollageElement = {
+      id: genId(),
+      type: 'drawing',
+      x: minX - pad,
+      y: minY - pad,
+      width: w,
+      height: h,
+      rotation: 0,
+      points: normalizedPoints,
+      stroke: '#37352F',
+      strokeWidth: 3,
+    };
+    const next = [...elements, newEl];
+    setElements(next);
+    pushHistory(next);
+    setDrawingPoints([]);
+  };
+
+  // ── Board click (deselect / place text) ───────────────
+  const handleBoardClick = (e: React.MouseEvent) => {
+    if (e.target === boardRef.current || e.target === canvasRef.current) {
+      if (tool === 'text') {
+        const rect = boardRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const newEl: CollageElement = {
+          id: genId(),
+          type: 'text',
+          x: e.clientX - rect.left - 100,
+          y: e.clientY - rect.top - 16,
+          width: 200,
+          height: 50,
+          rotation: 0,
+          text: 'Click to edit',
+          fontSize: 24,
+          fontFamily: 'Inter, sans-serif',
+          fill: '#37352F',
+        };
+        const next = [...elements, newEl];
+        setElements(next);
+        pushHistory(next);
+        setSelectedId(newEl.id);
+        setTool('select');
+      } else if (tool === 'select') {
+        setSelectedId(null);
+      }
+    }
+  };
+
+  // ── Keyboard shortcuts ────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (document.activeElement instanceof HTMLTextAreaElement || document.activeElement instanceof HTMLInputElement) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); duplicateSelected(); }
+      if (e.key === 'Escape') setSelectedId(null);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  });
+
+  // ── Canvas resize ─────────────────────────────────────
+  useEffect(() => {
+    const resize = () => {
+      if (canvasRef.current && boardRef.current) {
+        canvasRef.current.width = boardRef.current.offsetWidth;
+        canvasRef.current.height = boardRef.current.offsetHeight;
+      }
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
+
+  const toolbarBtnClass = (active: boolean) =>
+    `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 ${
+      active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+    }`;
 
   return (
     <AppShell>
-      <div className="relative w-full h-[calc(100vh-64px)] overflow-hidden" style={{ background: 'linear-gradient(135deg, #FAF8F5 0%, #F5F0EB 50%, #FFF8F0 100%)' }}>
+      <div className="relative flex flex-col w-full h-[calc(100vh-64px)] bg-background overflow-hidden">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm z-20">
+          <div className="flex items-center gap-2">
+            <button onClick={undo} disabled={historyIndex <= 0} className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors" title="Undo">
+              <Undo2 size={18} className="text-muted-foreground" />
+            </button>
+            <button onClick={redo} disabled={historyIndex >= history.length - 1} className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors" title="Redo">
+              <Redo2 size={18} className="text-muted-foreground" />
+            </button>
+          </div>
 
-        {/* Floating particles */}
-        {particles.map((particle, idx) => (
-          <div
-            key={idx}
-            className="absolute rounded-full pointer-events-none"
-            style={{
-              left: `${particle.x}%`,
-              top: `${particle.y}%`,
-              width: '4px',
-              height: '4px',
-              backgroundColor: `rgba(217, 179, 140, ${particle.opacity})`,
-              transition: 'all 2s ease-in-out',
-            }}
-          />
-        ))}
-
-        {/* Paper texture overlay */}
-        <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.02\'/%3E%3C/svg%3E")', opacity: 0.3 }} />
-
-        {/* Left toolbar */}
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 z-10">
-          {tools.map((tool) => {
-            const Icon = tool.icon;
-            const isActive = currentTool === tool.id;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => setCurrentTool(tool.id as any)}
-                className={`group relative w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-300 ${
-                  isActive
-                    ? 'bg-amber-100/40 backdrop-blur-sm'
-                    : 'hover:bg-white/30 opacity-40 hover:opacity-100'
-                }`}
-                title={tool.label}
-              >
-                <Icon size={20} className={isActive ? 'text-amber-700' : 'text-gray-500'} />
-                <span className="absolute left-14 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm">
-                  {tool.label}
-                </span>
+          {selectedId && (
+            <div className="flex items-center gap-1">
+              <button onClick={duplicateSelected} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Duplicate">
+                <Copy size={16} className="text-muted-foreground" />
               </button>
-            );
-          })}
-
-          <button className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-white/30 opacity-40 hover:opacity-100 transition-all duration-300" title="Undo">
-            <Undo size={20} className="text-gray-500" />
-          </button>
-
-          <button
-            onClick={() => setShowInspirationPanel(!showInspirationPanel)}
-            className="mt-8 w-12 h-12 flex items-center justify-center rounded-xl bg-amber-100/40 backdrop-blur-sm hover:bg-amber-200/40 transition-all duration-300 group"
-            title="Add inspiration"
-          >
-            <Sparkles size={20} className="text-amber-600" />
-            <span className="absolute left-14 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-xs text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm">
-              Add inspiration
-            </span>
-          </button>
-        </div>
-
-        {/* Main canvas */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full cursor-crosshair"
-            onMouseDown={() => setIsDrawing(true)}
-            onMouseUp={() => setIsDrawing(false)}
-            onMouseLeave={() => setIsDrawing(false)}
-          />
-
-          {showFirstDream && elements.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center animate-fade-in">
-              <div className="text-center max-w-md">
-                <div className="mb-8">
-                  <p className="text-2xl font-light text-gray-700 tracking-tight" style={{ fontFamily: "'Georgia', serif" }}>
-                    What does your future feel like?
-                  </p>
-                  <p className="text-sm text-gray-400 mt-3 font-light">
-                    You can draw, write, or add images.
-                  </p>
-                </div>
-
-                <button
-                  onClick={handlePlaceFirstDream}
-                  className="px-6 py-3 bg-amber-50/80 backdrop-blur-sm border border-amber-200/50 rounded-full text-sm text-amber-700 font-light hover:bg-amber-100/80 transition-all duration-300 hover:shadow-sm"
-                >
-                  Place your first dream
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Top right - Save & new board */}
-        <div className="absolute top-6 right-6 flex items-center gap-4 z-10">
-          {boards.length > 0 && (
-            <div className="flex items-center gap-3 bg-white/40 backdrop-blur-sm rounded-full px-4 py-2">
-              <div className="flex -space-x-2">
-                {boards.slice(-3).map((board, idx) => (
-                  <div
-                    key={board.id}
-                    className="w-8 h-8 rounded-lg border-2 border-white/80 bg-gradient-to-br from-amber-100 to-orange-50 shadow-sm"
-                    style={{ zIndex: 3 - idx }}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-gray-500 font-light">
-                {boards.length} {boards.length === 1 ? 'vision' : 'visions'}
-              </span>
+              <button onClick={() => moveLayer('up')} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Bring forward">
+                <ArrowUp size={16} className="text-muted-foreground" />
+              </button>
+              <button onClick={() => moveLayer('down')} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Send backward">
+                <ArrowDown size={16} className="text-muted-foreground" />
+              </button>
+              <button onClick={deleteSelected} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Delete">
+                <Trash2 size={16} className="text-destructive" />
+              </button>
             </div>
           )}
 
-          <button
-            onClick={handleSaveAndNewBoard}
-            className="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-sm border border-gray-200/50 rounded-full text-sm text-gray-600 hover:bg-white/80 transition-all duration-300 font-light"
-          >
-            <Plus size={16} />
-            Save & start a new board
-          </button>
-        </div>
-
-        {/* Inspiration panel */}
-        <div
-          className="absolute right-0 top-0 h-full w-80 transition-transform duration-500 ease-out z-20"
-          style={{ transform: showInspirationPanel ? 'translateX(0)' : 'translateX(100%)' }}
-        >
-          <div className="h-full bg-white/80 backdrop-blur-xl border-l border-gray-200/30 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-light text-gray-700">Inspiration</h3>
-              <button
-                onClick={() => setShowInspirationPanel(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs text-gray-400 font-light mb-2 block">Search images</label>
-                <input
-                  type="text"
-                  value={imageSearchQuery}
-                  onChange={(e) => setImageSearchQuery(e.target.value)}
-                  placeholder="mountains, dreams, peace..."
-                  className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:outline-none focus:border-amber-300 transition-colors font-light"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-gray-400 font-light mb-2 block">Upload image</label>
-                <label className="flex items-center gap-3 px-4 py-3 bg-gray-50/50 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-300 transition-colors">
-                  <ImageIcon size={18} className="text-gray-400" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  <span className="text-sm text-gray-400 font-light">Choose an image</span>
-                </label>
-              </div>
-
-              {uploadedImages.length > 0 && (
-                <div>
-                  <label className="text-xs text-gray-400 font-light mb-2 block">Recent uploads</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {uploadedImages.map((img, idx) => (
-                      <div key={idx} className="aspect-square rounded-lg overflow-hidden border border-gray-200/50 cursor-pointer hover:border-amber-300 transition-colors">
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="text-xs text-muted-foreground font-light">
+            {elements.length} element{elements.length !== 1 ? 's' : ''}
           </div>
         </div>
 
-        <style>{`
-          @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          .animate-fade-in {
-            animation: fade-in 0.6s ease-out;
-          }
-        `}</style>
+        {/* Canvas area */}
+        <div
+          ref={boardRef}
+          className="flex-1 relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, hsl(40 7% 98%) 0%, hsl(40 10% 96%) 50%, hsl(30 15% 97%) 100%)',
+            cursor: tool === 'draw' ? 'crosshair' : tool === 'text' ? 'text' : 'default',
+          }}
+          onClick={handleBoardClick}
+        >
+          {elements.length === 0 && !isDrawing && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="text-center">
+                <p className="text-xl font-light text-muted-foreground" style={{ fontFamily: 'Georgia, serif' }}>
+                  What does your future look like?
+                </p>
+                <p className="text-sm text-muted-foreground/60 mt-2">Add images, text, or doodle your dreams</p>
+              </div>
+            </div>
+          )}
+
+          {/* Elements */}
+          {elements.map((el) => (
+            <CollageItem
+              key={el.id}
+              el={el}
+              isSelected={selectedId === el.id}
+              onSelect={() => { setSelectedId(el.id); setTool('select'); }}
+              onChange={(attrs) => updateElement(el.id, attrs)}
+              boardRef={boardRef as React.RefObject<HTMLDivElement>}
+            />
+          ))}
+
+          {/* Drawing canvas overlay */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 z-30"
+            style={{ pointerEvents: tool === 'draw' ? 'auto' : 'none' }}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            onMouseLeave={handleCanvasMouseUp}
+          />
+        </div>
+
+        {/* Bottom toolbar */}
+        <div className="flex items-center justify-center gap-1 px-4 py-3 border-t border-border bg-card/90 backdrop-blur-sm z-20">
+          <button onClick={() => { setTool('select'); setSelectedId(null); }} className={toolbarBtnClass(tool === 'select')}>
+            <MousePointer2 size={20} />
+            <span className="text-[10px] font-medium">Select</span>
+          </button>
+
+          <button onClick={() => { setTool('draw'); setSelectedId(null); }} className={toolbarBtnClass(tool === 'draw')}>
+            <Pencil size={20} />
+            <span className="text-[10px] font-medium">Draw</span>
+          </button>
+
+          <button onClick={addText} className={toolbarBtnClass(false)}>
+            <Type size={20} />
+            <span className="text-[10px] font-medium">Text</span>
+          </button>
+
+          <button onClick={() => fileInputRef.current?.click()} className={toolbarBtnClass(false)}>
+            <Plus size={20} />
+            <span className="text-[10px] font-medium">Add Image</span>
+          </button>
+
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+
+          <button onClick={() => fileInputRef.current?.click()} className={toolbarBtnClass(false)}>
+            <ImageIcon size={20} />
+            <span className="text-[10px] font-medium">Photos</span>
+          </button>
+
+          <div className="relative">
+            <button onClick={() => setShowMore(!showMore)} className={toolbarBtnClass(showMore)}>
+              <MoreHorizontal size={20} />
+              <span className="text-[10px] font-medium">More</span>
+            </button>
+
+            {showMore && (
+              <div className="absolute bottom-full mb-2 right-0 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[160px] z-50">
+                <button onClick={() => { duplicateSelected(); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
+                  <Copy size={14} /> Duplicate
+                </button>
+                <button onClick={() => { moveLayer('up'); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
+                  <ArrowUp size={14} /> Bring Forward
+                </button>
+                <button onClick={() => { moveLayer('down'); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
+                  <ArrowDown size={14} /> Send Backward
+                </button>
+                <button onClick={() => { deleteSelected(); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-30">
+                  <Trash2 size={14} /> Delete
+                </button>
+                <hr className="my-1 border-border" />
+                <button onClick={() => { setElements([]); pushHistory([]); setSelectedId(null); setShowMore(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                  <RotateCcw size={14} /> Clear Board
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </AppShell>
   );
