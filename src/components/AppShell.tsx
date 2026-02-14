@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import VoiceInput from "@/components/VoiceInput";
 
 // ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
 const projectFolders = [
@@ -540,6 +541,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Bottom Tab Bar */}
       <MobileTabBar />
+
+      {/* Floating Voice Input */}
+      <VoiceInput />
 
       {/* Main Content */}
       <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>
