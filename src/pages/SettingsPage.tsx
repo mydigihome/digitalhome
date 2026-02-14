@@ -140,6 +140,11 @@ export default function SettingsPage() {
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [studentDiscount, setStudentDiscount] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [studentEmail, setStudentEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationStep, setVerificationStep] = useState<"idle" | "sent" | "verified">("idle");
+  const [verifying, setVerifying] = useState(false);
+  const [managingBilling, setManagingBilling] = useState(false);
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
   }, [profile?.full_name]);
@@ -155,6 +160,11 @@ export default function SettingsPage() {
       const accColors = prefs.accent_colors as any;
       if (accColors?.sidebarColors) setSidebarColors(accColors.sidebarColors);
       if (accColors?.font) setSelectedFont(accColors.font);
+      if (prefs.student_verified) {
+        setVerificationStep("verified");
+        setStudentDiscount(true);
+      }
+      if (prefs.student_email) setStudentEmail(prefs.student_email);
     }
   }, [prefs]);
 
@@ -616,18 +626,56 @@ export default function SettingsPage() {
               {/* ==================== BILLING TAB ==================== */}
               {activeTab === "billing" && (
                 <>
-                  {/* Subscription Status */}
+                  {/* Subscription Status + Manage */}
                   {(prefs as any)?.is_subscribed && (
-                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Crown size={20} className="text-primary" />
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Crown size={20} className="text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground">Pro Membership Active</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Plan: {(prefs as any)?.subscription_type === "student" ? "Student ($100/yr)" : "Pro ($200/yr)"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-foreground">Pro Membership Active</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Plan: {(prefs as any)?.subscription_type === "student" ? "Student ($100/yr)" : "Pro ($200/yr)"}
-                        </p>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={managingBilling}
+                        onClick={async () => {
+                          setManagingBilling(true);
+                          try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const res = await fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`,
+                              {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${session?.access_token}`,
+                                },
+                                body: JSON.stringify({
+                                  returnUrl: `${window.location.origin}/settings?tab=billing`,
+                                }),
+                              }
+                            );
+                            const data = await res.json();
+                            if (data.url) {
+                              window.location.href = data.url;
+                            } else {
+                              toast.error(data.error || "Failed to open billing portal");
+                            }
+                          } catch {
+                            toast.error("Failed to open billing portal");
+                          } finally {
+                            setManagingBilling(false);
+                          }
+                        }}
+                      >
+                        {managingBilling ? "Opening..." : "Manage Subscription"}
+                      </Button>
                     </div>
                   )}
 
@@ -724,22 +772,127 @@ export default function SettingsPage() {
                     )}
                   </div>
 
-                  {/* Student Discount */}
+                  {/* Student Discount Verification */}
                   {!(prefs as any)?.is_subscribed && (
                     <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <GraduationCap size={20} className="text-muted-foreground" />
-                          <div>
-                            <h4 className="font-medium text-foreground">Student Discount</h4>
-                            <p className="text-sm text-muted-foreground">50% off with a valid .edu email</p>
-                          </div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <GraduationCap size={20} className="text-muted-foreground" />
+                        <div>
+                          <h4 className="font-medium text-foreground">Student Discount</h4>
+                          <p className="text-sm text-muted-foreground">50% off with a valid .edu email</p>
                         </div>
-                        <Switch
-                          checked={studentDiscount}
-                          onCheckedChange={setStudentDiscount}
-                        />
                       </div>
+
+                      {verificationStep === "verified" ? (
+                        <div className="flex items-center gap-2 text-sm text-primary">
+                          <Check size={16} />
+                          <span>Verified: {studentEmail}</span>
+                        </div>
+                      ) : verificationStep === "sent" ? (
+                        <div className="space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            A 6-digit code was sent to <strong>{studentEmail}</strong>. Check your email (and spam folder).
+                          </p>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter 6-digit code"
+                              value={verificationCode}
+                              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              maxLength={6}
+                              className="max-w-[200px]"
+                            />
+                            <Button
+                              disabled={verifying || verificationCode.length !== 6}
+                              onClick={async () => {
+                                setVerifying(true);
+                                try {
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  const res = await fetch(
+                                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-verification`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${session?.access_token}`,
+                                      },
+                                      body: JSON.stringify({ action: "verify", code: verificationCode }),
+                                    }
+                                  );
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setVerificationStep("verified");
+                                    setStudentDiscount(true);
+                                    toast.success("Student status verified! Discount applied.");
+                                  } else {
+                                    toast.error(data.error || "Verification failed");
+                                  }
+                                } catch {
+                                  toast.error("Verification failed");
+                                } finally {
+                                  setVerifying(false);
+                                }
+                              }}
+                            >
+                              {verifying ? "Verifying..." : "Verify"}
+                            </Button>
+                          </div>
+                          <button
+                            className="text-xs text-muted-foreground underline"
+                            onClick={() => setVerificationStep("idle")}
+                          >
+                            Use a different email
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="your-name@university.edu"
+                              type="email"
+                              value={studentEmail}
+                              onChange={(e) => setStudentEmail(e.target.value.slice(0, 255))}
+                              className="max-w-[320px]"
+                            />
+                            <Button
+                              variant="secondary"
+                              disabled={verifying || !studentEmail.trim().endsWith(".edu")}
+                              onClick={async () => {
+                                setVerifying(true);
+                                try {
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  const res = await fetch(
+                                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/student-verification`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        Authorization: `Bearer ${session?.access_token}`,
+                                      },
+                                      body: JSON.stringify({ action: "send", email: studentEmail.trim() }),
+                                    }
+                                  );
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setVerificationStep("sent");
+                                    toast.success("Verification code sent!");
+                                  } else {
+                                    toast.error(data.error || "Failed to send code");
+                                  }
+                                } catch {
+                                  toast.error("Failed to send verification code");
+                                } finally {
+                                  setVerifying(false);
+                                }
+                              }}
+                            >
+                              {verifying ? "Sending..." : "Send Code"}
+                            </Button>
+                          </div>
+                          {studentEmail && !studentEmail.trim().endsWith(".edu") && studentEmail.includes("@") && (
+                            <p className="text-xs text-destructive">Only .edu email addresses qualify</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
