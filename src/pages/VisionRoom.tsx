@@ -1,9 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Pencil, Type, Plus, ImageIcon, LayoutGrid, Trash2, Copy, ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2, Save, Eraser, Palette, Loader2 } from 'lucide-react';
+import {
+  Pencil, Type, Plus, ImageIcon, LayoutGrid, Trash2, Copy,
+  ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2,
+  Save, Download, Mail, Eraser, Palette, Loader2, XCircle, RefreshCw,
+} from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Types ──────────────────────────────────────────────────
 interface CollageElement {
@@ -40,6 +45,14 @@ const RAINBOW_COLORS = [
   '#4CAF50', '#529CCA', '#2196F3',
   '#8B5CF6', '#6D28D9', '#D946EF',
   '#EC4899', '#F472B6',
+];
+
+const FONTS = [
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Courier', value: 'Courier New, monospace' },
+  { label: 'Comic Sans', value: 'Comic Sans MS, cursive' },
+  { label: 'Times', value: 'Times New Roman, serif' },
 ];
 
 // ── Resizable/Draggable Element ────────────────────────────
@@ -161,7 +174,6 @@ const CollageItem = ({
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Content */}
       {el.type === 'image' && el.src && (
         <img
           src={el.src}
@@ -231,7 +243,6 @@ const CollageItem = ({
         </svg>
       )}
 
-      {/* Selection handles */}
       {isSelected && !isEditing && (
         <>
           {corners.map((corner) => (
@@ -248,8 +259,6 @@ const CollageItem = ({
               onMouseDown={(e) => handleResizeStart(e, corner)}
             />
           ))}
-
-          {/* Rotate handle */}
           <div
             className="absolute -top-8 left-1/2 -translate-x-1/2 w-5 h-5 bg-card border-2 border-primary rounded-full flex items-center justify-center z-50 cursor-grab"
             onMouseDown={handleRotateStart}
@@ -278,10 +287,13 @@ const VisionRoom = () => {
   const [history, setHistory] = useState<CollageElement[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [boardId, setBoardId] = useState<string | null>(null);
+  const [boardTitle, setBoardTitle] = useState('My Vision Board');
   const [savedBoards, setSavedBoards] = useState<SavedBoard[]>([]);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [showBoards, setShowBoards] = useState(false);
+  const [showLayouts, setShowLayouts] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── History helpers ───────────────────────────────────
@@ -310,19 +322,20 @@ const VisionRoom = () => {
 
   // ── Auto-save ─────────────────────────────────────────
   const saveBoard = useCallback(
-    async (els: CollageElement[]) => {
+    async (els: CollageElement[], title?: string) => {
       if (!user) return;
+      const nameToSave = title || boardTitle;
       if (boardId) {
         await supabase
           .from('vision_boards')
-          .update({ elements: els as any, updated_at: new Date().toISOString() })
+          .update({ elements: els as any, name: nameToSave, updated_at: new Date().toISOString() })
           .eq('id', boardId);
       } else {
         const { data } = await supabase
           .from('vision_boards')
           .insert({
             user_id: user.id,
-            name: `Vision ${new Date().toLocaleDateString()}`,
+            name: nameToSave,
             elements: els as any,
           })
           .select('id')
@@ -330,7 +343,7 @@ const VisionRoom = () => {
         if (data) setBoardId(data.id);
       }
     },
-    [user, boardId],
+    [user, boardId, boardTitle],
   );
 
   useEffect(() => {
@@ -364,6 +377,7 @@ const VisionRoom = () => {
         .maybeSingle();
       if (data) {
         setBoardId(data.id);
+        setBoardTitle(data.name || 'My Vision Board');
         setElements((data.elements as any) || []);
         setHistory([(data.elements as any) || []]);
       }
@@ -374,14 +388,12 @@ const VisionRoom = () => {
   // ── Save & Start New Board ────────────────────────────
   const saveAndNewBoard = async () => {
     if (!user) return;
-    // Force save current board immediately
     if (boardId && elements.length > 0) {
       await supabase
         .from('vision_boards')
-        .update({ elements: elements as any, updated_at: new Date().toISOString() })
+        .update({ elements: elements as any, name: boardTitle, updated_at: new Date().toISOString() })
         .eq('id', boardId);
     }
-    // Create new blank board
     const { data } = await supabase
       .from('vision_boards')
       .insert({
@@ -389,10 +401,11 @@ const VisionRoom = () => {
         name: `Vision ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
         elements: [] as any,
       })
-      .select('id')
+      .select('id, name')
       .single();
     if (data) {
       setBoardId(data.id);
+      setBoardTitle(data.name);
       setElements([]);
       setHistory([[]]);
       setHistoryIndex(0);
@@ -405,6 +418,7 @@ const VisionRoom = () => {
   // ── Load a specific board ──────────────────────────────
   const loadBoard = (board: SavedBoard) => {
     setBoardId(board.id);
+    setBoardTitle(board.name || 'My Vision Board');
     setElements(board.elements || []);
     setHistory([board.elements || []]);
     setHistoryIndex(0);
@@ -449,6 +463,67 @@ const VisionRoom = () => {
     pushHistory(next);
   };
 
+  const clearAll = () => {
+    setElements([]);
+    pushHistory([]);
+    setSelectedId(null);
+    toast.success('Canvas cleared');
+  };
+
+  const startOver = async () => {
+    clearAll();
+    setBoardTitle('My Vision Board');
+    if (boardId) {
+      await supabase
+        .from('vision_boards')
+        .update({ elements: [] as any, name: 'My Vision Board', updated_at: new Date().toISOString() })
+        .eq('id', boardId);
+    }
+    toast.success('Board reset');
+  };
+
+  // ── Download as PNG ──────────────────────────────────
+  const downloadAsPng = async () => {
+    if (!boardRef.current) return;
+    setIsDownloading(true);
+    setSelectedId(null); // Deselect so handles don't show
+
+    try {
+      // Wait a tick for selection handles to disappear
+      await new Promise((r) => setTimeout(r, 100));
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(boardRef.current, {
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        ignoreElements: (el) => {
+          // Ignore the drawing canvas overlay
+          return el.tagName === 'CANVAS';
+        },
+      });
+      const link = document.createElement('a');
+      link.download = `${boardTitle.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.success('Board downloaded as PNG!');
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download board');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // ── Email Board ─────────────────────────────────────
+  const emailBoard = () => {
+    const subject = encodeURIComponent(boardTitle);
+    const body = encodeURIComponent(
+      `Check out my vision board: "${boardTitle}"\n\nCreated with Vision Room.\n\n(Download the board as PNG and attach it to share!)`
+    );
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+  };
+
   // ── Add image ─────────────────────────────────────────
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -463,10 +538,9 @@ const VisionRoom = () => {
       return;
     }
 
-    // Use signed URL since bucket is private
     const { data: signedData } = await supabase.storage
       .from('vision-images')
-      .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
 
     const src = signedData?.signedUrl;
     if (!src) {
@@ -474,7 +548,6 @@ const VisionRoom = () => {
       return;
     }
 
-    // Also use local blob for immediate display + sizing
     const localUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -510,14 +583,15 @@ const VisionRoom = () => {
     setIsRemovingBg(true);
     try {
       const { removeBackground: removeBg } = await import('@imgly/background-removal');
-      const blob = await removeBg(el.src, {
+      const response = await fetch(el.src);
+      const imageBlob = await response.blob();
+      const resultBlob = await removeBg(imageBlob, {
         output: { format: 'image/png', quality: 0.9 },
       });
 
-      // Upload processed image
       if (!user) return;
       const path = `${user.id}/nobg-${Date.now()}.png`;
-      const file = new File([blob], 'nobg.png', { type: 'image/png' });
+      const file = new File([resultBlob], 'nobg.png', { type: 'image/png' });
       const { error } = await supabase.storage.from('vision-images').upload(path, file);
       if (error) throw error;
 
@@ -531,7 +605,7 @@ const VisionRoom = () => {
       }
     } catch (err) {
       console.error('Remove bg error:', err);
-      toast.error('Failed to remove background. Try a different image.');
+      toast.error('Failed to remove background. Try a smaller image.');
     } finally {
       setIsRemovingBg(false);
     }
@@ -558,6 +632,63 @@ const VisionRoom = () => {
     pushHistory(next);
     setSelectedId(newEl.id);
     setTool('select');
+  };
+
+  // ── Layout Templates ─────────────────────────────────
+  const applyLayout = (layout: 'grid' | 'collage' | 'freeform') => {
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    const w = boardRect ? boardRect.width : 800;
+    const h = boardRect ? boardRect.height : 600;
+    const gap = 12;
+    const newEls: CollageElement[] = [];
+
+    if (layout === 'grid') {
+      const cols = 3, rows = 2;
+      const cellW = (w - gap * (cols + 1)) / cols;
+      const cellH = (h - gap * (rows + 1)) / rows;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          newEls.push({
+            id: genId(), type: 'text',
+            x: gap + c * (cellW + gap), y: gap + r * (cellH + gap),
+            width: cellW, height: cellH, rotation: 0,
+            text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774',
+          });
+        }
+      }
+    } else if (layout === 'collage') {
+      // Asymmetric Pinterest-style
+      newEls.push(
+        { id: genId(), type: 'text', x: gap, y: gap, width: w * 0.55, height: h * 0.5 - gap, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
+        { id: genId(), type: 'text', x: w * 0.55 + gap * 2, y: gap, width: w * 0.45 - gap * 3, height: h * 0.35 - gap, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
+        { id: genId(), type: 'text', x: w * 0.55 + gap * 2, y: h * 0.35 + gap, width: w * 0.45 - gap * 3, height: h * 0.65 - gap * 2, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
+        { id: genId(), type: 'text', x: gap, y: h * 0.5 + gap, width: w * 0.35, height: h * 0.5 - gap * 2, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
+        { id: genId(), type: 'text', x: w * 0.35 + gap * 2, y: h * 0.5 + gap, width: w * 0.2, height: h * 0.5 - gap * 2, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
+      );
+    } else if (layout === 'freeform') {
+      // Scattered elements with slight rotations
+      const positions = [
+        { x: w * 0.1, y: h * 0.1, rot: -5 },
+        { x: w * 0.5, y: h * 0.05, rot: 3 },
+        { x: w * 0.05, y: h * 0.5, rot: 2 },
+        { x: w * 0.45, y: h * 0.4, rot: -3 },
+        { x: w * 0.65, y: h * 0.55, rot: 5 },
+      ];
+      positions.forEach((p) => {
+        newEls.push({
+          id: genId(), type: 'text',
+          x: p.x, y: p.y, width: w * 0.3, height: h * 0.35,
+          rotation: p.rot,
+          text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774',
+        });
+      });
+    }
+
+    const next = [...elements, ...newEls];
+    setElements(next);
+    pushHistory(next);
+    setShowLayouts(false);
+    toast.success(`${layout.charAt(0).toUpperCase() + layout.slice(1)} layout added!`);
   };
 
   // ── Drawing on canvas ────────────────────────────────
@@ -647,7 +778,7 @@ const VisionRoom = () => {
           rotation: 0,
           text: 'Click to edit',
           fontSize: 24,
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Georgia, serif',
           fill: '#37352F',
         };
         const next = [...elements, newEl];
@@ -670,7 +801,7 @@ const VisionRoom = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); duplicateSelected(); }
-      if (e.key === 'Escape') { setSelectedId(null); setShowColorPicker(false); }
+      if (e.key === 'Escape') { setSelectedId(null); setShowColorPicker(false); setShowLayouts(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -700,8 +831,8 @@ const VisionRoom = () => {
     <AppShell>
       <div className="relative flex flex-col w-full h-[calc(100vh-64px)] bg-background overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm z-20">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm z-20 gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={undo} disabled={historyIndex <= 0} className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors" title="Undo">
               <Undo2 size={18} className="text-muted-foreground" />
             </button>
@@ -709,17 +840,44 @@ const VisionRoom = () => {
               <Redo2 size={18} className="text-muted-foreground" />
             </button>
             <div className="w-px h-5 bg-border mx-1" />
-            <button onClick={saveAndNewBoard} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Save & New Board">
+          </div>
+
+          {/* Board title input */}
+          <input
+            type="text"
+            value={boardTitle}
+            onChange={(e) => setBoardTitle(e.target.value)}
+            onBlur={() => saveBoard(elements, boardTitle)}
+            className="flex-1 max-w-xs text-center text-sm font-medium bg-transparent border-b border-transparent hover:border-border focus:border-primary focus:outline-none px-2 py-1 transition-colors text-foreground"
+            placeholder="Board title..."
+          />
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <button
+              onClick={downloadAsPng}
+              disabled={isDownloading}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              title="Save as PNG"
+            >
+              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              <span className="hidden sm:inline">Save PNG</span>
+            </button>
+            <button onClick={emailBoard} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground" title="Email Board">
+              <Mail size={14} />
+              <span className="hidden sm:inline">Email</span>
+            </button>
+            <button onClick={saveAndNewBoard} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Save & New Board">
               <Save size={14} />
               <span className="hidden sm:inline">Save & New</span>
             </button>
             <div className="relative">
-              <button onClick={() => { setShowBoards(!showBoards); loadBoards(); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-muted-foreground">
+              <button onClick={() => { setShowBoards(!showBoards); loadBoards(); }} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground">
                 <LayoutGrid size={14} />
                 <span className="hidden sm:inline">Boards</span>
               </button>
               {showBoards && (
-                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[220px] max-h-[300px] overflow-y-auto z-50">
+                <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[220px] max-h-[300px] overflow-y-auto z-50">
                   {savedBoards.length === 0 && (
                     <p className="text-xs text-muted-foreground p-2">No saved boards yet</p>
                   )}
@@ -736,38 +894,49 @@ const VisionRoom = () => {
                 </div>
               )}
             </div>
+            <div className="w-px h-5 bg-border mx-1" />
+            <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground" title="Clear All">
+              <XCircle size={14} />
+              <span className="hidden sm:inline">Clear</span>
+            </button>
+            <button onClick={startOver} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-destructive/10 text-destructive transition-colors" title="Start Over">
+              <RefreshCw size={14} />
+              <span className="hidden sm:inline">Start Over</span>
+            </button>
           </div>
+        </div>
 
-          {/* Context actions for selected element */}
-          {selectedId && (
-            <div className="flex items-center gap-1">
-              {selectedEl?.type === 'image' && (
-                <button
-                  onClick={removeBackground}
-                  disabled={isRemovingBg}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors disabled:opacity-50"
-                  title="Remove Background"
-                >
-                  {isRemovingBg ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />}
-                  <span className="hidden sm:inline">{isRemovingBg ? 'Removing...' : 'Remove BG'}</span>
-                </button>
-              )}
-              {selectedEl?.type === 'text' && (
+        {/* Context bar for selected element */}
+        {selectedId && selectedEl && (
+          <div className="flex items-center gap-2 px-4 py-1.5 border-b border-border bg-card/60 backdrop-blur-sm z-20">
+            {selectedEl.type === 'image' && (
+              <button
+                onClick={removeBackground}
+                disabled={isRemovingBg}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors disabled:opacity-50"
+                title="Remove Background"
+              >
+                {isRemovingBg ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />}
+                {isRemovingBg ? 'Removing...' : 'Remove BG'}
+              </button>
+            )}
+            {selectedEl.type === 'text' && (
+              <>
                 <div className="relative">
                   <button
                     onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="p-2 rounded-lg hover:bg-secondary transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
                     title="Text Color"
                   >
                     <Palette size={16} style={{ color: selectedEl.fill || 'hsl(var(--foreground))' }} />
                   </button>
                   {showColorPicker && (
-                    <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-3 z-50">
+                    <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-3 z-50">
                       <div className="grid grid-cols-6 gap-1.5 w-[180px]">
                         {RAINBOW_COLORS.map((color) => (
                           <button
                             key={color}
-                            onClick={() => { updateElement(selectedId, { fill: color }); }}
+                            onClick={() => updateElement(selectedId, { fill: color })}
                             className="w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform"
                             style={{
                               backgroundColor: color,
@@ -780,26 +949,39 @@ const VisionRoom = () => {
                     </div>
                   )}
                 </div>
-              )}
-              <button onClick={duplicateSelected} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Duplicate">
-                <Copy size={16} className="text-muted-foreground" />
-              </button>
-              <button onClick={() => moveLayer('up')} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Bring forward">
+                <Select
+                  value={selectedEl.fontFamily || 'Georgia, serif'}
+                  onValueChange={(val) => updateElement(selectedId, { fontFamily: val })}
+                >
+                  <SelectTrigger className="h-7 w-[130px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONTS.map((f) => (
+                      <SelectItem key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                        {f.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            )}
+            <div className="flex items-center gap-1 ml-auto">
+              <button onClick={() => moveLayer('up')} className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Bring Forward">
                 <ArrowUp size={16} className="text-muted-foreground" />
               </button>
-              <button onClick={() => moveLayer('down')} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Send backward">
+              <button onClick={() => moveLayer('down')} className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Send Backward">
                 <ArrowDown size={16} className="text-muted-foreground" />
               </button>
-              <button onClick={deleteSelected} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors" title="Delete">
+              <button onClick={duplicateSelected} className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Duplicate">
+                <Copy size={16} className="text-muted-foreground" />
+              </button>
+              <button onClick={deleteSelected} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors" title="Delete">
                 <Trash2 size={16} className="text-destructive" />
               </button>
             </div>
-          )}
-
-          <div className="text-xs text-muted-foreground font-light">
-            {elements.length} element{elements.length !== 1 ? 's' : ''}
           </div>
-        </div>
+        )}
 
         {/* Canvas area */}
         <div
@@ -822,11 +1004,10 @@ const VisionRoom = () => {
             </div>
           )}
 
-          {/* Elements */}
-          {elements.map((el) => (
+          {elements.map((el, i) => (
             <CollageItem
               key={el.id}
-              el={el}
+              el={{ ...el }}
               isSelected={selectedId === el.id}
               onSelect={() => { setSelectedId(el.id); setTool('select'); }}
               onChange={(attrs) => updateElement(el.id, attrs)}
@@ -834,7 +1015,6 @@ const VisionRoom = () => {
             />
           ))}
 
-          {/* Drawing canvas overlay */}
           <canvas
             ref={canvasRef}
             className="absolute inset-0 z-30"
@@ -875,45 +1055,42 @@ const VisionRoom = () => {
             <span className="text-[10px] font-medium">Photos</span>
           </button>
 
-          <button
-            onClick={() => {
-              // Layouts: add a grid of placeholder images
-              const boardRect = boardRef.current?.getBoundingClientRect();
-              const w = boardRect ? boardRect.width : 800;
-              const h = boardRect ? boardRect.height : 600;
-              const gap = 12;
-              const cols = 3;
-              const rows = 2;
-              const cellW = (w - gap * (cols + 1)) / cols;
-              const cellH = (h - gap * (rows + 1)) / rows;
-              const newEls: CollageElement[] = [];
-              for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                  newEls.push({
-                    id: genId(),
-                    type: 'text',
-                    x: gap + c * (cellW + gap),
-                    y: gap + r * (cellH + gap),
-                    width: cellW,
-                    height: cellH,
-                    rotation: 0,
-                    text: `+`,
-                    fontSize: 40,
-                    fontFamily: 'Inter, sans-serif',
-                    fill: '#787774',
-                  });
-                }
-              }
-              const next = [...elements, ...newEls];
-              setElements(next);
-              pushHistory(next);
-              toast.success('Grid layout added! Replace placeholders with images.');
-            }}
-            className={toolbarBtnClass(false)}
-          >
-            <LayoutGrid size={20} />
-            <span className="text-[10px] font-medium">Layouts</span>
-          </button>
+          <div className="relative">
+            <button onClick={() => setShowLayouts(!showLayouts)} className={toolbarBtnClass(showLayouts)}>
+              <LayoutGrid size={20} />
+              <span className="text-[10px] font-medium">Layouts</span>
+            </button>
+            {showLayouts && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-card border border-border rounded-xl shadow-lg p-3 z-50 min-w-[200px]">
+                <p className="text-xs font-semibold text-foreground mb-2">Choose Layout</p>
+                <div className="flex flex-col gap-1">
+                  <button onClick={() => applyLayout('grid')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-secondary transition-colors text-foreground">
+                    <div className="grid grid-cols-3 gap-0.5 w-6 h-4">
+                      {[...Array(6)].map((_, i) => <div key={i} className="bg-muted-foreground/30 rounded-[1px]" />)}
+                    </div>
+                    Grid (3×2)
+                  </button>
+                  <button onClick={() => applyLayout('collage')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-secondary transition-colors text-foreground">
+                    <div className="flex gap-0.5 w-6 h-4">
+                      <div className="bg-muted-foreground/30 rounded-[1px] w-3 h-full" />
+                      <div className="flex flex-col gap-0.5 flex-1">
+                        <div className="bg-muted-foreground/30 rounded-[1px] flex-1" />
+                        <div className="bg-muted-foreground/30 rounded-[1px] flex-[1.5]" />
+                      </div>
+                    </div>
+                    Collage
+                  </button>
+                  <button onClick={() => applyLayout('freeform')} className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-secondary transition-colors text-foreground">
+                    <div className="relative w-6 h-4">
+                      <div className="absolute top-0 left-0 w-2.5 h-2 bg-muted-foreground/30 rounded-[1px] rotate-[-3deg]" />
+                      <div className="absolute bottom-0 right-0 w-2.5 h-2 bg-muted-foreground/30 rounded-[1px] rotate-[3deg]" />
+                    </div>
+                    Freeform
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </AppShell>
