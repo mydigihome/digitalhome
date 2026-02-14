@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,11 @@ export default function Login() {
     if (error) {
       toast.error(error.message);
     } else {
+      // Update last_login timestamp
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await (supabase as any).from("profiles").update({ last_login: new Date().toISOString() }).eq("id", session.user.id);
+      }
       navigate("/welcome");
     }
   };

@@ -410,18 +410,21 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          last_login: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
+          last_login?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
+          last_login?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -682,6 +685,8 @@ export type Database = {
           wealth_banner_text_color: string | null
           wealth_banner_url: string | null
           website: string | null
+          welcome_video_url: string | null
+          welcome_video_watched: boolean | null
         }
         Insert: {
           accent_colors?: Json | null
@@ -712,6 +717,8 @@ export type Database = {
           wealth_banner_text_color?: string | null
           wealth_banner_url?: string | null
           website?: string | null
+          welcome_video_url?: string | null
+          welcome_video_watched?: boolean | null
         }
         Update: {
           accent_colors?: Json | null
@@ -742,6 +749,8 @@ export type Database = {
           wealth_banner_text_color?: string | null
           wealth_banner_url?: string | null
           website?: string | null
+          welcome_video_url?: string | null
+          welcome_video_watched?: boolean | null
         }
         Relationships: []
       }
