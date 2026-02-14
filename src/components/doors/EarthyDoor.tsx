@@ -8,62 +8,81 @@ interface EarthyDoorProps {
 export default function EarthyDoor({ isOpen, size = 'large' }: EarthyDoorProps) {
   const width = size === 'large' ? 240 : 80;
   const height = size === 'large' ? 320 : 100;
+  const uid = `earthy-${size}`;
 
   return (
-    <div style={{ position: 'relative', width, height, overflow: 'hidden', borderRadius: 8 }}>
+    <div style={{ position: 'relative', width, height, overflow: 'hidden', borderRadius: 4 }}>
       <svg width={width} height={height} viewBox="0 0 240 320" style={{ display: 'block' }}>
         <defs>
-          <linearGradient id={`earthWood-${size}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#A67B5B" />
-            <stop offset="50%" stopColor="#8B6543" />
-            <stop offset="100%" stopColor="#7A5634" />
+          <linearGradient id={`blackDoorGrad-${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#2a2a2a" />
+            <stop offset="50%" stopColor="#1a1a1a" />
+            <stop offset="100%" stopColor="#0a0a0a" />
+          </linearGradient>
+          <linearGradient id={`glassGrad-${uid}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#87ceeb" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#4682b4" stopOpacity="0.6" />
           </linearGradient>
         </defs>
 
-        {/* Dark interior */}
-        <rect width="240" height="320" fill="#1a1a2e" />
-        <rect x="25" y="15" width="190" height="290" rx="6" fill="#0f0f1a" opacity="0.5" />
+        {/* Wall background */}
+        <rect width="240" height="320" fill="#e8e8e8" />
 
-        {/* Door frame */}
-        <rect x="20" y="10" width="200" height="300" rx="8" fill="none" stroke="#6B4D2E" strokeWidth="5" />
+        {/* Arch frame */}
+        <path d="M 40 300 L 40 80 Q 40 30 70 30 L 170 30 Q 200 30 200 80 L 200 300"
+              fill="#d8d8d8" stroke="#c0c0c0" strokeWidth="8" />
+        <path d="M 50 290 L 50 80 Q 50 40 75 40 L 165 40 Q 190 40 190 80 L 190 290"
+              fill="#1a1a1a" />
 
-        {/* Single wooden door */}
+        {/* Left door leaf */}
         <motion.g
-          style={{ originX: '20px', originY: '160px' }}
-          animate={isOpen ? { scaleX: 0.15, x: -70, skewY: -3 } : { scaleX: 1, x: 0, skewY: 0 }}
-          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+          style={{ originX: '55px', originY: '170px' }}
+          animate={isOpen
+            ? { scaleX: 0.2, x: -80, skewY: -2, opacity: 0.4 }
+            : { scaleX: 1, x: 0, skewY: 0, opacity: 1 }
+          }
+          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
         >
-          <rect x="20" y="10" width="200" height="300" rx="6" fill={`url(#earthWood-${size})`} />
-
-          {/* Wood grain lines */}
-          <line x1="60" y1="20" x2="58" y2="300" stroke="#7A5634" strokeWidth="0.8" opacity="0.5" />
-          <line x1="100" y1="15" x2="98" y2="305" stroke="#7A5634" strokeWidth="0.8" opacity="0.5" />
-          <line x1="140" y1="18" x2="142" y2="302" stroke="#7A5634" strokeWidth="0.8" opacity="0.5" />
-          <line x1="180" y1="20" x2="178" y2="300" stroke="#7A5634" strokeWidth="0.8" opacity="0.5" />
-
-          {/* Door knob */}
-          <circle cx="190" cy="170" r="8" fill="#C8A96E" />
-          <circle cx="190" cy="170" r="4" fill="#B8954E" />
-          {/* Keyhole */}
-          <ellipse cx="190" cy="185" rx="3" ry="5" fill="#5A3E28" />
-
-          {/* Hanging plant at top */}
-          <g>
-            {/* Cord */}
-            <line x1="120" y1="0" x2="120" y2="30" stroke="#8B7355" strokeWidth="1.5" />
-            {/* Pot */}
-            <path d="M 108 30 L 112 50 L 128 50 L 132 30 Z" fill="#C4956A" />
-            <rect x="106" y="27" width="28" height="5" rx="2" fill="#B8854E" />
-            {/* Leaves */}
-            <ellipse cx="105" cy="32" rx="12" ry="6" fill="#6B8F5E" transform="rotate(-30 105 32)" />
-            <ellipse cx="135" cy="32" rx="12" ry="6" fill="#7AA06A" transform="rotate(30 135 32)" />
-            <ellipse cx="120" cy="25" rx="10" ry="5" fill="#5A7F4E" transform="rotate(5 120 25)" />
-          </g>
+          <path d="M 55 50 L 55 80 Q 55 45 75 45 L 115 45 L 115 285 L 55 285 Z"
+                fill={`url(#blackDoorGrad-${uid})`} stroke="#0a0a0a" strokeWidth="2" />
+          {/* Glass panel */}
+          <rect x="65" y="70" width="40" height="90" rx="3" fill={`url(#glassGrad-${uid})`} />
+          <line x1="85" y1="70" x2="85" y2="160" stroke="#1a1a1a" strokeWidth="3" />
+          <line x1="65" y1="115" x2="105" y2="115" stroke="#1a1a1a" strokeWidth="3" />
+          {/* Lower panel */}
+          <rect x="65" y="230" width="40" height="45" rx="3" fill="none" stroke="#000000" strokeWidth="2" />
         </motion.g>
 
+        {/* Right door leaf */}
+        <motion.g
+          style={{ originX: '185px', originY: '170px' }}
+          animate={isOpen
+            ? { scaleX: 0.2, x: 80, skewY: 2, opacity: 0.4 }
+            : { scaleX: 1, x: 0, skewY: 0, opacity: 1 }
+          }
+          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <path d="M 185 50 L 185 80 Q 185 45 165 45 L 125 45 L 125 285 L 185 285 Z"
+                fill={`url(#blackDoorGrad-${uid})`} stroke="#0a0a0a" strokeWidth="2" />
+          <rect x="135" y="70" width="40" height="90" rx="3" fill={`url(#glassGrad-${uid})`} />
+          <line x1="155" y1="70" x2="155" y2="160" stroke="#1a1a1a" strokeWidth="3" />
+          <line x1="135" y1="115" x2="175" y2="115" stroke="#1a1a1a" strokeWidth="3" />
+          <rect x="135" y="230" width="40" height="45" rx="3" fill="none" stroke="#000000" strokeWidth="2" />
+          {/* Handle */}
+          <rect x="142" y="155" width="3" height="25" rx="1.5" fill="#c0c0c0" />
+        </motion.g>
+
+        {/* Lantern */}
+        <g transform="translate(120, 20)">
+          <line x1="0" y1="-10" x2="0" y2="5" stroke="#1a1a1a" strokeWidth="1" />
+          <rect x="-8" y="5" width="16" height="12" fill="#1a1a1a" />
+          <circle cx="-5" cy="12" r="2" fill="#ffb347" />
+          <circle cx="5" cy="12" r="2" fill="#ffb347" />
+        </g>
+
         {/* Welcome mat */}
-        <rect x="60" y="300" width="120" height="15" rx="3" fill="#C4A77D" opacity="0.7" />
-        <text x="120" y="311" textAnchor="middle" fontSize="7" fill="#7A5634" fontWeight="500">WELCOME</text>
+        <rect x="70" y="295" width="100" height="15" rx="2" fill="#8b7355" />
+        <text x="120" y="305" fontFamily="serif" fontSize="8" fill="#d4b896" textAnchor="middle">WELCOME</text>
       </svg>
     </div>
   );

@@ -149,7 +149,7 @@ export default function OnboardingPage() {
               <div>
                 <label className="text-sm font-medium text-foreground mb-3 block">Choose your door style</label>
                 <div className="grid grid-cols-3 gap-3">
-                  {(['modern', 'traditional', 'earthy'] as HomeStyle[]).map((style) => (
+                  {(['modern', 'earthy', 'traditional'] as HomeStyle[]).map((style) => (
                     <button
                       key={style}
                       onClick={() => setHomeStyle(style)}
