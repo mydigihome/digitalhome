@@ -11,6 +11,7 @@ const WelcomeScreen = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { data: prefs } = useUserPreferences();
+  const [doorOpened, setDoorOpened] = useState(false);
   const [isEntering, setIsEntering] = useState(false);
 
   const homeStyle = (prefs as any)?.home_style || 'modern';
@@ -26,7 +27,7 @@ const WelcomeScreen = () => {
   };
 
   const getDoorComponent = () => {
-    const props = { isOpen: isEntering, size: 'large' as const };
+    const props = { isOpen: doorOpened, size: 'large' as const };
     switch (homeStyle) {
       case 'modern': return <ModernDoor {...props} />;
       case 'earthy': return <EarthyDoor {...props} />;
@@ -36,8 +37,18 @@ const WelcomeScreen = () => {
   };
 
   const handleEnter = () => {
-    setIsEntering(true);
-    setTimeout(() => navigate('/dashboard'), 1200);
+    // Step 1: Door opens (800ms)
+    setDoorOpened(true);
+    
+    // Step 2: After door opens, zoom and fade (800ms)
+    setTimeout(() => {
+      setIsEntering(true);
+    }, 800);
+    
+    // Step 3: Navigate after zoom completes (1200ms total)
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1600);
   };
 
   return (
@@ -56,18 +67,27 @@ const WelcomeScreen = () => {
         Welcome home, {firstName}.
       </motion.p>
 
-      {/* Door BELOW text */}
+      {/* Door BELOW text with zoom animation */}
       <motion.div
-        animate={!isEntering ? { scale: [0.98, 1, 0.98] } : {}}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className={`transition-all duration-1000 ${isEntering ? 'scale-110 opacity-0' : ''}`}
+        animate={
+          !doorOpened
+            ? { scale: [0.98, 1, 0.98] } // breathing animation
+            : isEntering
+            ? { scale: 1.5, opacity: 0 } // zoom and fade
+            : { scale: 1, opacity: 1 } // door just opened
+        }
+        transition={
+          !doorOpened
+            ? { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+            : { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+        }
       >
         {getDoorComponent()}
       </motion.div>
 
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: isEntering ? 0 : 0.5 }}
+        animate={{ opacity: isEntering ? 0 : !doorOpened ? 0.5 : 1 }}
         transition={{ delay: 0.8, duration: 0.5 }}
         className="mt-8 text-sm text-muted-foreground"
       >
