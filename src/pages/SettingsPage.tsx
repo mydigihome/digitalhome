@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, HeadphonesIcon, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -93,6 +93,7 @@ const settingsTabs = [
   { id: "account", label: "Account", icon: Shield },
   { id: "resources", label: "AI Resources", icon: Sparkles },
   { id: "archived", label: "Archived Projects", icon: Archive },
+  { id: "support", label: "Support", icon: HeadphonesIcon },
 ] as const;
 
 type SettingsTab = typeof settingsTabs[number]["id"];
@@ -127,7 +128,11 @@ export default function SettingsPage() {
   const [selectedSize, setSelectedSize] = useState("Medium");
   const [selectedSpacing, setSelectedSpacing] = useState("Comfortable");
   const [sidebarColors, setSidebarColors] = useState<Record<string, string>>({});
-
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackEmail, setFeedbackEmail] = useState(user?.email || "");
+  const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
   }, [profile?.full_name]);
@@ -792,6 +797,108 @@ export default function SettingsPage() {
                       <li>• You can restore an archived project at any time to continue working on it</li>
                       <li>• Permanently deleting an archived project cannot be undone</li>
                     </ul>
+                  </div>
+                </>
+              )}
+
+              {/* ==================== SUPPORT TAB ==================== */}
+              {activeTab === "support" && (
+                <>
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <div className="flex items-start gap-4 mb-2">
+                      <HeadphonesIcon size={28} className="text-muted-foreground mt-1" />
+                      <div>
+                        <h3 className="text-xl font-semibold text-foreground">Support & Feedback</h3>
+                        <p className="text-sm text-muted-foreground">We'd love to hear from you! Share your thoughts, report issues, or suggest features.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h4 className="text-lg font-semibold text-foreground mb-6">Send Feedback</h4>
+
+                    {feedbackSent ? (
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                          <Star size={28} className="text-primary fill-primary" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-foreground mb-1">Thank you!</h4>
+                        <p className="text-sm text-muted-foreground mb-4">Your feedback has been submitted successfully.</p>
+                        <Button variant="outline" onClick={() => { setFeedbackSent(false); setFeedbackMsg(""); setFeedbackRating(0); }}>Send More Feedback</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        {/* Star Rating */}
+                        <div>
+                          <Label className="text-sm font-medium text-foreground mb-2 block">How would you rate your experience? (optional)</Label>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setFeedbackRating(feedbackRating === star ? 0 : star)}
+                                className="p-1 transition-transform hover:scale-110"
+                              >
+                                <Star
+                                  size={28}
+                                  className={cn(
+                                    "transition-colors",
+                                    star <= feedbackRating ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30"
+                                  )}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                          <Label htmlFor="feedback-email" className="text-sm font-medium text-foreground mb-1.5 block">Your Email</Label>
+                          <Input
+                            id="feedback-email"
+                            type="email"
+                            value={feedbackEmail}
+                            onChange={(e) => setFeedbackEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            className="max-w-sm"
+                          />
+                        </div>
+
+                        {/* Message */}
+                        <div>
+                          <Label htmlFor="feedback-msg" className="text-sm font-medium text-foreground mb-1.5 block">Your Feedback</Label>
+                          <Textarea
+                            id="feedback-msg"
+                            value={feedbackMsg}
+                            onChange={(e) => setFeedbackMsg(e.target.value)}
+                            placeholder="Tell us what you think, report a bug, or suggest a feature..."
+                            rows={5}
+                            className="resize-none"
+                          />
+                        </div>
+
+                        <Button
+                          onClick={async () => {
+                            if (!feedbackMsg.trim()) { toast.error("Please enter a feedback message"); return; }
+                            if (!user) { toast.error("You must be logged in"); return; }
+                            setSendingFeedback(true);
+                            const { error } = await supabase.from("feedback" as any).insert({
+                              user_id: user.id,
+                              email: feedbackEmail.trim() || null,
+                              message: feedbackMsg.trim(),
+                              rating: feedbackRating || null,
+                            });
+                            setSendingFeedback(false);
+                            if (error) { toast.error("Failed to send feedback"); console.error(error); }
+                            else { setFeedbackSent(true); toast.success("Feedback sent! Thank you 💜"); }
+                          }}
+                          disabled={sendingFeedback || !feedbackMsg.trim()}
+                          className="w-full sm:w-auto"
+                        >
+                          {sendingFeedback ? "Sending..." : "Send Feedback"}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

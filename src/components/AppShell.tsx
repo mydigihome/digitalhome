@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -89,6 +89,13 @@ function NotionProfileMenu({ collapsed }: { collapsed?: boolean }) {
             >
               <Settings className="h-[18px] w-[18px] text-muted-foreground" />
               Settings
+            </button>
+            <button
+              onClick={() => { setOpen(false); navigate("/settings?tab=support"); }}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
+            >
+              <MessageSquareHeart className="h-[18px] w-[18px] text-muted-foreground" />
+              Feedback
             </button>
             <div className="mx-2 my-1 h-px bg-border" />
             <button
