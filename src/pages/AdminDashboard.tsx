@@ -57,8 +57,72 @@ function OverviewTab() {
   });
   const [chartData, setChartData] = useState<{ date: string; users: number }[]>([]);
   const [counts, setCounts] = useState({ total: 0, students: 0, main: 0, activeToday: 0, newThisWeek: 0 });
+  const [selectedRange, setSelectedRange] = useState<"7d" | "30d" | "90d" | "1y" | "all">("7d");
+  const [signupStats, setSignupStats] = useState({ range: "", total: 0, average: 0, max: 0 });
 
   useEffect(() => {
+    const fetchSignupsByRange = async (range: "7d" | "30d" | "90d" | "1y" | "all") => {
+      let days = 7, granularity = "daily";
+      
+      if (range === "30d") days = 30;
+      else if (range === "90d") { days = 90; granularity = "weekly"; }
+      else if (range === "1y") { days = 365; granularity = "monthly"; }
+      else if (range === "all") { days = 1095; granularity = "monthly"; }
+
+      const data: { date: string; users: number }[] = [];
+      const now = new Date();
+
+      if (granularity === "daily") {
+        for (let i = days - 1; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const ds = d.toISOString().split("T")[0];
+          const { count } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", `${ds}T00:00:00`)
+            .lt("created_at", `${ds}T23:59:59`);
+          data.push({ date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), users: count || 0 });
+        }
+      } else if (granularity === "weekly") {
+        const weeks = Math.ceil(days / 7);
+        for (let i = weeks - 1; i >= 0; i--) {
+          const weekEnd = new Date(now);
+          weekEnd.setDate(weekEnd.getDate() - (i * 7));
+          const weekStart = new Date(weekEnd);
+          weekStart.setDate(weekStart.getDate() - 7);
+          const { count } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", weekStart.toISOString())
+            .lt("created_at", weekEnd.toISOString());
+          const weekNum = Math.floor((now.getTime() - weekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+          data.push({ date: `Week ${weekNum}`, users: count || 0 });
+        }
+      } else {
+        const months = Math.ceil(days / 30);
+        for (let i = months - 1; i >= 0; i--) {
+          const d = new Date(now);
+          d.setMonth(d.getMonth() - i);
+          const nextMonth = new Date(d);
+          nextMonth.setMonth(nextMonth.getMonth() + 1);
+          const { count } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", d.toISOString())
+            .lt("created_at", nextMonth.toISOString());
+          data.push({ date: d.toLocaleDateString("en-US", { month: "short", year: "2-digit" }), users: count || 0 });
+        }
+      }
+
+      const total = data.reduce((sum, d) => sum + d.users, 0);
+      const avg = data.length > 0 ? Math.round(total / data.length) : 0;
+      const max = Math.max(...data.map(d => d.users), 0);
+
+      setChartData(data);
+      setSignupStats({ range: range === "all" ? "All Time" : range.toUpperCase(), total, average: avg, max });
+    };
+
     const fetchAll = async () => {
       const [projects, tasks, notes, expenses, resources] = await Promise.all([
         supabase.from("projects").select("*", { count: "exact", head: true }),
@@ -76,7 +140,6 @@ function OverviewTab() {
         resourceClicks: resources.count || 0,
       });
 
-      // User counts
       const { count: total } = await supabase.from("profiles").select("*", { count: "exact", head: true });
       const { data: roles } = await supabase.from("user_roles").select("role");
       const students = (roles || []).filter((r) => r.role === "student").length;
@@ -96,40 +159,13 @@ function OverviewTab() {
         .gte("created_at", weekAgo.toISOString());
 
       setCounts({ total: total || 0, students, main, activeToday: activeToday || 0, newThisWeek: newThisWeek || 0 });
-
-      // 7-day signup trend
-      const days: { date: string; users: number }[] = [];
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const ds = d.toISOString().split("T")[0];
-        const { count } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", `${ds}T00:00:00`)
-          .lt("created_at", `${ds}T23:59:59`);
-        days.push({ date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), users: count || 0 });
-      }
-      setChartData(days);
+      await fetchSignupsByRange(selectedRange);
     };
+
     fetchAll();
     const id = setInterval(fetchAll, 30000);
     return () => clearInterval(id);
-  }, []);
-
-  const kpiCards = [
-    { label: "Total Users", value: counts.total, color: "#8B5CF6" },
-    { label: "Active Today", value: counts.activeToday, color: "#10B981" },
-    { label: "New This Week", value: counts.newThisWeek, color: "#3B82F6" },
-  ];
-
-  const statCards = [
-    { label: "Projects Created", value: analytics.projects, color: "#EC4899" },
-    { label: "Tasks Created", value: analytics.tasks, color: "#10B981" },
-    { label: "Notes Created", value: analytics.notes, color: "#6366F1" },
-    { label: "Finance Entries", value: analytics.expenses, color: "#F59E0B" },
-    { label: "Resource Engagements", value: analytics.resourceClicks, color: "#8B5CF6" },
-  ];
+  }, [selectedRange]);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -190,9 +226,22 @@ function OverviewTab() {
     }
   };
 
+  const kpiCards = [
+    { label: "Total Users", value: counts.total, color: "#8B5CF6" },
+    { label: "Active Today", value: counts.activeToday, color: "#10B981" },
+    { label: "New This Week", value: counts.newThisWeek, color: "#3B82F6" },
+  ];
+
+  const statCards = [
+    { label: "Projects Created", value: analytics.projects, color: "#EC4899" },
+    { label: "Tasks Created", value: analytics.tasks, color: "#10B981" },
+    { label: "Notes Created", value: analytics.notes, color: "#6366F1" },
+    { label: "Finance Entries", value: analytics.expenses, color: "#F59E0B" },
+    { label: "Resource Engagements", value: analytics.resourceClicks, color: "#8B5CF6" },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
-      {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-4">
         {kpiCards.map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-xl p-5">
@@ -204,7 +253,6 @@ function OverviewTab() {
         ))}
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {statCards.map((c) => (
           <div key={c.label} className="bg-card border border-border rounded-xl p-4">
@@ -216,38 +264,75 @@ function OverviewTab() {
         ))}
       </div>
 
-      {/* Signup Chart */}
-      <div className="bg-card border border-border rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-3">User Signups (Last 7 Days)</h3>
-        <div className="flex items-end justify-between h-[180px] gap-2">
-          {chartData.map((day, i) => {
-            const max = Math.max(...chartData.map((d) => d.users), 1);
-            const h = (day.users / max) * 150;
-            return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs font-semibold text-foreground">{day.users}</span>
-                <div className="w-full rounded-t bg-primary transition-all duration-300" style={{ height: `${Math.max(h, 4)}px` }} />
-                <span className="text-[10px] text-muted-foreground text-center">{day.date}</span>
-              </div>
-            );
-          })}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-foreground">User Signups Analytics</h3>
+          <div className="flex gap-2">
+            {(["7d", "30d", "90d", "1y", "all"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setSelectedRange(range)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  selectedRange === range
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : range === "90d" ? "90 Days" : range === "1y" ? "1 Year" : "All Time"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {signupStats.range && (
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <div className="text-xs font-medium text-muted-foreground mb-1">Total Signups</div>
+              <div className="text-3xl font-semibold text-foreground">{signupStats.total}</div>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <div className="text-xs font-medium text-muted-foreground mb-1">Avg per Period</div>
+              <div className="text-3xl font-semibold text-primary">{signupStats.average}</div>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <div className="text-xs font-medium text-muted-foreground mb-1">Peak Period</div>
+              <div className="text-3xl font-semibold text-accent">{signupStats.max}</div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-end justify-between h-[200px] gap-1.5 bg-secondary/30 rounded-lg p-4">
+          {chartData.length > 0 ? (
+            chartData.map((day, i) => {
+              const max = Math.max(...chartData.map((d) => d.users), 1);
+              const h = (day.users / max) * 160;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                  <span className="text-xs font-semibold text-foreground">{day.users}</span>
+                  <div className="w-full rounded-t-sm bg-gradient-to-t from-primary to-primary/60 transition-all duration-300 hover:shadow-lg hover:shadow-primary/30" style={{ height: `${Math.max(h, 3)}px` }} />
+                  <span className="text-[10px] text-muted-foreground text-center truncate w-full">{day.date}</span>
+                </div>
+              );
+            })
+          ) : (
+            <div className="w-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
+          )}
         </div>
       </div>
 
-       {/* Quick Actions */}
-       <div className="bg-card border border-border rounded-xl p-6">
-         <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-           <button onClick={handleExportAllData} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
-             <span className="text-lg">💾</span> Export All Data
-           </button>
-           <button onClick={handleRefreshAnalytics} disabled={refreshing} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-             <span className="text-lg">{refreshing ? "⏳" : "🔄"}</span> {refreshing ? "Refreshing..." : "Refresh Analytics"}
-           </button>
-         </div>
-       </div>
-    </div>
-  );
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button onClick={handleExportAllData} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
+            <span className="text-lg">💾</span> Export All Data
+          </button>
+          <button onClick={handleRefreshAnalytics} disabled={refreshing} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+            <span className="text-lg">{refreshing ? "⏳" : "🔄"}</span> {refreshing ? "Refreshing..." : "Refresh Analytics"}
+          </button>
+        </div>
+      </div>
+
+
 }
 
 // ── Users Tab ──
@@ -755,10 +840,11 @@ function SystemTab() {
           <button onClick={() => toast.info("Cache clearing requires backend implementation")}
             className="flex flex-col items-center gap-2 rounded-lg bg-amber-500 p-4 text-sm font-medium text-white hover:bg-amber-600 transition-colors">
             <span className="text-2xl">⚡</span> Clear Cache
-          </button>
+
         </div>
       </div>
     </div>
+  );
   );
 }
 
