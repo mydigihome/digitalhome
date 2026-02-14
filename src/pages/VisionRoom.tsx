@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Pencil, Type, Plus, ImageIcon, MoreHorizontal, Trash2, Copy, ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2, GripVertical } from 'lucide-react';
+import { Pencil, Type, Plus, ImageIcon, LayoutGrid, Trash2, Copy, ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2, Save, Eraser, Palette, Loader2 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // ── Types ──────────────────────────────────────────────────
 interface CollageElement {
@@ -23,7 +24,23 @@ interface CollageElement {
   strokeWidth?: number;
 }
 
+interface SavedBoard {
+  id: string;
+  name: string;
+  elements: CollageElement[];
+  created_at: string;
+}
+
 const genId = () => `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+const RAINBOW_COLORS = [
+  '#37352F', '#787774', '#FFFFFF',
+  '#E03E3E', '#FF6B6B', '#D44B1A',
+  '#FFB224', '#FFDD57', '#0F7B6C',
+  '#4CAF50', '#529CCA', '#2196F3',
+  '#8B5CF6', '#6D28D9', '#D946EF',
+  '#EC4899', '#F472B6',
+];
 
 // ── Resizable/Draggable Element ────────────────────────────
 const CollageItem = ({
@@ -151,7 +168,8 @@ const CollageItem = ({
           alt=""
           className="w-full h-full object-cover rounded-lg pointer-events-none select-none"
           draggable={false}
-          style={{ boxShadow: isSelected ? '0 0 0 2px hsl(258 89% 66%)' : '0 2px 8px rgba(0,0,0,0.1)' }}
+          crossOrigin="anonymous"
+          style={{ boxShadow: isSelected ? '0 0 0 2px hsl(var(--primary))' : '0 2px 8px rgba(0,0,0,0.1)' }}
         />
       )}
 
@@ -161,10 +179,11 @@ const CollageItem = ({
           style={{
             fontSize: el.fontSize || 24,
             fontFamily: el.fontFamily || 'Georgia, serif',
-            color: el.fill || '#37352F',
-            outline: isSelected ? '2px solid hsl(258 89% 66%)' : 'none',
+            color: el.fill || 'hsl(var(--foreground))',
+            outline: isSelected ? '2px solid hsl(var(--primary))' : 'none',
             borderRadius: 8,
-            background: isSelected ? 'hsl(258 89% 66% / 0.05)' : 'transparent',
+            background: isSelected ? 'hsl(var(--primary) / 0.05)' : 'transparent',
+            textShadow: el.fill === '#FFFFFF' ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
           }}
         >
           {el.text || 'Double-click to edit'}
@@ -175,12 +194,13 @@ const CollageItem = ({
         <textarea
           autoFocus
           defaultValue={el.text || ''}
-          className="w-full h-full p-2 resize-none border-2 rounded-lg bg-card outline-none"
+          className="w-full h-full p-2 resize-none border-2 rounded-lg outline-none"
           style={{
             fontSize: el.fontSize || 24,
             fontFamily: el.fontFamily || 'Georgia, serif',
-            color: el.fill || '#37352F',
-            borderColor: 'hsl(258 89% 66%)',
+            color: el.fill || 'hsl(var(--foreground))',
+            borderColor: 'hsl(var(--primary))',
+            background: 'hsl(var(--card))',
           }}
           onBlur={(e) => {
             setIsEditing(false);
@@ -203,7 +223,7 @@ const CollageItem = ({
               return acc + ',' + val;
             }, '')}
             fill="none"
-            stroke={el.stroke || '#37352F'}
+            stroke={el.stroke || 'hsl(var(--foreground))'}
             strokeWidth={el.strokeWidth || 3}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -217,13 +237,12 @@ const CollageItem = ({
           {corners.map((corner) => (
             <div
               key={corner}
-              className="absolute w-3 h-3 bg-card border-2 rounded-full z-50"
+              className="absolute w-3.5 h-3.5 bg-card border-2 border-primary rounded-full z-50"
               style={{
-                borderColor: 'hsl(258 89% 66%)',
-                top: corner.includes('top') ? -6 : undefined,
-                bottom: corner.includes('bottom') ? -6 : undefined,
-                left: corner.includes('left') ? -6 : undefined,
-                right: corner.includes('right') ? -6 : undefined,
+                top: corner.includes('top') ? -7 : undefined,
+                bottom: corner.includes('bottom') ? -7 : undefined,
+                left: corner.includes('left') ? -7 : undefined,
+                right: corner.includes('right') ? -7 : undefined,
                 cursor: corner === 'top-left' || corner === 'bottom-right' ? 'nwse-resize' : 'nesw-resize',
               }}
               onMouseDown={(e) => handleResizeStart(e, corner)}
@@ -232,13 +251,12 @@ const CollageItem = ({
 
           {/* Rotate handle */}
           <div
-            className="absolute -top-8 left-1/2 -translate-x-1/2 w-5 h-5 bg-card border-2 rounded-full flex items-center justify-center z-50"
-            style={{ borderColor: 'hsl(258 89% 66%)', cursor: 'grab' }}
+            className="absolute -top-8 left-1/2 -translate-x-1/2 w-5 h-5 bg-card border-2 border-primary rounded-full flex items-center justify-center z-50 cursor-grab"
             onMouseDown={handleRotateStart}
           >
             <RotateCcw size={10} className="text-primary" />
           </div>
-          <div className="absolute -top-4 left-1/2 w-px h-4 z-40" style={{ background: 'hsl(258 89% 66%)' }} />
+          <div className="absolute -top-4 left-1/2 w-px h-4 bg-primary z-40" />
         </>
       )}
     </div>
@@ -259,8 +277,11 @@ const VisionRoom = () => {
   const [drawingPoints, setDrawingPoints] = useState<number[]>([]);
   const [history, setHistory] = useState<CollageElement[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
-  const [showMore, setShowMore] = useState(false);
   const [boardId, setBoardId] = useState<string | null>(null);
+  const [savedBoards, setSavedBoards] = useState<SavedBoard[]>([]);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [showBoards, setShowBoards] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── History helpers ───────────────────────────────────
@@ -318,7 +339,18 @@ const VisionRoom = () => {
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [elements, saveBoard]);
 
-  // ── Load board ────────────────────────────────────────
+  // ── Load boards ────────────────────────────────────────
+  const loadBoards = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('vision_boards')
+      .select('*')
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false });
+    if (data) setSavedBoards(data as any);
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -335,8 +367,51 @@ const VisionRoom = () => {
         setElements((data.elements as any) || []);
         setHistory([(data.elements as any) || []]);
       }
+      loadBoards();
     })();
   }, [user]);
+
+  // ── Save & Start New Board ────────────────────────────
+  const saveAndNewBoard = async () => {
+    if (!user) return;
+    // Force save current board immediately
+    if (boardId && elements.length > 0) {
+      await supabase
+        .from('vision_boards')
+        .update({ elements: elements as any, updated_at: new Date().toISOString() })
+        .eq('id', boardId);
+    }
+    // Create new blank board
+    const { data } = await supabase
+      .from('vision_boards')
+      .insert({
+        user_id: user.id,
+        name: `Vision ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+        elements: [] as any,
+      })
+      .select('id')
+      .single();
+    if (data) {
+      setBoardId(data.id);
+      setElements([]);
+      setHistory([[]]);
+      setHistoryIndex(0);
+      setSelectedId(null);
+      toast.success('Board saved! Starting fresh canvas.');
+      loadBoards();
+    }
+  };
+
+  // ── Load a specific board ──────────────────────────────
+  const loadBoard = (board: SavedBoard) => {
+    setBoardId(board.id);
+    setElements(board.elements || []);
+    setHistory([board.elements || []]);
+    setHistoryIndex(0);
+    setSelectedId(null);
+    setShowBoards(false);
+    toast.success(`Loaded "${board.name}"`);
+  };
 
   // ── Element CRUD ──────────────────────────────────────
   const updateElement = (id: string, attrs: Partial<CollageElement>) => {
@@ -382,11 +457,25 @@ const VisionRoom = () => {
     const ext = file.name.split('.').pop();
     const path = `${user.id}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from('vision-images').upload(path, file);
-    if (error) { console.error('Upload error:', error); return; }
+    if (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+      return;
+    }
 
-    const { data: urlData } = supabase.storage.from('vision-images').getPublicUrl(path);
-    const src = urlData.publicUrl;
+    // Use signed URL since bucket is private
+    const { data: signedData } = await supabase.storage
+      .from('vision-images')
+      .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
 
+    const src = signedData?.signedUrl;
+    if (!src) {
+      toast.error('Failed to get image URL');
+      return;
+    }
+
+    // Also use local blob for immediate display + sizing
+    const localUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
       const scale = Math.min(400 / img.width, 400 / img.height, 1);
@@ -406,9 +495,46 @@ const VisionRoom = () => {
       pushHistory(next);
       setSelectedId(newEl.id);
       setTool('select');
+      toast.success('Image added!');
+      URL.revokeObjectURL(localUrl);
     };
-    img.src = URL.createObjectURL(file);
+    img.src = localUrl;
     e.target.value = '';
+  };
+
+  // ── Remove Background ────────────────────────────────
+  const removeBackground = async () => {
+    const el = elements.find((e) => e.id === selectedId);
+    if (!el || el.type !== 'image' || !el.src) return;
+
+    setIsRemovingBg(true);
+    try {
+      const { removeBackground: removeBg } = await import('@imgly/background-removal');
+      const blob = await removeBg(el.src, {
+        output: { format: 'image/png', quality: 0.9 },
+      });
+
+      // Upload processed image
+      if (!user) return;
+      const path = `${user.id}/nobg-${Date.now()}.png`;
+      const file = new File([blob], 'nobg.png', { type: 'image/png' });
+      const { error } = await supabase.storage.from('vision-images').upload(path, file);
+      if (error) throw error;
+
+      const { data: signedData } = await supabase.storage
+        .from('vision-images')
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+
+      if (signedData?.signedUrl) {
+        updateElement(el.id, { src: signedData.signedUrl });
+        toast.success('Background removed!');
+      }
+    } catch (err) {
+      console.error('Remove bg error:', err);
+      toast.error('Failed to remove background. Try a different image.');
+    } finally {
+      setIsRemovingBg(false);
+    }
   };
 
   // ── Add text ──────────────────────────────────────────
@@ -440,9 +566,7 @@ const VisionRoom = () => {
     setIsDrawing(true);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setDrawingPoints([x, y]);
+    setDrawingPoints([e.clientX - rect.left, e.clientY - rect.top]);
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -453,12 +577,11 @@ const VisionRoom = () => {
     const y = e.clientY - rect.top;
     setDrawingPoints((prev) => [...prev, x, y]);
 
-    // Draw preview
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.beginPath();
-    ctx.strokeStyle = '#37352F';
+    ctx.strokeStyle = 'hsl(30 15% 20%)';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -478,7 +601,6 @@ const VisionRoom = () => {
 
     if (drawingPoints.length < 4) { setDrawingPoints([]); return; }
 
-    // Compute bounding box
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     for (let i = 0; i < drawingPoints.length; i += 2) {
       minX = Math.min(minX, drawingPoints[i]);
@@ -509,7 +631,7 @@ const VisionRoom = () => {
     setDrawingPoints([]);
   };
 
-  // ── Board click (deselect / place text) ───────────────
+  // ── Board click ───────────────────────────────────────
   const handleBoardClick = (e: React.MouseEvent) => {
     if (e.target === boardRef.current || e.target === canvasRef.current) {
       if (tool === 'text') {
@@ -535,6 +657,7 @@ const VisionRoom = () => {
         setTool('select');
       } else if (tool === 'select') {
         setSelectedId(null);
+        setShowColorPicker(false);
       }
     }
   };
@@ -547,7 +670,7 @@ const VisionRoom = () => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); duplicateSelected(); }
-      if (e.key === 'Escape') setSelectedId(null);
+      if (e.key === 'Escape') { setSelectedId(null); setShowColorPicker(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -566,6 +689,8 @@ const VisionRoom = () => {
     return () => window.removeEventListener('resize', resize);
   }, []);
 
+  const selectedEl = elements.find((e) => e.id === selectedId);
+
   const toolbarBtnClass = (active: boolean) =>
     `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 ${
       active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -583,10 +708,79 @@ const VisionRoom = () => {
             <button onClick={redo} disabled={historyIndex >= history.length - 1} className="p-2 rounded-lg hover:bg-secondary disabled:opacity-30 transition-colors" title="Redo">
               <Redo2 size={18} className="text-muted-foreground" />
             </button>
+            <div className="w-px h-5 bg-border mx-1" />
+            <button onClick={saveAndNewBoard} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="Save & New Board">
+              <Save size={14} />
+              <span className="hidden sm:inline">Save & New</span>
+            </button>
+            <div className="relative">
+              <button onClick={() => { setShowBoards(!showBoards); loadBoards(); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-muted-foreground">
+                <LayoutGrid size={14} />
+                <span className="hidden sm:inline">Boards</span>
+              </button>
+              {showBoards && (
+                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[220px] max-h-[300px] overflow-y-auto z-50">
+                  {savedBoards.length === 0 && (
+                    <p className="text-xs text-muted-foreground p-2">No saved boards yet</p>
+                  )}
+                  {savedBoards.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => loadBoard(b)}
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors ${b.id === boardId ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
+                    >
+                      <div className="font-medium truncate">{b.name}</div>
+                      <div className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Context actions for selected element */}
           {selectedId && (
             <div className="flex items-center gap-1">
+              {selectedEl?.type === 'image' && (
+                <button
+                  onClick={removeBackground}
+                  disabled={isRemovingBg}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-accent text-accent-foreground hover:bg-accent/80 transition-colors disabled:opacity-50"
+                  title="Remove Background"
+                >
+                  {isRemovingBg ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />}
+                  <span className="hidden sm:inline">{isRemovingBg ? 'Removing...' : 'Remove BG'}</span>
+                </button>
+              )}
+              {selectedEl?.type === 'text' && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="p-2 rounded-lg hover:bg-secondary transition-colors"
+                    title="Text Color"
+                  >
+                    <Palette size={16} style={{ color: selectedEl.fill || 'hsl(var(--foreground))' }} />
+                  </button>
+                  {showColorPicker && (
+                    <div className="absolute top-full right-0 mt-1 bg-card border border-border rounded-xl shadow-lg p-3 z-50">
+                      <div className="grid grid-cols-6 gap-1.5 w-[180px]">
+                        {RAINBOW_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => { updateElement(selectedId, { fill: color }); }}
+                            className="w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform"
+                            style={{
+                              backgroundColor: color,
+                              outline: selectedEl.fill === color ? '2px solid hsl(var(--primary))' : 'none',
+                              outlineOffset: 2,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <button onClick={duplicateSelected} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Duplicate">
                 <Copy size={16} className="text-muted-foreground" />
               </button>
@@ -612,7 +806,7 @@ const VisionRoom = () => {
           ref={boardRef}
           className="flex-1 relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, hsl(40 7% 98%) 0%, hsl(40 10% 96%) 50%, hsl(30 15% 97%) 100%)',
+            background: 'linear-gradient(135deg, hsl(var(--background)) 0%, hsl(40 10% 96%) 50%, hsl(30 15% 97%) 100%)',
             cursor: tool === 'draw' ? 'crosshair' : tool === 'text' ? 'text' : 'default',
           }}
           onClick={handleBoardClick}
@@ -681,33 +875,45 @@ const VisionRoom = () => {
             <span className="text-[10px] font-medium">Photos</span>
           </button>
 
-          <div className="relative">
-            <button onClick={() => setShowMore(!showMore)} className={toolbarBtnClass(showMore)}>
-              <MoreHorizontal size={20} />
-              <span className="text-[10px] font-medium">More</span>
-            </button>
-
-            {showMore && (
-              <div className="absolute bottom-full mb-2 right-0 bg-card border border-border rounded-xl shadow-lg p-2 min-w-[160px] z-50">
-                <button onClick={() => { duplicateSelected(); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
-                  <Copy size={14} /> Duplicate
-                </button>
-                <button onClick={() => { moveLayer('up'); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
-                  <ArrowUp size={14} /> Bring Forward
-                </button>
-                <button onClick={() => { moveLayer('down'); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-secondary rounded-lg transition-colors disabled:opacity-30">
-                  <ArrowDown size={14} /> Send Backward
-                </button>
-                <button onClick={() => { deleteSelected(); setShowMore(false); }} disabled={!selectedId} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-30">
-                  <Trash2 size={14} /> Delete
-                </button>
-                <hr className="my-1 border-border" />
-                <button onClick={() => { setElements([]); pushHistory([]); setSelectedId(null); setShowMore(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
-                  <RotateCcw size={14} /> Clear Board
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => {
+              // Layouts: add a grid of placeholder images
+              const boardRect = boardRef.current?.getBoundingClientRect();
+              const w = boardRect ? boardRect.width : 800;
+              const h = boardRect ? boardRect.height : 600;
+              const gap = 12;
+              const cols = 3;
+              const rows = 2;
+              const cellW = (w - gap * (cols + 1)) / cols;
+              const cellH = (h - gap * (rows + 1)) / rows;
+              const newEls: CollageElement[] = [];
+              for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                  newEls.push({
+                    id: genId(),
+                    type: 'text',
+                    x: gap + c * (cellW + gap),
+                    y: gap + r * (cellH + gap),
+                    width: cellW,
+                    height: cellH,
+                    rotation: 0,
+                    text: `+`,
+                    fontSize: 40,
+                    fontFamily: 'Inter, sans-serif',
+                    fill: '#787774',
+                  });
+                }
+              }
+              const next = [...elements, ...newEls];
+              setElements(next);
+              pushHistory(next);
+              toast.success('Grid layout added! Replace placeholders with images.');
+            }}
+            className={toolbarBtnClass(false)}
+          >
+            <LayoutGrid size={20} />
+            <span className="text-[10px] font-medium">Layouts</span>
+          </button>
         </div>
       </div>
     </AppShell>
