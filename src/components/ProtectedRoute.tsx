@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useLocation } from "react-router-dom";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { TrialBadge } from "./TrialBadge";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,5 +26,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/onboarding" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <TrialBadge />
+      {children}
+    </>
+  );
 }
