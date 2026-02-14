@@ -6,15 +6,16 @@ import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   format, isToday, isPast, isBefore, endOfWeek, addDays, isTomorrow,
 } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon, StickyNote,
+  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon, StickyNote, X,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
@@ -70,27 +71,29 @@ export default function Dashboard() {
   const [taskEventToggle, setTaskEventToggle] = useState<"task" | "event">("task");
   const [editingLinks, setEditingLinks] = useState(false);
   const now = useCurrentTime();
-
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   // Handle payment success
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
-      // Update subscription status
       upsertPrefs.mutate({ is_subscribed: true, subscription_type: "pro" } as any);
-      
-      // Show confetti
       import("canvas-confetti").then((confettiModule) => {
         const confetti = confettiModule.default;
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         setTimeout(() => confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } }), 300);
       });
-      
-      // Show toast
       toast.success("You're all set! Pro features unlocked 🎉");
-      
-      // Clean URL
       setSearchParams({}, { replace: true });
     }
   }, []);
+
+  // Tutorial modal - show 30s after entering dashboard for new users
+  useEffect(() => {
+    if (prefs && (prefs as any).welcome_video_watched === false) {
+      const timer = setTimeout(() => setShowTutorial(true), 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [prefs]);
 
   const [everydayLinks, setEverydayLinks] = useState<EverydayLink[]>([
     { id: "1", name: "Check your email", icon: "📧", url: "mailto:", completed: false },
@@ -527,6 +530,140 @@ export default function Dashboard() {
           onClose={() => setTaskEditorOpen(false)}
         />
       )}
+
+      {/* Tutorial prompt modal */}
+      <AnimatePresence>
+        {showTutorial && !showVideoPlayer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setShowTutorial(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10001,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '400px',
+                maxWidth: '90vw',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '32px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+              }}
+            >
+              <p style={{ fontSize: '17px', fontWeight: 600, color: '#1F2937', marginBottom: '8px' }}>
+                Hi, I'm glad you're here.
+              </p>
+              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+                Would you like a quick 60-second tour?
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  onClick={() => setShowVideoPlayer(true)}
+                  style={{
+                    width: '100%',
+                    height: '44px',
+                    backgroundColor: '#8B5CF6',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Watch the guide
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowTutorial(false);
+                    await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any);
+                  }}
+                  style={{
+                    width: '100%',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#9CA3AF',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    padding: '8px',
+                  }}
+                >
+                  Maybe later
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video player modal */}
+      <AnimatePresence>
+        {showVideoPlayer && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10002,
+            }}
+          >
+            <div
+              style={{
+                width: '640px',
+                maxWidth: '95vw',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                <button
+                  onClick={async () => {
+                    setShowVideoPlayer(false);
+                    setShowTutorial(false);
+                    await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any);
+                  }}
+                  className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
+                >
+                  <X size={18} className="text-muted-foreground" />
+                </button>
+              </div>
+              <div style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9', backgroundColor: '#000' }}>
+                <iframe
+                  src={(prefs as any)?.welcome_video_url || 'https://www.loom.com/embed/your-video-id'}
+                  frameBorder="0"
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 }
