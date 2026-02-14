@@ -23,18 +23,23 @@ const defaultIconColors: Record<string, string> = {
   team: "#6B7280",
 };
 
-/** 3D icon with CSS drop-shadow depth — no wrapper/bubble */
-function Icon3D({ icon: Icon, color, size = 18 }: { icon: any; color: string; size?: number }) {
+/** 3D icon bubble with gradient background, shadow, and hover lift */
+function IconBubble({ icon: Icon, color, size = 18 }: { icon: any; color: string; size?: number }) {
   return (
-    <Icon
-      className="shrink-0 transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5"
+    <span
+      className="inline-flex shrink-0 items-center justify-center rounded-md transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:shadow-md"
       style={{
-        color,
-        width: size,
-        height: size,
-        filter: `drop-shadow(0 2px 2px ${color}40) drop-shadow(0 1px 1px rgba(0,0,0,0.1))`,
+        width: size + 10,
+        height: size + 10,
+        background: `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`,
+        boxShadow: `0 2px 6px ${color}25, inset 0 1px 0 ${color}15`,
       }}
-    />
+    >
+      <Icon
+        className="shrink-0 drop-shadow-sm"
+        style={{ color, width: size, height: size }}
+      />
+    </span>
   );
 }
 
@@ -173,7 +178,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
-        <Icon3D icon={Icon} color={getIconColor(colorKey)} />
+        <IconBubble icon={Icon} color={getIconColor(colorKey)} />
         {!collapsed && <span>{label}</span>}
       </button>
     </li>
@@ -200,7 +205,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
-          <Icon3D icon={FolderOpen} color={getIconColor("projects")} />
+          <IconBubble icon={FolderOpen} color={getIconColor("projects")} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Projects</span>
@@ -262,7 +267,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
-          <Icon3D icon={DollarSign} color={getIconColor("finance")} />
+          <IconBubble icon={DollarSign} color={getIconColor("finance")} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Finance</span>
@@ -291,7 +296,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Icon3D icon={TrendingUp} color={getIconColor("finance_wealth")} size={16} />
+                    <IconBubble icon={TrendingUp} color={getIconColor("finance_wealth")} size={16} />
                     Wealth Tracker
                   </button>
                 </li>
@@ -305,7 +310,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Icon3D icon={Briefcase} color={getIconColor("finance_apps")} size={16} />
+                    <IconBubble icon={Briefcase} color={getIconColor("finance_apps")} size={16} />
                     Applications Tracker
                   </button>
                 </li>
