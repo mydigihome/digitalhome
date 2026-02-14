@@ -762,12 +762,271 @@ function SystemTab() {
   );
 }
 
+// ── Analytics Tab ──
+function AnalyticsTab() {
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d" | "1y" | "all">("7d");
+  const [chartData, setChartData] = useState<{ label: string; users: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const now = new Date();
+      let startDate: Date;
+      let granularity: "daily" | "weekly" | "monthly";
+
+      switch (timeRange) {
+        case "7d":
+          startDate = new Date(now); startDate.setDate(now.getDate() - 7);
+          granularity = "daily"; break;
+        case "30d":
+          startDate = new Date(now); startDate.setDate(now.getDate() - 30);
+          granularity = "daily"; break;
+        case "90d":
+          startDate = new Date(now); startDate.setDate(now.getDate() - 90);
+          granularity = "weekly"; break;
+        case "1y":
+          startDate = new Date(now); startDate.setFullYear(now.getFullYear() - 1);
+          granularity = "monthly"; break;
+        case "all":
+          startDate = new Date("2020-01-01");
+          granularity = "monthly"; break;
+      }
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("created_at")
+        .gte("created_at", startDate.toISOString())
+        .order("created_at", { ascending: true });
+
+      const buckets: Record<string, number> = {};
+
+      if (granularity === "daily") {
+        const days = timeRange === "7d" ? 7 : 30;
+        for (let i = days - 1; i >= 0; i--) {
+          const d = new Date(now); d.setDate(now.getDate() - i);
+          const key = d.toISOString().split("T")[0];
+          const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          buckets[key] = 0;
+        }
+        (profiles || []).forEach(p => {
+          const key = new Date(p.created_at).toISOString().split("T")[0];
+          if (buckets[key] !== undefined) buckets[key]++;
+        });
+      } else if (granularity === "weekly") {
+        const weeks = Math.ceil((now.getTime() - startDate.getTime()) / (7 * 86400000));
+        for (let i = 0; i < weeks; i++) {
+          const wStart = new Date(startDate); wStart.setDate(startDate.getDate() + i * 7);
+          const key = wStart.toISOString().split("T")[0];
+          buckets[key] = 0;
+        }
+        (profiles || []).forEach(p => {
+          const pDate = new Date(p.created_at);
+          const diffDays = Math.floor((pDate.getTime() - startDate.getTime()) / 86400000);
+          const weekIdx = Math.floor(diffDays / 7);
+          const wStart = new Date(startDate); wStart.setDate(startDate.getDate() + weekIdx * 7);
+          const key = wStart.toISOString().split("T")[0];
+          if (buckets[key] !== undefined) buckets[key]++;
+        });
+      } else {
+        const monthsDiff = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth()) + 1;
+        for (let i = 0; i < monthsDiff; i++) {
+          const m = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+          const key = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, "0")}`;
+          buckets[key] = 0;
+        }
+        (profiles || []).forEach(p => {
+          const pDate = new Date(p.created_at);
+          const key = `${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, "0")}`;
+          if (buckets[key] !== undefined) buckets[key]++;
+        });
+      }
+
+      const result = Object.entries(buckets).map(([key, count]) => {
+        let label: string;
+        if (granularity === "daily") {
+          const d = new Date(key + "T00:00:00");
+          label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        } else if (granularity === "weekly") {
+          const d = new Date(key + "T00:00:00");
+          label = `Wk ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+        } else {
+          const [y, m] = key.split("-");
+          const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+          label = d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+        }
+        return { label, users: count };
+      });
+
+      setChartData(result);
+      setLoading(false);
+    };
+    fetchData();
+  }, [timeRange]);
+
+  const max = Math.max(...chartData.map(d => d.users), 1);
+  const total = chartData.reduce((s, d) => s + d.users, 0);
+  const avg = chartData.length ? Math.round(total / chartData.length) : 0;
+
+  const rangeLabels: Record<string, string> = {
+    "7d": "Last 7 Days", "30d": "Last 30 Days", "90d": "Last 90 Days", "1y": "Last Year", "all": "All Time"
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Total Signups</div>
+          <div className="text-3xl font-bold text-primary">{total}</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Avg per Period</div>
+          <div className="text-3xl font-bold text-blue-600">{avg}</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Period</div>
+          <div className="text-3xl font-bold text-foreground">{rangeLabels[timeRange]}</div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-primary" /> User Signups
+          </h2>
+          <div className="flex gap-1.5">
+            {(["7d", "30d", "90d", "1y", "all"] as const).map(r => (
+              <button key={r} onClick={() => setTimeRange(r)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  timeRange === r ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}>
+                {rangeLabels[r]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Loading chart...</div>
+        ) : (
+          <div className="flex items-end gap-1 h-[220px] overflow-x-auto pb-6">
+            {chartData.map((d, i) => {
+              const h = (d.users / max) * 180;
+              return (
+                <div key={i} className="flex-1 min-w-[24px] flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-semibold text-foreground">{d.users || ""}</span>
+                  <div className="w-full max-w-[40px] rounded-t bg-primary/80 hover:bg-primary transition-colors"
+                    style={{ height: `${Math.max(h, 3)}px` }} />
+                  <span className="text-[9px] text-muted-foreground text-center leading-tight whitespace-nowrap">{d.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-2 text-xs text-muted-foreground">
+          Granularity: {timeRange === "7d" || timeRange === "30d" ? "Daily" : timeRange === "90d" ? "Weekly" : "Monthly"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── AI Resources Tab ──
+function ResourcesTab() {
+  const [engagements, setEngagements] = useState<{ resource_name: string; clicks: number; signups: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("resource_engagements")
+        .select("resource_name, engagement_type");
+
+      const map: Record<string, { clicks: number; signups: number }> = {};
+      (data || []).forEach(e => {
+        if (!map[e.resource_name]) map[e.resource_name] = { clicks: 0, signups: 0 };
+        if (e.engagement_type === "click") map[e.resource_name].clicks++;
+        else if (e.engagement_type === "signup") map[e.resource_name].signups++;
+      });
+
+      const result = Object.entries(map)
+        .map(([name, stats]) => ({ resource_name: name, ...stats }))
+        .sort((a, b) => (b.clicks + b.signups) - (a.clicks + a.signups));
+
+      setEngagements(result);
+      setLoading(false);
+    };
+    fetch();
+  }, []);
+
+  const totalClicks = engagements.reduce((s, e) => s + e.clicks, 0);
+  const totalSignups = engagements.reduce((s, e) => s + e.signups, 0);
+  const conversionRate = totalClicks > 0 ? ((totalSignups / totalClicks) * 100).toFixed(1) : "0";
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Total Clicks</div>
+          <div className="text-3xl font-bold text-primary">{totalClicks}</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Total Signups</div>
+          <div className="text-3xl font-bold text-green-600">{totalSignups}</div>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Conversion Rate</div>
+          <div className="text-3xl font-bold text-amber-600">{conversionRate}%</div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-5">Resource Engagement Breakdown</h2>
+        {loading ? (
+          <p className="text-center text-sm text-muted-foreground py-10">Loading...</p>
+        ) : engagements.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">No engagement data yet. Clicks and signups from the AI Resources page will appear here.</p>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b-2 border-border">
+                {["Resource", "Clicks", "Signups", "Conv. Rate"].map(h => (
+                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold text-muted-foreground">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {engagements.map(e => (
+                <tr key={e.resource_name} className="border-b border-border/50 hover:bg-secondary/50 transition-colors">
+                  <td className="px-3 py-3 text-sm font-medium text-foreground">{e.resource_name}</td>
+                  <td className="px-3 py-3 text-sm text-foreground">{e.clicks}</td>
+                  <td className="px-3 py-3 text-sm text-green-600 font-medium">{e.signups}</td>
+                  <td className="px-3 py-3 text-sm text-muted-foreground">
+                    {e.clicks > 0 ? ((e.signups / e.clicks) * 100).toFixed(1) : "0"}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Tab Config ──
 const TABS = [
-  { id: "overview", label: "Overview", icon: "📊" },
-  { id: "users", label: "Users", icon: "👥" },
-  { id: "content", label: "Content", icon: "📝" },
-  { id: "system", label: "System", icon: "⚙️" },
+  { id: "overview", label: "Overview", icon: BarChart3 },
+  { id: "users", label: "Users", icon: Users },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "resources", label: "AI Resources", icon: ExternalLink },
+  { id: "content", label: "Content", icon: FileText },
+  { id: "system", label: "System", icon: Settings },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -829,43 +1088,25 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-         {/* Premium Tab Navigation */}
-         <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid #F3F4F6', paddingBottom: '0', marginTop: '16px' }}>
-           {TABS.map((tab) => (
-             <button
-               key={tab.id}
-               onClick={() => setActiveTab(tab.id)}
-               style={{
-                 padding: '14px 24px',
-                 backgroundColor: 'transparent',
-                 color: activeTab === tab.id ? '#8B5CF6' : '#6B7280',
-                 border: 'none',
-                 borderBottom: activeTab === tab.id ? '3px solid #8B5CF6' : '3px solid transparent',
-                 fontSize: '15px',
-                 fontWeight: activeTab === tab.id ? '600' : '500',
-                 cursor: 'pointer',
-                 transition: 'all 0.2s ease',
-                 display: 'flex',
-                 alignItems: 'center',
-                 gap: '8px',
-                 position: 'relative',
-                 marginBottom: '-2px'
-               }}
-               onMouseEnter={(e) => {
-                 if (activeTab !== tab.id) {
-                   (e.currentTarget as HTMLButtonElement).style.color = '#374151';
-                 }
-               }}
-               onMouseLeave={(e) => {
-                 if (activeTab !== tab.id) {
-                   (e.currentTarget as HTMLButtonElement).style.color = '#6B7280';
-                 }
-               }}
-             >
-               <span style={{ fontSize: '18px' }}>{tab.icon}</span>
-               {tab.label}
-             </button>
-           ))}
+         {/* Tab Navigation */}
+         <div className="flex gap-1 border-b-2 border-border mt-4">
+           {TABS.map((tab) => {
+             const Icon = tab.icon;
+             return (
+               <button
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id)}
+                 className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-[3px] -mb-[2px] transition-colors ${
+                   activeTab === tab.id
+                     ? "border-primary text-primary"
+                     : "border-transparent text-muted-foreground hover:text-foreground"
+                 }`}
+               >
+                 <Icon className="h-4 w-4" />
+                 {tab.label}
+               </button>
+             );
+           })}
          </div>
       </div>
 
@@ -873,6 +1114,8 @@ export default function AdminDashboard() {
       <div className="p-6 lg:p-10">
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "users" && <UsersTab />}
+        {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "resources" && <ResourcesTab />}
         {activeTab === "content" && <ContentTab />}
         {activeTab === "system" && <SystemTab />}
       </div>
