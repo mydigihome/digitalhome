@@ -134,6 +134,60 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          attendees: Json | null
+          color: string | null
+          created_at: string
+          description: string | null
+          end_time: string | null
+          google_calendar_id: string | null
+          google_event_id: string | null
+          id: string
+          location: string | null
+          source: string
+          start_time: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_day?: boolean
+          attendees?: Json | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          source?: string
+          start_time: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_day?: boolean
+          attendees?: Json | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          id?: string
+          location?: string | null
+          source?: string
+          start_time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       collaborators: {
         Row: {
           created_at: string
@@ -354,6 +408,39 @@ export type Database = {
           message?: string
           rating?: number | null
           status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_email: string | null
+          created_at: string
+          id: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_email?: string | null
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_email?: string | null
+          created_at?: string
+          id?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
