@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          message: string
+          target_roles: string[] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message: string
+          target_roles?: string[] | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string
+          target_roles?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           application_date: string
@@ -265,6 +298,33 @@ export type Database = {
           id?: string
           priority?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      feature_flags: {
+        Row: {
+          description: string | null
+          feature_name: string
+          id: string
+          is_enabled: boolean | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          feature_name: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
