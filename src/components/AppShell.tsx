@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { supabase } from "@/integrations/supabase/client";
 
 const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
@@ -135,9 +136,17 @@ function NotionProfileMenu({ collapsed }: { collapsed?: boolean }) {
 function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: prefs } = useUserPreferences();
+  const [isAdmin, setIsAdmin] = useState(false);
   const iconColors = (prefs?.accent_colors as any)?.icon_colors || {};
   const getIconColor = (key: string) => iconColors[key] || defaultIconColors[key] || "#6B7280";
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "super_admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   const [projectsOpen, setProjectsOpen] = useState(
     location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/")
@@ -323,6 +332,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       {bottomItems.map((item) => (
         <NavItem key={item.path} {...item} isActive={location.pathname.startsWith(item.path)} />
       ))}
+
+      {/* Admin link - only for super_admin */}
+      {isAdmin && (
+        <NavItem icon={Shield} label="Admin" path="/admin" isActive={location.pathname === "/admin"} colorKey="home" />
+      )}
     </ul>
   );
 }
