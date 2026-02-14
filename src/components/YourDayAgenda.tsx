@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { useTodayEvents, useDeleteCalendarEvent } from "@/hooks/useCalendarEvents";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -5,8 +6,9 @@ import { useWealthGoals } from "@/hooks/useWealthGoals";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  Calendar, CheckCircle2, Clock, DollarSign, Target, X, Sun,
+  Calendar, CheckCircle2, Clock, DollarSign, Target, X, Sun, Plus, Zap, Trash2,
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -23,7 +25,36 @@ export default function YourDayAgenda() {
   const updateTask = useUpdateTask();
   const deleteEvent = useDeleteCalendarEvent();
 
-  const todayStr = format(new Date(), "yyyy-MM-dd");
+  // Last minute tasks - simple local bullet list
+  const storageKey = `last-minute-tasks-${format(new Date(), "yyyy-MM-dd")}`;
+  const [quickTasks, setQuickTasks] = useState<{ id: string; text: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [newQuickTask, setNewQuickTask] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(quickTasks));
+  }, [quickTasks, storageKey]);
+
+  const addQuickTask = () => {
+    const text = newQuickTask.trim();
+    if (!text) return;
+    setQuickTasks((prev) => [...prev, { id: crypto.randomUUID(), text }]);
+    setNewQuickTask("");
+    inputRef.current?.focus();
+  };
+
+  const deleteQuickTask = (id: string) => {
+    setQuickTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const updateQuickTask = (id: string, text: string) => {
+    setQuickTasks((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
+  };
 
   // Tasks due today or no date (top 5 non-done)
   const todayTasks = allTasks
@@ -51,7 +82,7 @@ export default function YourDayAgenda() {
     deleteEvent.mutate({ id, source });
   };
 
-  // Sample/placeholder data when real data is empty
+  const todayStr = format(new Date(), "yyyy-MM-dd");
   const displayEvents = events.length > 0 ? events : [];
   const displayTasks = todayTasks;
   const displayExpenses = upcomingExpenses;
@@ -214,6 +245,45 @@ export default function YourDayAgenda() {
             <p className="text-[11px] text-muted-foreground italic pl-3">Sample — your tasks will appear here</p>
           </div>
         )}
+      </div>
+
+      {/* Last Minute Tasks */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="h-3.5 w-3.5 text-warning" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Last Minute Tasks
+          </span>
+        </div>
+        <div className="space-y-1">
+          {quickTasks.map((qt) => (
+            <div key={qt.id} className="group flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-secondary transition-colors">
+              <span className="text-muted-foreground text-xs">•</span>
+              <input
+                className="flex-1 text-sm bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+                value={qt.text}
+                onChange={(e) => updateQuickTask(qt.id, e.target.value)}
+              />
+              <button
+                onClick={() => deleteQuickTask(qt.id)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10"
+              >
+                <X className="h-3 w-3 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 mt-2 px-3">
+          <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            ref={inputRef}
+            className="flex-1 text-sm bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground"
+            placeholder="Add a quick task..."
+            value={newQuickTask}
+            onChange={(e) => setNewQuickTask(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addQuickTask()}
+          />
+        </div>
       </div>
 
       <div className="border-t border-border my-4" />
