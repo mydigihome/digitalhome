@@ -779,7 +779,7 @@ export default function SettingsPage() {
                         <GraduationCap size={20} className="text-muted-foreground" />
                         <div>
                           <h4 className="font-medium text-foreground">Student Discount</h4>
-                          <p className="text-sm text-muted-foreground">50% off with a valid .edu email</p>
+                          <p className="text-sm text-muted-foreground">50% off with a valid student email</p>
                         </div>
                       </div>
 
