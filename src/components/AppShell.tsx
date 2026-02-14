@@ -23,6 +23,26 @@ const defaultIconColors: Record<string, string> = {
   team: "#6B7280",
 };
 
+/** 3D icon bubble with gradient background, shadow, and hover lift */
+function IconBubble({ icon: Icon, color, size = 18 }: { icon: any; color: string; size?: number }) {
+  return (
+    <span
+      className="inline-flex shrink-0 items-center justify-center rounded-md transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:shadow-md"
+      style={{
+        width: size + 10,
+        height: size + 10,
+        background: `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`,
+        boxShadow: `0 2px 6px ${color}25, inset 0 1px 0 ${color}15`,
+      }}
+    >
+      <Icon
+        className="shrink-0 drop-shadow-sm"
+        style={{ color, width: size, height: size }}
+      />
+    </span>
+  );
+}
+
 function NotionProfileMenu({ collapsed }: { collapsed?: boolean }) {
   const { profile, user, signOut } = useAuth();
   const { data: prefs } = useUserPreferences();
@@ -158,7 +178,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor(colorKey) }} />
+        <IconBubble icon={Icon} color={getIconColor(colorKey)} />
         {!collapsed && <span>{label}</span>}
       </button>
     </li>
@@ -185,7 +205,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
-          <FolderOpen className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("projects") }} />
+          <IconBubble icon={FolderOpen} color={getIconColor("projects")} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Projects</span>
@@ -247,7 +267,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             )}
           >
-          <DollarSign className="h-[18px] w-[18px] shrink-0" style={{ color: getIconColor("finance") }} />
+          <IconBubble icon={DollarSign} color={getIconColor("finance")} />
           {!collapsed && (
             <>
               <span className="flex-1 text-left">Finance</span>
@@ -276,7 +296,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <TrendingUp className="h-4 w-4 shrink-0" style={{ color: getIconColor("finance_wealth") }} />
+                    <IconBubble icon={TrendingUp} color={getIconColor("finance_wealth")} size={16} />
                     Wealth Tracker
                   </button>
                 </li>
@@ -290,7 +310,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
-                    <Briefcase className="h-4 w-4 shrink-0" style={{ color: getIconColor("finance_apps") }} />
+                    <IconBubble icon={Briefcase} color={getIconColor("finance_apps")} size={16} />
                     Applications Tracker
                   </button>
                 </li>
