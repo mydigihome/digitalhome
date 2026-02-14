@@ -24,6 +24,8 @@ export interface UserPreferences {
   home_style: string | null;
   onboarding_focus: string | null;
   onboarding_completed: boolean | null;
+  welcome_video_url: string | null;
+  welcome_video_watched: boolean | null;
   created_at: string;
   updated_at: string;
 }

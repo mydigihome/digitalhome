@@ -110,6 +110,7 @@ export default function SettingsPage() {
   const [bio, setBio] = useState(prefs?.bio || "");
   const [location, setLocation] = useState(prefs?.location || "");
   const [website, setWebsite] = useState(prefs?.website || "");
+  const [videoUrl, setVideoUrl] = useState((prefs as any)?.welcome_video_url || "");
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
@@ -136,6 +137,7 @@ export default function SettingsPage() {
       setBio(prefs.bio || "");
       setLocation(prefs.location || "");
       setWebsite(prefs.website || "");
+      setVideoUrl((prefs as any)?.welcome_video_url || "");
       if (prefs.font_size) setSelectedSize(prefs.font_size);
       if (prefs.density) setSelectedSpacing(prefs.density);
       const accColors = prefs.accent_colors as any;
@@ -558,6 +560,42 @@ export default function SettingsPage() {
                           {spacing}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Welcome Video */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">Welcome Video</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Set the video URL that shows to new users after onboarding.
+                    </p>
+                    <Input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://www.loom.com/embed/your-video-id"
+                      className="mb-3"
+                    />
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={async () => {
+                          await upsertPrefs.mutateAsync({ welcome_video_url: videoUrl } as any);
+                          toast.success("Video URL saved");
+                        }}
+                        size="sm"
+                      >
+                        Save Video URL
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                          await upsertPrefs.mutateAsync({ welcome_video_watched: false } as any);
+                          toast.success("Video will show again on next visit to Welcome screen");
+                        }}
+                      >
+                        Reset Video (show again)
+                      </Button>
                     </div>
                   </div>
                 </>
