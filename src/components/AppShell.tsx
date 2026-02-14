@@ -15,7 +15,7 @@ const projectFolders = [
 const defaultIconColors: Record<string, string> = {
   home: "#8B5CF6",
   projects: "#F59E0B",
-  finance: "#F59E0B",
+  finance: "#10B981",
   finance_wealth: "#10B981",
   finance_apps: "#3B82F6",
   calendar: "#3B82F6",
