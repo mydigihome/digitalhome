@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Shield, Users, BarChart3, MessageSquare, CreditCard, Search, ExternalLink, FileText, Settings, Megaphone, ToggleLeft } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 interface AdminUser {
   id: string;
@@ -1155,48 +1156,54 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-card border-b border-border px-6 lg:px-10 py-5">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-semibold text-foreground">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Super Admin Control Panel — Your Eyes Only</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 text-sm font-medium text-blue-700 dark:text-blue-300">
-              <Shield className="h-3.5 w-3.5" /> SUPER ADMIN
-            </span>
-            <button onClick={() => navigate("/dashboard")}
-              className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
-              Exit Admin
-            </button>
+      {/* Header - Professional two-tier */}
+      <div className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
+        {/* Top bar */}
+        <div className="px-4 md:px-6 lg:px-10 py-4 md:py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold text-foreground tracking-tight">Admin Dashboard</h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Complete control and analytics for Digital Home</p>
+            </div>
+            <div className="flex items-center gap-2 md:gap-3">
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-[11px] md:text-xs font-semibold text-primary tracking-wide">
+                <Shield className="h-3 w-3" /> SUPER ADMIN
+              </span>
+              <button onClick={() => navigate("/dashboard")}
+                className="rounded-lg border border-border bg-secondary px-3 py-1.5 text-xs md:text-sm font-medium text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-colors">
+                Exit Admin
+              </button>
+            </div>
           </div>
         </div>
 
-         {/* Tab Navigation */}
-         <div className="flex gap-1 border-b-2 border-border mt-4">
-           {TABS.map((tab) => {
-             const Icon = tab.icon;
-             return (
-               <button
-                 key={tab.id}
-                 onClick={() => setActiveTab(tab.id)}
-                 className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-[3px] -mb-[2px] transition-colors ${
-                   activeTab === tab.id
-                     ? "border-primary text-primary"
-                     : "border-transparent text-muted-foreground hover:text-foreground"
-                 }`}
-               >
-                 <Icon className="h-4 w-4" />
-                 {tab.label}
-               </button>
-             );
-           })}
-         </div>
+        {/* Tab Navigation - scrollable on mobile */}
+        <div className="overflow-x-auto scrollbar-none">
+          <div className="flex px-4 md:px-6 lg:px-10 min-w-max border-t border-border/50">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 md:px-5 py-3 text-xs md:text-sm font-medium border-b-[3px] transition-all whitespace-nowrap",
+                    activeTab === tab.id
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="p-6 lg:p-10">
+      <div className="p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto">
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "users" && <UsersTab />}
         {activeTab === "analytics" && <AnalyticsTab />}

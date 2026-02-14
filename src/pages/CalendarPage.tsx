@@ -61,12 +61,14 @@ export default function CalendarPage() {
 
   return (
     <AppShell>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+        className="w-full max-w-full overflow-hidden"
+      >
         {/* Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <CalendarIcon className="h-6 w-6 text-info" />
-            <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
+            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Calendar</h1>
             <Tabs value={view} onValueChange={(v) => setView(v as any)}>
               <TabsList className="h-8">
                 <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
@@ -83,7 +85,7 @@ export default function CalendarPage() {
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <span className="min-w-[140px] text-center text-sm font-medium">{headerLabel}</span>
+                <span className="min-w-[100px] md:min-w-[140px] text-center text-sm font-medium">{headerLabel}</span>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(1)}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -95,25 +97,25 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Month View */}
-        {view === "month" && <MonthView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
+        {/* Calendar Views - wrapped for overflow */}
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[640px]">
+            {view === "month" && <MonthView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
+            {view === "week" && <WeekView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
+          </div>
+        </div>
 
-        {/* Week View */}
-        {view === "week" && <WeekView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
-
-        {/* Day View */}
+        {/* These don't need horizontal scroll */}
         {view === "day" && <DayView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} projectNameMap={projectNameMap} />}
-
-        {/* Agenda View */}
         {view === "agenda" && <AgendaView tasks={tasks} projectNameMap={projectNameMap} updateTask={updateTask} />}
 
         {/* Today's Events */}
         <TodaysEvents />
 
         {/* Calendar Integration CTA */}
-        <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+        <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 md:p-5">
           <div className="flex items-start gap-3">
-            <CalendarIcon className="mt-0.5 h-5 w-5 text-primary" />
+            <CalendarIcon className="mt-0.5 h-5 w-5 text-primary flex-shrink-0" />
             <div className="flex-1">
               <h4 className="font-semibold text-foreground mb-1">Connect Your Calendars</h4>
               <p className="text-sm text-muted-foreground mb-4">
@@ -150,7 +152,7 @@ function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
     <>
       <div className="grid grid-cols-7 gap-px">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="p-2 text-center text-xs font-medium text-muted-foreground">{d}</div>
+          <div key={d} className="p-1 md:p-2 text-center text-[10px] md:text-xs font-medium text-muted-foreground">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-border bg-border">
@@ -165,7 +167,7 @@ function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
               key={dateKey}
               onClick={() => onSelectDate(dateKey)}
               className={cn(
-                "min-h-[100px] cursor-pointer p-2 transition-colors hover:bg-primary/5",
+                "min-h-[60px] md:min-h-[100px] cursor-pointer p-1 md:p-2 transition-colors hover:bg-primary/5",
                 inMonth ? (isWeekend ? "bg-secondary/60" : "bg-card") : "bg-muted/30 opacity-40"
               )}
             >
