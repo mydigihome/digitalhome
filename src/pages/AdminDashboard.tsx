@@ -131,6 +131,65 @@ function OverviewTab() {
     { label: "Resource Engagements", value: analytics.resourceClicks, color: "#8B5CF6" },
   ];
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleExportAllData = async () => {
+    try {
+      const [users, tasks, projects, notes, expenses] = await Promise.all([
+        supabase.from("profiles").select("*"),
+        supabase.from("tasks").select("*"),
+        supabase.from("projects").select("*"),
+        supabase.from("notes").select("*"),
+        supabase.from("expenses").select("*"),
+      ]);
+      
+      const exportData = {
+        users: users.data || [],
+        tasks: tasks.data || [],
+        projects: projects.data || [],
+        notes: notes.data || [],
+        expenses: expenses.data || [],
+        exported_at: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `full_backup_${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("All data exported successfully!");
+    } catch (error) {
+      toast.error("Export failed: " + (error as Error).message);
+    }
+  };
+
+  const handleRefreshAnalytics = async () => {
+    setRefreshing(true);
+    try {
+      const { count: total } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+      const today = new Date().toISOString().split("T")[0];
+      const { count: activeToday } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("last_login", `${today}T00:00:00`);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const { count: newThisWeek } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", weekAgo.toISOString());
+      
+      setCounts({ total: total || 0, students: counts.students, main: counts.main, activeToday: activeToday || 0, newThisWeek: newThisWeek || 0 });
+      toast.success("Analytics refreshed!");
+    } catch (error) {
+      toast.error("Refresh failed: " + (error as Error).message);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* KPI Cards */}
@@ -175,18 +234,18 @@ function OverviewTab() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-card border border-border rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
-            <span className="text-lg">💾</span> Export All Data
-          </button>
-          <button className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
-            <span className="text-lg">🔄</span> Refresh Analytics
-          </button>
-        </div>
-      </div>
+       {/* Quick Actions */}
+       <div className="bg-card border border-border rounded-xl p-6">
+         <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
+         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+           <button onClick={handleExportAllData} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors">
+             <span className="text-lg">💾</span> Export All Data
+           </button>
+           <button onClick={handleRefreshAnalytics} disabled={refreshing} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+             <span className="text-lg">{refreshing ? "⏳" : "🔄"}</span> {refreshing ? "Refreshing..." : "Refresh Analytics"}
+           </button>
+         </div>
+       </div>
     </div>
   );
 }
@@ -770,19 +829,44 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1">
-          {TABS.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-secondary"
-              }`}>
-              <span>{tab.icon}</span> {tab.label}
-            </button>
-          ))}
-        </div>
+         {/* Premium Tab Navigation */}
+         <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid #F3F4F6', paddingBottom: '0', marginTop: '16px' }}>
+           {TABS.map((tab) => (
+             <button
+               key={tab.id}
+               onClick={() => setActiveTab(tab.id)}
+               style={{
+                 padding: '14px 24px',
+                 backgroundColor: 'transparent',
+                 color: activeTab === tab.id ? '#8B5CF6' : '#6B7280',
+                 border: 'none',
+                 borderBottom: activeTab === tab.id ? '3px solid #8B5CF6' : '3px solid transparent',
+                 fontSize: '15px',
+                 fontWeight: activeTab === tab.id ? '600' : '500',
+                 cursor: 'pointer',
+                 transition: 'all 0.2s ease',
+                 display: 'flex',
+                 alignItems: 'center',
+                 gap: '8px',
+                 position: 'relative',
+                 marginBottom: '-2px'
+               }}
+               onMouseEnter={(e) => {
+                 if (activeTab !== tab.id) {
+                   (e.currentTarget as HTMLButtonElement).style.color = '#374151';
+                 }
+               }}
+               onMouseLeave={(e) => {
+                 if (activeTab !== tab.id) {
+                   (e.currentTarget as HTMLButtonElement).style.color = '#6B7280';
+                 }
+               }}
+             >
+               <span style={{ fontSize: '18px' }}>{tab.icon}</span>
+               {tab.label}
+             </button>
+           ))}
+         </div>
       </div>
 
       {/* Content */}
