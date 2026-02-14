@@ -2,18 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
-import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
+import { useAllTasks } from "@/hooks/useTasks";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import {
-  format, isToday, isPast, isBefore, endOfWeek, addDays, isTomorrow,
-} from "date-fns";
+import { format } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
-  CheckCircle2, Sparkles, Edit2, Check, Search, ImageIcon, StickyNote, X,
+  Sparkles, Edit2, Check, ImageIcon, StickyNote, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -25,6 +22,7 @@ import NotesWidget from "@/components/NotesWidget";
 import NoteEditor from "@/components/NoteEditor";
 import BrainDumpWidget from "@/components/BrainDumpWidget";
 import HabitTrackerWidget from "@/components/HabitTrackerWidget";
+import YourDayAgenda from "@/components/YourDayAgenda";
 import { cn } from "@/lib/utils";
 
 interface EverydayLink {
@@ -62,13 +60,11 @@ export default function Dashboard() {
   const { data: tasks = [] } = useAllTasks();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
-  const updateTask = useUpdateTask();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
-  const [taskEventToggle, setTaskEventToggle] = useState<"task" | "event">("task");
   const [editingLinks, setEditingLinks] = useState(false);
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
@@ -123,32 +119,6 @@ export default function Dashboard() {
     setEverydayLinks(everydayLinks.filter(link => link.id !== id));
   };
 
-  // Group tasks for agenda
-  const activeTasks = tasks.filter(t => t.status !== "done" && t.due_date);
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
-  const overdue = activeTasks.filter(t => isPast(new Date(t.due_date!)) && !isToday(new Date(t.due_date!)));
-  const todayTasks = activeTasks.filter(t => isToday(new Date(t.due_date!)));
-  const tomorrowTasks = activeTasks.filter(t => isTomorrow(new Date(t.due_date!)));
-  const thisWeekTasks = activeTasks.filter(t => {
-    const d = new Date(t.due_date!);
-    return !isToday(d) && !isPast(d) && !isTomorrow(d) && isBefore(d, addDays(weekEnd, 1));
-  });
-
-  const agendaGroups = [
-    { label: "Overdue", dotColor: "bg-destructive", items: overdue },
-    { label: "Today", dotColor: "bg-warning", items: todayTasks },
-    { label: "Tomorrow", dotColor: "bg-info", items: tomorrowTasks },
-    { label: "This week", dotColor: "bg-muted-foreground", items: thisWeekTasks },
-  ].filter(g => g.items.length > 0);
-
-  const projectNameMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
-
-  const toggleTask = (taskId: string, currentStatus: string) => {
-    updateTask.mutate({ id: taskId, status: currentStatus === "done" ? "backlog" : "done" });
-  };
-
-  const allAgendaItems = agendaGroups.flatMap(g => g.items).slice(0, 8);
   const totalDone = tasks.filter(t => t.status === "done").length;
   const momentumPct = tasks.length > 0 ? Math.round((totalDone / tasks.length) * 100) : 0;
 
@@ -222,100 +192,9 @@ export default function Dashboard() {
 
         {/* Widget Grid */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {/* Agenda Widget */}
-          <div className="xl:col-span-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">Agenda</h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-0.5 rounded-sm bg-secondary p-0.5">
-                  <button
-                    onClick={() => setTaskEventToggle("task")}
-                    className={cn(
-                      "rounded-xs px-2.5 py-1 text-xs font-medium transition-all duration-150",
-                      taskEventToggle === "task"
-                        ? "bg-card text-foreground shadow-xs"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    Tasks
-                  </button>
-                  <button
-                    onClick={() => setTaskEventToggle("event")}
-                    className={cn(
-                      "rounded-xs px-2.5 py-1 text-xs font-medium transition-all duration-150",
-                      taskEventToggle === "event"
-                        ? "bg-card text-foreground shadow-xs"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    Events
-                  </button>
-                </div>
-                <button
-                  onClick={() => setTaskEditorOpen(true)}
-                  className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-
-            {agendaGroups.length === 0 ? (
-              <div className="flex flex-col items-center py-12 text-center">
-                <CheckCircle2 className="mb-3 h-12 w-12 text-muted-foreground/30" />
-                <p className="text-lg font-medium text-foreground">All caught up!</p>
-                <p className="text-sm text-muted-foreground mt-1">Take a break or plan ahead</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {agendaGroups.map((group) => (
-                  <div key={group.label}>
-                    <div className="mb-1.5 flex items-center gap-2">
-                      <div className={cn("h-2 w-2 rounded-full", group.dotColor)} />
-                      <span className="text-xs font-medium text-muted-foreground">{group.label}</span>
-                      <span className="text-xs text-muted-foreground">({group.items.length})</span>
-                    </div>
-                    <div className="space-y-0.5">
-                      {group.items.slice(0, 4).map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 transition-all duration-100 hover:bg-secondary"
-                          onClick={() => toggleTask(task.id, task.status)}
-                        >
-                          <Checkbox
-                            checked={task.status === "done"}
-                            onCheckedChange={() => toggleTask(task.id, task.status)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="h-4 w-4 rounded"
-                          />
-                          <div className={cn("h-2 w-2 rounded-full", {
-                            "bg-destructive": task.priority === "high",
-                            "bg-warning": task.priority === "medium",
-                            "bg-success": task.priority === "low",
-                          })} />
-                          <span className={cn("flex-1 text-sm", task.status === "done" ? "text-muted-foreground line-through" : "text-foreground hover:underline")}>
-                            {task.title}
-                          </span>
-                          {projectNameMap[task.project_id] && (
-                            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
-                              {projectNameMap[task.project_id]}
-                            </span>
-                          )}
-                          {task.due_date && (
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(task.due_date), "h:mm a")}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Your Day Agenda Widget */}
+          <div className="xl:col-span-2">
+            <YourDayAgenda />
           </div>
 
           {/* Right column widgets */}

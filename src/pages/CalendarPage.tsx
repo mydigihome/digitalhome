@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
+import { useCalendarEvents, useDeleteCalendarEvent } from "@/hooks/useCalendarEvents";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Video, MapPin, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Video, MapPin, Users, X } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
@@ -329,73 +331,60 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
   );
 }
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  type: 'meeting' | 'call' | 'event' | 'task';
-  attendees?: string[];
-  location?: string;
-}
-
-const sampleEvents: CalendarEvent[] = [
-  { id: '1', title: 'Team Standup', startTime: '09:00', endTime: '09:30', type: 'meeting', attendees: ['Sarah', 'Mike', 'You'] },
-  { id: '2', title: 'Contractor Call - Home Renovation', startTime: '14:00', endTime: '15:00', type: 'call', location: 'Phone' },
-  { id: '3', title: 'French Lesson', startTime: '18:00', endTime: '19:00', type: 'event' },
-];
-
-const eventTypeConfig: Record<string, { icon: any; color: string }> = {
-  meeting: { icon: Users, color: 'bg-primary' },
-  call: { icon: Video, color: 'bg-success' },
-  event: { icon: CalendarIcon, color: 'bg-accent-foreground' },
-  task: { icon: Clock, color: 'bg-warning' },
-};
-
-function formatEventTime(time: string) {
-  const [h, m] = time.split(':');
-  const hour = parseInt(h);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${displayHour}:${m} ${ampm}`;
-}
-
 function TodaysEvents() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+  const { data: events = [] } = useCalendarEvents({
+    start: todayStart.toISOString(),
+    end: todayEnd.toISOString(),
+  });
+  const deleteEvent = useDeleteCalendarEvent();
+
+  if (events.length === 0) return null;
+
   return (
     <div className="mt-6 space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground">Today's Events</h3>
-      {sampleEvents.map((event) => {
-        const config = eventTypeConfig[event.type] || eventTypeConfig.task;
-        const Icon = config.icon;
-        return (
-          <div key={event.id} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/20 cursor-pointer">
-            <div className={cn("rounded-lg p-2", config.color)}>
-              <Icon className="h-5 w-5 text-primary-foreground" />
+      {events.map((event) => (
+        <div key={event.id} className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/20">
+          <div className="rounded-lg p-2 bg-primary">
+            <CalendarIcon className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="font-semibold text-foreground">{event.title}</h4>
+              {event.source !== "manual" && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                  {event.source === "google_calendar" ? "📅 Google" : event.source}
+                </Badge>
+              )}
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-foreground mb-1">{event.title}</h4>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  {formatEventTime(event.startTime)} - {formatEventTime(event.endTime)}
-                </div>
-                {event.location && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {event.location}
-                  </div>
-                )}
-                {event.attendees && (
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {event.attendees.length} attendees
-                  </div>
-                )}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {event.all_day
+                  ? "All day"
+                  : `${format(new Date(event.start_time), "h:mm a")}${event.end_time ? ` - ${format(new Date(event.end_time), "h:mm a")}` : ""}`}
               </div>
+              {event.location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {event.location}
+                </div>
+              )}
             </div>
           </div>
-        );
-      })}
+          <button
+            onClick={() => deleteEvent.mutate({ id: event.id, source: event.source })}
+            className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 hover:bg-destructive/10"
+            title={event.source === "manual" ? "Delete event" : "Hide from view"}
+          >
+            <X className="h-4 w-4 text-destructive" />
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
