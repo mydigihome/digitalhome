@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Pencil, Type, Plus, ImageIcon, LayoutGrid, Trash2, Copy,
   ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2,
-  Save, Download, Mail, Eraser, Palette, Loader2, XCircle,
+  Save, Download, Mail, Eraser, Palette, Loader2, XCircle, Printer,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/hooks/useAuth';
@@ -271,6 +271,50 @@ const CollageItem = ({
           <div className="absolute -top-4 left-1/2 w-px h-4 bg-primary z-40" />
         </>
       )}
+    </div>
+  );
+};
+
+// ── Pinterest Inspiration Button (draggable) ──────────────
+const PinterestButton = () => {
+  const [pos, setPos] = useState({ x: 16, y: 16 });
+  const [dragging, setDragging] = useState(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDragging(true);
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+  };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: MouseEvent) => setPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
+    const onUp = () => setDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [dragging]);
+
+  return (
+    <div
+      className="absolute z-40 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card/90 border border-border shadow-md cursor-grab active:cursor-grabbing select-none"
+      style={{ left: pos.x, top: pos.y }}
+      onMouseDown={onMouseDown}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#E60023"/>
+        <path d="M12 5.5c-3.59 0-6.5 2.91-6.5 6.5 0 2.63 1.56 4.89 3.81 5.92-.05-.47-.1-1.2.02-1.71.11-.47.7-2.97.7-2.97s-.18-.36-.18-.88c0-.82.48-1.44 1.07-1.44.5 0 .75.38.75.83 0 .5-.32 1.26-.49 1.96-.14.59.3 1.07.88 1.07 1.06 0 1.87-1.12 1.87-2.73 0-1.43-1.03-2.43-2.5-2.43-1.7 0-2.7 1.28-2.7 2.6 0 .52.2.93.45 1.2.05.06.06.11.04.2l-.17.68c-.03.11-.09.13-.2.08-.74-.34-1.2-1.43-1.2-2.3 0-1.87 1.36-3.59 3.92-3.59 2.06 0 3.66 1.47 3.66 3.43 0 2.05-1.29 3.7-3.08 3.7-.6 0-1.17-.31-1.36-.69l-.37 1.41c-.13.52-.5 1.16-.74 1.56.56.17 1.15.27 1.77.27 3.59 0 6.5-2.91 6.5-6.5S15.59 5.5 12 5.5z" fill="white"/>
+      </svg>
+      <a
+        href="https://www.pinterest.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs font-medium text-foreground hover:text-primary transition-colors"
+        onClick={(e) => e.stopPropagation()}
+      >
+        Get Inspiration
+      </a>
     </div>
   );
 };
@@ -891,6 +935,13 @@ const VisionRoom = () => {
               {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
               <span className="hidden sm:inline">Save PNG</span>
             </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground"
+              title="Print Board"
+            >
+              <Printer size={14} />
+            </button>
             <button onClick={emailBoard} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground" title="Email Board">
               <Mail size={14} />
               <span className="hidden sm:inline">Email</span>
@@ -1041,6 +1092,9 @@ const VisionRoom = () => {
               </div>
             </div>
           )}
+
+          {/* Pinterest Inspiration - draggable floating button */}
+          <PinterestButton />
 
           {elements.map((el, i) => (
             <CollageItem
