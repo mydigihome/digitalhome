@@ -28,10 +28,8 @@ export default function ModernDoor({ isOpen, size = 'large' }: ModernDoorProps) 
           </linearGradient>
         </defs>
 
-        {/* Dark interior */}
-        <rect width="240" height="320" fill="#1a1a1a" />
-        <rect x="30" y="40" width="180" height="260" fill="#c0c0c0" rx="2" />
-        <rect x="35" y="45" width="170" height="250" fill="#1a1a1a" />
+        {/* Frame only - NO background */}
+        <rect x="30" y="40" width="180" height="260" fill="none" stroke="#c0c0c0" strokeWidth="6" rx="2" />
 
         {/* Floor indicator */}
         <rect x="95" y="15" width="50" height="20" fill="#e0e0e0" rx="2" />

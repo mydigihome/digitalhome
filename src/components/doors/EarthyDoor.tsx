@@ -25,14 +25,9 @@ export default function EarthyDoor({ isOpen, size = 'large' }: EarthyDoorProps) 
           </linearGradient>
         </defs>
 
-        {/* Wall background */}
-        <rect width="240" height="320" fill="#e8e8e8" />
-
-        {/* Arch frame */}
-        <path d="M 40 300 L 40 80 Q 40 30 70 30 L 170 30 Q 200 30 200 80 L 200 300"
-              fill="#d8d8d8" stroke="#c0c0c0" strokeWidth="8" />
-        <path d="M 50 290 L 50 80 Q 50 40 75 40 L 165 40 Q 190 40 190 80 L 190 290"
-              fill="#1a1a1a" />
+        {/* Frame only - NO background */}
+        <path d="M 40 300 L 40 80 Q 40 30 70 30 L 170 30 Q 200 30 200 80 L 200 300" 
+              fill="none" stroke="#c0c0c0" strokeWidth="8" />
 
         {/* Left door leaf */}
         <motion.g
