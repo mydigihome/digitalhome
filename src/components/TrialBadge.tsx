@@ -8,14 +8,17 @@ export function TrialBadge() {
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    if (prefs?.trial_end_date && !prefs?.is_subscribed) {
+    if (prefs?.trial_end_date && !prefs?.is_subscribed && !prefs?.founding_member) {
       const endDate = new Date(prefs.trial_end_date);
       const now = new Date();
       const diffMs = endDate.getTime() - now.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       setDaysLeft(Math.max(0, diffDays));
     }
-  }, [prefs?.trial_end_date, prefs?.is_subscribed]);
+  }, [prefs?.trial_end_date, prefs?.is_subscribed, prefs?.founding_member]);
+
+  // Founding members never see trial badge
+  if (prefs?.founding_member) return null;
 
   // Don't show if subscribed or no trial data
   if (!daysLeft && daysLeft !== 0 || prefs?.is_subscribed) {

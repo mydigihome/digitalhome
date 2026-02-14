@@ -19,6 +19,7 @@ export function UpgradeModal() {
   useEffect(() => {
     if (!prefs) return;
     if (prefs.is_subscribed) return;
+    if (prefs.founding_member) return;
     if (!prefs.trial_end_date) return;
 
     const isExpired = new Date(prefs.trial_end_date) < new Date();
@@ -27,9 +28,9 @@ export function UpgradeModal() {
       const t = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(t);
     }
-  }, [prefs?.trial_end_date, prefs?.is_subscribed]);
+  }, [prefs?.trial_end_date, prefs?.is_subscribed, prefs?.founding_member]);
 
-  if (prefs?.is_subscribed) return null;
+  if (prefs?.is_subscribed || prefs?.founding_member) return null;
 
   const handleUpgrade = () => {
     setOpen(false);
