@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Pencil, Type, Plus, ImageIcon, LayoutGrid, Trash2, Copy,
   ArrowUp, ArrowDown, RotateCcw, Undo2, Redo2, MousePointer2,
-  Save, Download, Mail, Eraser, Palette, Loader2, XCircle, RefreshCw,
+  Save, Download, Mail, Eraser, Palette, Loader2, XCircle,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,12 +62,14 @@ const CollageItem = ({
   onSelect,
   onChange,
   boardRef,
+  onPlaceholderClick,
 }: {
   el: CollageElement;
   isSelected: boolean;
   onSelect: () => void;
   onChange: (attrs: Partial<CollageElement>) => void;
   boardRef: React.RefObject<HTMLDivElement>;
+  onPlaceholderClick?: (id: string) => void;
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -187,16 +189,17 @@ const CollageItem = ({
 
       {el.type === 'text' && !isEditing && (
         <div
-          className="w-full h-full flex items-center justify-center p-2 select-none"
+          className={`w-full h-full flex items-center justify-center p-2 select-none ${el.text === '+' ? 'cursor-pointer border-2 border-dashed border-muted-foreground/30 rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-colors' : ''}`}
           style={{
             fontSize: el.fontSize || 24,
             fontFamily: el.fontFamily || 'Georgia, serif',
             color: el.fill || 'hsl(var(--foreground))',
-            outline: isSelected ? '2px solid hsl(var(--primary))' : 'none',
+            outline: isSelected && el.text !== '+' ? '2px solid hsl(var(--primary))' : 'none',
             borderRadius: 8,
-            background: isSelected ? 'hsl(var(--primary) / 0.05)' : 'transparent',
+            background: el.text === '+' ? 'hsl(var(--muted) / 0.3)' : isSelected ? 'hsl(var(--primary) / 0.05)' : 'transparent',
             textShadow: el.fill === '#FFFFFF' ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
           }}
+          onClick={(e) => { if (el.text === '+' && onPlaceholderClick) { e.stopPropagation(); onPlaceholderClick(el.id); } }}
         >
           {el.text || 'Double-click to edit'}
         </div>
@@ -470,17 +473,7 @@ const VisionRoom = () => {
     toast.success('Canvas cleared');
   };
 
-  const startOver = async () => {
-    clearAll();
-    setBoardTitle('My Vision Board');
-    if (boardId) {
-      await supabase
-        .from('vision_boards')
-        .update({ elements: [] as any, name: 'My Vision Board', updated_at: new Date().toISOString() })
-        .eq('id', boardId);
-    }
-    toast.success('Board reset');
-  };
+
 
   // ── Download as PNG ──────────────────────────────────
   const downloadAsPng = async () => {
@@ -635,12 +628,18 @@ const VisionRoom = () => {
   };
 
   // ── Layout Templates ─────────────────────────────────
+  const layoutFileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingLayoutSlot, setPendingLayoutSlot] = useState<string | null>(null);
+
   const applyLayout = (layout: 'grid' | 'collage' | 'freeform') => {
     const boardRect = boardRef.current?.getBoundingClientRect();
     const w = boardRect ? boardRect.width : 800;
     const h = boardRect ? boardRect.height : 600;
     const gap = 12;
     const newEls: CollageElement[] = [];
+
+    // Remove old layout placeholder slots (text elements with text='+')
+    const nonPlaceholders = elements.filter(el => !(el.type === 'text' && el.text === '+'));
 
     if (layout === 'grid') {
       const cols = 3, rows = 2;
@@ -657,7 +656,6 @@ const VisionRoom = () => {
         }
       }
     } else if (layout === 'collage') {
-      // Asymmetric Pinterest-style
       newEls.push(
         { id: genId(), type: 'text', x: gap, y: gap, width: w * 0.55, height: h * 0.5 - gap, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
         { id: genId(), type: 'text', x: w * 0.55 + gap * 2, y: gap, width: w * 0.45 - gap * 3, height: h * 0.35 - gap, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
@@ -666,7 +664,6 @@ const VisionRoom = () => {
         { id: genId(), type: 'text', x: w * 0.35 + gap * 2, y: h * 0.5 + gap, width: w * 0.2, height: h * 0.5 - gap * 2, rotation: 0, text: '+', fontSize: 40, fontFamily: 'Arial, sans-serif', fill: '#787774' },
       );
     } else if (layout === 'freeform') {
-      // Scattered elements with slight rotations
       const positions = [
         { x: w * 0.1, y: h * 0.1, rot: -5 },
         { x: w * 0.5, y: h * 0.05, rot: 3 },
@@ -684,11 +681,42 @@ const VisionRoom = () => {
       });
     }
 
-    const next = [...elements, ...newEls];
+    const next = [...nonPlaceholders, ...newEls];
     setElements(next);
     pushHistory(next);
     setShowLayouts(false);
-    toast.success(`${layout.charAt(0).toUpperCase() + layout.slice(1)} layout added!`);
+    toast.success(`${layout.charAt(0).toUpperCase() + layout.slice(1)} layout applied!`);
+  };
+
+  // Handle clicking a '+' placeholder to upload an image into that slot
+  const handlePlaceholderClick = (elId: string) => {
+    setPendingLayoutSlot(elId);
+    layoutFileInputRef.current?.click();
+  };
+
+  const handleLayoutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user || !pendingLayoutSlot) return;
+
+    const ext = file.name.split('.').pop();
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('vision-images').upload(path, file);
+    if (error) { toast.error('Failed to upload image'); return; }
+
+    const { data: signedData } = await supabase.storage
+      .from('vision-images')
+      .createSignedUrl(path, 60 * 60 * 24 * 365);
+
+    const src = signedData?.signedUrl;
+    if (!src) { toast.error('Failed to get image URL'); return; }
+
+    const slot = elements.find(el => el.id === pendingLayoutSlot);
+    if (slot) {
+      updateElement(pendingLayoutSlot, { type: 'image', src, text: undefined, fontSize: undefined, fontFamily: undefined, fill: undefined });
+      toast.success('Image added to slot!');
+    }
+    setPendingLayoutSlot(null);
+    e.target.value = '';
   };
 
   // ── Drawing on canvas ────────────────────────────────
@@ -882,14 +910,28 @@ const VisionRoom = () => {
                     <p className="text-xs text-muted-foreground p-2">No saved boards yet</p>
                   )}
                   {savedBoards.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => loadBoard(b)}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-secondary transition-colors ${b.id === boardId ? 'bg-primary/10 text-primary' : 'text-foreground'}`}
-                    >
-                      <div className="font-medium truncate">{b.name}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</div>
-                    </button>
+                    <div key={b.id} className={`flex items-center gap-1 rounded-lg hover:bg-secondary transition-colors ${b.id === boardId ? 'bg-primary/10' : ''}`}>
+                      <button
+                        onClick={() => loadBoard(b)}
+                        className={`flex-1 text-left px-3 py-2 text-sm ${b.id === boardId ? 'text-primary' : 'text-foreground'}`}
+                      >
+                        <div className="font-medium truncate">{b.name}</div>
+                        <div className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</div>
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await supabase.from('vision_boards').update({ deleted_at: new Date().toISOString() }).eq('id', b.id);
+                          if (b.id === boardId) { setBoardId(null); setElements([]); setBoardTitle('My Vision Board'); setHistory([[]]); setHistoryIndex(0); }
+                          loadBoards();
+                          toast.success('Board deleted');
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors mr-1 flex-shrink-0"
+                        title="Delete board"
+                      >
+                        <Trash2 size={13} className="text-destructive" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -898,10 +940,6 @@ const VisionRoom = () => {
             <button onClick={clearAll} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-muted-foreground" title="Clear All">
               <XCircle size={14} />
               <span className="hidden sm:inline">Clear</span>
-            </button>
-            <button onClick={startOver} className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-destructive/10 text-destructive transition-colors" title="Start Over">
-              <RefreshCw size={14} />
-              <span className="hidden sm:inline">Start Over</span>
             </button>
           </div>
         </div>
@@ -1012,8 +1050,11 @@ const VisionRoom = () => {
               onSelect={() => { setSelectedId(el.id); setTool('select'); }}
               onChange={(attrs) => updateElement(el.id, attrs)}
               boardRef={boardRef as React.RefObject<HTMLDivElement>}
+              onPlaceholderClick={handlePlaceholderClick}
             />
           ))}
+
+          <input ref={layoutFileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLayoutImageUpload} />
 
           <canvas
             ref={canvasRef}
