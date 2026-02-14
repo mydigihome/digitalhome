@@ -699,12 +699,18 @@ export type Database = {
           home_name: string | null
           home_style: string | null
           id: string
+          is_subscribed: boolean | null
           location: string | null
           onboarding_completed: boolean | null
           onboarding_focus: string | null
           profile_photo: string | null
           sidebar_theme: string | null
+          student_email: string | null
+          student_verified: boolean | null
+          subscription_type: string | null
           theme_color: string | null
+          trial_end_date: string | null
+          trial_start_date: string | null
           updated_at: string
           user_id: string
           user_type: string | null
@@ -731,12 +737,18 @@ export type Database = {
           home_name?: string | null
           home_style?: string | null
           id?: string
+          is_subscribed?: boolean | null
           location?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
           sidebar_theme?: string | null
+          student_email?: string | null
+          student_verified?: boolean | null
+          subscription_type?: string | null
           theme_color?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id: string
           user_type?: string | null
@@ -763,12 +775,18 @@ export type Database = {
           home_name?: string | null
           home_style?: string | null
           id?: string
+          is_subscribed?: boolean | null
           location?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
           sidebar_theme?: string | null
+          student_email?: string | null
+          student_verified?: boolean | null
+          subscription_type?: string | null
           theme_color?: string | null
+          trial_end_date?: string | null
+          trial_start_date?: string | null
           updated_at?: string
           user_id?: string
           user_type?: string | null

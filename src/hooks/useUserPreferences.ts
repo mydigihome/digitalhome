@@ -26,6 +26,12 @@ export interface UserPreferences {
   onboarding_completed: boolean | null;
   welcome_video_url: string | null;
   welcome_video_watched: boolean | null;
+  trial_start_date: string | null;
+  trial_end_date: string | null;
+  is_subscribed: boolean | null;
+  subscription_type: string | null;
+  student_verified: boolean | null;
+  student_email: string | null;
   created_at: string;
   updated_at: string;
 }
