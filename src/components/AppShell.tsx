@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
+import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 
 const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
@@ -347,6 +348,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Announcement Banner */}
+      <AnnouncementBanner />
+      
       {/* Desktop Sidebar */}
       <div
         className={cn(
