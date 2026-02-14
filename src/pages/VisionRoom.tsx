@@ -297,25 +297,21 @@ const PinterestButton = () => {
   }, [dragging]);
 
   return (
-    <div
-      className="absolute z-40 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card/90 border border-border shadow-md cursor-grab active:cursor-grabbing select-none"
+    <a
+      href="https://www.pinterest.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="absolute z-40 flex flex-col items-center cursor-grab active:cursor-grabbing select-none opacity-40 hover:opacity-60 transition-opacity"
       style={{ left: pos.x, top: pos.y }}
       onMouseDown={onMouseDown}
+      onClick={(e) => { if (dragging) e.preventDefault(); }}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="12" fill="#E60023"/>
         <path d="M12 5.5c-3.59 0-6.5 2.91-6.5 6.5 0 2.63 1.56 4.89 3.81 5.92-.05-.47-.1-1.2.02-1.71.11-.47.7-2.97.7-2.97s-.18-.36-.18-.88c0-.82.48-1.44 1.07-1.44.5 0 .75.38.75.83 0 .5-.32 1.26-.49 1.96-.14.59.3 1.07.88 1.07 1.06 0 1.87-1.12 1.87-2.73 0-1.43-1.03-2.43-2.5-2.43-1.7 0-2.7 1.28-2.7 2.6 0 .52.2.93.45 1.2.05.06.06.11.04.2l-.17.68c-.03.11-.09.13-.2.08-.74-.34-1.2-1.43-1.2-2.3 0-1.87 1.36-3.59 3.92-3.59 2.06 0 3.66 1.47 3.66 3.43 0 2.05-1.29 3.7-3.08 3.7-.6 0-1.17-.31-1.36-.69l-.37 1.41c-.13.52-.5 1.16-.74 1.56.56.17 1.15.27 1.77.27 3.59 0 6.5-2.91 6.5-6.5S15.59 5.5 12 5.5z" fill="white"/>
       </svg>
-      <a
-        href="https://www.pinterest.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs font-medium text-foreground hover:text-primary transition-colors"
-        onClick={(e) => e.stopPropagation()}
-      >
-        Get Inspiration
-      </a>
-    </div>
+      <span className="text-[9px] text-muted-foreground/50 mt-0.5">✨ Get inspiration</span>
+    </a>
   );
 };
 
