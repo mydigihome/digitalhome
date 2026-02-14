@@ -331,8 +331,8 @@ function OverviewTab() {
           </button>
         </div>
       </div>
-
-
+    </div>
+  );
 }
 
 // ── Users Tab ──
@@ -840,11 +840,10 @@ function SystemTab() {
           <button onClick={() => toast.info("Cache clearing requires backend implementation")}
             className="flex flex-col items-center gap-2 rounded-lg bg-amber-500 p-4 text-sm font-medium text-white hover:bg-amber-600 transition-colors">
             <span className="text-2xl">⚡</span> Clear Cache
-
+          </button>
         </div>
       </div>
     </div>
-  );
   );
 }
 
