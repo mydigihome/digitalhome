@@ -498,24 +498,30 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          founding_member: boolean
           full_name: string | null
           id: string
           last_login: string | null
           updated_at: string
+          user_number: number
         }
         Insert: {
           created_at?: string
+          founding_member?: boolean
           full_name?: string | null
           id: string
           last_login?: string | null
           updated_at?: string
+          user_number?: number
         }
         Update: {
           created_at?: string
+          founding_member?: boolean
           full_name?: string | null
           id?: string
           last_login?: string | null
           updated_at?: string
+          user_number?: number
         }
         Relationships: []
       }

@@ -32,6 +32,8 @@ export interface UserPreferences {
   subscription_type: string | null;
   student_verified: boolean | null;
   student_email: string | null;
+  founding_member: boolean | null;
+  user_number: number | null;
   created_at: string;
   updated_at: string;
 }

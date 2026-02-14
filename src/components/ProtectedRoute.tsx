@@ -27,8 +27,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Founding members never get locked out
+  const isFoundingMember = (prefs as any)?.founding_member === true;
+
   // Check if trial has expired and user is not subscribed
-  const isExpired = prefs?.trial_end_date && !prefs?.is_subscribed
+  const isExpired = !isFoundingMember && prefs?.trial_end_date && !prefs?.is_subscribed
     ? new Date(prefs.trial_end_date) < new Date()
     : false;
 

@@ -382,6 +382,11 @@ export default function SettingsPage() {
                     <p className="mt-2 text-xs text-muted-foreground">
                       {uploadingPhoto ? "Uploading..." : "Click to change photo"}
                     </p>
+                    {(prefs as any)?.founding_member && (
+                      <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800 border border-amber-200">
+                        ⭐ Founding Member
+                      </span>
+                    )}
                   </div>
 
                   {/* Form fields */}
@@ -626,8 +631,21 @@ export default function SettingsPage() {
               {/* ==================== BILLING TAB ==================== */}
               {activeTab === "billing" && (
                 <>
+                  {/* Founding Member Badge */}
+                  {(prefs as any)?.founding_member && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">⭐</div>
+                      <div>
+                        <h4 className="font-semibold text-foreground text-lg">Founding Member — Lifetime Access</h4>
+                        <p className="text-sm text-muted-foreground">
+                          You're user #{(prefs as any)?.user_number ?? '—'} — one of the first 50 to join. All features are yours forever, no payment needed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Subscription Status + Manage */}
-                  {(prefs as any)?.is_subscribed && (
+                  {!(prefs as any)?.founding_member && (prefs as any)?.is_subscribed && (
                     <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -679,7 +697,8 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  {/* Pro Membership Card */}
+                  {/* Pro Membership Card — hidden for founding members */}
+                  {!(prefs as any)?.founding_member && (
                   <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
                     <div className="flex items-center gap-3 mb-6">
                       <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -771,9 +790,10 @@ export default function SettingsPage() {
                       </Button>
                     )}
                   </div>
+                  )}
 
                   {/* Student Discount Verification */}
-                  {!(prefs as any)?.is_subscribed && (
+                  {!(prefs as any)?.founding_member && !(prefs as any)?.is_subscribed && (
                     <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
                       <div className="flex items-center gap-3 mb-4">
                         <GraduationCap size={20} className="text-muted-foreground" />
