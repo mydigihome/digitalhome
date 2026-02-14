@@ -23,6 +23,7 @@ import WealthTrackerPage from "./pages/WealthTrackerPage";
 import ApplicationsTrackerPage from "./pages/ApplicationsTrackerPage";
 import NotFound from "./pages/NotFound";
 import VisionRoom from "./pages/VisionRoom";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /><BrainDump /></ProtectedRoute>} />
             <Route path="/vision" element={<ProtectedRoute><VisionRoom /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           
