@@ -273,3 +273,84 @@
 .icon-float {
   animation: iconFloat 3s ease-in-out infinite;
 }
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE APP EXPERIENCE — max-width: 767px ONLY
+   Desktop (768px+) remains completely untouched.
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* ── Prevent iOS auto-zoom on input focus ── */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* ── Touch targets: minimum 44px ── */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* ── Bottom tab bar spacing — push content above tab bar ── */
+  .mobile-main-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ── Mobile tab bar native feel ── */
+  .mobile-tab-bar nav {
+    box-shadow: 0 -1px 0 hsl(var(--border)), 0 -4px 12px rgba(0,0,0,0.06);
+  }
+
+  .mobile-tab-item {
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab-item:active {
+    transform: scale(0.92);
+    transition: transform 0.1s ease;
+  }
+
+  /* ── Cards: native rounded feel with depth ── */
+  .bg-card {
+    border-radius: 16px !important;
+  }
+
+  .rounded-xl {
+    border-radius: 16px !important;
+  }
+
+  .rounded-lg {
+    border-radius: 14px !important;
+  }
+
+  /* ── Subtle depth shadows for cards ── */
+  .shadow-sm, .border {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  /* ── Stack grid layouts vertically ── */
+  .grid-cols-2,
+  .grid-cols-3,
+  .sm\:grid-cols-2,
+  .sm\:grid-cols-3,
+  .sm\:grid-cols-4,
+  .lg\:grid-cols-3,
+  .lg\:grid-cols-4,
+  .lg\:grid-cols-5 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Allow 2-col for small stat cards */
+  .grid-cols-2.gap-3,
+  .grid-cols-2.gap-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ── Mobile header styling ── */
+  .mobile-header {
+    height: 52px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+}

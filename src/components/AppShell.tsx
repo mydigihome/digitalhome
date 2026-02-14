@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield, MoreHorizontal } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 
+// ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
 const projectFolders = [
   { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
   { id: "work", label: "Work", icon: Briefcase, color: "text-info" },
@@ -341,6 +342,130 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   );
 }
 
+/** Fixed bottom tab bar for mobile — iOS/Android native feel */
+function MobileTabBar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: prefs } = useUserPreferences();
+  const iconColors = (prefs?.accent_colors as any)?.icon_colors || {};
+  const getIconColor = (key: string) => iconColors[key] || defaultIconColors[key] || "#6B7280";
+
+  const tabs = [
+    { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
+    { icon: FolderOpen, label: "Projects", path: "/projects", colorKey: "projects" },
+    { icon: DollarSign, label: "Finance", path: "/finance/wealth", colorKey: "finance" },
+    { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
+    { icon: MoreHorizontal, label: "More", path: "/__more__", colorKey: "team" },
+  ];
+
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const moreItems = [
+    { icon: Sparkles, label: "Vision Room", path: "/vision" },
+    { icon: Users, label: "Team", path: "/team" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+  ];
+
+  const isActive = (path: string) => {
+    if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
+    if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
+    if (path === "/__more__") return ["/vision", "/team", "/settings"].some(p => location.pathname.startsWith(p));
+    return location.pathname.startsWith(path);
+  };
+
+  return (
+    <div className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+      <nav
+        className="flex items-stretch border-t border-border bg-card/95 backdrop-blur-xl"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {tabs.map((tab) => {
+          const active = isActive(tab.path);
+          const Icon = tab.icon;
+          const color = active ? getIconColor(tab.colorKey) : undefined;
+
+          if (tab.path === "/__more__") {
+            return (
+              <div key="more" className="relative flex-1" ref={moreRef}>
+                <button
+                  onClick={() => setMoreOpen(!moreOpen)}
+                  className={cn(
+                    "mobile-tab-item flex w-full flex-col items-center justify-center gap-0.5 py-2",
+                    active ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" style={color ? { color } : undefined} strokeWidth={active ? 2 : 1.5} />
+                  <span className="text-[10px] font-medium">{tab.label}</span>
+                </button>
+
+                <AnimatePresence>
+                  {moreOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute bottom-full right-0 mb-2 mr-1 w-48 rounded-2xl border border-border bg-card p-1.5 shadow-xl"
+                    >
+                      {moreItems.map((item) => {
+                        const ItemIcon = item.icon;
+                        const itemActive = location.pathname.startsWith(item.path);
+                        return (
+                          <button
+                            key={item.path}
+                            onClick={() => { setMoreOpen(false); navigate(item.path); }}
+                            className={cn(
+                              "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                              itemActive ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-secondary"
+                            )}
+                          >
+                            <ItemIcon className="h-5 w-5" />
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className={cn(
+                "mobile-tab-item flex flex-1 flex-col items-center justify-center gap-0.5 py-2",
+                active ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5" style={color ? { color } : undefined} strokeWidth={active ? 2 : 1.5} />
+              <span className="text-[10px] font-medium">{tab.label}</span>
+              {active && (
+                <motion.div
+                  layoutId="tab-indicator"
+                  className="absolute top-0 h-[2px] w-8 rounded-full bg-primary"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -350,7 +475,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Announcement Banner */}
       <AnnouncementBanner />
       
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar — unchanged, hidden on mobile via lg: prefix */}
       <div
         className={cn(
           "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-200",
@@ -405,69 +530,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-sm lg:hidden">
-        <button
-          className="p-1.5 text-muted-foreground hover:text-foreground"
-          onClick={() => setMobileOpen(true)}
-        >
-          <span className="sr-only">Open sidebar</span>
-          <Menu className="h-5 w-5" aria-hidden="true" />
-        </button>
+      {/* Mobile Header — slim top bar */}
+      <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
         <div className="flex items-center gap-2 flex-1">
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
         </div>
         <NotionProfileMenu collapsed />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <div className="relative z-50 lg:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/40 backdrop-blur-sm"
-              onClick={() => setMobileOpen(false)}
-            />
-            <div className="fixed inset-0 flex">
-              <motion.div
-                initial={{ x: -280 }}
-                animate={{ x: 0 }}
-                exit={{ x: -280 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative mr-16 flex w-full max-w-[240px] flex-1"
-              >
-                <div className="absolute left-full top-0 flex w-16 justify-center pt-3">
-                  <button className="p-1.5" onClick={() => setMobileOpen(false)}>
-                    <span className="sr-only">Close sidebar</span>
-                    <X className="h-5 w-5 text-primary-foreground" aria-hidden="true" />
-                  </button>
-                </div>
-
-                <div className="flex grow flex-col overflow-y-auto bg-card">
-                  <div className="flex h-16 shrink-0 items-center px-4">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-md font-semibold text-foreground">Digital Home</span>
-                    </div>
-                  </div>
-                  <nav className="flex flex-1 flex-col px-2 py-2">
-                    <SidebarNav onNavigate={() => setMobileOpen(false)} />
-                  </nav>
-                  <div className="shrink-0 border-t border-border px-2 py-2">
-                    <NotionProfileMenu />
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Mobile Bottom Tab Bar */}
+      <MobileTabBar />
 
       {/* Main Content */}
       <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>
-        <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
+        <div className="mobile-main-content mx-auto max-w-[1400px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
           {children}
         </div>
       </main>
