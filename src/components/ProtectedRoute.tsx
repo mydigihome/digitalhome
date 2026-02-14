@@ -26,6 +26,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Check if trial has expired and user is not subscribed
+  const isExpired = prefs?.trial_end_date && !prefs?.is_subscribed
+    ? new Date(prefs.trial_end_date) < new Date()
+    : false;
+
+  // Redirect to billing if expired (unless already on settings page)
+  if (isExpired && !location.pathname.startsWith('/settings')) {
+    return <Navigate to="/settings?tab=billing" replace />;
+  }
+
   return (
     <>
       <TrialBadge />
