@@ -47,10 +47,10 @@ function getFaviconUrl(url: string): string | null {
 
 function useCurrentTime() {
   const [now, setNow] = useState(new Date());
-  useState(() => {
+  useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
-  });
+  }, []);
   return now;
 }
 
