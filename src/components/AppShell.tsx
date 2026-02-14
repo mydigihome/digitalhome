@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const defaultIconColors: Record<string, string> = {
   finance_wealth: "#10B981",
   finance_apps: "#3B82F6",
   calendar: "#3B82F6",
+  vision: "#EC4899",
   team: "#6B7280",
 };
 
@@ -130,6 +131,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
 
   const bottomItems = [
     { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
+    { icon: Sparkles, label: "Vision Room", path: "/vision", colorKey: "vision" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
   ];
 
