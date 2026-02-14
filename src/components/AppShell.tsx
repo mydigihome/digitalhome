@@ -25,21 +25,20 @@ const defaultIconColors: Record<string, string> = {
   team: "#6B7280",
 };
 
-/** 3D icon bubble with gradient background, shadow, and hover lift */
-function IconBubble({ icon: Icon, color, size = 18 }: { icon: any; color: string; size?: number }) {
+/** Refined icon wrapper — subtle tint, clean lines, no heavy shadows */
+function IconBubble({ icon: Icon, color, size = 17 }: { icon: any; color: string; size?: number }) {
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-md transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-0.5 group-hover:shadow-md"
+      className="inline-flex shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-105"
       style={{
-        width: size + 10,
-        height: size + 10,
-        background: `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`,
-        boxShadow: `0 2px 6px ${color}25, inset 0 1px 0 ${color}15`,
+        width: size + 8,
+        height: size + 8,
+        background: `${color}12`,
       }}
     >
       <Icon
-        className="shrink-0 drop-shadow-sm"
-        style={{ color, width: size, height: size }}
+        className="shrink-0"
+        style={{ color, width: size, height: size, strokeWidth: 1.75 }}
       />
     </span>
   );
@@ -182,7 +181,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       <button
         onClick={() => go(path)}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+          "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium tracking-tight transition-all duration-150",
           isActive
             ? "bg-accent text-accent-foreground shadow-xs"
             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -209,7 +208,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
               if (!isProjectsActive) go("/projects");
             }}
             className={cn(
-              "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
+              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium tracking-tight transition-all duration-150",
               isProjectsActive
                 ? "bg-accent text-accent-foreground shadow-xs"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
