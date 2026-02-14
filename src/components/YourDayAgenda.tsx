@@ -51,13 +51,46 @@ export default function YourDayAgenda() {
     deleteEvent.mutate({ id, source });
   };
 
+  // Sample/placeholder data when real data is empty
+  const displayEvents = events.length > 0 ? events : [];
+  const displayTasks = todayTasks;
+  const displayExpenses = upcomingExpenses;
+  const displayGoals = activeGoals;
+
+  const sampleEvents = [
+    { id: "s1", title: "Team standup", time: "9:00 AM", color: "hsl(var(--primary))" },
+    { id: "s2", title: "Dentist appointment", time: "2:30 PM", color: "#10B981" },
+    { id: "s3", title: "French lesson", time: "6:00 PM", color: "#F59E0B" },
+  ];
+
+  const sampleTasks = [
+    { id: "st1", title: "Review project proposal", priority: "high" },
+    { id: "st2", title: "Submit expense report", priority: "medium" },
+    { id: "st3", title: "Call back contractor", priority: "low" },
+  ];
+
+  const sampleExpenses = [
+    { id: "se1", description: "Spotify subscription", amount: 9.99 },
+    { id: "se2", description: "Electric bill", amount: 142.50 },
+  ];
+
+  const sampleGoals = [
+    { id: "sg1", title: "Save $5,000 emergency fund", progress: 68 },
+    { id: "sg2", title: "Pay off credit card", progress: 45 },
+  ];
+
+  const showRealEvents = displayEvents.length > 0;
+  const showRealTasks = displayTasks.length > 0;
+  const showRealExpenses = displayExpenses.length > 0;
+  const showRealGoals = displayGoals.length > 0;
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
       {/* Header */}
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <Sun className="h-5 w-5 text-warning" />
-          <h2 className="text-lg font-semibold text-foreground">Your Day</h2>
+          <Calendar className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold text-foreground">Today's Agenda</h2>
         </div>
         <p className="text-sm text-muted-foreground">
           {format(new Date(), "EEEE, MMMM d, yyyy")}
@@ -67,24 +100,18 @@ export default function YourDayAgenda() {
       {/* Schedule Section */}
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <Calendar className="h-3.5 w-3.5 text-primary" />
+          <Clock className="h-3.5 w-3.5 text-primary" />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Your Schedule
           </span>
-          {events.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {events.length}
-            </Badge>
-          )}
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+            {showRealEvents ? displayEvents.length : sampleEvents.length}
+          </Badge>
         </div>
 
-        {events.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic pl-5">
-            No events scheduled today
-          </p>
-        ) : (
+        {showRealEvents ? (
           <div className="space-y-1.5">
-            {events.map((event) => (
+            {displayEvents.map((event) => (
               <div
                 key={event.id}
                 className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-secondary"
@@ -118,6 +145,17 @@ export default function YourDayAgenda() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className="space-y-1.5 opacity-50">
+            {sampleEvents.map((e) => (
+              <div key={e.id} className="flex items-center gap-3 rounded-lg px-3 py-2.5">
+                <span className="text-xs font-medium text-muted-foreground min-w-[65px]">{e.time}</span>
+                <div className="h-4 w-1 rounded-full flex-shrink-0" style={{ backgroundColor: e.color }} />
+                <span className="flex-1 text-sm text-muted-foreground truncate">{e.title}</span>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground italic pl-3">Sample — add events to see yours</p>
+          </div>
         )}
       </div>
 
@@ -130,20 +168,14 @@ export default function YourDayAgenda() {
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Your Tasks
           </span>
-          {todayTasks.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-              {todayTasks.length}
-            </Badge>
-          )}
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+            {showRealTasks ? displayTasks.length : sampleTasks.length}
+          </Badge>
         </div>
 
-        {todayTasks.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic pl-5">
-            No tasks for today
-          </p>
-        ) : (
+        {showRealTasks ? (
           <div className="space-y-1">
-            {todayTasks.map((task) => (
+            {displayTasks.map((task) => (
               <div
                 key={task.id}
                 className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-secondary cursor-pointer"
@@ -166,65 +198,96 @@ export default function YourDayAgenda() {
               </div>
             ))}
           </div>
+        ) : (
+          <div className="space-y-1 opacity-50">
+            {sampleTasks.map((t) => (
+              <div key={t.id} className="flex items-center gap-3 rounded-lg px-3 py-2">
+                <div className="h-4 w-4 rounded border border-muted-foreground/30" />
+                <div className={cn("h-2 w-2 rounded-full flex-shrink-0", {
+                  "bg-destructive": t.priority === "high",
+                  "bg-warning": t.priority === "medium",
+                  "bg-success": t.priority === "low",
+                })} />
+                <span className="flex-1 text-sm text-muted-foreground truncate">{t.title}</span>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground italic pl-3">Sample — your tasks will appear here</p>
+          </div>
         )}
       </div>
 
-      {/* Expenses Reminder */}
-      {upcomingExpenses.length > 0 && (
-        <>
-          <div className="border-t border-border my-4" />
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-3.5 w-3.5 text-destructive" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Money Reminder
-              </span>
-            </div>
-            <div className="space-y-1.5">
-              {upcomingExpenses.map((expense: any) => (
-                <div
-                  key={expense.id}
-                  className="flex items-center justify-between rounded-lg bg-destructive/5 border border-destructive/10 px-3 py-2"
-                >
-                  <span className="text-sm text-foreground">
-                    {expense.description}
-                  </span>
-                  <span className="text-sm font-medium text-destructive">
-                    ${Number(expense.amount).toFixed(2)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+      <div className="border-t border-border my-4" />
 
-      {/* Goals */}
-      {activeGoals.length > 0 && (
-        <>
-          <div className="border-t border-border my-4" />
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Goal Check
-              </span>
-            </div>
-            <div className="space-y-2">
-              {activeGoals.map((goal: any) => (
-                <div key={goal.id} className="flex items-center gap-2">
-                  <span className="text-sm text-foreground">{goal.title}</span>
-                  {goal.progress != null && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {goal.progress}%
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
+      {/* Money Reminder - always show */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <DollarSign className="h-3.5 w-3.5 text-destructive" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Money Reminder
+          </span>
+        </div>
+        {showRealExpenses ? (
+          <div className="space-y-1.5">
+            {displayExpenses.map((expense: any) => (
+              <div
+                key={expense.id}
+                className="flex items-center justify-between rounded-lg bg-destructive/5 border border-destructive/10 px-3 py-2"
+              >
+                <span className="text-sm text-foreground">{expense.description}</span>
+                <span className="text-sm font-medium text-destructive">
+                  ${Number(expense.amount).toFixed(2)}
+                </span>
+              </div>
+            ))}
           </div>
-        </>
-      )}
+        ) : (
+          <div className="space-y-1.5 opacity-50">
+            {sampleExpenses.map((e) => (
+              <div key={e.id} className="flex items-center justify-between rounded-lg bg-destructive/5 border border-destructive/10 px-3 py-2">
+                <span className="text-sm text-muted-foreground">{e.description}</span>
+                <span className="text-sm font-medium text-muted-foreground">${e.amount.toFixed(2)}</span>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground italic pl-3">Sample — add expenses to track bills</p>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-border my-4" />
+
+      {/* Goals - always show */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Target className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Goal Check
+          </span>
+        </div>
+        {showRealGoals ? (
+          <div className="space-y-2">
+            {displayGoals.map((goal: any) => (
+              <div key={goal.id} className="flex items-center gap-2">
+                <span className="text-sm text-foreground">{goal.title}</span>
+                {goal.progress != null && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    {goal.progress}%
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2 opacity-50">
+            {sampleGoals.map((g) => (
+              <div key={g.id} className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{g.title}</span>
+                <Badge variant="secondary" className="text-[10px] opacity-60">{g.progress}%</Badge>
+              </div>
+            ))}
+            <p className="text-[11px] text-muted-foreground italic pl-3">Sample — set goals in Wealth Tracker</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
