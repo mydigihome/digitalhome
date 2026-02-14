@@ -140,14 +140,18 @@ export type Database = {
           attendees: Json | null
           color: string | null
           created_at: string
+          deleted_locally: boolean
           description: string | null
+          edited_locally: boolean
           end_time: string | null
           google_calendar_id: string | null
           google_event_id: string | null
+          hidden: boolean
           id: string
           location: string | null
           source: string
           start_time: string
+          synced_at: string | null
           title: string
           updated_at: string
           user_id: string
@@ -157,14 +161,18 @@ export type Database = {
           attendees?: Json | null
           color?: string | null
           created_at?: string
+          deleted_locally?: boolean
           description?: string | null
+          edited_locally?: boolean
           end_time?: string | null
           google_calendar_id?: string | null
           google_event_id?: string | null
+          hidden?: boolean
           id?: string
           location?: string | null
           source?: string
           start_time: string
+          synced_at?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -174,14 +182,18 @@ export type Database = {
           attendees?: Json | null
           color?: string | null
           created_at?: string
+          deleted_locally?: boolean
           description?: string | null
+          edited_locally?: boolean
           end_time?: string | null
           google_calendar_id?: string | null
           google_event_id?: string | null
+          hidden?: boolean
           id?: string
           location?: string | null
           source?: string
           start_time?: string
+          synced_at?: string | null
           title?: string
           updated_at?: string
           user_id?: string
