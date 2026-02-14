@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
@@ -7,6 +7,7 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import {
   format, isToday, isPast, isBefore, endOfWeek, addDays, isTomorrow,
 } from "date-fns";
@@ -62,12 +63,34 @@ export default function Dashboard() {
   const upsertPrefs = useUpsertPreferences();
   const updateTask = useUpdateTask();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
   const [taskEventToggle, setTaskEventToggle] = useState<"task" | "event">("task");
   const [editingLinks, setEditingLinks] = useState(false);
   const now = useCurrentTime();
+
+  // Handle payment success
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      // Update subscription status
+      upsertPrefs.mutate({ is_subscribed: true, subscription_type: "pro" } as any);
+      
+      // Show confetti
+      import("canvas-confetti").then((confettiModule) => {
+        const confetti = confettiModule.default;
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } }), 300);
+      });
+      
+      // Show toast
+      toast.success("You're all set! Pro features unlocked 🎉");
+      
+      // Clean URL
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   const [everydayLinks, setEverydayLinks] = useState<EverydayLink[]>([
     { id: "1", name: "Check your email", icon: "📧", url: "mailto:", completed: false },

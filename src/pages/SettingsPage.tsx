@@ -8,10 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, HeadphonesIcon, Star } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, HeadphonesIcon, Star, CreditCard, Crown, GraduationCap, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
+import { Switch } from "@/components/ui/switch";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe("pk_test_51T0ZZyDs3UlCCXBa9qLPUy9c2w3osnYHXs1JKuALZkoOWZ688sRtnGzOJ0AaXXlD0CGI0cUSH9gOjzmlRRmcASeU00YOjg9k0v");
 
 const accentColors = [
   { label: "Purple", value: "#8B5CF6" },
@@ -90,6 +94,7 @@ const categories = ["All", "AI", "Productivity", "Automation", "Development", "D
 const settingsTabs = [
   { id: "profile", label: "Profile", icon: User },
   { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "billing", label: "Billing", icon: CreditCard },
   { id: "account", label: "Account", icon: Shield },
   { id: "resources", label: "AI Resources", icon: Sparkles },
   { id: "archived", label: "Archived Projects", icon: Archive },
@@ -133,6 +138,8 @@ export default function SettingsPage() {
   const [feedbackEmail, setFeedbackEmail] = useState(user?.email || "");
   const [sendingFeedback, setSendingFeedback] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [studentDiscount, setStudentDiscount] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
   }, [profile?.full_name]);
@@ -603,6 +610,138 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   </div>
+                </>
+              )}
+
+              {/* ==================== BILLING TAB ==================== */}
+              {activeTab === "billing" && (
+                <>
+                  {/* Subscription Status */}
+                  {(prefs as any)?.is_subscribed && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Crown size={20} className="text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground">Pro Membership Active</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Plan: {(prefs as any)?.subscription_type === "student" ? "Student ($100/yr)" : "Pro ($200/yr)"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pro Membership Card */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Crown size={24} className="text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">Pro Membership</h3>
+                        <p className="text-sm text-muted-foreground">Unlock the full Digital Home experience</p>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="mb-6">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-foreground">
+                          ${studentDiscount ? "100" : "200"}
+                        </span>
+                        <span className="text-muted-foreground">/year</span>
+                        {studentDiscount && (
+                          <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                            50% Student Discount
+                          </span>
+                        )}
+                      </div>
+                      {studentDiscount && (
+                        <p className="text-sm text-muted-foreground mt-1 line-through">$200/year</p>
+                      )}
+                    </div>
+
+                    {/* Features */}
+                    <div className="space-y-3 mb-8">
+                      {[
+                        "Unlimited projects & tasks",
+                        "AI Brain Dump & task generation",
+                        "Vision Room with unlimited boards",
+                        "Wealth & investment tracker",
+                        "College & job application tracker",
+                        "Team collaboration",
+                        "Custom themes & branding",
+                        "Priority support",
+                        "All future features included",
+                      ].map((feature) => (
+                        <div key={feature} className="flex items-center gap-3">
+                          <Check size={16} className="text-primary shrink-0" />
+                          <span className="text-sm text-foreground">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Subscribe Button */}
+                    {!(prefs as any)?.is_subscribed && (
+                      <Button
+                        className="w-full h-12 text-base font-semibold"
+                        disabled={checkingOut}
+                        onClick={async () => {
+                          setCheckingOut(true);
+                          try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const baseUrl = window.location.origin;
+                            const res = await fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
+                              {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${session?.access_token}`,
+                                },
+                                body: JSON.stringify({
+                                  plan: studentDiscount ? "student" : "pro",
+                                  successUrl: `${baseUrl}/dashboard?payment=success`,
+                                  cancelUrl: `${baseUrl}/settings?tab=billing`,
+                                }),
+                              }
+                            );
+                            const data = await res.json();
+                            if (data.url) {
+                              window.location.href = data.url;
+                            } else {
+                              toast.error(data.error || "Failed to create checkout session");
+                            }
+                          } catch (err: any) {
+                            toast.error("Failed to start checkout");
+                          } finally {
+                            setCheckingOut(false);
+                          }
+                        }}
+                      >
+                        {checkingOut ? "Redirecting to checkout..." : `Subscribe — $${studentDiscount ? "100" : "200"}/year`}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Student Discount */}
+                  {!(prefs as any)?.is_subscribed && (
+                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <GraduationCap size={20} className="text-muted-foreground" />
+                          <div>
+                            <h4 className="font-medium text-foreground">Student Discount</h4>
+                            <p className="text-sm text-muted-foreground">50% off with a valid .edu email</p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={studentDiscount}
+                          onCheckedChange={setStudentDiscount}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
