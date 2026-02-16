@@ -56,6 +56,8 @@ export default function YourDayAgenda() {
     setQuickTasks((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
   };
 
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+
   // Tasks due today or no date (top 5 non-done)
   const todayTasks = allTasks
     .filter((t) => t.status !== "done" && (t.due_date === todayStr || !t.due_date))
@@ -77,8 +79,6 @@ export default function YourDayAgenda() {
   const handleToggleTask = (taskId: string, currentStatus: string) => {
     updateTask.mutate({ id: taskId, status: currentStatus === "done" ? "backlog" : "done" });
   };
-
-  const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const handleDeleteEvent = (id: string, source: string) => {
     deleteEvent.mutate({ id, source });
