@@ -253,10 +253,10 @@ export default function VoiceInput() {
             "flex items-center justify-center rounded-full transition-colors",
             "h-12 w-12 lg:h-14 lg:w-14",
             !locked && "ring-2 ring-dashed ring-primary/40 cursor-grab active:cursor-grabbing",
-            locked && (isListening
-              ? "bg-destructive/85 text-destructive-foreground backdrop-blur-lg border border-white/20 shadow-md lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
-              : "bg-primary/80 text-primary-foreground hover:bg-primary/90 backdrop-blur-lg border border-white/20 shadow-md lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"),
-            !locked && "bg-primary/60 text-primary-foreground backdrop-blur-lg border-2 border-dashed border-white/40 shadow-md"
+             locked && (isListening
+               ? "bg-destructive/50 text-destructive-foreground backdrop-blur-xl border border-white/15 shadow-sm lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
+               : "bg-primary/45 text-primary-foreground hover:bg-primary/60 backdrop-blur-xl border border-white/15 shadow-sm lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"),
+             !locked && "bg-primary/35 text-primary-foreground backdrop-blur-xl border-2 border-dashed border-white/30 shadow-sm"
           )}
           whileTap={locked ? { scale: 0.9 } : {}}
           animate={isListening && locked ? { scale: [1, 1.08, 1] } : {}}
