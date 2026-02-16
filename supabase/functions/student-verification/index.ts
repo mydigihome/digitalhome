@@ -1,13 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://digitalhome.lovable.app",
+  "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,31 +38,25 @@ serve(async (req) => {
     const { action, email, code } = await req.json();
 
     if (action === "send") {
-      // Validate .edu email
       if (!email || typeof email !== "string") throw new Error("Email is required");
       const trimmed = email.trim().toLowerCase();
       if (trimmed.length > 255) throw new Error("Email too long");
       if (!trimmed.endsWith(".edu")) throw new Error("Only .edu email addresses qualify for student discount");
-      // Basic email format check
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmed)) throw new Error("Invalid email format");
 
-      // Generate 6-digit code
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-      // Use service role to insert verification code
       const serviceClient = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
 
-      // Delete old codes for this user
       await serviceClient
         .from("student_verification_codes")
         .delete()
         .eq("user_id", user.id);
 
-      // Insert new code
       const { error: insertError } = await serviceClient
         .from("student_verification_codes")
         .insert({
@@ -63,7 +67,6 @@ serve(async (req) => {
 
       if (insertError) throw new Error("Failed to create verification code");
 
-      // Try to send email via Resend if configured
       const resendKey = Deno.env.get("RESEND_API_KEY");
       if (resendKey) {
         await fetch("https://api.resend.com/emails", {
@@ -81,7 +84,6 @@ serve(async (req) => {
         });
       }
 
-      // Always return success (in dev/test, code is logged)
       console.log(`Verification code for ${trimmed}: ${verificationCode}`);
 
       return new Response(
@@ -102,7 +104,6 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
 
-      // Find valid code
       const { data: record, error: fetchError } = await serviceClient
         .from("student_verification_codes")
         .select("*")
@@ -116,13 +117,11 @@ serve(async (req) => {
         throw new Error("Invalid or expired verification code");
       }
 
-      // Mark as verified
       await serviceClient
         .from("student_verification_codes")
         .update({ verified: true })
         .eq("id", record.id);
 
-      // Update user preferences
       await serviceClient
         .from("user_preferences")
         .update({

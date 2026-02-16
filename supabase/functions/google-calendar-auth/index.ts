@@ -1,12 +1,24 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://digitalhome.lovable.app",
+  "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
+
+const VALID_ACTIONS = ["get_auth_url", "exchange_code", "disconnect"];
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,8 +31,19 @@ Deno.serve(async (req) => {
   try {
     const { action, code, redirect_uri } = await req.json();
 
-    // Action: get_auth_url — returns Google OAuth URL
+    // Validate action
+    if (!action || typeof action !== "string" || !VALID_ACTIONS.includes(action)) {
+      return new Response(JSON.stringify({ error: "Invalid action" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "get_auth_url") {
+      if (!redirect_uri || typeof redirect_uri !== "string") {
+        return new Response(JSON.stringify({ error: "redirect_uri is required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const params = new URLSearchParams({
         client_id: GOOGLE_CLIENT_ID,
         redirect_uri: redirect_uri,
@@ -35,13 +58,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Action: exchange_code — exchange auth code for tokens
     if (action === "exchange_code") {
+      if (!code || typeof code !== "string") {
+        return new Response(JSON.stringify({ error: "code is required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!redirect_uri || typeof redirect_uri !== "string") {
+        return new Response(JSON.stringify({ error: "redirect_uri is required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const authHeader = req.headers.get("Authorization");
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -53,13 +85,11 @@ Deno.serve(async (req) => {
       const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const userId = claimsData.claims.sub;
 
-      // Exchange code for tokens
       const tokenResp = await fetch("https://oauth2.googleapis.com/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -75,12 +105,10 @@ Deno.serve(async (req) => {
       const tokenData = await tokenResp.json();
       if (tokenData.error) {
         return new Response(JSON.stringify({ error: tokenData.error_description || tokenData.error }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Get calendar email
       const userInfoResp = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
@@ -88,13 +116,10 @@ Deno.serve(async (req) => {
 
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 
-      // Use service role to upsert tokens
       const serviceClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-      // Delete existing tokens for this user
       await serviceClient.from("google_calendar_tokens").delete().eq("user_id", userId);
 
-      // Insert new tokens
       const { error: insertError } = await serviceClient.from("google_calendar_tokens").insert({
         user_id: userId,
         access_token: tokenData.access_token,
@@ -106,8 +131,7 @@ Deno.serve(async (req) => {
       if (insertError) {
         console.error("Insert error:", insertError);
         return new Response(JSON.stringify({ error: "Failed to store tokens" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -117,13 +141,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Action: disconnect — remove tokens
     if (action === "disconnect") {
       const authHeader = req.headers.get("Authorization");
       if (!authHeader?.startsWith("Bearer ")) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -134,8 +156,7 @@ Deno.serve(async (req) => {
       const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
       if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -148,14 +169,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ error: "Invalid action" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

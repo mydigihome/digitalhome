@@ -1,10 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://digitalhome.lovable.app",
+  "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 async function refreshAccessToken(refreshToken: string, clientId: string, clientSecret: string) {
   const resp = await fetch("https://oauth2.googleapis.com/token", {
@@ -21,6 +30,7 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -34,8 +44,7 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -47,15 +56,13 @@ Deno.serve(async (req) => {
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const userId = claimsData.claims.sub;
 
     const serviceClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Get stored tokens
     const { data: tokenRow, error: tokenError } = await serviceClient
       .from("google_calendar_tokens")
       .select("*")
@@ -64,28 +71,23 @@ Deno.serve(async (req) => {
 
     if (tokenError || !tokenRow) {
       return new Response(JSON.stringify({ error: "Google Calendar not connected" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     let accessToken = tokenRow.access_token;
 
-    // Check if token expired, refresh if needed
     if (tokenRow.token_expires_at && new Date(tokenRow.token_expires_at) < new Date()) {
       if (!tokenRow.refresh_token) {
         return new Response(JSON.stringify({ error: "Token expired and no refresh token. Please reconnect." }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const refreshed = await refreshAccessToken(tokenRow.refresh_token, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
       if (refreshed.error) {
-        // Token revoked, clean up
         await serviceClient.from("google_calendar_tokens").delete().eq("user_id", userId);
         return new Response(JSON.stringify({ error: "Google token expired. Please reconnect." }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       accessToken = refreshed.access_token;
@@ -96,7 +98,6 @@ Deno.serve(async (req) => {
       }).eq("user_id", userId);
     }
 
-    // Fetch events from Google Calendar (next 3 months + past 1 month)
     const now = new Date();
     const oneMonthAgo = new Date(now);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -117,11 +118,9 @@ Deno.serve(async (req) => {
     );
 
     if (!calResp.ok) {
-      const errText = await calResp.text();
-      console.error("Google Calendar API error:", errText);
+      console.error("Google Calendar API error:", calResp.status);
       return new Response(JSON.stringify({ error: "Failed to fetch Google Calendar events" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -137,7 +136,6 @@ Deno.serve(async (req) => {
 
       if (!startTime) continue;
 
-      // Check if event already exists
       const { data: existing } = await serviceClient
         .from("calendar_events")
         .select("id, edited_locally")
@@ -146,7 +144,6 @@ Deno.serve(async (req) => {
         .single();
 
       if (existing) {
-        // Don't overwrite locally edited events
         if (!existing.edited_locally) {
           await serviceClient.from("calendar_events").update({
             title: event.summary || "Untitled Event",
@@ -179,7 +176,6 @@ Deno.serve(async (req) => {
       importedCount++;
     }
 
-    // Update sync time on token record
     await serviceClient.from("google_calendar_tokens").update({
       updated_at: new Date().toISOString(),
     }).eq("user_id", userId);
@@ -190,9 +186,8 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Sync error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
