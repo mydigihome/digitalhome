@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useLocation } from "react-router-dom";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { TrialBadge } from "./TrialBadge";
 import { UpgradeModal } from "./UpgradeModal";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -42,7 +41,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   return (
     <>
-      <TrialBadge />
       <UpgradeModal />
       {children}
     </>

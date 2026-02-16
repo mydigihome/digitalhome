@@ -631,6 +631,41 @@ export default function SettingsPage() {
               {/* ==================== BILLING TAB ==================== */}
               {activeTab === "billing" && (
                 <>
+                  {/* Trial Status Card */}
+                  {!(prefs as any)?.founding_member && !prefs?.is_subscribed && prefs?.trial_end_date && (() => {
+                    const endDate = new Date(prefs.trial_end_date);
+                    const now = new Date();
+                    const diffMs = endDate.getTime() - now.getTime();
+                    const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+                    const isExpired = daysLeft === 0;
+                    return (
+                      <div className={cn(
+                        "rounded-xl p-6 flex items-center gap-4 border",
+                        isExpired
+                          ? "bg-destructive/5 border-destructive/20"
+                          : daysLeft <= 3
+                          ? "bg-amber-50 border-amber-200"
+                          : "bg-blue-50 border-blue-200"
+                      )}>
+                        <div className={cn(
+                          "w-12 h-12 rounded-full flex items-center justify-center text-2xl",
+                          isExpired ? "bg-destructive/10" : daysLeft <= 3 ? "bg-amber-100" : "bg-blue-100"
+                        )}>
+                          {isExpired ? '🔒' : daysLeft <= 3 ? '⚠️' : '🎁'}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-foreground text-lg">
+                            {isExpired ? "Trial Expired" : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left in your trial`}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {isExpired
+                              ? "Subscribe to continue using all features."
+                              : "Subscribe now to keep access to all features."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {/* Founding Member Badge */}
                   {(prefs as any)?.founding_member && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex items-center gap-4">

@@ -25,25 +25,38 @@ export function TrialBadge() {
   if (isFoundingMember) return null;
 
   // Don't show if subscribed or no trial data
-  if ((!daysLeft && daysLeft !== 0) || prefs?.is_subscribed) {
-    return null;
-  }
+  if ((!daysLeft && daysLeft !== 0) || prefs?.is_subscribed) return null;
 
-  const isExpired = daysLeft === 0;
-  const bgColor = isExpired
-    ? "bg-destructive/10 hover:bg-destructive/20"
-    : "bg-amber-500/10 hover:bg-amber-500/20";
-  const textColor = isExpired ? "text-destructive" : "text-amber-700";
-  const borderColor = isExpired ? "border-destructive/30" : "border-amber-200";
+  // Don't show expired in toolbar (only in settings)
+  if (daysLeft === 0) return null;
+
+  const isWarning = daysLeft <= 3;
 
   return (
     <button
       onClick={() => navigate("/settings?tab=billing")}
-      className={`fixed top-4 right-4 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${bgColor} ${textColor} ${borderColor} border z-50 hover:shadow-md`}
+      title="Click to view upgrade options"
+      className="flex items-center gap-1.5 transition-transform hover:scale-105"
+      style={{
+        padding: '4px 12px',
+        backgroundColor: isWarning ? '#FEF3C7' : '#EEF2FF',
+        border: `1px solid ${isWarning ? '#FCD34D' : '#C7D2FE'}`,
+        borderRadius: '12px',
+        cursor: 'pointer',
+      }}
     >
-      {isExpired
-        ? "Trial expired"
-        : `${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`}
+      <span style={{ fontSize: '14px' }}>
+        {isWarning ? '⚠️' : '🎁'}
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          fontWeight: 500,
+          color: isWarning ? '#92400E' : '#4F46E5',
+        }}
+      >
+        {daysLeft} day{daysLeft !== 1 ? 's' : ''}
+      </span>
     </button>
   );
 }
