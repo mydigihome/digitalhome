@@ -654,7 +654,7 @@ export default function SettingsPage() {
                         <div>
                           <h4 className="font-semibold text-foreground">Pro Membership Active</h4>
                           <p className="text-sm text-muted-foreground">
-                            Plan: {(prefs as any)?.subscription_type === "student" ? "Student ($100/yr)" : "Pro ($200/yr)"}
+                            Plan: {(prefs as any)?.subscription_type === "student" ? "Student ($5/mo)" : "Main Account ($12/mo)"}
                           </p>
                         </div>
                       </div>
@@ -714,17 +714,17 @@ export default function SettingsPage() {
                     <div className="mb-6">
                       <div className="flex items-baseline gap-2">
                         <span className="text-4xl font-bold text-foreground">
-                          ${studentDiscount ? "100" : "200"}
+                          ${studentDiscount ? "5" : "12"}
                         </span>
-                        <span className="text-muted-foreground">/year</span>
+                        <span className="text-muted-foreground">/month</span>
                         {studentDiscount && (
                           <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                            50% Student Discount
+                            Student Discount
                           </span>
                         )}
                       </div>
                       {studentDiscount && (
-                        <p className="text-sm text-muted-foreground mt-1 line-through">$200/year</p>
+                        <p className="text-sm text-muted-foreground mt-1 line-through">$12/month</p>
                       )}
                     </div>
 
@@ -786,7 +786,7 @@ export default function SettingsPage() {
                           }
                         }}
                       >
-                        {checkingOut ? "Redirecting to checkout..." : `Subscribe — $${studentDiscount ? "100" : "200"}/year`}
+                        {checkingOut ? "Redirecting to checkout..." : `Subscribe — $${studentDiscount ? "5" : "12"}/month`}
                       </Button>
                     )}
                   </div>
