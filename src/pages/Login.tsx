@@ -1,4 +1,5 @@
 import { useState } from "react";
+import HouseIcon from "@/components/HouseIcon";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -59,8 +60,8 @@ export default function Login() {
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
-            <span className="text-sm font-semibold text-primary-foreground">D</span>
+          <div className="mx-auto mb-4">
+            <HouseIcon size={48} />
           </div>
           <h1 className="text-2xl font-semibold text-foreground">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your Digital Home</p>
