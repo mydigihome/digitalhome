@@ -1,4 +1,5 @@
 import { useState } from "react";
+import HouseIcon from "@/components/HouseIcon";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -74,8 +75,10 @@ export default function Signup() {
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
+          <div className="mx-auto mb-4">
+            <HouseIcon size={48} />
+          </div>
           <h1 className="text-[32px] font-semibold tracking-tight">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Your life, all in one place</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
