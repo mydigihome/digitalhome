@@ -596,8 +596,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      {/* Mobile Bottom Tab Bar */}
-      <MobileTabBar />
+      {/* Mobile Bottom Tab Bar — removed, using sidebar instead */}
 
       {/* Floating Voice Input */}
       <VoiceInput />
