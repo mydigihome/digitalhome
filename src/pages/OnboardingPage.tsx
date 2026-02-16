@@ -29,11 +29,17 @@ export default function OnboardingPage() {
     if (!user || saving) return;
     setSaving(true);
     try {
+      const now = new Date();
+      const trialEnd = new Date(now);
+      trialEnd.setDate(trialEnd.getDate() + 7);
+
       await upsertPrefs.mutateAsync({
         home_name: homeName,
         home_style: 'minimal',
         onboarding_focus: focus,
         onboarding_completed: true,
+        trial_start_date: now.toISOString(),
+        trial_end_date: trialEnd.toISOString(),
       } as any);
       navigate('/welcome');
     } catch (error) {
