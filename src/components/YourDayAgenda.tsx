@@ -78,11 +78,11 @@ export default function YourDayAgenda() {
     updateTask.mutate({ id: taskId, status: currentStatus === "done" ? "backlog" : "done" });
   };
 
+  const todayStr = format(new Date(), "yyyy-MM-dd");
+
   const handleDeleteEvent = (id: string, source: string) => {
     deleteEvent.mutate({ id, source });
   };
-
-  const todayStr = format(new Date(), "yyyy-MM-dd");
   const displayEvents = events.length > 0 ? events : [];
   const displayTasks = todayTasks;
   const displayExpenses = upcomingExpenses;
