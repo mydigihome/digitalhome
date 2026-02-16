@@ -5,7 +5,7 @@ import { TrialBadge } from "./TrialBadge";
 import { UpgradeModal } from "./UpgradeModal";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { data: prefs, isLoading: prefsLoading } = useUserPreferences();
   const location = useLocation();
 
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   }
 
   // Founding members never get locked out
-  const isFoundingMember = (prefs as any)?.founding_member === true;
+  const isFoundingMember = profile?.founding_member === true;
 
   // Check if trial has expired and user is not subscribed
   const isExpired = !isFoundingMember && prefs?.trial_end_date && !prefs?.is_subscribed

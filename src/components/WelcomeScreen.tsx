@@ -27,11 +27,11 @@ const WelcomeScreen = () => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         backgroundColor: '#FFFFFF',
         cursor: 'pointer',
         userSelect: 'none',
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
+        paddingTop: '40px',
       }}
     >
       {/* Welcome text */}
@@ -40,10 +40,10 @@ const WelcomeScreen = () => {
         animate={{ opacity: isEntering ? 0 : 1, y: isEntering ? -20 : 0 }}
         transition={{ delay: 0.3, duration: 0.5 }}
         style={{
-          fontSize: '36px',
+          fontSize: '48px',
           fontWeight: 600,
           color: '#1F2937',
-          marginBottom: '60px',
+          marginBottom: '0',
           letterSpacing: '-0.02em',
           textAlign: 'center',
         }}
@@ -51,7 +51,10 @@ const WelcomeScreen = () => {
         Welcome home, {firstName}.
       </motion.h1>
 
-      {/* Door with breathing animation */}
+      {/* Spacer */}
+      <div style={{ height: '80px' }} />
+
+      {/* Door with breathing animation - BIG 500px */}
       <motion.div
         animate={
           !doorOpened
@@ -66,7 +69,7 @@ const WelcomeScreen = () => {
             : { duration: 1.2, ease: [0.4, 0, 0.2, 1] }
         }
       >
-        <MinimalWhiteDoor isOpen={doorOpened} />
+        <MinimalWhiteDoor isOpen={doorOpened} height={500} />
       </motion.div>
 
       {/* Click hint */}
@@ -75,7 +78,7 @@ const WelcomeScreen = () => {
         animate={{ opacity: isEntering ? 0 : 0.4 }}
         transition={{ delay: 1, duration: 0.5 }}
         style={{
-          marginTop: '48px',
+          marginTop: '32px',
           fontSize: '14px',
           color: '#9CA3AF',
         }}
