@@ -11,7 +11,6 @@ import {
 } from "@/hooks/useGoogleCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, MapPin, X, RefreshCw, Link2, Unlink } from "lucide-react";
 import { motion } from "framer-motion";
@@ -102,40 +101,77 @@ export default function CalendarPage() {
     : view === "day" ? format(currentDate, "EEEE, MMMM d, yyyy")
     : "Upcoming";
 
+  const views = ["month", "week", "day", "agenda"] as const;
+
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
         className="w-full max-w-full overflow-hidden"
       >
-        {/* Header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <CalendarIcon className="h-6 w-6 text-info" />
-            <h1 className="text-xl md:text-2xl font-semibold tracking-tight">Calendar</h1>
-            <Tabs value={view} onValueChange={(v) => setView(v as any)}>
-              <TabsList className="h-8">
-                <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
-                <TabsTrigger value="week" className="text-xs">Week</TabsTrigger>
-                <TabsTrigger value="day" className="text-xs">Day</TabsTrigger>
-                <TabsTrigger value="agenda" className="text-xs">Agenda</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        {/* ── Google Calendar-style Header ── */}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: title + nav */}
           <div className="flex items-center gap-2">
+            {/* Today button */}
             {view !== "agenda" && (
-              <>
-                <Button variant="ghost" size="sm" onClick={goToday} className="text-xs">Today</Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="min-w-[100px] md:min-w-[140px] text-center text-sm font-medium">{headerLabel}</span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(1)}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
+              <button
+                onClick={goToday}
+                className="rounded-lg border border-border bg-card px-3.5 py-1.5 text-[13px] font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+              >
+                Today
+              </button>
             )}
-            <Button size="sm" onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}>
-              <Plus className="mr-1 h-4 w-4" /> New Task
+
+            {/* Prev / Next arrows */}
+            {view !== "agenda" && (
+              <div className="flex items-center">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary"
+                >
+                  <ChevronLeft className="h-[18px] w-[18px]" />
+                </button>
+                <button
+                  onClick={() => navigate(1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary"
+                >
+                  <ChevronRight className="h-[18px] w-[18px]" />
+                </button>
+              </div>
+            )}
+
+            {/* Month / Year label */}
+            <h1 className="text-lg font-semibold tracking-[-0.3px] text-foreground md:text-xl">
+              {headerLabel}
+            </h1>
+          </div>
+
+          {/* Right: view switcher + new */}
+          <div className="flex items-center gap-2">
+            {/* View switcher — pill style */}
+            <div className="flex rounded-lg border border-border bg-card p-0.5 shadow-sm">
+              {views.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors",
+                    view === v
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+
+            <Button
+              size="sm"
+              className="rounded-lg shadow-sm"
+              onClick={() => setSelectedDate(format(new Date(), "yyyy-MM-dd"))}
+            >
+              <Plus className="mr-1 h-4 w-4" /> Event
             </Button>
           </div>
         </div>
@@ -166,7 +202,7 @@ export default function CalendarPage() {
         <TodaysEvents />
 
         {/* Legend */}
-        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-5 flex flex-wrap items-center gap-5 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <div className="h-2.5 w-2.5 rounded-full bg-[#4285F4]" />
             Google Calendar
@@ -201,6 +237,7 @@ export default function CalendarPage() {
   );
 }
 
+/* ─── Google Calendar Connection Bar ─── */
 function GoogleCalendarBar({ connection, loading, connecting, syncing, onConnect, onSync, onDisconnect }: {
   connection: any;
   loading: boolean;
@@ -254,6 +291,7 @@ function GoogleCalendarBar({ connection, loading, connecting, syncing, onConnect
   );
 }
 
+/* ─── Month View — Google Calendar grid style ─── */
 function MonthView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -262,67 +300,98 @@ function MonthView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any
   const days = eachDayOfInterval({ start: calStart, end: calEnd });
 
   return (
-    <>
-      <div className="grid grid-cols-7 gap-px">
+    <div className="overflow-hidden rounded-xl border border-border shadow-sm">
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 border-b border-border bg-secondary/30">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="p-1 md:p-2 text-center text-[10px] md:text-xs font-medium text-muted-foreground">{d}</div>
+          <div key={d} className="px-2 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {d}
+          </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-border bg-border">
-        {days.map((day) => {
+
+      {/* Day cells */}
+      <div className="grid grid-cols-7">
+        {days.map((day, index) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDate[dateKey] || [];
           const dayEvents = eventsByDate[dateKey] || [];
           const inMonth = isSameMonth(day, currentDate);
-          const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          const today = isToday(day);
+          const totalItems = dayEvents.length + dayTasks.length;
+          const maxVisible = 3;
 
           return (
             <div
               key={dateKey}
               onClick={() => onSelectDate(dateKey)}
               className={cn(
-                "min-h-[60px] md:min-h-[100px] cursor-pointer p-1 md:p-2 transition-colors hover:bg-primary/5",
-                inMonth ? (isWeekend ? "bg-secondary/60" : "bg-card") : "bg-muted/30 opacity-40"
+                "group relative min-h-[72px] cursor-pointer border-b border-r border-border/50 px-1.5 py-1.5 transition-colors md:min-h-[110px] md:px-2 md:py-2",
+                inMonth
+                  ? "bg-card hover:bg-secondary/30"
+                  : "bg-muted/20",
+                // Remove right border on last column
+                (index + 1) % 7 === 0 && "border-r-0"
               )}
             >
-              <span
-                className={cn(
-                  "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs",
-                  isToday(day) && "border-2 border-primary font-medium text-primary"
-                )}
-              >
-                {format(day, "d")}
-              </span>
-              {/* Event pills */}
-              <div className="mt-0.5 space-y-0.5">
-                {dayEvents.slice(0, 2).map((e: any) => (
-                  <div key={e.id} className="truncate rounded px-1 py-0.5 text-[9px] md:text-[10px] font-medium leading-tight"
-                    style={{
-                      backgroundColor: e.source === "google_calendar" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.15)",
-                      color: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))",
-                    }}
-                  >
-                    {e.title}
-                  </div>
-                ))}
-                {dayTasks.slice(0, 2 - Math.min(dayEvents.length, 2)).map((t: any) => (
-                  <div key={t.id} className="flex items-center gap-1">
-                    <div className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", priorityColors[t.priority])} />
-                    <span className="truncate text-[9px] md:text-[10px] text-muted-foreground">{t.title}</span>
-                  </div>
-                ))}
-                {(dayEvents.length + dayTasks.length) > 2 && (
-                  <span className="text-[9px] text-muted-foreground">+{dayEvents.length + dayTasks.length - 2} more</span>
-                )}
+              {/* Day number */}
+              <div className="mb-1 flex justify-start">
+                <span
+                  className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium md:h-7 md:w-7 md:text-sm",
+                    today
+                      ? "bg-primary text-primary-foreground"
+                      : inMonth
+                        ? "text-foreground"
+                        : "text-muted-foreground/50"
+                  )}
+                >
+                  {format(day, "d")}
+                </span>
               </div>
+
+              {/* Event pills + task dots */}
+              {inMonth && (
+                <div className="space-y-0.5">
+                  {dayEvents.slice(0, maxVisible).map((e: any) => (
+                    <div
+                      key={e.id}
+                      className="truncate rounded px-1.5 py-[2px] text-[9px] font-medium leading-tight md:text-[11px]"
+                      style={{
+                        backgroundColor: e.source === "google_calendar" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.12)",
+                        color: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))",
+                      }}
+                    >
+                      {!e.all_day && (
+                        <span className="mr-0.5 opacity-70">
+                          {format(new Date(e.start_time), "h:mma").toLowerCase()}
+                        </span>
+                      )}
+                      {e.title}
+                    </div>
+                  ))}
+                  {dayTasks.slice(0, maxVisible - Math.min(dayEvents.length, maxVisible)).map((t: any) => (
+                    <div key={t.id} className="flex items-center gap-1 px-0.5">
+                      <div className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", priorityColors[t.priority])} />
+                      <span className="truncate text-[9px] text-muted-foreground md:text-[11px]">{t.title}</span>
+                    </div>
+                  ))}
+                  {totalItems > maxVisible && (
+                    <button className="px-1 text-[9px] font-medium text-muted-foreground transition-colors hover:text-foreground md:text-[11px]">
+                      +{totalItems - maxVisible} more
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 }
 
+/* ─── Week View ─── */
 function WeekView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any) {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
@@ -333,19 +402,21 @@ function WeekView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any)
         const dateKey = format(day, "yyyy-MM-dd");
         const dayTasks = tasksByDate[dateKey] || [];
         const dayEvents = eventsByDate[dateKey] || [];
+        const today = isToday(day);
+
         return (
           <div
             key={dateKey}
             onClick={() => onSelectDate(dateKey)}
             className={cn(
-              "min-h-[300px] cursor-pointer rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/30",
-              isToday(day) && "border-primary/40"
+              "min-h-[300px] cursor-pointer rounded-xl border border-border bg-card p-3 transition-all hover:shadow-md",
+              today && "border-primary/40 ring-1 ring-primary/10"
             )}
           >
             <div className="mb-3 text-center">
-              <div className="text-[10px] font-medium uppercase text-muted-foreground">{format(day, "EEE")}</div>
-              <div className={cn("mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium",
-                isToday(day) && "bg-primary text-primary-foreground"
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{format(day, "EEE")}</div>
+              <div className={cn("mt-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold",
+                today ? "bg-primary text-primary-foreground" : "text-foreground"
               )}>{format(day, "d")}</div>
             </div>
             <div className="space-y-1.5">
@@ -381,6 +452,7 @@ function WeekView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any)
   );
 }
 
+/* ─── Day View ─── */
 function DayView({ currentDate, tasksByDate, eventsByDate, onSelectDate, projectNameMap }: any) {
   const dateKey = format(currentDate, "yyyy-MM-dd");
   const dayTasks = tasksByDate[dateKey] || [];
@@ -388,23 +460,24 @@ function DayView({ currentDate, tasksByDate, eventsByDate, onSelectDate, project
   const deleteEvent = useDeleteCalendarEvent();
 
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <span className={cn("text-sm font-medium", isToday(currentDate) && "text-primary")}>
+    <div className="rounded-xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-5 py-3.5">
+        <span className={cn("text-sm font-semibold", isToday(currentDate) && "text-primary")}>
           {isToday(currentDate) ? "Today" : format(currentDate, "EEEE")} — {dayTasks.length} tasks, {dayEvents.length} events
         </span>
       </div>
       {dayEvents.length === 0 && dayTasks.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
+          <CalendarIcon className="mb-3 h-10 w-10 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">Nothing scheduled</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => onSelectDate(dateKey)}>
+          <Button variant="outline" size="sm" className="mt-3 rounded-lg" onClick={() => onSelectDate(dateKey)}>
             <Plus className="mr-1 h-4 w-4" /> Add task
           </Button>
         </div>
       ) : (
         <div className="divide-y divide-border">
           {dayEvents.map((e: any) => (
-            <div key={e.id} className="group flex items-center gap-3 px-4 py-3">
+            <div key={e.id} className="group flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/30">
               <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))" }} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -420,14 +493,14 @@ function DayView({ currentDate, tasksByDate, eventsByDate, onSelectDate, project
               </div>
               <button
                 onClick={() => deleteEvent.mutate({ id: e.id, source: e.source })}
-                className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 hover:bg-destructive/10"
+                className="opacity-0 group-hover:opacity-100 transition-opacity rounded-md p-1.5 hover:bg-destructive/10"
               >
                 <X className="h-4 w-4 text-destructive" />
               </button>
             </div>
           ))}
           {dayTasks.map((t: any) => (
-            <div key={t.id} className="flex items-center gap-3 px-4 py-3">
+            <div key={t.id} className="flex items-center gap-3 px-5 py-3.5">
               <div className={cn("h-2.5 w-2.5 rounded-full", priorityColors[t.priority])} />
               <div className="flex-1">
                 <p className="text-sm font-medium">{t.title}</p>
@@ -441,6 +514,7 @@ function DayView({ currentDate, tasksByDate, eventsByDate, onSelectDate, project
   );
 }
 
+/* ─── Agenda View ─── */
 function AgendaView({ tasks, projectNameMap, updateTask }: any) {
   const now = new Date();
   const upcoming = tasks
@@ -468,18 +542,19 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
     <div className="space-y-6">
       {groups.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
+          <CalendarIcon className="mb-3 h-10 w-10 text-muted-foreground/30" />
           <p className="text-sm text-muted-foreground">No upcoming tasks</p>
         </div>
       ) : groups.map((g) => (
         <div key={g.label}>
           <div className="mb-2 flex items-center gap-2">
             <div className={cn("h-2 w-2 rounded-full", g.color)} />
-            <span className="text-sm font-medium">{g.label}</span>
-            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{g.items.length}</span>
+            <span className="text-sm font-semibold">{g.label}</span>
+            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{g.items.length}</span>
           </div>
           <div className="space-y-1">
             {g.items.map((t: any) => (
-              <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+              <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-secondary/30">
                 <Checkbox
                   checked={false}
                   onCheckedChange={() => updateTask.mutate({ id: t.id, status: "done" })}
@@ -500,6 +575,7 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
   );
 }
 
+/* ─── Today's Events ─── */
 function TodaysEvents() {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -517,7 +593,7 @@ function TodaysEvents() {
     <div className="mt-6 space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground">Today's Events</h3>
       {events.map((event) => (
-        <div key={event.id} className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/20">
+        <div key={event.id} className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md hover:border-primary/20">
           <div className="rounded-lg p-2" style={{ backgroundColor: event.source === "google_calendar" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.15)" }}>
             <CalendarIcon className="h-5 w-5" style={{ color: event.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))" }} />
           </div>
@@ -547,7 +623,7 @@ function TodaysEvents() {
           </div>
           <button
             onClick={() => deleteEvent.mutate({ id: event.id, source: event.source })}
-            className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 hover:bg-destructive/10"
+            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-md p-1.5 hover:bg-destructive/10"
             title={event.source === "manual" ? "Delete event" : "Hide from view"}
           >
             <X className="h-4 w-4 text-destructive" />
