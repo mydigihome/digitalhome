@@ -21,13 +21,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<{ full_name: string; founding_member?: boolean } | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string; founding_member?: boolean; user_number?: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, founding_member")
+      .select("full_name, founding_member, user_number")
       .eq("id", userId)
       .single();
     setProfile(data);
