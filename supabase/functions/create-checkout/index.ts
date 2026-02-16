@@ -2,13 +2,23 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = [
+  "https://digitalhome.lovable.app",
+  "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,12 +38,18 @@ serve(async (req) => {
 
     const { plan, successUrl, cancelUrl } = await req.json();
     
+    // Input validation
+    if (!plan || typeof plan !== "string" || !["student", "pro"].includes(plan)) {
+      throw new Error("Invalid plan. Must be 'student' or 'pro'.");
+    }
+    if (successUrl && typeof successUrl !== "string") throw new Error("Invalid successUrl");
+    if (cancelUrl && typeof cancelUrl !== "string") throw new Error("Invalid cancelUrl");
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("Stripe not configured");
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    // Check if customer already exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string;
     if (customers.data.length > 0) {
@@ -46,7 +62,7 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    const priceAmount = plan === "student" ? 10000 : 20000; // cents per year
+    const priceAmount = plan === "student" ? 10000 : 20000;
     const planName = plan === "student" ? "Pro Membership (Student)" : "Pro Membership";
 
     const session = await stripe.checkout.sessions.create({
