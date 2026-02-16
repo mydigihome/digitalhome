@@ -15,14 +15,48 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const { signIn, user } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already authenticated (e.g. after Google OAuth redirect), go to dashboard
+  // On mount: check for existing session (covers OAuth redirect back)
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard", { replace: true });
-    }
+    let cancelled = false;
+
+    const check = async () => {
+      // Check URL hash for OAuth tokens (Supabase puts them there)
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        // Let Supabase client process the hash first
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) {
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+      if (!cancelled) setCheckingSession(false);
+    };
+
+    check();
+
+    // Also listen for auth changes (belt and suspenders)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user && !cancelled) {
+        navigate("/dashboard", { replace: true });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
+  // Also react to user from context
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
@@ -57,6 +91,14 @@ export default function Login() {
       navigate("/welcome");
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
