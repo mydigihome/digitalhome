@@ -83,10 +83,10 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Tutorial modal - show 30s after entering dashboard for new users
+  // Tutorial modal - show 5s after entering dashboard for new users
   useEffect(() => {
     if (prefs && (prefs as any).welcome_video_watched === false) {
-      const timer = setTimeout(() => setShowTutorial(true), 30000);
+      const timer = setTimeout(() => setShowTutorial(true), 5000);
       return () => clearTimeout(timer);
     }
   }, [prefs]);

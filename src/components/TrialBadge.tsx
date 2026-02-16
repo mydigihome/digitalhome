@@ -1,27 +1,31 @@
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 export function TrialBadge() {
   const { data: prefs } = useUserPreferences();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
+  const isFoundingMember = profile?.founding_member === true;
+
   useEffect(() => {
-    if (prefs?.trial_end_date && !prefs?.is_subscribed && !prefs?.founding_member) {
+    if (prefs?.trial_end_date && !prefs?.is_subscribed && !isFoundingMember) {
       const endDate = new Date(prefs.trial_end_date);
       const now = new Date();
       const diffMs = endDate.getTime() - now.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       setDaysLeft(Math.max(0, diffDays));
     }
-  }, [prefs?.trial_end_date, prefs?.is_subscribed, prefs?.founding_member]);
+  }, [prefs?.trial_end_date, prefs?.is_subscribed, isFoundingMember]);
 
   // Founding members never see trial badge
-  if (prefs?.founding_member) return null;
+  if (isFoundingMember) return null;
 
   // Don't show if subscribed or no trial data
-  if (!daysLeft && daysLeft !== 0 || prefs?.is_subscribed) {
+  if ((!daysLeft && daysLeft !== 0) || prefs?.is_subscribed) {
     return null;
   }
 

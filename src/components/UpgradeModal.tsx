@@ -1,4 +1,5 @@
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
@@ -13,24 +14,26 @@ import { Shield, Zap, Star, ArrowRight } from "lucide-react";
 
 export function UpgradeModal() {
   const { data: prefs } = useUserPreferences();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  const isFoundingMember = profile?.founding_member === true;
 
   useEffect(() => {
     if (!prefs) return;
     if (prefs.is_subscribed) return;
-    if (prefs.founding_member) return;
+    if (isFoundingMember) return;
     if (!prefs.trial_end_date) return;
 
     const isExpired = new Date(prefs.trial_end_date) < new Date();
     if (isExpired) {
-      // Small delay so it doesn't flash on mount
       const t = setTimeout(() => setOpen(true), 600);
       return () => clearTimeout(t);
     }
-  }, [prefs?.trial_end_date, prefs?.is_subscribed, prefs?.founding_member]);
+  }, [prefs?.trial_end_date, prefs?.is_subscribed, isFoundingMember]);
 
-  if (prefs?.is_subscribed || prefs?.founding_member) return null;
+  if (prefs?.is_subscribed || isFoundingMember) return null;
 
   const handleUpgrade = () => {
     setOpen(false);

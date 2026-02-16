@@ -1,12 +1,16 @@
 interface MinimalWhiteDoorProps {
   isOpen: boolean;
+  height?: number;
 }
 
-export default function MinimalWhiteDoor({ isOpen }: MinimalWhiteDoorProps) {
+export default function MinimalWhiteDoor({ isOpen, height = 500 }: MinimalWhiteDoorProps) {
+  const aspectRatio = 160 / 260;
+  const w = Math.round(height * aspectRatio);
+
   return (
     <svg
-      width="160"
-      height="260"
+      width={w}
+      height={height}
       viewBox="0 0 160 260"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
