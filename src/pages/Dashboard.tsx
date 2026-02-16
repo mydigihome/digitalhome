@@ -78,7 +78,7 @@ export default function Dashboard() {
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         setTimeout(() => confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } }), 300);
       });
-      toast.success("You're all set! Pro features unlocked 🎉");
+      toast.success("You're all set — Pro features unlocked 🎉");
       setSearchParams({}, { replace: true });
     }
   }, []);

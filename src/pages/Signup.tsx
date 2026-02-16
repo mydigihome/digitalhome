@@ -61,7 +61,7 @@ export default function Signup() {
       >
         <div className="mb-8 text-center">
           <h1 className="text-[32px] font-semibold tracking-tight">Create account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Start organizing your projects</p>
+          <p className="mt-2 text-sm text-muted-foreground">Your life, all in one place</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
