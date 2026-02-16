@@ -46,8 +46,8 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    const priceAmount = plan === "student" ? 500 : 1200; // cents per month
-    const planName = plan === "student" ? "Student Plan" : "Main Account Plan";
+    const priceAmount = plan === "student" ? 10000 : 20000; // cents per year
+    const planName = plan === "student" ? "Pro Membership (Student)" : "Pro Membership";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -57,7 +57,7 @@ serve(async (req) => {
             currency: "usd",
             product_data: { name: planName },
             unit_amount: priceAmount,
-            recurring: { interval: "month" },
+            recurring: { interval: "year" },
           },
           quantity: 1,
         },
