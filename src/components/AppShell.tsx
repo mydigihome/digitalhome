@@ -8,6 +8,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import VoiceInput from "@/components/VoiceInput";
+import { TrialBadge } from "@/components/TrialBadge";
 
 // ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
 const projectFolders = [
@@ -489,6 +490,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {!collapsed ? (
               <div className="flex items-center gap-2.5">
                 <span className="text-md font-semibold text-foreground">Digital Home</span>
+                <TrialBadge />
               </div>
             ) : (
               <div className="mx-auto">
@@ -535,6 +537,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
         <div className="flex items-center gap-2 flex-1">
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
+          <TrialBadge />
         </div>
         <NotionProfileMenu collapsed />
       </div>

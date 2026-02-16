@@ -31,7 +31,7 @@ const WelcomeScreen = () => {
         cursor: 'pointer',
         userSelect: 'none',
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
-        paddingTop: '40px',
+        paddingTop: '60px',
       }}
     >
       {/* Welcome text */}
@@ -44,7 +44,7 @@ const WelcomeScreen = () => {
           fontWeight: 600,
           color: '#1F2937',
           marginBottom: '0',
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.5px',
           textAlign: 'center',
         }}
       >
@@ -52,7 +52,7 @@ const WelcomeScreen = () => {
       </motion.h1>
 
       {/* Spacer */}
-      <div style={{ height: '80px' }} />
+      <div style={{ height: '100px' }} />
 
       {/* Door with breathing animation - BIG 500px */}
       <motion.div
