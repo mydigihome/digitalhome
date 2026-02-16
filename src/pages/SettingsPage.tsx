@@ -673,7 +673,7 @@ export default function SettingsPage() {
                       <div>
                         <h4 className="font-semibold text-foreground text-lg">Founding Member — Lifetime Access</h4>
                         <p className="text-sm text-muted-foreground">
-                          You're user #{profile?.user_number ?? '—'} — one of the first 50 to join. All features are yours forever, no payment needed.
+                          You're user #{(profile as any)?.user_number ?? '—'} — one of the first 50 to join. All features are yours forever, no payment needed.
                         </p>
                       </div>
                     </div>
