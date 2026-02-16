@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Mic, MicOff, X } from "lucide-react";
+import { Mic, MicOff, X, Lock, Unlock, GripVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,13 @@ export default function VoiceInput() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [supported, setSupported] = useState(false);
+  const [locked, setLocked] = useState(() => localStorage.getItem("voice-btn-locked") === "true");
+  const [position, setPosition] = useState(() => {
+    const saved = localStorage.getItem("voice-btn-pos");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [dragging, setDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number; bottom: number; right: number } | null>(null);
   const recognitionRef = useRef<any>(null);
   const { user } = useAuth();
   const { data: projects = [] } = useProjects();
@@ -170,25 +177,101 @@ export default function VoiceInput() {
 
   return (
     <>
-      {/* Floating mic button */}
-      <motion.button
-        onClick={toggleListening}
-        className={cn(
-          "fixed flex items-center justify-center rounded-full transition-colors",
-          "bottom-[76px] right-4 lg:bottom-6 lg:right-6",
-          "h-12 w-12 lg:h-14 lg:w-14",
-          "z-40 lg:z-50",
-          isListening
-            ? "bg-destructive/85 text-destructive-foreground backdrop-blur-lg border border-white/20 shadow-md lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
-            : "bg-primary/80 text-primary-foreground hover:bg-primary/90 backdrop-blur-lg border border-white/20 shadow-md lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
-        )}
-        whileTap={{ scale: 0.9 }}
-        animate={isListening ? { scale: [1, 1.08, 1] } : {}}
-        transition={isListening ? { repeat: Infinity, duration: 1.2 } : {}}
-        aria-label={isListening ? "Stop listening" : "Voice input"}
+      {/* Floating mic button — draggable when unlocked */}
+      <div
+        className="fixed z-40 lg:z-50"
+        style={
+          position
+            ? { bottom: `${position.bottom}px`, right: `${position.right}px` }
+            : { bottom: "76px", right: "16px" }
+        }
+        onPointerDown={(e) => {
+          if (locked) return;
+          e.preventDefault();
+          setDragging(true);
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          dragStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            bottom: window.innerHeight - rect.bottom,
+            right: window.innerWidth - rect.right,
+          };
+
+          const onMove = (ev: PointerEvent) => {
+            if (!dragStartRef.current) return;
+            const dx = ev.clientX - dragStartRef.current.x;
+            const dy = ev.clientY - dragStartRef.current.y;
+            const newBottom = Math.max(8, dragStartRef.current.bottom - dy);
+            const newRight = Math.max(8, dragStartRef.current.right - dx);
+            setPosition({ bottom: newBottom, right: newRight });
+          };
+
+          const onUp = () => {
+            setDragging(false);
+            dragStartRef.current = null;
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+          };
+
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+        }}
       >
-        {isListening ? <MicOff className="h-5 w-5 lg:h-6 lg:w-6" /> : <Mic className="h-5 w-5 lg:h-6 lg:w-6" />}
-      </motion.button>
+        {/* Lock/unlock toggle — visible when unlocked or long-pressing */}
+        {!locked && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (position) {
+                localStorage.setItem("voice-btn-pos", JSON.stringify(position));
+              }
+              localStorage.setItem("voice-btn-locked", "true");
+              setLocked(true);
+              toast({ title: "Button locked", description: "Position saved." });
+            }}
+            className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-card border border-border px-2 py-0.5 text-[10px] text-muted-foreground shadow-sm hover:text-foreground"
+          >
+            <Lock className="h-3 w-3" /> Lock
+          </button>
+        )}
+
+        <motion.button
+          onClick={() => {
+            if (dragging) return;
+            if (locked) {
+              toggleListening();
+            }
+          }}
+          onDoubleClick={() => {
+            if (locked) {
+              localStorage.setItem("voice-btn-locked", "false");
+              setLocked(false);
+              toast({ title: "Button unlocked", description: "Drag to reposition, then tap Lock." });
+            }
+          }}
+          className={cn(
+            "flex items-center justify-center rounded-full transition-colors",
+            "h-12 w-12 lg:h-14 lg:w-14",
+            !locked && "ring-2 ring-dashed ring-primary/40 cursor-grab active:cursor-grabbing",
+            locked && (isListening
+              ? "bg-destructive/85 text-destructive-foreground backdrop-blur-lg border border-white/20 shadow-md lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
+              : "bg-primary/80 text-primary-foreground hover:bg-primary/90 backdrop-blur-lg border border-white/20 shadow-md lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"),
+            !locked && "bg-primary/60 text-primary-foreground backdrop-blur-lg border-2 border-dashed border-white/40 shadow-md"
+          )}
+          whileTap={locked ? { scale: 0.9 } : {}}
+          animate={isListening && locked ? { scale: [1, 1.08, 1] } : {}}
+          transition={isListening ? { repeat: Infinity, duration: 1.2 } : {}}
+          aria-label={locked ? (isListening ? "Stop listening" : "Voice input") : "Drag to move, tap Lock to save"}
+        >
+          {!locked ? (
+            <GripVertical className="h-5 w-5 lg:h-6 lg:w-6" />
+          ) : isListening ? (
+            <MicOff className="h-5 w-5 lg:h-6 lg:w-6" />
+          ) : (
+            <Mic className="h-5 w-5 lg:h-6 lg:w-6" />
+          )}
+        </motion.button>
+      </div>
 
       {/* Transcript overlay */}
       <AnimatePresence>
