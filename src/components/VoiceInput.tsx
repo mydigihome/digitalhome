@@ -174,19 +174,20 @@ export default function VoiceInput() {
       <motion.button
         onClick={toggleListening}
         className={cn(
-        "fixed z-50 flex items-center justify-center rounded-full shadow-lg transition-colors",
-          "bottom-[100px] right-6 lg:bottom-6 lg:right-6",
-          "h-14 w-14",
+          "fixed flex items-center justify-center rounded-full transition-colors",
+          "bottom-[100px] right-4 lg:bottom-6 lg:right-6",
+          "h-12 w-12 lg:h-14 lg:w-14",
+          "z-40 lg:z-50",
           isListening
-            ? "bg-destructive text-destructive-foreground"
-            : "bg-primary text-primary-foreground hover:bg-primary/90"
+            ? "bg-destructive/85 text-destructive-foreground backdrop-blur-lg border border-white/20 shadow-md lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
+            : "bg-primary/80 text-primary-foreground hover:bg-primary/90 backdrop-blur-lg border border-white/20 shadow-md lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
         )}
         whileTap={{ scale: 0.9 }}
         animate={isListening ? { scale: [1, 1.08, 1] } : {}}
         transition={isListening ? { repeat: Infinity, duration: 1.2 } : {}}
         aria-label={isListening ? "Stop listening" : "Voice input"}
       >
-        {isListening ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
+        {isListening ? <MicOff className="h-5 w-5 lg:h-6 lg:w-6" /> : <Mic className="h-5 w-5 lg:h-6 lg:w-6" />}
       </motion.button>
 
       {/* Transcript overlay */}
