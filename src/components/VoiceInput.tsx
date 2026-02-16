@@ -254,9 +254,9 @@ export default function VoiceInput() {
             "h-12 w-12 lg:h-14 lg:w-14",
             !locked && "ring-2 ring-dashed ring-primary/40 cursor-grab active:cursor-grabbing",
              locked && (isListening
-               ? "bg-destructive/50 text-destructive-foreground backdrop-blur-xl border border-white/15 shadow-sm lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
-               : "bg-primary/45 text-primary-foreground hover:bg-primary/60 backdrop-blur-xl border border-white/15 shadow-sm lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"),
-             !locked && "bg-primary/35 text-primary-foreground backdrop-blur-xl border-2 border-dashed border-white/30 shadow-sm"
+               ? "bg-destructive/25 text-destructive-foreground backdrop-blur-2xl border border-white/10 shadow-none lg:bg-destructive lg:backdrop-blur-none lg:border-0 lg:shadow-lg"
+               : "bg-primary/20 text-primary-foreground hover:bg-primary/35 backdrop-blur-2xl border border-white/10 shadow-none lg:bg-primary lg:backdrop-blur-none lg:border-0 lg:shadow-lg"),
+             !locked && "bg-primary/15 text-primary-foreground backdrop-blur-2xl border-2 border-dashed border-white/15 shadow-none"
           )}
           whileTap={locked ? { scale: 0.9 } : {}}
           animate={isListening && locked ? { scale: [1, 1.08, 1] } : {}}
