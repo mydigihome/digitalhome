@@ -1,5 +1,5 @@
 import { useState } from "react";
-import HouseIcon from "@/components/HouseIcon";
+import houseLogo from "@/assets/house-logo.png";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -75,8 +75,8 @@ export default function Signup() {
         className="w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4">
-            <HouseIcon size={48} />
+          <div className="mx-auto mb-4 flex justify-center">
+            <img src={houseLogo} alt="Digital Home" className="h-24 w-24 object-contain" />
           </div>
           <h1 className="text-[32px] font-semibold tracking-tight">Create account</h1>
         </div>
