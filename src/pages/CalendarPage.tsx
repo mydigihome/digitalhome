@@ -1,12 +1,19 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAllTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useProjects } from "@/hooks/useProjects";
-import { useCalendarEvents, useDeleteCalendarEvent } from "@/hooks/useCalendarEvents";
+import { useCalendarEvents, useDeleteCalendarEvent, useCreateCalendarEvent } from "@/hooks/useCalendarEvents";
+import {
+  useGoogleCalendarConnection,
+  useConnectGoogleCalendar,
+  useHandleGoogleCallback,
+  useSyncGoogleCalendar,
+  useDisconnectGoogleCalendar,
+} from "@/hooks/useGoogleCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Video, MapPin, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, MapPin, X, RefreshCw, Link2, Unlink } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
@@ -17,14 +24,13 @@ import {
 import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
 import TaskEditor from "@/components/TaskEditor";
+import { useSearchParams } from "react-router-dom";
 
 const priorityColors: Record<string, string> = {
   low: "bg-success",
   medium: "bg-warning",
   high: "bg-destructive",
 };
-
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function CalendarPage() {
   const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
@@ -33,6 +39,33 @@ export default function CalendarPage() {
   const { data: tasks = [] } = useAllTasks();
   const { data: projects = [] } = useProjects();
   const updateTask = useUpdateTask();
+  const [searchParams] = useSearchParams();
+
+  // Google Calendar
+  const { data: gcalConnection, isLoading: gcalLoading } = useGoogleCalendarConnection();
+  const { startConnect, connecting } = useConnectGoogleCalendar();
+  const { exchangeCode } = useHandleGoogleCallback();
+  const syncGoogle = useSyncGoogleCalendar();
+  const disconnectGoogle = useDisconnectGoogleCalendar();
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code) {
+      exchangeCode(code);
+    }
+  }, [searchParams, exchangeCode]);
+
+  // Compute date range for events query
+  const dateRange = useMemo(() => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    return { start: calStart.toISOString(), end: calEnd.toISOString() };
+  }, [currentDate]);
+
+  const { data: calendarEvents = [] } = useCalendarEvents(dateRange);
 
   const projectNameMap = Object.fromEntries(projects.map((p) => [p.id, p.name]));
 
@@ -46,6 +79,16 @@ export default function CalendarPage() {
     });
     return map;
   }, [tasks]);
+
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, typeof calendarEvents> = {};
+    calendarEvents.forEach((e) => {
+      const dateKey = format(new Date(e.start_time), "yyyy-MM-dd");
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push(e);
+    });
+    return map;
+  }, [calendarEvents]);
 
   const goToday = () => setCurrentDate(new Date());
   const navigate = (dir: 1 | -1) => {
@@ -97,35 +140,52 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Calendar Views - wrapped for overflow */}
+        {/* Google Calendar Connection Bar */}
+        <GoogleCalendarBar
+          connection={gcalConnection}
+          loading={gcalLoading}
+          connecting={connecting}
+          syncing={syncGoogle.isPending}
+          onConnect={startConnect}
+          onSync={() => syncGoogle.mutate()}
+          onDisconnect={() => disconnectGoogle.mutate()}
+        />
+
+        {/* Calendar Views */}
         <div className="w-full overflow-x-auto">
           <div className="min-w-[640px]">
-            {view === "month" && <MonthView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
-            {view === "week" && <WeekView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} />}
+            {view === "month" && <MonthView currentDate={currentDate} tasksByDate={tasksByDate} eventsByDate={eventsByDate} onSelectDate={setSelectedDate} />}
+            {view === "week" && <WeekView currentDate={currentDate} tasksByDate={tasksByDate} eventsByDate={eventsByDate} onSelectDate={setSelectedDate} />}
           </div>
         </div>
 
-        {/* These don't need horizontal scroll */}
-        {view === "day" && <DayView currentDate={currentDate} tasksByDate={tasksByDate} onSelectDate={setSelectedDate} projectNameMap={projectNameMap} />}
+        {view === "day" && <DayView currentDate={currentDate} tasksByDate={tasksByDate} eventsByDate={eventsByDate} onSelectDate={setSelectedDate} projectNameMap={projectNameMap} />}
         {view === "agenda" && <AgendaView tasks={tasks} projectNameMap={projectNameMap} updateTask={updateTask} />}
 
         {/* Today's Events */}
         <TodaysEvents />
 
-        {/* Calendar Integration CTA */}
-        <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 md:p-5">
-          <div className="flex items-start gap-3">
-            <CalendarIcon className="mt-0.5 h-5 w-5 text-primary flex-shrink-0" />
-            <div className="flex-1">
-              <h4 className="font-semibold text-foreground mb-1">Connect Your Calendars</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Sync with Google Calendar, Apple Calendar, and Outlook to see all your events in one place.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm">Connect Google Calendar</Button>
-                <Button variant="outline" size="sm">Connect Apple Calendar</Button>
-              </div>
-            </div>
+        {/* Legend */}
+        <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-[#4285F4]" />
+            Google Calendar
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            Digital Home
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-destructive" />
+            High priority
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-warning" />
+            Medium
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-success" />
+            Low
           </div>
         </div>
       </motion.div>
@@ -141,7 +201,60 @@ export default function CalendarPage() {
   );
 }
 
-function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
+function GoogleCalendarBar({ connection, loading, connecting, syncing, onConnect, onSync, onDisconnect }: {
+  connection: any;
+  loading: boolean;
+  connecting: boolean;
+  syncing: boolean;
+  onConnect: () => void;
+  onSync: () => void;
+  onDisconnect: () => void;
+}) {
+  if (loading) return null;
+
+  if (!connection) {
+    return (
+      <div className="mb-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+          <CalendarIcon className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">Connect Google Calendar</p>
+          <p className="text-xs text-muted-foreground">Import your events automatically. Changes here won't affect Google.</p>
+        </div>
+        <Button size="sm" onClick={onConnect} disabled={connecting}>
+          <Link2 className="mr-1.5 h-4 w-4" />
+          {connecting ? "Connecting..." : "Connect"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 flex items-center gap-3 rounded-xl border border-success/20 bg-success/5 p-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10">
+        <span className="text-lg">✅</span>
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-foreground">Google Calendar Connected</p>
+        <p className="text-xs text-muted-foreground">
+          {connection.calendar_email || "Synced"} · Last synced {connection.updated_at ? format(new Date(connection.updated_at), "MMM d, h:mm a") : "recently"}
+        </p>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onSync} disabled={syncing}>
+          <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", syncing && "animate-spin")} />
+          {syncing ? "Syncing" : "Sync"}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDisconnect} className="text-destructive hover:text-destructive">
+          <Unlink className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function MonthView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -159,6 +272,7 @@ function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
         {days.map((day) => {
           const dateKey = format(day, "yyyy-MM-dd");
           const dayTasks = tasksByDate[dateKey] || [];
+          const dayEvents = eventsByDate[dateKey] || [];
           const inMonth = isSameMonth(day, currentDate);
           const isWeekend = day.getDay() === 0 || day.getDay() === 6;
 
@@ -179,12 +293,26 @@ function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
               >
                 {format(day, "d")}
               </span>
-              <div className="mt-1 flex gap-1">
-                {dayTasks.slice(0, 3).map((t: any) => (
-                  <div key={t.id} className={cn("h-1.5 w-1.5 rounded-full", priorityColors[t.priority])} />
+              {/* Event pills */}
+              <div className="mt-0.5 space-y-0.5">
+                {dayEvents.slice(0, 2).map((e: any) => (
+                  <div key={e.id} className="truncate rounded px-1 py-0.5 text-[9px] md:text-[10px] font-medium leading-tight"
+                    style={{
+                      backgroundColor: e.source === "google_calendar" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.15)",
+                      color: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))",
+                    }}
+                  >
+                    {e.title}
+                  </div>
                 ))}
-                {dayTasks.length > 3 && (
-                  <span className="text-[9px] text-muted-foreground">+{dayTasks.length - 3}</span>
+                {dayTasks.slice(0, 2 - Math.min(dayEvents.length, 2)).map((t: any) => (
+                  <div key={t.id} className="flex items-center gap-1">
+                    <div className={cn("h-1.5 w-1.5 rounded-full flex-shrink-0", priorityColors[t.priority])} />
+                    <span className="truncate text-[9px] md:text-[10px] text-muted-foreground">{t.title}</span>
+                  </div>
+                ))}
+                {(dayEvents.length + dayTasks.length) > 2 && (
+                  <span className="text-[9px] text-muted-foreground">+{dayEvents.length + dayTasks.length - 2} more</span>
                 )}
               </div>
             </div>
@@ -195,7 +323,7 @@ function MonthView({ currentDate, tasksByDate, onSelectDate }: any) {
   );
 }
 
-function WeekView({ currentDate, tasksByDate, onSelectDate }: any) {
+function WeekView({ currentDate, tasksByDate, eventsByDate, onSelectDate }: any) {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
 
@@ -204,6 +332,7 @@ function WeekView({ currentDate, tasksByDate, onSelectDate }: any) {
       {days.map((day) => {
         const dateKey = format(day, "yyyy-MM-dd");
         const dayTasks = tasksByDate[dateKey] || [];
+        const dayEvents = eventsByDate[dateKey] || [];
         return (
           <div
             key={dateKey}
@@ -220,6 +349,21 @@ function WeekView({ currentDate, tasksByDate, onSelectDate }: any) {
               )}>{format(day, "d")}</div>
             </div>
             <div className="space-y-1.5">
+              {dayEvents.map((e: any) => (
+                <div key={e.id} className="rounded-lg px-2 py-1.5 text-xs font-medium"
+                  style={{
+                    backgroundColor: e.source === "google_calendar" ? "rgba(66,133,244,0.12)" : "hsl(var(--primary) / 0.12)",
+                    color: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))",
+                  }}
+                >
+                  <div className="truncate">{e.title}</div>
+                  {!e.all_day && (
+                    <div className="text-[10px] opacity-70 mt-0.5">
+                      {format(new Date(e.start_time), "h:mm a")}
+                    </div>
+                  )}
+                </div>
+              ))}
               {dayTasks.map((t: any) => (
                 <div key={t.id} className={cn("rounded-lg border-l-2 bg-secondary/50 px-2 py-1.5 text-xs", {
                   "border-l-destructive": t.priority === "high",
@@ -237,26 +381,51 @@ function WeekView({ currentDate, tasksByDate, onSelectDate }: any) {
   );
 }
 
-function DayView({ currentDate, tasksByDate, onSelectDate, projectNameMap }: any) {
+function DayView({ currentDate, tasksByDate, eventsByDate, onSelectDate, projectNameMap }: any) {
   const dateKey = format(currentDate, "yyyy-MM-dd");
   const dayTasks = tasksByDate[dateKey] || [];
+  const dayEvents = eventsByDate[dateKey] || [];
+  const deleteEvent = useDeleteCalendarEvent();
 
   return (
     <div className="rounded-xl border border-border bg-card">
       <div className="border-b border-border px-4 py-3">
         <span className={cn("text-sm font-medium", isToday(currentDate) && "text-primary")}>
-          {isToday(currentDate) ? "Today" : format(currentDate, "EEEE")} — {dayTasks.length} tasks
+          {isToday(currentDate) ? "Today" : format(currentDate, "EEEE")} — {dayTasks.length} tasks, {dayEvents.length} events
         </span>
       </div>
-      {dayTasks.length === 0 ? (
+      {dayEvents.length === 0 && dayTasks.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
-          <p className="text-sm text-muted-foreground">No tasks scheduled</p>
+          <p className="text-sm text-muted-foreground">Nothing scheduled</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => onSelectDate(dateKey)}>
             <Plus className="mr-1 h-4 w-4" /> Add task
           </Button>
         </div>
       ) : (
         <div className="divide-y divide-border">
+          {dayEvents.map((e: any) => (
+            <div key={e.id} className="group flex items-center gap-3 px-4 py-3">
+              <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: e.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))" }} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">{e.title}</p>
+                  {e.source === "google_calendar" && (
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 flex-shrink-0">Google</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {e.all_day ? "All day" : `${format(new Date(e.start_time), "h:mm a")}${e.end_time ? ` – ${format(new Date(e.end_time), "h:mm a")}` : ""}`}
+                  {e.location && ` · ${e.location}`}
+                </p>
+              </div>
+              <button
+                onClick={() => deleteEvent.mutate({ id: e.id, source: e.source })}
+                className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 hover:bg-destructive/10"
+              >
+                <X className="h-4 w-4 text-destructive" />
+              </button>
+            </div>
+          ))}
           {dayTasks.map((t: any) => (
             <div key={t.id} className="flex items-center gap-3 px-4 py-3">
               <div className={cn("h-2.5 w-2.5 rounded-full", priorityColors[t.priority])} />
@@ -278,11 +447,9 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
     .filter((t: any) => t.due_date && t.status !== "done")
     .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
 
-  const groups: { label: string; color: string; items: any[] }[] = [];
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-
   const buckets = { Overdue: [] as any[], Today: [] as any[], Tomorrow: [] as any[], "This Week": [] as any[], Later: [] as any[] };
   const colors: Record<string, string> = { Overdue: "bg-destructive", Today: "bg-warning", Tomorrow: "bg-primary", "This Week": "bg-primary/60", Later: "bg-muted-foreground" };
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
   upcoming.forEach((t: any) => {
     const d = new Date(t.due_date);
@@ -293,15 +460,15 @@ function AgendaView({ tasks, projectNameMap, updateTask }: any) {
     else buckets.Later.push(t);
   });
 
-  Object.entries(buckets).forEach(([label, items]) => {
-    if (items.length > 0) groups.push({ label, color: colors[label], items });
-  });
+  const groups = Object.entries(buckets)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({ label, color: colors[label], items }));
 
   return (
     <div className="space-y-6">
       {groups.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
-          <p className="text-sm text-muted-foreground">No upcoming tasks 🎉</p>
+          <p className="text-sm text-muted-foreground">No upcoming tasks</p>
         </div>
       ) : groups.map((g) => (
         <div key={g.label}>
@@ -351,8 +518,8 @@ function TodaysEvents() {
       <h3 className="text-sm font-semibold text-muted-foreground">Today's Events</h3>
       {events.map((event) => (
         <div key={event.id} className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/20">
-          <div className="rounded-lg p-2 bg-primary">
-            <CalendarIcon className="h-5 w-5 text-primary-foreground" />
+          <div className="rounded-lg p-2" style={{ backgroundColor: event.source === "google_calendar" ? "rgba(66,133,244,0.15)" : "hsl(var(--primary) / 0.15)" }}>
+            <CalendarIcon className="h-5 w-5" style={{ color: event.source === "google_calendar" ? "#4285F4" : "hsl(var(--primary))" }} />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
