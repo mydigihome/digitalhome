@@ -535,12 +535,66 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header — slim top bar */}
       <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          aria-label="Toggle sidebar"
+        >
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
         <div className="flex items-center gap-2 flex-1">
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
           <TrialBadge />
         </div>
         <NotionProfileMenu collapsed />
       </div>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 400, damping: 35 }}
+              className="fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col border-r border-border bg-card lg:hidden"
+            >
+              {/* Mobile sidebar header */}
+              <div className="flex h-14 shrink-0 items-center justify-between px-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-md font-semibold text-foreground">Digital Home</span>
+                  <TrialBadge />
+                </div>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Scrollable navigation */}
+              <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5">
+                <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              </nav>
+
+              {/* Bottom profile section */}
+              <div className="shrink-0 border-t border-border px-2 py-2">
+                <NotionProfileMenu />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Bottom Tab Bar */}
       <MobileTabBar />
