@@ -174,8 +174,8 @@ export default function VoiceInput() {
       <motion.button
         onClick={toggleListening}
         className={cn(
-          "fixed z-50 flex items-center justify-center rounded-full shadow-lg transition-colors",
-          "bottom-20 right-4 lg:bottom-6 lg:right-6",
+        "fixed z-50 flex items-center justify-center rounded-full shadow-lg transition-colors",
+          "bottom-[100px] right-6 lg:bottom-6 lg:right-6",
           "h-14 w-14",
           isListening
             ? "bg-destructive text-destructive-foreground"
