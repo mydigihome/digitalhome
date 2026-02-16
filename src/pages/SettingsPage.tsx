@@ -1121,7 +1121,7 @@ export default function SettingsPage() {
                       <HeadphonesIcon size={28} className="text-muted-foreground mt-1" />
                       <div>
                         <h3 className="text-xl font-semibold text-foreground">Support & Feedback</h3>
-                        <p className="text-sm text-muted-foreground">We'd love to hear from you! Share your thoughts, report issues, or suggest features.</p>
+                        <p className="text-sm text-muted-foreground">We'd love to hear from you. Share your thoughts, report issues, or suggest features.</p>
                       </div>
                     </div>
                   </div>
