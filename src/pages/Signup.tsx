@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import houseLogo from "@/assets/house-logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,11 +20,32 @@ export default function Signup() {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already authenticated (e.g. after Google OAuth redirect), go to dashboard
+  // On mount: check for existing session (covers OAuth redirect back)
   useEffect(() => {
-    if (user) {
-      navigate("/dashboard", { replace: true });
-    }
+    let cancelled = false;
+    const check = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        await new Promise((r) => setTimeout(r, 500));
+      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!cancelled && session?.user) {
+        navigate("/dashboard", { replace: true });
+      }
+    };
+    check();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user && !cancelled) {
+        navigate("/dashboard", { replace: true });
+      }
+    });
+
+    return () => { cancelled = true; subscription.unsubscribe(); };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
