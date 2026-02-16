@@ -175,7 +175,7 @@ export default function VoiceInput() {
         onClick={toggleListening}
         className={cn(
           "fixed flex items-center justify-center rounded-full transition-colors",
-          "bottom-[100px] right-4 lg:bottom-6 lg:right-6",
+          "bottom-[76px] right-4 lg:bottom-6 lg:right-6",
           "h-12 w-12 lg:h-14 lg:w-14",
           "z-40 lg:z-50",
           isListening
