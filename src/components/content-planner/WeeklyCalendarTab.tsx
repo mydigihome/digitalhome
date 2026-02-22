@@ -123,8 +123,8 @@ export default function WeeklyCalendarTab({
             {/* Add post button */}
             <button
               onClick={() => addPost(dayIdx)}
-              className="w-full py-2.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150"
-              style={{ borderTop: "1px solid #F0F0F0", borderRadius: "0 0 0 0" }}
+              className="w-full py-2.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150 hover:-translate-y-px"
+              style={{ borderTop: "1px solid #F0F0F0" }}
             >
               <Plus size={12} /> Add Post
             </button>
@@ -134,26 +134,28 @@ export default function WeeklyCalendarTab({
 
       {/* Weekly review sections */}
       <div className="grid grid-cols-2 gap-0" style={{ borderTop: "1px solid #F0F0F0" }}>
-        <div className="p-4" style={{ background: "#F8F8F8", borderRight: "1px solid #F0F0F0", borderLeft: "3px solid #CCE5FF" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Weekly To-Do</div>
-          {week.weeklyTodos.map((t, i) => (
-            <input
-              key={i}
-              className="block w-full bg-transparent py-1 text-[13px] outline-none text-gray-700"
-              value={t}
-              onChange={e => setWeek(p => {
-                const todos = [...p.weeklyTodos];
-                todos[i] = e.target.value;
-                return { ...p, weeklyTodos: todos };
-              })}
-              placeholder={`To-do ${i + 1}`}
-            />
-          ))}
+        <div className="p-5" style={{ background: "#FAFAFA", borderRight: "1px solid #F0F0F0", borderLeft: "3px solid #CCE5FF", borderRadius: "0 0 0 12px" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Weekly To-Do</div>
+          <div className="space-y-1">
+            {week.weeklyTodos.map((t, i) => (
+              <input
+                key={i}
+                className="block w-full bg-transparent py-1.5 text-[13px] outline-none text-gray-700 transition-all duration-150 hover:bg-white/50 px-2 rounded-lg"
+                value={t}
+                onChange={e => setWeek(p => {
+                  const todos = [...p.weeklyTodos];
+                  todos[i] = e.target.value;
+                  return { ...p, weeklyTodos: todos };
+                })}
+                placeholder={`To-do ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
-        <div className="p-4" style={{ background: "#F8F8F8", borderLeft: "3px solid #E8D5FF" }}>
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">Weekly Review</div>
+        <div className="p-5" style={{ background: "#FAFAFA", borderLeft: "3px solid #E8D5FF", borderRadius: "0 0 12px 0" }}>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Weekly Review</div>
           <AutoTextarea
-            className="w-full bg-transparent text-[13px] outline-none text-gray-700"
+            className="w-full bg-transparent text-[13px] outline-none text-gray-700 transition-all duration-150 hover:bg-white/50 px-2 py-1 rounded-lg"
             value={week.weeklyReview}
             onChange={e => setWeek(p => ({ ...p, weeklyReview: e.target.value }))}
             placeholder="Notes on the week..."

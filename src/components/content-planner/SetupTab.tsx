@@ -87,7 +87,7 @@ export default function SetupTab({ setup, setSetup }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 h-full">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-0 h-full pl-6 overflow-x-auto">
       {/* Regular lists */}
       {lists.map(({ key, label }) => (
         <div key={key} className="border-r border-gray-100 last:border-r-0">
