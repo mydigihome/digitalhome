@@ -1,7 +1,16 @@
-import { useRef, useCallback, DragEvent } from "react";
-import { X, Upload, Image, Link2, ExternalLink } from "lucide-react";
+import { useRef, useCallback, useState, useEffect, DragEvent } from "react";
+import { X, Upload, Image, Link2, ExternalLink, Globe, Loader2 } from "lucide-react";
 import { SetupData, PostEntry, getStatusColor, getPlatformColor } from "./types";
 import AutoTextarea from "./AutoTextarea";
+import { supabase } from "@/integrations/supabase/client";
+
+interface OgData {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  siteName: string | null;
+  url: string | null;
+}
 
 interface Props {
   post: PostEntry;
@@ -14,6 +23,95 @@ interface Props {
 }
 
 const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as const;
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
+}
+
+function LinkPreviewCard({ url }: { url: string }) {
+  const [og, setOg] = useState<OgData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    const fetchOg = async () => {
+      setLoading(true);
+      setFailed(false);
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-og-tags", {
+          body: { url },
+        });
+        if (cancelled) return;
+        if (error || !data?.success) {
+          setFailed(true);
+        } else {
+          setOg(data.data);
+        }
+      } catch {
+        if (!cancelled) setFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchOg();
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 mt-2 px-3 py-2.5 text-[12px] text-gray-400" style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}>
+        <Loader2 size={14} className="animate-spin" /> Fetching link preview…
+      </div>
+    );
+  }
+
+  if (failed || !og) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 mt-2 px-3 py-2.5 hover:bg-gray-50 transition-all duration-150 no-underline"
+        style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}
+      >
+        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+          <Globe size={14} className="text-gray-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[12px] font-medium text-gray-700 truncate">{getDomain(url)}</div>
+          <div className="text-[11px] text-blue-500 truncate">{url}</div>
+        </div>
+        <ExternalLink size={12} className="text-gray-300 shrink-0" />
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 mt-2 overflow-hidden hover:shadow-md transition-all duration-150 no-underline"
+      style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}
+    >
+      {og.image && (
+        <img src={og.image} alt="" className="w-20 h-16 object-cover shrink-0" style={{ borderRadius: "12px 0 0 12px" }} />
+      )}
+      <div className="flex-1 min-w-0 py-2 px-1">
+        <div className="text-[12px] font-medium text-gray-800 truncate">{og.title || getDomain(url)}</div>
+        {og.description && <div className="text-[11px] text-gray-500 truncate mt-0.5">{og.description}</div>}
+        <div className="text-[10px] text-gray-400 mt-0.5">{og.siteName || getDomain(url)}</div>
+      </div>
+      <ExternalLink size={12} className="text-gray-300 shrink-0 mr-3" />
+    </a>
+  );
+}
 
 export default function PostDetailModal({ post, setup, onUpdate, onUpdateChecklist, onUpdateAnalytics, onDelete, onClose }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -31,6 +129,14 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
     const file = e.dataTransfer.files?.[0];
     if (file?.type.startsWith("image/")) handleFile(file);
   }, [handleFile]);
+
+  const handleLinkPaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    if (text) {
+      // Let the input update naturally, then trigger OG fetch via the value change
+      setTimeout(() => onUpdate({ postLink: text }), 0);
+    }
+  }, [onUpdate]);
 
   const imgSrc = post.imageFile || post.imageUrl;
 
@@ -107,19 +213,11 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
                 style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
                 value={post.postLink || ""}
                 onChange={e => onUpdate({ postLink: e.target.value })}
+                onPaste={handleLinkPaste}
                 placeholder="https://..."
               />
             </div>
-            {post.postLink && (
-              <a
-                href={post.postLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-1.5 text-[12px] text-blue-500 underline hover:text-blue-700 transition-colors duration-150"
-              >
-                <ExternalLink size={11} /> Open link
-              </a>
-            )}
+            {post.postLink && <LinkPreviewCard url={post.postLink} />}
           </div>
 
           {/* Platform + Content Type */}

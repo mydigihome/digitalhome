@@ -468,6 +468,21 @@ function MobileTabBar() {
   );
 }
 
+function ContentWrapper({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const isFullBleed = location.pathname === "/vision";
+
+  if (isFullBleed) {
+    return <div className="h-full">{children}</div>;
+  }
+
+  return (
+    <div className="mobile-main-content mx-auto max-w-[1400px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
+      {children}
+    </div>
+  );
+}
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -603,9 +618,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>
-        <div className="mobile-main-content mx-auto max-w-[1400px] px-4 py-6 sm:px-8 sm:py-8 lg:px-12 lg:py-12">
-          {children}
-        </div>
+        <ContentWrapper>{children}</ContentWrapper>
       </main>
     </div>
   );
