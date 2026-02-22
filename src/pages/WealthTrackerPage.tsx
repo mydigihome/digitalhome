@@ -1,66 +1,90 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, Receipt, Target, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 import AppShell from "@/components/AppShell";
-import SubscriptionsTab from "@/components/wealth/SubscriptionsTab";
-import MonthlySpendingTab from "@/components/wealth/MonthlySpendingTab";
-import SavingsGoalsTab from "@/components/wealth/SavingsGoalsTab";
-import InvestmentsTab from "@/components/wealth/InvestmentsTab";
+import NetWorthHero from "@/components/wealth/NetWorthHero";
+import SubscriptionsSection from "@/components/wealth/SubscriptionsSection";
+import SpendingSection from "@/components/wealth/SpendingSection";
+import BudgetEnvelopes from "@/components/wealth/BudgetEnvelopes";
+import BillsCalendar from "@/components/wealth/BillsCalendar";
+import SavingsSection from "@/components/wealth/SavingsSection";
+import InvestmentsSection from "@/components/wealth/InvestmentsSection";
 
-const TABS = [
-  { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
-  { id: "spending", label: "Monthly Spending", icon: Receipt },
-  { id: "savings", label: "Savings Goals", icon: Target },
-  { id: "investments", label: "Investments", icon: TrendingUp },
-] as const;
-
-type TabId = typeof TABS[number]["id"];
+const NAV_ITEMS = [
+  { id: "net-worth", label: "Net Worth" },
+  { id: "subscriptions", label: "Subscriptions" },
+  { id: "spending", label: "Spending" },
+  { id: "budget", label: "Budget" },
+  { id: "bills", label: "Bills" },
+  { id: "goals", label: "Goals" },
+  { id: "investments", label: "Investments" },
+];
 
 export default function WealthTrackerPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("subscriptions");
+  const [activeSection, setActiveSection] = useState("net-worth");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px" }
+    );
+
+    NAV_ITEMS.forEach(item => {
+      const el = document.getElementById(item.id);
+      if (el) observerRef.current?.observe(el);
+    });
+
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {/* Page header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">💰</span>
-          <h1 className="text-3xl font-bold text-foreground">Wealth Tracker</h1>
+          <h1 className="text-2xl font-bold text-foreground">Wealth Tracker</h1>
         </div>
 
-        {/* Sub-navigation */}
-        <div className="mb-8">
-          <nav className="flex gap-1 p-1 rounded-xl bg-muted/40 border border-border w-fit">
-            {TABS.map(tab => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                    active
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              );
-            })}
+        {/* Sticky mini-nav */}
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm pb-3 pt-1 -mx-1 px-1">
+          <nav className="flex gap-0.5 p-1 rounded-xl bg-muted/40 border border-border overflow-x-auto scrollbar-hide">
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.id}
+                onClick={() => scrollTo(item.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  activeSection === item.id
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {/* Tab content */}
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          {activeTab === "subscriptions" && <SubscriptionsTab />}
-          {activeTab === "spending" && <MonthlySpendingTab />}
-          {activeTab === "savings" && <SavingsGoalsTab />}
-          {activeTab === "investments" && <InvestmentsTab />}
-        </motion.div>
+        {/* Sections */}
+        <div className="space-y-10 mt-4">
+          <NetWorthHero />
+          <SubscriptionsSection />
+          <SpendingSection />
+          <BudgetEnvelopes />
+          <BillsCalendar />
+          <SavingsSection />
+          <InvestmentsSection />
+        </div>
       </motion.div>
     </AppShell>
   );
