@@ -14,7 +14,17 @@ interface Props {
 
 const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as const;
 
-// ─── Microlink preview hook ────────────────────────────────────────────────
+// ─── YouTube ID extractor ──────────────────────────────────────────────────
+function extractYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1).split("/")[0] || null;
+    if (u.hostname.includes("youtube.com")) return u.searchParams.get("v") || null;
+  } catch { /* ignore */ }
+  return null;
+}
+
+// ─── Link preview hook (YouTube-direct, microlink fallback) ────────────────
 function useLinkPreview() {
   const [preview, setPreview] = useState<{ title: string; image: string | null; domain: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +33,19 @@ function useLinkPreview() {
   const fetchPreview = useCallback((url: string) => {
     if (!url || !url.startsWith("http")) { setPreview(null); return; }
     if (timerRef.current) clearTimeout(timerRef.current);
+
+    // YouTube: extract video ID and build thumbnail URL directly
+    const ytId = extractYouTubeId(url);
+    if (ytId) {
+      setPreview({
+        title: "YouTube Video",
+        image: `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`,
+        domain: "youtube.com",
+      });
+      return;
+    }
+
+    // Non-YouTube: debounced microlink
     timerRef.current = setTimeout(async () => {
       setLoading(true);
       try {
