@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, DragEvent } from "react";
+import { useState, useCallback } from "react";
 import AppShell from "@/components/AppShell";
 import { useContentPlannerState } from "@/components/content-planner/useContentPlannerState";
 import SetupTab from "@/components/content-planner/SetupTab";
@@ -7,6 +7,7 @@ import MonthlyViewTab from "@/components/content-planner/MonthlyViewTab";
 import IdeasBankTab from "@/components/content-planner/IdeasBankTab";
 import HashtagManagerTab from "@/components/content-planner/HashtagManagerTab";
 import StrategyTab from "@/components/content-planner/StrategyTab";
+import SocialQuickLinks from "@/components/content-planner/SocialQuickLinks";
 
 const TAB_LABELS: Record<string, string> = {
   setup: "Setup",
@@ -45,32 +46,13 @@ export default function ContentPlanner() {
   return (
     <AppShell>
       <div className="flex flex-col h-full w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-        {/* Tab bar */}
-        <div className="flex items-center border-b border-gray-200 px-4 shrink-0">
-          {state.tabOrder.map(tabId => (
-            <button
-              key={tabId}
-              draggable
-              onDragStart={() => handleDragStart(tabId)}
-              onDragOver={e => handleDragOver(e, tabId)}
-              onDragEnd={handleDragEnd}
-              onClick={() => setActiveTab(tabId)}
-              className={`px-3 py-2.5 text-sm transition-colors relative cursor-grab active:cursor-grabbing ${
-                activeTab === tabId
-                  ? "text-gray-900 font-medium"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              {TAB_LABELS[tabId] || tabId}
-              {activeTab === tabId && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
-              )}
-            </button>
-          ))}
+        {/* Top bar with social quick links */}
+        <div className="flex items-center justify-end px-4 py-2 shrink-0">
+          <SocialQuickLinks links={state.socialLinks} setLinks={state.setSocialLinks} />
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-h-0">
           {activeTab === "setup" && <SetupTab setup={state.setup} setSetup={state.setSetup} />}
           {activeTab === "weekly" && (
             <WeeklyCalendarTab
@@ -90,6 +72,30 @@ export default function ContentPlanner() {
           {activeTab === "ideas" && <IdeasBankTab setup={state.setup} ideas={state.ideas} setIdeas={state.setIdeas} />}
           {activeTab === "hashtags" && <HashtagManagerTab hashtagGroups={state.hashtagGroups} setHashtagGroups={state.setHashtagGroups} />}
           {activeTab === "strategy" && <StrategyTab strategy={state.strategy} setStrategy={state.setStrategy} />}
+        </div>
+
+        {/* Bottom tab bar */}
+        <div className="flex items-center border-t border-gray-200 bg-white shrink-0">
+          {state.tabOrder.map(tabId => (
+            <button
+              key={tabId}
+              draggable
+              onDragStart={() => handleDragStart(tabId)}
+              onDragOver={e => handleDragOver(e, tabId)}
+              onDragEnd={handleDragEnd}
+              onClick={() => setActiveTab(tabId)}
+              className={`flex-1 px-3 py-2.5 text-xs transition-colors relative cursor-grab active:cursor-grabbing ${
+                activeTab === tabId
+                  ? "text-gray-900 font-medium"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              {activeTab === tabId && (
+                <span className="absolute top-0 left-0 right-0 h-[2px] bg-gray-900" />
+              )}
+              {TAB_LABELS[tabId] || tabId}
+            </button>
+          ))}
         </div>
       </div>
     </AppShell>

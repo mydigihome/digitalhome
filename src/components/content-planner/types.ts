@@ -3,11 +3,16 @@ export interface StatusItem {
   color: string; // pastel hex
 }
 
+export interface PlatformItem {
+  name: string;
+  color: string; // brand color hex
+}
+
 export interface SetupData {
   contentPillars: string[];
   contentFormats: string[];
   statuses: StatusItem[];
-  platforms: string[];
+  platforms: PlatformItem[];
   goals: string[];
 }
 
@@ -64,6 +69,11 @@ export interface StrategyRow {
   value: string;
 }
 
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
 export interface ContentPlannerData {
   setup: SetupData;
   weeks: Record<string, WeekData>; // keyed by weekStart date
@@ -71,26 +81,43 @@ export interface ContentPlannerData {
   hashtagGroups: HashtagGroup[];
   strategy: StrategyRow[];
   tabOrder: string[];
+  socialLinks: SocialLink[];
 }
 
+export const DEFAULT_PLATFORM_COLORS: PlatformItem[] = [
+  { name: "Substack", color: "#FF6719" },
+  { name: "YouTube", color: "#FF0000" },
+  { name: "Instagram", color: "#833AB4" },
+  { name: "TikTok", color: "#000000" },
+  { name: "Pinterest", color: "#E60023" },
+];
+
 export const DEFAULT_STATUS_COLORS: StatusItem[] = [
-  { label: "Not Started", color: "#e5e7eb" },
-  { label: "Draft", color: "#fef08a" },
-  { label: "Filming", color: "#fed7aa" },
-  { label: "Editing", color: "#bfdbfe" },
-  { label: "Scheduled", color: "#ddd6fe" },
-  { label: "Published", color: "#bbf7d0" },
+  { label: "Not Started", color: "#E5E7EB" },
+  { label: "Draft", color: "#FFF3CD" },
+  { label: "Filming", color: "#FFE5CC" },
+  { label: "Editing", color: "#CCE5FF" },
+  { label: "Scheduled", color: "#E8D5FF" },
+  { label: "Published", color: "#D4EDDA" },
 ];
 
 export const DEFAULT_SETUP: SetupData = {
   contentPillars: ["Educate", "Nurture", "Inspire", "Grow", "Social Proof"],
   contentFormats: ["Reel", "Story", "Carousel", "Video", "Blog", "Newsletter", "Podcast"],
   statuses: DEFAULT_STATUS_COLORS,
-  platforms: ["Substack", "YouTube", "Instagram", "TikTok", "Pinterest"],
+  platforms: DEFAULT_PLATFORM_COLORS,
   goals: ["Views", "Subscribers", "Likes", "Signups"],
 };
 
 export const DEFAULT_TAB_ORDER = ["setup", "weekly", "monthly", "ideas", "hashtags", "strategy"];
+
+export const DEFAULT_SOCIAL_LINKS: SocialLink[] = [
+  { platform: "YouTube", url: "https://youtube.com" },
+  { platform: "Instagram", url: "https://instagram.com" },
+  { platform: "TikTok", url: "https://tiktok.com" },
+  { platform: "Substack", url: "https://substack.com" },
+  { platform: "Pinterest", url: "https://pinterest.com" },
+];
 
 export function createEmptyPost(): PostEntry {
   return {
@@ -107,5 +134,14 @@ export function createEmptyPost(): PostEntry {
 }
 
 export function getStatusColor(statuses: StatusItem[], statusLabel: string): string {
-  return statuses.find(s => s.label === statusLabel)?.color || "#e5e7eb";
+  return statuses.find(s => s.label === statusLabel)?.color || "#E5E7EB";
 }
+
+export function getPlatformColor(platforms: PlatformItem[], name: string): string {
+  return platforms.find(p => p.name === name)?.color || "#6B7280";
+}
+
+// Pastel tints for day columns (Mon-Sun)
+export const DAY_COLUMN_TINTS = [
+  "#FFF8F0", "#F0F7FF", "#FFF0F8", "#F0FFF4", "#FFF5F0", "#F5F0FF", "#F0FFFF",
+];
