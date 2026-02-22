@@ -20,6 +20,7 @@ export interface PostEntry {
   id: string;
   imageUrl: string;
   imageFile?: string; // base64 data URL for uploaded files
+  postLink: string; // separate URL field for the actual post link
   platform: string;
   contentType: string;
   title: string;
@@ -123,6 +124,7 @@ export function createEmptyPost(): PostEntry {
   return {
     id: crypto.randomUUID(),
     imageUrl: "",
+    postLink: "",
     platform: "",
     contentType: "",
     title: "",
@@ -143,5 +145,5 @@ export function getPlatformColor(platforms: PlatformItem[], name: string): strin
 
 // Pastel tints for day columns (Mon-Sun)
 export const DAY_COLUMN_TINTS = [
-  "#FFF8F0", "#F0F7FF", "#FFF0F8", "#F0FFF4", "#FFF5F0", "#F5F0FF", "#F0FFFF",
+  "#F0F4FF", "#F4F0FF", "#F0FFF8", "#FFF4F0", "#FFFBF0", "#FFF0F6", "#F6F6F6",
 ];

@@ -45,7 +45,7 @@ export default function ContentPlanner() {
 
   return (
     <AppShell>
-      <div className="flex flex-col h-full w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+      <div className="flex flex-col w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
         {/* Top bar with social quick links */}
         <div className="flex items-center justify-end px-4 py-2 shrink-0">
           <SocialQuickLinks links={state.socialLinks} setLinks={state.setSocialLinks} />
@@ -75,7 +75,7 @@ export default function ContentPlanner() {
         </div>
 
         {/* Bottom tab bar */}
-        <div className="flex items-center border-t border-gray-200 bg-white shrink-0">
+        <div className="flex items-center bg-white shrink-0" style={{ borderTop: "1px solid #F0F0F0" }}>
           {state.tabOrder.map(tabId => (
             <button
               key={tabId}
@@ -84,7 +84,7 @@ export default function ContentPlanner() {
               onDragOver={e => handleDragOver(e, tabId)}
               onDragEnd={handleDragEnd}
               onClick={() => setActiveTab(tabId)}
-              className={`flex-1 px-3 py-2.5 text-xs transition-colors relative cursor-grab active:cursor-grabbing ${
+              className={`flex-1 px-3 py-3 text-[14px] transition-all duration-150 relative cursor-grab active:cursor-grabbing ${
                 activeTab === tabId
                   ? "text-gray-900 font-medium"
                   : "text-gray-400 hover:text-gray-600"
