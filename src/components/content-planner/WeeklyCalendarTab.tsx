@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, parseISO, addDays } from "date-fns";
 import { SetupData, WeekData, PostEntry, getStatusColor, getPlatformColor, DAY_COLUMN_TINTS } from "./types";
-import { ChevronLeft, ChevronRight, Plus, Maximize2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Camera } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import PostDetailModal from "./PostDetailModal";
 
@@ -78,42 +78,43 @@ export default function WeeklyCalendarTab({
                 return (
                   <div
                     key={post.id}
-                    className="bg-white p-3 hover:shadow-md transition-all duration-150 cursor-pointer group relative"
+                    className="bg-white hover:shadow-md transition-all duration-150 cursor-pointer group relative overflow-hidden"
                     style={{ border: "1px solid #EBEBEB", borderRadius: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
                     onClick={() => setModalPost({ dayIdx, postId: post.id })}
                   >
-                    <div className="flex items-start gap-2">
-                      {imgSrc ? (
-                        <img src={imgSrc} alt="" className="w-10 h-10 object-cover shrink-0" style={{ borderRadius: 8 }} />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-50 shrink-0 flex items-center justify-center text-gray-300 text-[10px]" style={{ borderRadius: 8 }}>
-                          IMG
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-gray-800 truncate">
-                          {post.title || "Untitled"}
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {post.platform && (
-                            <span
-                              className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 text-white"
-                              style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 6 }}
-                            >
-                              {post.platform}
-                            </span>
-                          )}
-                          <span
-                            className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5"
-                            style={{ background: getStatusColor(setup.statuses, post.status), color: "#374151", borderRadius: 6 }}
-                          >
-                            {post.status}
-                          </span>
-                        </div>
+                    {/* Image — full width, tall */}
+                    {imgSrc ? (
+                      <img src={imgSrc} alt="" className="w-full object-cover" style={{ minHeight: 140, maxHeight: 180, borderRadius: "12px 12px 0 0" }} />
+                    ) : (
+                      <div
+                        className="w-full flex flex-col items-center justify-center text-gray-300"
+                        style={{ minHeight: 140, background: "#FAFAFA", border: "2px dashed #E5E7EB", borderRadius: "10px 10px 0 0" }}
+                      >
+                        <Camera size={22} className="mb-1" />
+                        <span className="text-[11px]">Add Image</span>
                       </div>
-                      <button className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-gray-600 transition-all duration-150">
-                        <Maximize2 size={12} />
-                      </button>
+                    )}
+                    {/* Metadata below image */}
+                    <div className="px-3 py-2.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {post.platform && (
+                          <span
+                            className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 text-white"
+                            style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 6 }}
+                          >
+                            {post.platform}
+                          </span>
+                        )}
+                        <span
+                          className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5"
+                          style={{ background: getStatusColor(setup.statuses, post.status), color: "#374151", borderRadius: 6 }}
+                        >
+                          {post.status}
+                        </span>
+                      </div>
+                      <div className="text-[13px] font-medium text-gray-800 truncate mt-1.5">
+                        {post.title || "Untitled"}
+                      </div>
                     </div>
                   </div>
                 );

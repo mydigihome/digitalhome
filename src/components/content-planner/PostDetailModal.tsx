@@ -1,16 +1,7 @@
 import { useRef, useCallback, useState, useEffect, DragEvent } from "react";
-import { X, Upload, Image, Link2, ExternalLink, Globe, Loader2 } from "lucide-react";
+import { X, Upload, Image, Link2, Globe, Loader2 } from "lucide-react";
 import { SetupData, PostEntry, getStatusColor, getPlatformColor } from "./types";
 import AutoTextarea from "./AutoTextarea";
-import { supabase } from "@/integrations/supabase/client";
-
-interface OgData {
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  siteName: string | null;
-  url: string | null;
-}
 
 interface Props {
   post: PostEntry;
@@ -33,61 +24,58 @@ function getDomain(url: string): string {
 }
 
 function LinkPreviewCard({ url }: { url: string }) {
-  const [og, setOg] = useState<OgData | null>(null);
+  const [data, setData] = useState<{ title?: string; image?: string; url?: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!url) return;
     let cancelled = false;
-    const fetchOg = async () => {
+    const timer = setTimeout(async () => {
       setLoading(true);
       setFailed(false);
       try {
-        const { data, error } = await supabase.functions.invoke("fetch-og-tags", {
-          body: { url },
-        });
+        const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
+        const json = await res.json();
         if (cancelled) return;
-        if (error || !data?.success) {
-          setFailed(true);
+        if (json.status === "success" && json.data) {
+          setData({
+            title: json.data.title,
+            image: json.data.image?.url || json.data.logo?.url,
+            url: json.data.url,
+          });
         } else {
-          setOg(data.data);
+          setFailed(true);
         }
       } catch {
         if (!cancelled) setFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
-    };
-    fetchOg();
-    return () => { cancelled = true; };
+    }, 500);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [url]);
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 mt-2 px-3 py-2.5 text-[12px] text-gray-400" style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}>
-        <Loader2 size={14} className="animate-spin" /> Fetching link preview…
+      <div className="flex items-center gap-2 mt-2 px-3 py-2 text-[12px] text-gray-400" style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}>
+        <Loader2 size={14} className="animate-spin" /> Loading preview…
       </div>
     );
   }
 
-  if (failed || !og) {
+  if (failed || !data) {
     return (
       <a
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-3 mt-2 px-3 py-2.5 hover:bg-gray-50 transition-all duration-150 no-underline"
-        style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}
+        className="flex items-center gap-2.5 mt-2 px-3 py-2 hover:bg-gray-50 transition-all duration-150 no-underline"
+        style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}
       >
-        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-          <Globe size={14} className="text-gray-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-medium text-gray-700 truncate">{getDomain(url)}</div>
-          <div className="text-[11px] text-blue-500 truncate">{url}</div>
-        </div>
-        <ExternalLink size={12} className="text-gray-300 shrink-0" />
+        <Link2 size={14} className="text-gray-400 shrink-0" />
+        <span className="text-[13px] text-blue-600 truncate flex-1">{url}</span>
+        <span className="text-[11px] text-gray-400 shrink-0">{getDomain(url)}</span>
       </a>
     );
   }
@@ -97,18 +85,20 @@ function LinkPreviewCard({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 mt-2 overflow-hidden hover:shadow-md transition-all duration-150 no-underline"
-      style={{ background: "#FAFAFA", borderRadius: 12, border: "1px solid #F0F0F0" }}
+      className="flex items-center gap-2.5 mt-2 overflow-hidden hover:bg-gray-50 transition-all duration-150 no-underline"
+      style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}
     >
-      {og.image && (
-        <img src={og.image} alt="" className="w-20 h-16 object-cover shrink-0" style={{ borderRadius: "12px 0 0 12px" }} />
+      {data.image ? (
+        <img src={data.image} alt="" className="w-12 h-12 object-cover shrink-0" style={{ borderRadius: "8px 0 0 8px" }} />
+      ) : (
+        <div className="w-12 h-12 bg-gray-100 flex items-center justify-center shrink-0" style={{ borderRadius: "8px 0 0 8px" }}>
+          <Globe size={16} className="text-gray-400" />
+        </div>
       )}
-      <div className="flex-1 min-w-0 py-2 px-1">
-        <div className="text-[12px] font-medium text-gray-800 truncate">{og.title || getDomain(url)}</div>
-        {og.description && <div className="text-[11px] text-gray-500 truncate mt-0.5">{og.description}</div>}
-        <div className="text-[10px] text-gray-400 mt-0.5">{og.siteName || getDomain(url)}</div>
+      <div className="flex-1 min-w-0 py-1.5">
+        <div className="text-[13px] font-medium text-gray-800 truncate">{data.title || getDomain(url)}</div>
       </div>
-      <ExternalLink size={12} className="text-gray-300 shrink-0 mr-3" />
+      <span className="text-[11px] text-gray-400 shrink-0 pr-3">{getDomain(url)}</span>
     </a>
   );
 }
