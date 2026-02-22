@@ -51,8 +51,7 @@ export default function WealthTrackerPage() {
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {/* Page header */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-3xl">💰</span>
+        <div className="mb-4">
           <h1 className="text-2xl font-bold text-foreground">Wealth Tracker</h1>
         </div>
 
