@@ -170,7 +170,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
 
   const bottomItems = [
     { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
-    { icon: Sparkles, label: "Vision Room", path: "/vision", colorKey: "vision" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
   ];
 
@@ -372,7 +372,7 @@ function MobileTabBar() {
   }, []);
 
   const moreItems = [
-    { icon: Sparkles, label: "Vision Room", path: "/vision" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision" },
     { icon: Users, label: "Team", path: "/team" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
