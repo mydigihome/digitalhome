@@ -84,14 +84,26 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
   const fileRef = useRef<HTMLInputElement>(null);
   const { preview, loading, fetchPreview } = useLinkPreview();
 
+  // Store link thumbnail separately so it can be used on the card
+  const [linkThumb, setLinkThumb] = useState<string | null>(null);
+
   // Auto-fetch preview when modal opens with existing link
   useEffect(() => {
     if (post.postLink) fetchPreview(post.postLink);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When preview changes, store the thumbnail on the post so the card can use it
+  useEffect(() => {
+    if (preview?.image && preview.image !== linkThumb) {
+      setLinkThumb(preview.image);
+      // Persist the link thumbnail to the post data so PostCard can display it
+      onUpdate({ imageUrl: post.imageFile ? post.imageUrl : preview.image });
+    }
+  }, [preview]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleFile = useCallback((file: File) => {
     const reader = new FileReader();
-    reader.onload = e => onUpdate({ imageFile: e.target?.result as string, imageUrl: "" });
+    reader.onload = e => onUpdate({ imageFile: e.target?.result as string });
     reader.readAsDataURL(file);
   }, [onUpdate]);
 
@@ -127,25 +139,25 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none bg-transparent border-none cursor-pointer">×</button>
         </div>
 
-        {/* IMAGE — 16:9 hero */}
+        {/* IMAGE UPLOAD — 16:9 drag-and-drop zone */}
         <label className={labelStyle}>Image</label>
         <div
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
-          onClick={() => !imgSrc && fileRef.current?.click()}
+          onClick={() => !post.imageFile && fileRef.current?.click()}
           className="w-full overflow-hidden flex items-center justify-center mb-2 relative"
           style={{
             aspectRatio: "16/9", borderRadius: 12,
-            border: imgSrc ? "none" : "2px dashed #DDD",
-            background: imgSrc ? "transparent" : "#F8F8F8",
-            cursor: imgSrc ? "default" : "pointer",
+            border: post.imageFile ? "none" : "2px dashed #DDD",
+            background: post.imageFile ? "transparent" : "#F8F8F8",
+            cursor: post.imageFile ? "default" : "pointer",
           }}
         >
-          {imgSrc ? (
+          {post.imageFile ? (
             <>
-              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+              <img src={post.imageFile} alt="" className="w-full h-full object-cover" />
               <button
-                onClick={e => { e.stopPropagation(); onUpdate({ imageFile: undefined, imageUrl: "" }); }}
+                onClick={e => { e.stopPropagation(); onUpdate({ imageFile: undefined, imageUrl: preview?.image || "" }); }}
                 className="absolute top-2 right-2 text-white cursor-pointer text-base leading-none"
                 style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 28, height: 28 }}
               >×</button>
@@ -158,7 +170,7 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
           )}
         </div>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-        {imgSrc && (
+        {post.imageFile && (
           <button onClick={() => fileRef.current?.click()} className="text-[11px] text-gray-400 bg-transparent border-none cursor-pointer underline mb-3">
             Change image
           </button>

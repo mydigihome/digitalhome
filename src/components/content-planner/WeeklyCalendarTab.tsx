@@ -24,7 +24,6 @@ const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as c
 
 // ─── Post Card (16:9 image-first) ─────────────────────────────────────────
 function PostCard({ post, setup, onClick }: { post: PostEntry; setup: SetupData; onClick: () => void }) {
-  const imgSrc = post.imageFile || post.imageUrl;
   const checkCount = CHECKLIST_KEYS.filter(k => post.checklist[k]).length;
   const totalChecks = CHECKLIST_KEYS.length;
 
@@ -39,10 +38,12 @@ function PostCard({ post, setup, onClick }: { post: PostEntry; setup: SetupData;
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.10)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
     >
-      {/* 16:9 Image */}
+      {/* 16:9 Image — uploaded image takes priority, then link thumbnail */}
       <div className="w-full relative" style={{ aspectRatio: "16/9", background: "#F4F4F4" }}>
-        {imgSrc ? (
-          <img src={imgSrc} alt="" className="w-full h-full object-cover block" />
+        {post.imageFile ? (
+          <img src={post.imageFile} alt="" className="w-full h-full object-cover block" />
+        ) : post.imageUrl ? (
+          <img src={post.imageUrl} alt="" className="w-full h-full object-cover block" />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-300" style={{ border: "2px dashed #E8E8E8" }}>
             <div className="text-[24px]">📷</div>
@@ -135,11 +136,11 @@ export default function WeeklyCalendarTab({
           <div key={dayIdx} className="flex flex-col min-h-0" style={{ borderRight: dayIdx < 6 ? "1px solid #F0F0F0" : "none" }}>
             {/* Day header */}
             <div
-              className="px-3 py-2.5 text-center"
-              style={{ background: DAY_COLUMN_TINTS[dayIdx], borderBottom: "1px solid #F0F0F0" }}
+              className="text-center"
+              style={{ background: DAY_COLUMN_TINTS[dayIdx], borderBottom: "1px solid #F0F0F0", padding: "6px 12px" }}
             >
               <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{DOW[dayIdx]}</div>
-              <div className="text-[26px] font-bold text-gray-800 leading-tight">{format(parseISO(day.date), "d")}</div>
+              <div className="text-[18px] font-bold text-gray-800 leading-tight">{format(parseISO(day.date), "d")}</div>
             </div>
 
             {/* Posts */}
