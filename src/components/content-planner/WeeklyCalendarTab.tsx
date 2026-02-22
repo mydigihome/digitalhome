@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format, parseISO, addDays } from "date-fns";
 import { SetupData, WeekData, PostEntry, getStatusColor, getPlatformColor, DAY_COLUMN_TINTS } from "./types";
-import { ChevronLeft, ChevronRight, Plus, Camera } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import PostDetailModal from "./PostDetailModal";
 
@@ -20,6 +20,77 @@ interface Props {
 
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as const;
+
+// ─── Post Card (16:9 image-first) ─────────────────────────────────────────
+function PostCard({ post, setup, onClick }: { post: PostEntry; setup: SetupData; onClick: () => void }) {
+  const imgSrc = post.imageFile || post.imageUrl;
+  const checkCount = CHECKLIST_KEYS.filter(k => post.checklist[k]).length;
+  const totalChecks = CHECKLIST_KEYS.length;
+
+  return (
+    <div
+      onClick={onClick}
+      className="overflow-hidden cursor-pointer bg-white transition-all duration-150"
+      style={{
+        borderRadius: 12, border: "1px solid #F0F0F0",
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 8,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.10)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
+    >
+      {/* 16:9 Image */}
+      <div className="w-full relative" style={{ aspectRatio: "16/9", background: "#F4F4F4" }}>
+        {imgSrc ? (
+          <img src={imgSrc} alt="" className="w-full h-full object-cover block" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300" style={{ border: "2px dashed #E8E8E8" }}>
+            <div className="text-[24px]">📷</div>
+            <div className="text-[11px] mt-1">Add Image</div>
+          </div>
+        )}
+        {/* Green progress bar overlay */}
+        {checkCount > 0 && (
+          <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "rgba(0,0,0,0.1)" }}>
+            <div style={{ height: "100%", width: `${(checkCount / totalChecks) * 100}%`, background: "#2ECC71", transition: "width 0.3s ease" }} />
+          </div>
+        )}
+      </div>
+
+      {/* Metadata */}
+      <div style={{ padding: "8px 10px" }}>
+        <div className="flex gap-1.5 mb-1 flex-wrap">
+          {post.platform && (
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wide text-white"
+              style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 20, padding: "2px 8px" }}
+            >
+              {post.platform}
+            </span>
+          )}
+          {post.status && (
+            <span
+              className="text-[10px] font-semibold uppercase tracking-wide"
+              style={{ background: getStatusColor(setup.statuses, post.status), borderRadius: 20, padding: "2px 8px", color: "#374151" }}
+            >
+              {post.status}
+            </span>
+          )}
+        </div>
+        <div className="text-[12px] font-medium text-gray-800 overflow-hidden" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+          {post.title || <span className="text-gray-300">Untitled</span>}
+        </div>
+        {post.postLink && (
+          <div className="text-[10px] text-gray-400 mt-1 truncate">
+            🔗 {post.postLink.replace(/^https?:\/\/(www\.)?/, "").substring(0, 30)}…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────
 export default function WeeklyCalendarTab({
   setup, week, weekStart, setWeek, navigateWeek,
   addPost, updatePost, deletePost, updatePostChecklist, updatePostAnalytics,
@@ -64,68 +135,30 @@ export default function WeeklyCalendarTab({
           <div key={dayIdx} className="flex flex-col min-h-0" style={{ borderRight: dayIdx < 6 ? "1px solid #F0F0F0" : "none" }}>
             {/* Day header */}
             <div
-              className="px-4 py-3 flex flex-col"
+              className="px-3 py-2.5 text-center"
               style={{ background: DAY_COLUMN_TINTS[dayIdx], borderBottom: "1px solid #F0F0F0" }}
             >
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{DOW[dayIdx]}</span>
-              <span className="text-[28px] font-bold text-gray-800 leading-tight">{format(parseISO(day.date), "d")}</span>
+              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{DOW[dayIdx]}</div>
+              <div className="text-[26px] font-bold text-gray-800 leading-tight">{format(parseISO(day.date), "d")}</div>
             </div>
 
             {/* Posts */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {day.posts.map(post => {
-                const imgSrc = post.imageFile || post.imageUrl;
-                return (
-                  <div
-                    key={post.id}
-                    className="bg-white hover:shadow-md transition-all duration-150 cursor-pointer group relative overflow-hidden"
-                    style={{ border: "1px solid #EBEBEB", borderRadius: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-                    onClick={() => setModalPost({ dayIdx, postId: post.id })}
-                  >
-                    {/* Image — full width, tall */}
-                    {imgSrc ? (
-                      <img src={imgSrc} alt="" className="w-full object-cover" style={{ minHeight: 140, maxHeight: 180, borderRadius: "12px 12px 0 0" }} />
-                    ) : (
-                      <div
-                        className="w-full flex flex-col items-center justify-center text-gray-300"
-                        style={{ minHeight: 140, background: "#FAFAFA", border: "2px dashed #E5E7EB", borderRadius: "10px 10px 0 0" }}
-                      >
-                        <Camera size={22} className="mb-1" />
-                        <span className="text-[11px]">Add Image</span>
-                      </div>
-                    )}
-                    {/* Metadata below image */}
-                    <div className="px-3 py-2.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {post.platform && (
-                          <span
-                            className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 text-white"
-                            style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 6 }}
-                          >
-                            {post.platform}
-                          </span>
-                        )}
-                        <span
-                          className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5"
-                          style={{ background: getStatusColor(setup.statuses, post.status), color: "#374151", borderRadius: 6 }}
-                        >
-                          {post.status}
-                        </span>
-                      </div>
-                      <div className="text-[13px] font-medium text-gray-800 truncate mt-1.5">
-                        {post.title || "Untitled"}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="flex-1 overflow-y-auto p-2">
+              {day.posts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  setup={setup}
+                  onClick={() => setModalPost({ dayIdx, postId: post.id })}
+                />
+              ))}
             </div>
 
-            {/* Add post button */}
+            {/* Add post */}
             <button
               onClick={() => addPost(dayIdx)}
-              className="w-full py-2.5 text-[12px] font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150 hover:-translate-y-px"
-              style={{ borderTop: "1px solid #F0F0F0" }}
+              className="mx-2 mb-2 py-1.5 text-[12px] text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150 cursor-pointer"
+              style={{ border: "1px dashed #DDD", borderRadius: 8, background: "none" }}
             >
               <Plus size={12} /> Add Post
             </button>

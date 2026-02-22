@@ -1,5 +1,4 @@
-import { useRef, useCallback, useState, useEffect, DragEvent } from "react";
-import { X, Upload, Image, Link2, Globe, Loader2 } from "lucide-react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { SetupData, PostEntry, getStatusColor, getPlatformColor } from "./types";
 import AutoTextarea from "./AutoTextarea";
 
@@ -15,331 +14,275 @@ interface Props {
 
 const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as const;
 
-function getDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace("www.", "");
-  } catch {
-    return url;
-  }
-}
-
-function LinkPreviewCard({ url }: { url: string }) {
-  const [data, setData] = useState<{ title?: string; image?: string; url?: string } | null>(null);
+// ─── Microlink preview hook ────────────────────────────────────────────────
+function useLinkPreview() {
+  const [preview, setPreview] = useState<{ title: string; image: string | null; domain: string } | null>(null);
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (!url) return;
-    let cancelled = false;
-    const timer = setTimeout(async () => {
+  const fetchPreview = useCallback((url: string) => {
+    if (!url || !url.startsWith("http")) { setPreview(null); return; }
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
       setLoading(true);
-      setFailed(false);
       try {
         const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
         const json = await res.json();
-        if (cancelled) return;
-        if (json.status === "success" && json.data) {
-          setData({
-            title: json.data.title,
-            image: json.data.image?.url || json.data.logo?.url,
-            url: json.data.url,
+        if (json.status === "success") {
+          setPreview({
+            title: json.data.title || url,
+            image: json.data.image?.url || json.data.logo?.url || null,
+            domain: new URL(url).hostname.replace("www.", ""),
           });
         } else {
-          setFailed(true);
+          setPreview({ title: url, image: null, domain: new URL(url).hostname.replace("www.", "") });
         }
       } catch {
-        if (!cancelled) setFailed(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+        setPreview({ title: url, image: null, domain: "" });
       }
-    }, 500);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [url]);
+      setLoading(false);
+    }, 600);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 mt-2 px-3 py-2 text-[12px] text-gray-400" style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}>
-        <Loader2 size={14} className="animate-spin" /> Loading preview…
-      </div>
-    );
-  }
+  return { preview, loading, fetchPreview };
+}
 
-  if (failed || !data) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2.5 mt-2 px-3 py-2 hover:bg-gray-50 transition-all duration-150 no-underline"
-        style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}
-      >
-        <Link2 size={14} className="text-gray-400 shrink-0" />
-        <span className="text-[13px] text-blue-600 truncate flex-1">{url}</span>
-        <span className="text-[11px] text-gray-400 shrink-0">{getDomain(url)}</span>
-      </a>
-    );
-  }
-
+// ─── Link Preview Bar ──────────────────────────────────────────────────────
+function LinkPreviewBar({ preview, loading, url }: {
+  preview: { title: string; image: string | null; domain: string } | null;
+  loading: boolean;
+  url: string;
+}) {
+  if (!url) return null;
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2.5 mt-2 overflow-hidden hover:bg-gray-50 transition-all duration-150 no-underline"
-      style={{ border: "1px solid #F0F0F0", borderRadius: 8 }}
+    <div
+      className="flex items-center gap-2.5 mt-2"
+      style={{ border: "1px solid #EBEBEB", borderRadius: 8, padding: "8px 10px", background: "#FAFAFA", minHeight: 56 }}
     >
-      {data.image ? (
-        <img src={data.image} alt="" className="w-12 h-12 object-cover shrink-0" style={{ borderRadius: "8px 0 0 8px" }} />
+      {loading ? (
+        <span className="text-[12px] text-gray-400">Fetching preview…</span>
+      ) : preview ? (
+        <>
+          {preview.image && (
+            <img src={preview.image} alt="" className="shrink-0" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6 }} />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-medium text-gray-800 truncate">{preview.title}</div>
+            <div className="text-[11px] text-gray-400 mt-0.5">{preview.domain}</div>
+          </div>
+          <a href={url} target="_blank" rel="noreferrer" className="text-[11px] text-gray-500 underline shrink-0">Open ↗</a>
+        </>
       ) : (
-        <div className="w-12 h-12 bg-gray-100 flex items-center justify-center shrink-0" style={{ borderRadius: "8px 0 0 8px" }}>
-          <Globe size={16} className="text-gray-400" />
-        </div>
+        <a href={url} target="_blank" rel="noreferrer" className="text-[12px] text-gray-500 underline">{url}</a>
       )}
-      <div className="flex-1 min-w-0 py-1.5">
-        <div className="text-[13px] font-medium text-gray-800 truncate">{data.title || getDomain(url)}</div>
-      </div>
-      <span className="text-[11px] text-gray-400 shrink-0 pr-3">{getDomain(url)}</span>
-    </a>
+    </div>
   );
 }
 
+// ─── Post Detail Modal ─────────────────────────────────────────────────────
 export default function PostDetailModal({ post, setup, onUpdate, onUpdateChecklist, onUpdateAnalytics, onDelete, onClose }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const { preview, loading, fetchPreview } = useLinkPreview();
+
+  // Auto-fetch preview when modal opens with existing link
+  useEffect(() => {
+    if (post.postLink) fetchPreview(post.postLink);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFile = useCallback((file: File) => {
     const reader = new FileReader();
-    reader.onload = e => {
-      onUpdate({ imageFile: e.target?.result as string, imageUrl: "" });
-    };
+    reader.onload = e => onUpdate({ imageFile: e.target?.result as string, imageUrl: "" });
     reader.readAsDataURL(file);
   }, [onUpdate]);
 
-  const handleDrop = useCallback((e: DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file?.type.startsWith("image/")) handleFile(file);
   }, [handleFile]);
 
-  const handleLinkPaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
-    const text = e.clipboardData.getData("text");
-    if (text) {
-      // Let the input update naturally, then trigger OG fetch via the value change
-      setTimeout(() => onUpdate({ postLink: text }), 0);
-    }
-  }, [onUpdate]);
-
   const imgSrc = post.imageFile || post.imageUrl;
 
+  const labelStyle = "text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block";
+  const inputStyle: React.CSSProperties = {
+    width: "100%", border: "1px solid #EBEBEB", borderRadius: 8,
+    padding: "8px 10px", fontSize: 13, fontFamily: "inherit",
+    background: "#FAFAFA", color: "#111", boxSizing: "border-box" as const,
+  };
+  const selectStyle: React.CSSProperties = {
+    border: "1px solid #EBEBEB", borderRadius: 8, padding: "6px 10px",
+    fontSize: 12, background: "#FAFAFA", color: "#111", width: "100%",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.35)" }} onClick={onClose}>
       <div
-        className="bg-white shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4"
-        style={{ borderRadius: 16 }}
+        className="bg-white w-full max-h-[88vh] overflow-y-auto mx-4"
+        style={{ borderRadius: 16, maxWidth: 520, padding: 24, boxShadow: "0 8px 40px rgba(0,0,0,0.12)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5" style={{ borderBottom: "1px solid #F0F0F0" }}>
-          <span className="text-[13px] font-semibold text-gray-800">Post Details</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { onDelete(); onClose(); }}
-              className="text-[11px] uppercase tracking-wide text-red-400 hover:text-red-600 transition-colors duration-150 font-medium"
-            >
-              Delete
-            </button>
-            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors duration-150">
-              <X size={16} className="text-gray-400" />
-            </button>
+        <div className="flex justify-between items-center mb-5">
+          <span className="text-[15px] font-bold text-gray-900">Post Details</span>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none bg-transparent border-none cursor-pointer">×</button>
+        </div>
+
+        {/* IMAGE — 16:9 hero */}
+        <label className={labelStyle}>Image</label>
+        <div
+          onDrop={handleDrop}
+          onDragOver={e => e.preventDefault()}
+          onClick={() => !imgSrc && fileRef.current?.click()}
+          className="w-full overflow-hidden flex items-center justify-center mb-2 relative"
+          style={{
+            aspectRatio: "16/9", borderRadius: 12,
+            border: imgSrc ? "none" : "2px dashed #DDD",
+            background: imgSrc ? "transparent" : "#F8F8F8",
+            cursor: imgSrc ? "default" : "pointer",
+          }}
+        >
+          {imgSrc ? (
+            <>
+              <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+              <button
+                onClick={e => { e.stopPropagation(); onUpdate({ imageFile: undefined, imageUrl: "" }); }}
+                className="absolute top-2 right-2 text-white cursor-pointer text-base leading-none"
+                style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 28, height: 28 }}
+              >×</button>
+            </>
+          ) : (
+            <div className="text-center text-gray-400">
+              <div className="text-[28px] mb-1.5">📷</div>
+              <div className="text-[12px]">Drop image or click to upload</div>
+            </div>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+        {imgSrc && (
+          <button onClick={() => fileRef.current?.click()} className="text-[11px] text-gray-400 bg-transparent border-none cursor-pointer underline mb-3">
+            Change image
+          </button>
+        )}
+
+        {/* POST LINK */}
+        <label className={labelStyle} style={{ marginTop: 12 }}>Post Link / URL</label>
+        <input
+          type="url"
+          placeholder="https://..."
+          value={post.postLink || ""}
+          onChange={e => { onUpdate({ postLink: e.target.value }); fetchPreview(e.target.value); }}
+          style={{ ...inputStyle, minHeight: "auto" }}
+        />
+        <LinkPreviewBar preview={preview} loading={loading} url={post.postLink || ""} />
+
+        {/* PLATFORM + STATUS */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <div>
+            <label className={labelStyle}>Platform</label>
+            <select value={post.platform} onChange={e => onUpdate({ platform: e.target.value })} style={selectStyle}>
+              <option value="">Select…</option>
+              {setup.platforms.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelStyle}>Status</label>
+            <select value={post.status} onChange={e => onUpdate({ status: e.target.value })} style={selectStyle}>
+              <option value="">Select…</option>
+              {setup.statuses.map(s => <option key={s.label} value={s.label}>{s.label}</option>)}
+            </select>
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* Image Upload */}
-          {imgSrc ? (
-            <div className="relative group">
-              <img src={imgSrc} alt="" className="w-full h-48 object-cover" style={{ borderRadius: 12 }} />
-              <button
-                onClick={() => onUpdate({ imageFile: undefined, imageUrl: "" })}
-                className="absolute top-2 right-2 bg-white/90 p-1 opacity-0 group-hover:opacity-100 transition-all duration-150 shadow-sm"
-                style={{ borderRadius: 8 }}
+        {/* CONTENT TYPE */}
+        <div className="mt-3.5">
+          <label className={labelStyle}>Content Type</label>
+          <select value={post.contentType} onChange={e => onUpdate({ contentType: e.target.value })} style={selectStyle}>
+            <option value="">Select…</option>
+            {setup.contentFormats.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+
+        {/* TITLE */}
+        <div className="mt-3.5">
+          <label className={labelStyle}>Title / Hook</label>
+          <AutoTextarea
+            value={post.title}
+            onChange={e => onUpdate({ title: e.target.value })}
+            placeholder="What's the hook?"
+            className="w-full text-[13px] outline-none"
+            style={{ ...inputStyle, resize: "none", overflow: "hidden" }}
+          />
+        </div>
+
+        {/* CAPTION */}
+        <div className="mt-3.5">
+          <label className={labelStyle}>Caption</label>
+          <AutoTextarea
+            value={post.caption}
+            onChange={e => onUpdate({ caption: e.target.value })}
+            placeholder="Write your full caption here — no limit…"
+            className="w-full text-[13px] outline-none"
+            style={{ ...inputStyle, resize: "none", overflow: "hidden", minHeight: 100 }}
+          />
+        </div>
+
+        {/* CHECKLIST */}
+        <div className="mt-3.5">
+          <label className={labelStyle}>Checklist</label>
+          <div className="flex flex-wrap gap-2">
+            {CHECKLIST_KEYS.map(k => (
+              <label
+                key={k}
+                className="flex items-center gap-1.5 text-[12px] cursor-pointer px-3 py-1 transition-colors duration-150"
+                style={{
+                  background: post.checklist[k] ? "#D4EDDA" : "#F4F4F4",
+                  borderRadius: 20,
+                }}
               >
-                <X size={14} />
-              </button>
-            </div>
-          ) : (
-            <div
-              className="flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-gray-50 transition-colors duration-150 text-gray-400"
-              style={{ border: "2px dashed #E5E7EB", borderRadius: 12 }}
-              onClick={() => fileRef.current?.click()}
-              onDrop={handleDrop}
-              onDragOver={e => e.preventDefault()}
-            >
-              <Image size={24} className="mb-2" />
-              <span className="text-[12px]">Drop image, click to upload, or paste URL below</span>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-              />
-              <input
-                className="mt-2 w-3/4 px-3 py-1.5 text-[12px] bg-gray-50 outline-none text-center text-gray-500 border"
-                style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                placeholder="Paste image URL..."
-                onBlur={e => { if (e.target.value) onUpdate({ imageUrl: e.target.value }); }}
-                onKeyDown={e => { if (e.key === "Enter") { onUpdate({ imageUrl: (e.target as HTMLInputElement).value }); } }}
-              />
-            </div>
-          )}
-
-          {/* Post Link / URL — separate from image */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Post Link / URL</label>
-            <div className="flex items-center gap-2">
-              <Link2 size={14} className="text-gray-400 shrink-0" />
-              <input
-                className="flex-1 text-[13px] bg-white outline-none text-gray-700 border px-3 py-2"
-                style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                value={post.postLink || ""}
-                onChange={e => onUpdate({ postLink: e.target.value })}
-                onPaste={handleLinkPaste}
-                placeholder="https://..."
-              />
-            </div>
-            {post.postLink && <LinkPreviewCard url={post.postLink} />}
+                <input
+                  type="checkbox"
+                  checked={post.checklist[k]}
+                  onChange={e => onUpdateChecklist(k, e.target.checked)}
+                  style={{ accentColor: "#2ECC71" }}
+                />
+                {k.charAt(0).toUpperCase() + k.slice(1)}
+              </label>
+            ))}
           </div>
+        </div>
 
-          {/* Platform + Content Type */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Platform</label>
-              <select
-                className="w-full text-[13px] bg-white outline-none text-gray-700 border px-3 py-2"
-                style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                value={post.platform}
-                onChange={e => onUpdate({ platform: e.target.value })}
-              >
-                <option value="">Select...</option>
-                {setup.platforms.map(p => (
-                  <option key={p.name} value={p.name}>{p.name}</option>
-                ))}
-              </select>
-              {post.platform && (
-                <span
-                  className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 text-white"
-                  style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 8 }}
-                >
-                  {post.platform}
-                </span>
-              )}
-            </div>
-            <div>
-              <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Content Type</label>
-              <select
-                className="w-full text-[13px] bg-white outline-none text-gray-700 border px-3 py-2"
-                style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                value={post.contentType}
-                onChange={e => onUpdate({ contentType: e.target.value })}
-              >
-                <option value="">Select...</option>
-                {setup.contentFormats.map(f => <option key={f} value={f}>{f}</option>)}
-              </select>
-            </div>
+        {/* ANALYTICS */}
+        <div className="mt-3.5">
+          <label className={labelStyle}>Analytics</label>
+          <div className="grid grid-cols-4 gap-2">
+            {(["views", "likes", "comments", "shares"] as const).map(k => (
+              <div key={k}>
+                <div className="text-[10px] text-gray-400 mb-0.5">{k.charAt(0).toUpperCase() + k.slice(1)}</div>
+                <input
+                  type="number"
+                  value={post.analytics[k]}
+                  onChange={e => onUpdateAnalytics(k, e.target.value)}
+                  placeholder="0"
+                  className="text-center"
+                  style={{ ...inputStyle, minHeight: "auto" }}
+                />
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* Title */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Title / Hook</label>
-            <AutoTextarea
-              className="w-full text-[13px] bg-white outline-none text-gray-800 border px-3 py-2"
-              style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-              value={post.title}
-              onChange={e => onUpdate({ title: e.target.value })}
-              placeholder="Enter title..."
-            />
-          </div>
-
-          {/* Caption */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Caption</label>
-            <AutoTextarea
-              className="w-full text-[13px] bg-white outline-none text-gray-600 border px-3 py-2 leading-relaxed"
-              style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-              value={post.caption}
-              onChange={e => onUpdate({ caption: e.target.value })}
-              placeholder="Write caption..."
-            />
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-1 block">Status</label>
-            <div className="flex items-center gap-2">
-              <select
-                className="text-[13px] bg-white outline-none text-gray-700 border px-3 py-2"
-                style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                value={post.status}
-                onChange={e => onUpdate({ status: e.target.value })}
-              >
-                {setup.statuses.map(s => <option key={s.label} value={s.label}>{s.label}</option>)}
-              </select>
-              <span
-                className="inline-block text-[11px] font-semibold uppercase tracking-wide px-3 py-1"
-                style={{ background: getStatusColor(setup.statuses, post.status), color: "#374151", borderRadius: 8 }}
-              >
-                {post.status}
-              </span>
-            </div>
-          </div>
-
-          {/* Checklist */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-2 block">Checklist</label>
-            <div className="flex flex-wrap gap-2">
-              {CHECKLIST_KEYS.map(k => (
-                <label
-                  key={k}
-                  className="flex items-center gap-1.5 text-[12px] cursor-pointer px-3 py-1.5 border transition-all duration-150"
-                  style={{
-                    background: post.checklist[k] ? "#D4EDDA" : "white",
-                    borderColor: post.checklist[k] ? "#86EFAC" : "#F0F0F0",
-                    color: post.checklist[k] ? "#166534" : "#6B7280",
-                    borderRadius: 8,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={post.checklist[k]}
-                    onChange={e => onUpdateChecklist(k, e.target.checked)}
-                    className="sr-only"
-                  />
-                  <span className={post.checklist[k] ? "font-medium" : ""}>
-                    {post.checklist[k] ? "✓" : "☐"} {k.charAt(0).toUpperCase() + k.slice(1)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Analytics */}
-          <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-400 tracking-wider mb-2 block">Analytics</label>
-            <div className="grid grid-cols-4 gap-2">
-              {(["views", "likes", "comments", "shares"] as const).map(k => (
-                <div key={k}>
-                  <div className="text-[11px] text-gray-400 mb-0.5 uppercase tracking-wide">{k}</div>
-                  <input
-                    className="w-full text-[13px] bg-gray-50 outline-none text-gray-700 border px-2 py-1.5 text-center"
-                    style={{ borderRadius: 8, borderColor: "#F0F0F0" }}
-                    value={post.analytics[k]}
-                    onChange={e => onUpdateAnalytics(k, e.target.value)}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* ACTIONS */}
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={() => { onDelete(); onClose(); }}
+            className="cursor-pointer text-[13px]"
+            style={{ background: "none", border: "1px solid #FFD0D0", borderRadius: 8, color: "#E55", padding: "8px 16px" }}
+          >Delete Post</button>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-[13px] font-semibold text-white"
+            style={{ background: "#111", border: "none", borderRadius: 8, padding: "8px 20px" }}
+          >Done</button>
         </div>
       </div>
     </div>
