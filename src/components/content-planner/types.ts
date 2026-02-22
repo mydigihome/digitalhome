@@ -1,14 +1,20 @@
+export interface StatusItem {
+  label: string;
+  color: string; // pastel hex
+}
+
 export interface SetupData {
   contentPillars: string[];
   contentFormats: string[];
-  statuses: string[];
+  statuses: StatusItem[];
   platforms: string[];
   goals: string[];
 }
 
-export interface DayEntry {
-  date: string;
+export interface PostEntry {
+  id: string;
   imageUrl: string;
+  imageFile?: string; // base64 data URL for uploaded files
   platform: string;
   contentType: string;
   title: string;
@@ -29,12 +35,17 @@ export interface DayEntry {
   };
 }
 
+export interface DayData {
+  date: string; // yyyy-MM-dd
+  posts: PostEntry[];
+}
+
 export interface WeekData {
-  weekNumber: number;
+  weekStart: string; // yyyy-MM-dd (Monday)
   weeklyGoal: string;
   weeklyTodos: string[];
   weeklyReview: string;
-  days: DayEntry[];
+  days: DayData[];
 }
 
 export interface IdeaEntry {
@@ -53,26 +64,37 @@ export interface StrategyRow {
   value: string;
 }
 
-export const STATUS_COLORS: Record<string, string> = {
-  "Not Started": "#EF4444",
-  "Draft": "#F59E0B",
-  "Filming": "#8B5CF6",
-  "Editing": "#6366F1",
-  "Scheduled": "#3B82F6",
-  "Published": "#22C55E",
-};
+export interface ContentPlannerData {
+  setup: SetupData;
+  weeks: Record<string, WeekData>; // keyed by weekStart date
+  ideas: Record<string, IdeaEntry[]>;
+  hashtagGroups: HashtagGroup[];
+  strategy: StrategyRow[];
+  tabOrder: string[];
+}
+
+export const DEFAULT_STATUS_COLORS: StatusItem[] = [
+  { label: "Not Started", color: "#e5e7eb" },
+  { label: "Draft", color: "#fef08a" },
+  { label: "Filming", color: "#fed7aa" },
+  { label: "Editing", color: "#bfdbfe" },
+  { label: "Scheduled", color: "#ddd6fe" },
+  { label: "Published", color: "#bbf7d0" },
+];
 
 export const DEFAULT_SETUP: SetupData = {
   contentPillars: ["Educate", "Nurture", "Inspire", "Grow", "Social Proof"],
   contentFormats: ["Reel", "Story", "Carousel", "Video", "Blog", "Newsletter", "Podcast"],
-  statuses: ["Not Started", "Draft", "Filming", "Editing", "Scheduled", "Published"],
+  statuses: DEFAULT_STATUS_COLORS,
   platforms: ["Substack", "YouTube", "Instagram", "TikTok", "Pinterest"],
-  goals: ["Views", "Subscribers", "Likes", "Comments", "Signups"],
+  goals: ["Views", "Subscribers", "Likes", "Signups"],
 };
 
-export function createEmptyDay(dateStr: string): DayEntry {
+export const DEFAULT_TAB_ORDER = ["setup", "weekly", "monthly", "ideas", "hashtags", "strategy"];
+
+export function createEmptyPost(): PostEntry {
   return {
-    date: dateStr,
+    id: crypto.randomUUID(),
     imageUrl: "",
     platform: "",
     contentType: "",
@@ -82,4 +104,8 @@ export function createEmptyDay(dateStr: string): DayEntry {
     checklist: { script: false, graphics: false, filmed: false, edited: false, posted: false },
     analytics: { views: "", likes: "", comments: "", shares: "" },
   };
+}
+
+export function getStatusColor(statuses: StatusItem[], statusLabel: string): string {
+  return statuses.find(s => s.label === statusLabel)?.color || "#e5e7eb";
 }
