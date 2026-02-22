@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  SetupData, WeekData, DayData, PostEntry, IdeaEntry, HashtagGroup, StrategyRow,
-  ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, createEmptyPost,
+  SetupData, WeekData, DayData, PostEntry, IdeaEntry, HashtagGroup, StrategyRow, SocialLink, DEFAULT_PLATFORM_COLORS,
+  ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, createEmptyPost,
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 
@@ -58,7 +58,20 @@ const DEFAULT_STRATEGY: StrategyRow[] = [
 function loadFromStorage(): ContentPlannerData | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migrate old format: platforms as string[] → PlatformItem[]
+      if (parsed.setup?.platforms && parsed.setup.platforms.length > 0 && typeof parsed.setup.platforms[0] === "string") {
+        parsed.setup.platforms = (parsed.setup.platforms as string[]).map((name: string) => {
+          const found = DEFAULT_PLATFORM_COLORS.find(p => p.name === name);
+          return found || { name, color: "#6B7280" };
+        });
+      }
+      if (!parsed.socialLinks) {
+        parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
+      }
+      return parsed;
+    }
   } catch {}
   return null;
 }
@@ -72,6 +85,7 @@ function buildDefaults(): ContentPlannerData {
     hashtagGroups: DEFAULT_HASHTAG_GROUPS,
     strategy: DEFAULT_STRATEGY,
     tabOrder: DEFAULT_TAB_ORDER,
+    socialLinks: DEFAULT_SOCIAL_LINKS,
   };
 }
 
@@ -95,7 +109,6 @@ export function useContentPlannerState() {
   // Ensure current week exists
   const currentWeek = data.weeks[currentWeekStart] || createEmptyWeek(currentWeekStart);
   if (!data.weeks[currentWeekStart]) {
-    // lazily add it
     setData(prev => ({ ...prev, weeks: { ...prev.weeks, [currentWeekStart]: createEmptyWeek(currentWeekStart) } }));
   }
 
@@ -194,13 +207,20 @@ export function useContentPlannerState() {
     setData(prev => ({ ...prev, tabOrder: order }));
   }, []);
 
+  const setSocialLinks = useCallback((fn: SocialLink[] | ((prev: SocialLink[]) => SocialLink[])) => {
+    setData(prev => ({
+      ...prev,
+      socialLinks: typeof fn === "function" ? fn(prev.socialLinks) : fn,
+    }));
+  }, []);
+
   // Get all posts across all weeks for monthly view
   const getAllPosts = useCallback(() => {
-    const all: { date: string; post: PostEntry }[] = [];
-    Object.values(data.weeks).forEach(week => {
-      week.days.forEach(day => {
+    const all: { date: string; post: PostEntry; weekStart: string; dayIndex: number }[] = [];
+    Object.entries(data.weeks).forEach(([ws, week]) => {
+      week.days.forEach((day, dayIdx) => {
         day.posts.forEach(post => {
-          all.push({ date: day.date, post });
+          all.push({ date: day.date, post, weekStart: ws, dayIndex: dayIdx });
         });
       });
     });
@@ -227,6 +247,8 @@ export function useContentPlannerState() {
     setStrategy,
     tabOrder: data.tabOrder,
     setTabOrder,
+    socialLinks: data.socialLinks,
+    setSocialLinks,
     getAllPosts,
   };
 }

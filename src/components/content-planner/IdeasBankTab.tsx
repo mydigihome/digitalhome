@@ -9,6 +9,9 @@ interface Props {
   setIdeas: (fn: Record<string, IdeaEntry[]> | ((prev: Record<string, IdeaEntry[]>) => Record<string, IdeaEntry[]>)) => void;
 }
 
+// Soft pastel backgrounds for pillar columns
+const PILLAR_COLORS = ["#FFF5F0", "#F0F7FF", "#FFF0F8", "#F0FFF4", "#FFF8E0", "#F0FFFF", "#FFF0FF"];
+
 function EditableHeader({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -60,12 +63,15 @@ export default function IdeasBankTab({ setup, ideas, setIdeas }: Props) {
 
   return (
     <div className="grid h-full" style={{ gridTemplateColumns: `repeat(${pillars.length}, minmax(0, 1fr))` }}>
-      {pillars.map(pillar => (
-        <div key={pillar} className="border-r border-gray-200 last:border-r-0 flex flex-col">
-          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50">
+      {pillars.map((pillar, pi) => (
+        <div key={pillar} className="border-r border-gray-100 last:border-r-0 flex flex-col">
+          <div
+            className="px-3 py-2 border-b border-gray-100"
+            style={{ background: PILLAR_COLORS[pi % PILLAR_COLORS.length] }}
+          >
             <EditableHeader value={pillar} onChange={() => {}} />
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
+          <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
             {(ideas[pillar] || []).map((idea, idx) => (
               <div key={idea.id} className="flex group">
                 <AutoTextarea
@@ -85,7 +91,7 @@ export default function IdeasBankTab({ setup, ideas, setIdeas }: Props) {
           </div>
           <button
             onClick={() => addIdea(pillar)}
-            className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 border-t border-gray-200 transition-colors"
+            className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 border-t border-gray-100 transition-colors"
           >
             <Plus size={10} /> Add Idea
           </button>

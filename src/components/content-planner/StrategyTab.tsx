@@ -7,6 +7,8 @@ interface Props {
   setStrategy: (fn: StrategyRow[] | ((prev: StrategyRow[]) => StrategyRow[])) => void;
 }
 
+const ACCENT_COLORS = ["#FF6719", "#833AB4", "#CCE5FF", "#D4EDDA", "#FFF3CD", "#E8D5FF", "#FFE5CC"];
+
 function EditableLabel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -51,10 +53,10 @@ export default function StrategyTab({ strategy, setStrategy }: Props) {
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="border border-gray-200 bg-gray-50 px-4 py-2 text-left text-xs font-semibold uppercase text-gray-400 w-48">
+            <th className="border border-gray-100 bg-gray-50/50 px-4 py-2.5 text-left text-xs font-semibold uppercase text-gray-400 w-52">
               Section
             </th>
-            <th className="border border-gray-200 bg-gray-50 px-4 py-2 text-left text-xs font-semibold uppercase text-gray-400">
+            <th className="border border-gray-100 bg-gray-50/50 px-4 py-2.5 text-left text-xs font-semibold uppercase text-gray-400">
               Details
             </th>
           </tr>
@@ -62,10 +64,13 @@ export default function StrategyTab({ strategy, setStrategy }: Props) {
         <tbody>
           {strategy.map((row, idx) => (
             <tr key={idx}>
-              <td className="border border-gray-200 px-4 py-3 align-top bg-gray-50/50">
+              <td
+                className="border border-gray-100 px-4 py-3 align-top bg-white"
+                style={{ borderLeft: `3px solid ${ACCENT_COLORS[idx % ACCENT_COLORS.length]}` }}
+              >
                 <EditableLabel value={row.label} onChange={v => updateLabel(idx, v)} />
               </td>
-              <td className="border border-gray-200 px-0 py-0">
+              <td className="border border-gray-100 px-0 py-0">
                 <AutoTextarea
                   className="w-full px-4 py-3 text-sm bg-transparent outline-none text-gray-700 leading-relaxed"
                   value={row.value}
