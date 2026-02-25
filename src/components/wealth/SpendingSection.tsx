@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 export interface Transaction {
   date: string;
@@ -23,9 +24,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function loadMonthlyData(): MonthData[] {
-  try { return JSON.parse(localStorage.getItem("wealth_monthly_spending") || "[]"); } catch { return []; }
+  return loadStoredJson<MonthData[]>("wealth_monthly_spending", []);
 }
-function saveMonthlyData(d: MonthData[]) { localStorage.setItem("wealth_monthly_spending", JSON.stringify(d)); }
+function saveMonthlyData(d: MonthData[]) { saveStoredJson("wealth_monthly_spending", d); }
 
 export default function SpendingSection() {
   const [allMonths, setAllMonths] = useState<MonthData[]>(loadMonthlyData);

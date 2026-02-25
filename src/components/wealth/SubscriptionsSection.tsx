@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { addMonths, addWeeks, addYears, addDays, format } from "date-fns";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 export interface Subscription {
   id: string;
@@ -51,9 +52,9 @@ function calcAnnual(cost: number, cycle: string): number {
 }
 
 function loadSubs(): Subscription[] {
-  try { return JSON.parse(localStorage.getItem("wealth_subscriptions") || "[]"); } catch { return []; }
+  return loadStoredJson<Subscription[]>("wealth_subscriptions", []);
 }
-function saveSubs(s: Subscription[]) { localStorage.setItem("wealth_subscriptions", JSON.stringify(s)); }
+function saveSubs(s: Subscription[]) { saveStoredJson("wealth_subscriptions", s); }
 
 type FormState = {
   name: string; category: string; cycle: string; cost: string; startDate: string;

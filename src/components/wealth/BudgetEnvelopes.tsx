@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 interface BudgetCategory {
   id: string;
@@ -19,16 +20,13 @@ const DEFAULT_CATEGORIES: BudgetCategory[] = [
 ];
 
 function loadBudgets(): BudgetCategory[] {
-  try {
-    const saved = localStorage.getItem("wealth_budgets");
-    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
-  } catch { return DEFAULT_CATEGORIES; }
+  return loadStoredJson<BudgetCategory[]>("wealth_budgets", DEFAULT_CATEGORIES);
 }
-function saveBudgets(b: BudgetCategory[]) { localStorage.setItem("wealth_budgets", JSON.stringify(b)); }
+function saveBudgets(b: BudgetCategory[]) { saveStoredJson("wealth_budgets", b); }
 
 function getCurrentMonthSpending(): Record<string, number> {
   try {
-    const data = JSON.parse(localStorage.getItem("wealth_monthly_spending") || "[]");
+    const data = loadStoredJson<any[]>("wealth_monthly_spending", []);
     const currentMonth = new Date().toISOString().slice(0, 7);
     const monthData = data.find((m: any) => m.month === currentMonth);
     if (!monthData) return {};

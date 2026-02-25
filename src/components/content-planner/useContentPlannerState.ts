@@ -4,6 +4,7 @@ import {
   ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, createEmptyPost,
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 const STORAGE_KEY = "content-planner-data";
 
@@ -56,23 +57,22 @@ const DEFAULT_STRATEGY: StrategyRow[] = [
 ];
 
 function loadFromStorage(): ContentPlannerData | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Migrate old format: platforms as string[] → PlatformItem[]
-      if (parsed.setup?.platforms && parsed.setup.platforms.length > 0 && typeof parsed.setup.platforms[0] === "string") {
-        parsed.setup.platforms = (parsed.setup.platforms as string[]).map((name: string) => {
-          const found = DEFAULT_PLATFORM_COLORS.find(p => p.name === name);
-          return found || { name, color: "#6B7280" };
-        });
-      }
-      if (!parsed.socialLinks) {
-        parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
-      }
-      return parsed;
+  const parsed = loadStoredJson<ContentPlannerData | null>(STORAGE_KEY, null);
+
+  if (parsed) {
+    // Migrate old format: platforms as string[] → PlatformItem[]
+    if (parsed.setup?.platforms && parsed.setup.platforms.length > 0 && typeof parsed.setup.platforms[0] === "string") {
+      parsed.setup.platforms = (parsed.setup.platforms as unknown as string[]).map((name: string) => {
+        const found = DEFAULT_PLATFORM_COLORS.find(p => p.name === name);
+        return found || { name, color: "#6B7280" };
+      });
     }
-  } catch {}
+    if (!parsed.socialLinks) {
+      parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
+    }
+    return parsed;
+  }
+
   return null;
 }
 
@@ -101,16 +101,18 @@ export function useContentPlannerState() {
   useEffect(() => {
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      saveStoredJson(STORAGE_KEY, data);
     }, 100);
     return () => clearTimeout(saveTimeout.current);
   }, [data]);
 
   // Ensure current week exists
   const currentWeek = data.weeks[currentWeekStart] || createEmptyWeek(currentWeekStart);
-  if (!data.weeks[currentWeekStart]) {
-    setData(prev => ({ ...prev, weeks: { ...prev.weeks, [currentWeekStart]: createEmptyWeek(currentWeekStart) } }));
-  }
+  useEffect(() => {
+    if (!data.weeks[currentWeekStart]) {
+      setData(prev => ({ ...prev, weeks: { ...prev.weeks, [currentWeekStart]: createEmptyWeek(currentWeekStart) } }));
+    }
+  }, [currentWeekStart, data.weeks]);
 
   const setSetup = useCallback((fn: SetupData | ((prev: SetupData) => SetupData)) => {
     setData(prev => ({
