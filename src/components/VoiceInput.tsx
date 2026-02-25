@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 // Extend window for webkit prefix
 declare global {
@@ -20,10 +21,9 @@ export default function VoiceInput() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [supported, setSupported] = useState(false);
-  const [locked, setLocked] = useState(() => localStorage.getItem("voice-btn-locked") === "true");
+  const [locked, setLocked] = useState(() => loadStoredJson<boolean>("voice-btn-locked", false));
   const [position, setPosition] = useState(() => {
-    const saved = localStorage.getItem("voice-btn-pos");
-    return saved ? JSON.parse(saved) : null;
+    return loadStoredJson<{ bottom: number; right: number } | null>("voice-btn-pos", null);
   });
   const [dragging, setDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; bottom: number; right: number } | null>(null);
@@ -223,9 +223,9 @@ export default function VoiceInput() {
             onClick={(e) => {
               e.stopPropagation();
               if (position) {
-                localStorage.setItem("voice-btn-pos", JSON.stringify(position));
+                saveStoredJson("voice-btn-pos", position);
               }
-              localStorage.setItem("voice-btn-locked", "true");
+              saveStoredJson("voice-btn-locked", true);
               setLocked(true);
               toast({ title: "Button locked", description: "Position saved." });
             }}
@@ -244,7 +244,7 @@ export default function VoiceInput() {
           }}
           onDoubleClick={() => {
             if (locked) {
-              localStorage.setItem("voice-btn-locked", "false");
+              saveStoredJson("voice-btn-locked", false);
               setLocked(false);
               toast({ title: "Button unlocked", description: "Drag to reposition, then tap Lock." });
             }

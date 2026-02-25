@@ -19,7 +19,7 @@ function save(a: Account[]) { saveStoredJson("wealth_accounts", a); }
 
 function getMonthlySpendingData() {
   try {
-    const data = JSON.parse(localStorage.getItem("wealth_monthly_spending") || "[]");
+    const data = loadStoredJson<any[]>("wealth_monthly_spending", []);
     if (data.length === 0) return { income: 0, spending: 0 };
     const latest = data[0];
     const income = latest.transactions.filter((t: any) => t.amount > 0).reduce((s: number, t: any) => s + t.amount, 0);
