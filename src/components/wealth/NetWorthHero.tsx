@@ -3,6 +3,7 @@ import { Pencil, X, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 interface Account {
   id: string;
@@ -12,9 +13,9 @@ interface Account {
 }
 
 function load(): Account[] {
-  try { return JSON.parse(localStorage.getItem("wealth_accounts") || "[]"); } catch { return []; }
+  return loadStoredJson<Account[]>("wealth_accounts", []);
 }
-function save(a: Account[]) { localStorage.setItem("wealth_accounts", JSON.stringify(a)); }
+function save(a: Account[]) { saveStoredJson("wealth_accounts", a); }
 
 function getMonthlySpendingData() {
   try {

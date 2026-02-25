@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addDays, format, isAfter, isBefore, startOfDay, endOfDay, addMonths, addWeeks, addYears } from "date-fns";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 interface Bill {
   id: string;
@@ -15,13 +16,13 @@ interface Bill {
 }
 
 function load(): Bill[] {
-  try { return JSON.parse(localStorage.getItem("wealth_bills") || "[]"); } catch { return []; }
+  return loadStoredJson<Bill[]>("wealth_bills", []);
 }
-function save(b: Bill[]) { localStorage.setItem("wealth_bills", JSON.stringify(b)); }
+function save(b: Bill[]) { saveStoredJson("wealth_bills", b); }
 
 function getSubscriptionBills(): Bill[] {
   try {
-    const subs = JSON.parse(localStorage.getItem("wealth_subscriptions") || "[]");
+    const subs = loadStoredJson<any[]>("wealth_subscriptions", []);
     return subs
       .filter((s: any) => s.status === "active" && s.nextBillingDate)
       .map((s: any) => ({
