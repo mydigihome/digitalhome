@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 export interface Subscription {
   id: string;
@@ -24,9 +25,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function loadSubscriptions(): Subscription[] {
-  try { return JSON.parse(localStorage.getItem("wealth_subscriptions") || "[]"); } catch { return []; }
+  return loadStoredJson<Subscription[]>("wealth_subscriptions", []);
 }
-function saveSubscriptions(s: Subscription[]) { localStorage.setItem("wealth_subscriptions", JSON.stringify(s)); }
+function saveSubscriptions(s: Subscription[]) { saveStoredJson("wealth_subscriptions", s); }
 
 export default function SubscriptionsTab() {
   const [subs, setSubs] = useState<Subscription[]>(loadSubscriptions);

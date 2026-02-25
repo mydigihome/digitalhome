@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { X, Clock, Tag, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 const statuses = [
   { value: "backlog", label: "Backlog" },
@@ -64,19 +65,18 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
   const draftKey = task ? `task-draft-${task.id}` : "task-draft-new";
   useEffect(() => {
     const interval = setInterval(() => {
-      localStorage.setItem(draftKey, JSON.stringify({ title, description, status, priority, dueDate }));
+      saveStoredJson(draftKey, { title, description, status, priority, dueDate });
     }, 2000);
     return () => clearInterval(interval);
   }, [title, description, status, priority, dueDate, draftKey]);
 
   useEffect(() => {
     if (isNew) {
-      const draft = localStorage.getItem(draftKey);
+      const draft = loadStoredJson<any>(draftKey, null);
       if (draft) {
         try {
-          const d = JSON.parse(draft);
-          if (d.title) setTitle(d.title);
-          if (d.description) setDescription(d.description);
+          if (draft.title) setTitle(draft.title);
+          if (draft.description) setDescription(draft.description);
         } catch {}
       }
     }
@@ -122,7 +122,7 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
         });
         toast.success("Task updated!");
       }
-      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftKey); localStorage.removeItem(`${draftKey}__backup`);
       onClose();
     } catch {
       toast.error("Failed to save task");
@@ -134,7 +134,7 @@ export default function TaskEditor({ task, projectId, defaultStatus, onClose }: 
     try {
       await deleteTask.mutateAsync(task.id);
       toast.success("Task deleted");
-      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftKey); localStorage.removeItem(`${draftKey}__backup`);
       onClose();
     } catch {
       toast.error("Failed to delete task");

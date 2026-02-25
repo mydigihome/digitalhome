@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { format, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 function formatEventTime(dateStr: string) {
   return format(new Date(dateStr), "h:mm a");
@@ -28,16 +29,13 @@ export default function YourDayAgenda() {
   // Last minute tasks - simple local bullet list
   const storageKey = `last-minute-tasks-${format(new Date(), "yyyy-MM-dd")}`;
   const [quickTasks, setQuickTasks] = useState<{ id: string; text: string }[]>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
+    return loadStoredJson<{ id: string; text: string }[]>(storageKey, []);
   });
   const [newQuickTask, setNewQuickTask] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(quickTasks));
+    saveStoredJson(storageKey, quickTasks);
   }, [quickTasks, storageKey]);
 
   const addQuickTask = () => {

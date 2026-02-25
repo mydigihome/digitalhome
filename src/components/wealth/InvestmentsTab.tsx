@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 interface InvestmentInfo {
   ticker: string;
@@ -42,9 +43,9 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 function loadWatchlist(): WatchlistItem[] {
-  try { return JSON.parse(localStorage.getItem("wealth_watchlist") || "[]"); } catch { return []; }
+  return loadStoredJson<WatchlistItem[]>("wealth_watchlist", []);
 }
-function saveWatchlist(w: WatchlistItem[]) { localStorage.setItem("wealth_watchlist", JSON.stringify(w)); }
+function saveWatchlist(w: WatchlistItem[]) { saveStoredJson("wealth_watchlist", w); }
 
 export default function InvestmentsTab() {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(loadWatchlist);

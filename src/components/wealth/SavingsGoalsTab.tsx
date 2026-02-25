@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
+import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 export interface SavingsGoal {
   id: string;
@@ -30,13 +31,13 @@ const PASTEL_COLORS = [
 ];
 
 function loadGoals(): SavingsGoal[] {
-  try { return JSON.parse(localStorage.getItem("wealth_savings_goals") || "[]"); } catch { return []; }
+  return loadStoredJson<SavingsGoal[]>("wealth_savings_goals", []);
 }
-function saveGoals(g: SavingsGoal[]) { localStorage.setItem("wealth_savings_goals", JSON.stringify(g)); }
+function saveGoals(g: SavingsGoal[]) { saveStoredJson("wealth_savings_goals", g); }
 
 function getAverageMonthlySpending(): number {
   try {
-    const data = JSON.parse(localStorage.getItem("wealth_monthly_spending") || "[]");
+    const data = loadStoredJson<any[]>("wealth_monthly_spending", []);
     if (data.length === 0) return 0;
     const totals = data.map((m: any) =>
       Math.abs(m.transactions.filter((t: any) => t.amount < 0).reduce((s: number, t: any) => s + t.amount, 0))
@@ -47,7 +48,7 @@ function getAverageMonthlySpending(): number {
 
 function getAverageMonthlyIncome(): number {
   try {
-    const data = JSON.parse(localStorage.getItem("wealth_monthly_spending") || "[]");
+    const data = loadStoredJson<any[]>("wealth_monthly_spending", []);
     if (data.length === 0) return 0;
     const totals = data.map((m: any) =>
       m.transactions.filter((t: any) => t.amount > 0).reduce((s: number, t: any) => s + t.amount, 0)
