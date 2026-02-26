@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback } from "react";
-import { FeedPost } from "./types";
-import { format, parseISO, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
-import { Plus, Trash2, ChevronLeft, ChevronRight, Instagram, Smartphone, GripVertical, Image, Type, Calendar, Clock } from "lucide-react";
+import { FeedPost, StudioProfile, FONT_PAIRINGS } from "./types";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay } from "date-fns";
+import { Plus, Trash2, ChevronLeft, ChevronRight, Instagram, Smartphone, Image, Calendar, Clock, ChevronDown, User, Upload } from "lucide-react";
 
 interface Props {
   feedPosts: FeedPost[];
   setFeedPosts: (fn: FeedPost[] | ((prev: FeedPost[]) => FeedPost[])) => void;
+  studioProfile: StudioProfile;
+  setStudioProfile: (fn: StudioProfile | ((prev: StudioProfile) => StudioProfile)) => void;
 }
 
 const FONTS = [
@@ -60,11 +62,69 @@ function TilePreview({ post, size, onClick }: { post: FeedPost; size: number; on
   );
 }
 
-function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder }: {
+function ProfileHeader({ profile, viewMode }: { profile: StudioProfile; viewMode: "instagram" | "tiktok" }) {
+  const pairing = FONT_PAIRINGS[profile.fontPairing] || FONT_PAIRINGS["modern"];
+
+  if (viewMode === "tiktok") {
+    return (
+      <div className="flex flex-col items-center py-3 border-b border-gray-100">
+        {profile.profilePhoto ? (
+          <img src={profile.profilePhoto} alt="" className="w-12 h-12 rounded-full object-cover" />
+        ) : (
+          <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: profile.brandColors[0] + "30" }}>
+            <User size={18} style={{ color: profile.brandColors[0] }} />
+          </div>
+        )}
+        <span className="text-[11px] font-bold mt-1.5 text-gray-900" style={{ fontFamily: pairing.display }}>
+          @{profile.username || "username"}
+        </span>
+        {profile.bio && (
+          <span className="text-[9px] text-gray-500 mt-0.5 text-center px-4 leading-tight" style={{ fontFamily: pairing.body }}>
+            {profile.bio}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Instagram style
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+      {profile.profilePhoto ? (
+        <img src={profile.profilePhoto} alt="" className="w-14 h-14 rounded-full object-cover border-2" style={{ borderColor: profile.brandColors[0] }} />
+      ) : (
+        <div className="w-14 h-14 rounded-full flex items-center justify-center border-2" style={{ borderColor: profile.brandColors[0], backgroundColor: profile.brandColors[0] + "15" }}>
+          <User size={20} style={{ color: profile.brandColors[0] }} />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <span className="text-[11px] font-bold text-gray-900 block" style={{ fontFamily: pairing.display }}>
+          {profile.username || "username"}
+        </span>
+        {profile.bio && (
+          <span className="text-[9px] text-gray-500 block leading-tight mt-0.5 truncate" style={{ fontFamily: pairing.body }}>
+            {profile.bio}
+          </span>
+        )}
+        <div className="flex gap-3 mt-1.5">
+          {["Posts", "Followers", "Following"].map(l => (
+            <div key={l} className="text-center">
+              <span className="text-[9px] font-bold text-gray-900 block">—</span>
+              <span className="text-[8px] text-gray-400">{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder, profile }: {
   posts: FeedPost[];
   viewMode: "instagram" | "tiktok";
   onSelectPost: (id: string) => void;
   onReorder: (fromIdx: number, toIdx: number) => void;
+  profile: StudioProfile;
 }) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
@@ -79,14 +139,11 @@ function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder }: {
 
   return (
     <div className="flex flex-col items-center">
-      {/* iPhone frame */}
       <div
         className="relative bg-black rounded-[36px] p-[10px] shadow-2xl"
         style={{ width: phoneW + 20, height: phoneH + 20 }}
       >
-        {/* Notch */}
         <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-[100px] h-[24px] bg-black rounded-b-2xl z-10" />
-        {/* Screen */}
         <div
           className="bg-white rounded-[26px] overflow-hidden flex flex-col"
           style={{ width: phoneW, height: phoneH }}
@@ -108,6 +165,9 @@ function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder }: {
             </span>
           </div>
 
+          {/* Profile header */}
+          <ProfileHeader profile={profile} viewMode={viewMode} />
+
           {/* Content area */}
           <div className="flex-1 overflow-auto p-4">
             {filtered.length === 0 ? (
@@ -126,9 +186,7 @@ function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder }: {
                     onDragStart={() => setDragIdx(idx)}
                     onDragOver={e => { e.preventDefault(); }}
                     onDrop={() => {
-                      if (dragIdx !== null && dragIdx !== idx) {
-                        onReorder(dragIdx, idx);
-                      }
+                      if (dragIdx !== null && dragIdx !== idx) onReorder(dragIdx, idx);
                       setDragIdx(null);
                     }}
                     onDragEnd={() => setDragIdx(null)}
@@ -147,9 +205,7 @@ function IPhoneMockup({ posts, viewMode, onSelectPost, onReorder }: {
                     onDragStart={() => setDragIdx(idx)}
                     onDragOver={e => { e.preventDefault(); }}
                     onDrop={() => {
-                      if (dragIdx !== null && dragIdx !== idx) {
-                        onReorder(dragIdx, idx);
-                      }
+                      if (dragIdx !== null && dragIdx !== idx) onReorder(dragIdx, idx);
                       setDragIdx(null);
                     }}
                     onDragEnd={() => setDragIdx(null)}
@@ -207,7 +263,7 @@ function CalendarStrip({ posts, viewMode, weekStart, onNavigate }: {
   );
 }
 
-export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) {
+export default function VisualContentStudio({ feedPosts, setFeedPosts, studioProfile, setStudioProfile }: Props) {
   const [platform, setPlatform] = useState<"instagram" | "tiktok">("instagram");
   const [bgColor, setBgColor] = useState("#F3F4F6");
   const [accentColor, setAccentColor] = useState("#111827");
@@ -219,7 +275,9 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"instagram" | "tiktok">("instagram");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
+  const [profileOpen, setProfileOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const profilePhotoRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -228,6 +286,14 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
     reader.onload = () => setImageData(reader.result as string);
     reader.readAsDataURL(file);
   }, []);
+
+  const handleProfilePhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setStudioProfile(prev => ({ ...prev, profilePhoto: reader.result as string }));
+    reader.readAsDataURL(file);
+  }, [setStudioProfile]);
 
   const handleAddToFeed = useCallback(() => {
     if (editingId) {
@@ -253,7 +319,6 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
       };
       setFeedPosts(prev => [...prev, newPost]);
     }
-    // Reset form
     setCaption("");
     setImageData(undefined);
     if (fileRef.current) fileRef.current.value = "";
@@ -299,7 +364,6 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
     if (fileRef.current) fileRef.current.value = "";
   }, []);
 
-  // Live preview tile
   const previewPost: FeedPost = {
     id: "preview",
     platform,
@@ -315,13 +379,126 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
 
   return (
     <div className="flex h-full overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
-      {/* LEFT PANEL — Design */}
+      {/* LEFT PANEL */}
       <div className="w-[360px] shrink-0 border-r border-gray-100 overflow-auto">
         <div className="p-5 space-y-5">
           {/* Header */}
           <div>
             <h2 className="text-sm font-semibold text-gray-900 mb-1">Visual Content Studio</h2>
             <p className="text-[11px] text-gray-400">Design and schedule feed posts</p>
+          </div>
+
+          {/* Collapsible Profile & Theme Settings */}
+          <div className="border border-gray-200 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <span className="text-xs font-semibold text-gray-700">Profile &amp; Theme Settings</span>
+              <ChevronDown size={14} className={`text-gray-400 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+            </button>
+            {profileOpen && (
+              <div className="p-4 space-y-4 border-t border-gray-100">
+                {/* Profile photo */}
+                <div>
+                  <label className="text-[11px] text-gray-500 block mb-1.5">Profile Photo</label>
+                  <div className="flex items-center gap-3">
+                    {studioProfile.profilePhoto ? (
+                      <img src={studioProfile.profilePhoto} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-gray-200" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200">
+                        <User size={20} className="text-gray-400" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5">
+                      <button
+                        onClick={() => profilePhotoRef.current?.click()}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                      >
+                        <Upload size={11} /> Upload
+                      </button>
+                      {studioProfile.profilePhoto && (
+                        <button
+                          onClick={() => setStudioProfile(prev => ({ ...prev, profilePhoto: undefined }))}
+                          className="text-[11px] text-red-400 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <input ref={profilePhotoRef} type="file" accept="image/*" className="hidden" onChange={handleProfilePhotoUpload} />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="text-[11px] text-gray-500 block mb-1">Username</label>
+                  <input
+                    value={studioProfile.username}
+                    onChange={e => setStudioProfile(prev => ({ ...prev, username: e.target.value }))}
+                    placeholder="@yourhandle"
+                    className="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-gray-400"
+                  />
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="text-[11px] text-gray-500 block mb-1">Bio</label>
+                  <textarea
+                    value={studioProfile.bio}
+                    onChange={e => setStudioProfile(prev => ({ ...prev, bio: e.target.value }))}
+                    placeholder="Tell people about yourself..."
+                    rows={2}
+                    className="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 outline-none resize-none focus:border-gray-400"
+                  />
+                </div>
+
+                {/* Brand colors */}
+                <div>
+                  <label className="text-[11px] text-gray-500 block mb-1.5">Brand Colors (3)</label>
+                  <div className="flex gap-3">
+                    {studioProfile.brandColors.map((color, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1">
+                        <input
+                          type="color"
+                          value={color}
+                          onChange={e => {
+                            const next = [...studioProfile.brandColors] as [string, string, string];
+                            next[i] = e.target.value;
+                            setStudioProfile(prev => ({ ...prev, brandColors: next }));
+                          }}
+                          className="w-9 h-9 rounded-lg cursor-pointer border border-gray-200 p-0"
+                        />
+                        <span className="text-[9px] text-gray-400">{i === 0 ? "Primary" : i === 1 ? "Secondary" : "Accent"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Font pairing */}
+                <div>
+                  <label className="text-[11px] text-gray-500 block mb-1">Font Pairing</label>
+                  <select
+                    value={studioProfile.fontPairing}
+                    onChange={e => setStudioProfile(prev => ({ ...prev, fontPairing: e.target.value }))}
+                    className="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 outline-none"
+                  >
+                    {Object.entries(FONT_PAIRINGS).map(([key, p]) => (
+                      <option key={key} value={key} style={{ fontFamily: p.display }}>{p.label}</option>
+                    ))}
+                  </select>
+                  {/* Preview */}
+                  <div className="mt-2 p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                    <span className="block text-sm font-bold" style={{ fontFamily: FONT_PAIRINGS[studioProfile.fontPairing]?.display }}>
+                      Display Font Preview
+                    </span>
+                    <span className="block text-[11px] text-gray-500 mt-0.5" style={{ fontFamily: FONT_PAIRINGS[studioProfile.fontPairing]?.body }}>
+                      Body font preview — lorem ipsum dolor sit amet.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Platform switcher */}
@@ -347,7 +524,6 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
           <div>
             <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1.5 block">Design</label>
             <div className="space-y-3">
-              {/* Colors */}
               <div className="flex gap-4">
                 <div className="flex items-center gap-2">
                   <label className="text-[11px] text-gray-500">Background</label>
@@ -369,7 +545,6 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
                 </div>
               </div>
 
-              {/* Font */}
               <div>
                 <label className="text-[11px] text-gray-500 block mb-1">Font</label>
                 <select
@@ -383,7 +558,6 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
                 </select>
               </div>
 
-              {/* Image upload */}
               <div>
                 <label className="text-[11px] text-gray-500 block mb-1">Image / Color Block</label>
                 <div className="flex gap-2">
@@ -481,9 +655,8 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
         </div>
       </div>
 
-      {/* RIGHT PANEL — Phone mockup */}
+      {/* RIGHT PANEL */}
       <div className="flex-1 overflow-auto flex flex-col items-center justify-center p-6 bg-gray-50/50">
-        {/* View mode toggle */}
         <div className="flex gap-2 mb-4">
           {(["instagram", "tiktok"] as const).map(v => (
             <button
@@ -504,6 +677,7 @@ export default function VisualContentStudio({ feedPosts, setFeedPosts }: Props) 
           viewMode={viewMode}
           onSelectPost={handleSelectPost}
           onReorder={handleReorder}
+          profile={studioProfile}
         />
 
         <CalendarStrip

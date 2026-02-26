@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  SetupData, WeekData, DayData, PostEntry, IdeaEntry, IdeasTable, HashtagGroup, StrategyRow, SocialLink, FeedPost, DEFAULT_PLATFORM_COLORS,
-  ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, createEmptyPost,
+  SetupData, WeekData, DayData, PostEntry, IdeaEntry, IdeasTable, HashtagGroup, StrategyRow, SocialLink, FeedPost, StudioProfile, DEFAULT_PLATFORM_COLORS,
+  ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, DEFAULT_STUDIO_PROFILE, createEmptyPost,
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
@@ -116,6 +116,7 @@ function buildDefaults(): ContentPlannerData {
     tabOrder: DEFAULT_TAB_ORDER,
     socialLinks: DEFAULT_SOCIAL_LINKS,
     feedPosts: [],
+    studioProfile: DEFAULT_STUDIO_PROFILE,
   };
 }
 
@@ -260,6 +261,13 @@ export function useContentPlannerState() {
     }));
   }, []);
 
+  const setStudioProfile = useCallback((fn: StudioProfile | ((prev: StudioProfile) => StudioProfile)) => {
+    setData(prev => ({
+      ...prev,
+      studioProfile: typeof fn === "function" ? fn(prev.studioProfile || DEFAULT_STUDIO_PROFILE) : fn,
+    }));
+  }, []);
+
   // Get all posts across all weeks for monthly view
   const getAllPosts = useCallback(() => {
     const all: { date: string; post: PostEntry; weekStart: string; dayIndex: number }[] = [];
@@ -299,6 +307,8 @@ export function useContentPlannerState() {
     setSocialLinks,
     feedPosts: data.feedPosts || [],
     setFeedPosts,
+    studioProfile: data.studioProfile || DEFAULT_STUDIO_PROFILE,
+    setStudioProfile,
     getAllPosts,
   };
 }

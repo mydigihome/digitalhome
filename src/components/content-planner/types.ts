@@ -83,6 +83,28 @@ export interface SocialLink {
   url: string;
 }
 
+export interface StudioProfile {
+  username: string;
+  bio: string;
+  profilePhoto?: string; // base64 data URL
+  brandColors: [string, string, string];
+  fontPairing: string; // key into FONT_PAIRINGS
+}
+
+export const FONT_PAIRINGS: Record<string, { display: string; body: string; label: string }> = {
+  "modern": { display: "Inter, sans-serif", body: "Inter, sans-serif", label: "Modern — Inter" },
+  "editorial": { display: "Georgia, serif", body: "Inter, sans-serif", label: "Editorial — Georgia + Inter" },
+  "bold": { display: "Arial Black, sans-serif", body: "Trebuchet MS, sans-serif", label: "Bold — Arial Black + Trebuchet" },
+  "classic": { display: "Palatino, serif", body: "Georgia, serif", label: "Classic — Palatino + Georgia" },
+};
+
+export const DEFAULT_STUDIO_PROFILE: StudioProfile = {
+  username: "",
+  bio: "",
+  brandColors: ["#6366F1", "#EC4899", "#F59E0B"],
+  fontPairing: "modern",
+};
+
 export interface FeedPost {
   id: string;
   platform: "instagram" | "tiktok";
@@ -106,6 +128,7 @@ export interface ContentPlannerData {
   tabOrder: string[];
   socialLinks: SocialLink[];
   feedPosts?: FeedPost[];
+  studioProfile?: StudioProfile;
 }
 
 export const DEFAULT_PLATFORM_COLORS: PlatformItem[] = [
