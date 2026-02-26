@@ -81,7 +81,6 @@ function ColorDot({ color, onChange }: { color: string; onChange: (c: string) =>
 
 function SingleTable({
   table,
-  pillars,
   onUpdateTitle,
   onUpdateColumnColor,
   onUpdateColumnName,
@@ -92,7 +91,6 @@ function SingleTable({
   canDelete,
 }: {
   table: IdeasTable;
-  pillars: string[];
   onUpdateTitle: (title: string) => void;
   onUpdateColumnColor: (pillar: string, color: string) => void;
   onUpdateColumnName: (oldName: string, newName: string) => void;
@@ -102,6 +100,7 @@ function SingleTable({
   onDelete: () => void;
   canDelete: boolean;
 }) {
+  const pillars = table.pillars || [];
   return (
     <div className="border border-gray-100 rounded-lg overflow-hidden">
       {/* Table title */}
@@ -182,6 +181,7 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
     if (!newName.trim() || oldName === newName) return;
     setIdeasTables(prev => prev.map(t => {
       if (t.id !== tableId) return t;
+      const newPillars = (t.pillars || []).map(p => p === oldName ? newName : p);
       const newIdeas = { ...t.ideas };
       if (newIdeas[oldName]) {
         newIdeas[newName] = newIdeas[oldName];
@@ -192,7 +192,7 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
         newColors[newName] = newColors[oldName];
         delete newColors[oldName];
       }
-      return { ...t, ideas: newIdeas, columnColors: newColors };
+      return { ...t, pillars: newPillars, ideas: newIdeas, columnColors: newColors };
     }));
   };
 
@@ -229,6 +229,7 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
     const newTable: IdeasTable = {
       id: crypto.randomUUID(),
       title: "New Platform",
+      pillars: [...pillars],
       columnColors,
       ideas: {},
     };
@@ -241,7 +242,6 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
         <SingleTable
           key={table.id}
           table={table}
-          pillars={pillars}
           onUpdateTitle={(title) => updateTable(table.id, { title })}
           onUpdateColumnColor={(pillar, color) => updateColumnColor(table.id, pillar, color)}
           onUpdateColumnName={(oldName, newName) => updateColumnName(table.id, oldName, newName)}

@@ -62,6 +62,7 @@ export interface IdeaEntry {
 export interface IdeasTable {
   id: string;
   title: string;
+  pillars: string[]; // each table owns its column names
   columnColors: Record<string, string>; // pillar name -> color hex
   ideas: Record<string, IdeaEntry[]>;
 }

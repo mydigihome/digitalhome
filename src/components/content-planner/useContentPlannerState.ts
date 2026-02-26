@@ -30,6 +30,7 @@ function buildDefaultIdeasTable(pillars: string[], title: string, defaultIdeas?:
   return {
     id: crypto.randomUUID(),
     title,
+    pillars: [...pillars],
     columnColors,
     ideas: defaultIdeas || {},
   };
@@ -87,6 +88,15 @@ function loadFromStorage(): ContentPlannerData | null {
     if (!parsed.ideasTables) {
       const pillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
       parsed.ideasTables = [buildDefaultIdeasTable(pillars, "Ideas", parsed.ideas || {})];
+    } else {
+      // Migrate existing tables missing the pillars array
+      const defaultPillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
+      parsed.ideasTables = parsed.ideasTables.map(t => {
+        if (!t.pillars) {
+          return { ...t, pillars: Object.keys(t.ideas).length > 0 ? Object.keys(t.ideas) : [...defaultPillars] };
+        }
+        return t;
+      });
     }
     return parsed;
   }
