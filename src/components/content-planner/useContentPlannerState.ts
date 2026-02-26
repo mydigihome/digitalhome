@@ -5,6 +5,8 @@ import {
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const STORAGE_KEY = "content-planner-data";
 
@@ -70,37 +72,35 @@ const DEFAULT_STRATEGY: StrategyRow[] = [
   { label: "Monthly KPIs", value: "" },
 ];
 
+function migrateData(parsed: ContentPlannerData): ContentPlannerData {
+  // Migrate old format: platforms as string[] → PlatformItem[]
+  if (parsed.setup?.platforms && parsed.setup.platforms.length > 0 && typeof parsed.setup.platforms[0] === "string") {
+    parsed.setup.platforms = (parsed.setup.platforms as unknown as string[]).map((name: string) => {
+      const found = DEFAULT_PLATFORM_COLORS.find(p => p.name === name);
+      return found || { name, color: "#6B7280" };
+    });
+  }
+  if (!parsed.socialLinks) {
+    parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
+  }
+  if (!parsed.ideasTables) {
+    const pillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
+    parsed.ideasTables = [buildDefaultIdeasTable(pillars, "Ideas", parsed.ideas || {})];
+  } else {
+    const defaultPillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
+    parsed.ideasTables = parsed.ideasTables.map(t => {
+      if (!t.pillars) {
+        return { ...t, pillars: Object.keys(t.ideas).length > 0 ? Object.keys(t.ideas) : [...defaultPillars] };
+      }
+      return t;
+    });
+  }
+  return parsed;
+}
+
 function loadFromStorage(): ContentPlannerData | null {
   const parsed = loadStoredJson<ContentPlannerData | null>(STORAGE_KEY, null);
-
-  if (parsed) {
-    // Migrate old format: platforms as string[] → PlatformItem[]
-    if (parsed.setup?.platforms && parsed.setup.platforms.length > 0 && typeof parsed.setup.platforms[0] === "string") {
-      parsed.setup.platforms = (parsed.setup.platforms as unknown as string[]).map((name: string) => {
-        const found = DEFAULT_PLATFORM_COLORS.find(p => p.name === name);
-        return found || { name, color: "#6B7280" };
-      });
-    }
-    if (!parsed.socialLinks) {
-      parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
-    }
-    // Migrate old ideas format to ideasTables
-    if (!parsed.ideasTables) {
-      const pillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
-      parsed.ideasTables = [buildDefaultIdeasTable(pillars, "Ideas", parsed.ideas || {})];
-    } else {
-      // Migrate existing tables missing the pillars array
-      const defaultPillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
-      parsed.ideasTables = parsed.ideasTables.map(t => {
-        if (!t.pillars) {
-          return { ...t, pillars: Object.keys(t.ideas).length > 0 ? Object.keys(t.ideas) : [...defaultPillars] };
-        }
-        return t;
-      });
-    }
-    return parsed;
-  }
-
+  if (parsed) return migrateData(parsed);
   return null;
 }
 
@@ -121,21 +121,77 @@ function buildDefaults(): ContentPlannerData {
 }
 
 export function useContentPlannerState() {
+  const { user } = useAuth();
   const [data, setData] = useState<ContentPlannerData>(() => {
     return loadFromStorage() || buildDefaults();
   });
+  const [dbLoaded, setDbLoaded] = useState(false);
+  const initialLoadDone = useRef(false);
 
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(0));
 
-  // Auto-save to localStorage on every change
+  // Load from database on mount (if logged in)
+  useEffect(() => {
+    if (!user?.id || initialLoadDone.current) return;
+    initialLoadDone.current = true;
+
+    const loadFromDb = async () => {
+      try {
+        const { data: row, error } = await supabase
+          .from("content_planner_data")
+          .select("data")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.warn("Failed to load content planner from DB:", error.message);
+          setDbLoaded(true);
+          return;
+        }
+
+        if (row?.data) {
+          const dbData = migrateData(row.data as unknown as ContentPlannerData);
+          setData(dbData);
+          saveStoredJson(STORAGE_KEY, dbData);
+        } else {
+          // No DB data yet — push localStorage data to DB
+          const localData = loadFromStorage();
+          if (localData) {
+            await supabase.from("content_planner_data").upsert([{
+              user_id: user.id,
+              data: JSON.parse(JSON.stringify(localData)),
+            }], { onConflict: "user_id" });
+          }
+        }
+      } catch (err) {
+        console.warn("Error loading content planner data:", err);
+      } finally {
+        setDbLoaded(true);
+      }
+    };
+
+    loadFromDb();
+  }, [user?.id]);
+
+  // Auto-save to localStorage AND database on every change
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
       saveStoredJson(STORAGE_KEY, data);
-    }, 100);
+
+      // Save to DB if user is logged in and initial load is done
+      if (user?.id && dbLoaded) {
+        supabase.from("content_planner_data").upsert([{
+          user_id: user.id,
+          data: JSON.parse(JSON.stringify(data)),
+        }], { onConflict: "user_id" }).then(({ error }) => {
+          if (error) console.warn("Failed to save content planner to DB:", error.message);
+        });
+      }
+    }, 500);
     return () => clearTimeout(saveTimeout.current);
-  }, [data]);
+  }, [data, user?.id, dbLoaded]);
 
   // Ensure current week exists
   const currentWeek = data.weeks[currentWeekStart] || createEmptyWeek(currentWeekStart);
@@ -268,7 +324,6 @@ export function useContentPlannerState() {
     }));
   }, []);
 
-  // Get all posts across all weeks for monthly view
   const getAllPosts = useCallback(() => {
     const all: { date: string; post: PostEntry; weekStart: string; dayIndex: number }[] = [];
     Object.entries(data.weeks).forEach(([ws, week]) => {
