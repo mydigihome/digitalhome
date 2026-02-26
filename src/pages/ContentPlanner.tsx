@@ -53,7 +53,7 @@ export default function ContentPlanner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto min-h-0">
-          {activeTab === "setup" && <VisualContentStudio feedPosts={state.feedPosts} setFeedPosts={state.setFeedPosts} />}
+          {activeTab === "setup" && <VisualContentStudio feedPosts={state.feedPosts} setFeedPosts={state.setFeedPosts} studioProfile={state.studioProfile} setStudioProfile={state.setStudioProfile} />}
           {activeTab === "weekly" && (
             <WeeklyCalendarTab
               setup={state.setup}
