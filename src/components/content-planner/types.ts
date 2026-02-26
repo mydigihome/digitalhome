@@ -59,6 +59,13 @@ export interface IdeaEntry {
   text: string;
 }
 
+export interface IdeasTable {
+  id: string;
+  title: string;
+  columnColors: Record<string, string>; // pillar name -> color hex
+  ideas: Record<string, IdeaEntry[]>;
+}
+
 export interface HashtagGroup {
   id: string;
   name: string;
@@ -78,7 +85,8 @@ export interface SocialLink {
 export interface ContentPlannerData {
   setup: SetupData;
   weeks: Record<string, WeekData>; // keyed by weekStart date
-  ideas: Record<string, IdeaEntry[]>;
+  ideas: Record<string, IdeaEntry[]>; // legacy, migrated to ideasTables
+  ideasTables: IdeasTable[];
   hashtagGroups: HashtagGroup[];
   strategy: StrategyRow[];
   tabOrder: string[];

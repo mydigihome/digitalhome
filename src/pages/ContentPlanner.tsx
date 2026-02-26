@@ -69,7 +69,7 @@ export default function ContentPlanner() {
             />
           )}
           {activeTab === "monthly" && <MonthlyViewTab setup={state.setup} getAllPosts={state.getAllPosts} />}
-          {activeTab === "ideas" && <IdeasBankTab setup={state.setup} ideas={state.ideas} setIdeas={state.setIdeas} />}
+          {activeTab === "ideas" && <IdeasBankTab setup={state.setup} ideasTables={state.ideasTables} setIdeasTables={state.setIdeasTables} />}
           {activeTab === "hashtags" && <HashtagManagerTab hashtagGroups={state.hashtagGroups} setHashtagGroups={state.setHashtagGroups} />}
           {activeTab === "strategy" && <StrategyTab strategy={state.strategy} setStrategy={state.setStrategy} />}
         </div>
