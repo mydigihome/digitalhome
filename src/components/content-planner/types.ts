@@ -83,6 +83,19 @@ export interface SocialLink {
   url: string;
 }
 
+export interface FeedPost {
+  id: string;
+  platform: "instagram" | "tiktok";
+  backgroundColor: string;
+  accentColor: string;
+  fontFamily: string;
+  imageData?: string; // base64 data URL
+  caption: string;
+  scheduledDate: string; // yyyy-MM-dd
+  scheduledTime: string; // HH:mm
+  order: number;
+}
+
 export interface ContentPlannerData {
   setup: SetupData;
   weeks: Record<string, WeekData>; // keyed by weekStart date
@@ -92,6 +105,7 @@ export interface ContentPlannerData {
   strategy: StrategyRow[];
   tabOrder: string[];
   socialLinks: SocialLink[];
+  feedPosts?: FeedPost[];
 }
 
 export const DEFAULT_PLATFORM_COLORS: PlatformItem[] = [

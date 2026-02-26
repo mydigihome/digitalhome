@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  SetupData, WeekData, DayData, PostEntry, IdeaEntry, IdeasTable, HashtagGroup, StrategyRow, SocialLink, DEFAULT_PLATFORM_COLORS,
+  SetupData, WeekData, DayData, PostEntry, IdeaEntry, IdeasTable, HashtagGroup, StrategyRow, SocialLink, FeedPost, DEFAULT_PLATFORM_COLORS,
   ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, createEmptyPost,
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
@@ -115,6 +115,7 @@ function buildDefaults(): ContentPlannerData {
     strategy: DEFAULT_STRATEGY,
     tabOrder: DEFAULT_TAB_ORDER,
     socialLinks: DEFAULT_SOCIAL_LINKS,
+    feedPosts: [],
   };
 }
 
@@ -252,6 +253,13 @@ export function useContentPlannerState() {
     }));
   }, []);
 
+  const setFeedPosts = useCallback((fn: FeedPost[] | ((prev: FeedPost[]) => FeedPost[])) => {
+    setData(prev => ({
+      ...prev,
+      feedPosts: typeof fn === "function" ? fn(prev.feedPosts || []) : fn,
+    }));
+  }, []);
+
   // Get all posts across all weeks for monthly view
   const getAllPosts = useCallback(() => {
     const all: { date: string; post: PostEntry; weekStart: string; dayIndex: number }[] = [];
@@ -289,6 +297,8 @@ export function useContentPlannerState() {
     setTabOrder,
     socialLinks: data.socialLinks,
     setSocialLinks,
+    feedPosts: data.feedPosts || [],
+    setFeedPosts,
     getAllPosts,
   };
 }

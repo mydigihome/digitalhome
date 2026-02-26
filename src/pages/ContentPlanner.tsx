@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import AppShell from "@/components/AppShell";
 import { useContentPlannerState } from "@/components/content-planner/useContentPlannerState";
-import SetupTab from "@/components/content-planner/SetupTab";
+import VisualContentStudio from "@/components/content-planner/VisualContentStudio";
 import WeeklyCalendarTab from "@/components/content-planner/WeeklyCalendarTab";
 import MonthlyViewTab from "@/components/content-planner/MonthlyViewTab";
 import IdeasBankTab from "@/components/content-planner/IdeasBankTab";
@@ -53,7 +53,7 @@ export default function ContentPlanner() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto min-h-0">
-          {activeTab === "setup" && <SetupTab setup={state.setup} setSetup={state.setSetup} />}
+          {activeTab === "setup" && <VisualContentStudio feedPosts={state.feedPosts} setFeedPosts={state.setFeedPosts} />}
           {activeTab === "weekly" && (
             <WeeklyCalendarTab
               setup={state.setup}
