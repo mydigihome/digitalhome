@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
-  SetupData, WeekData, DayData, PostEntry, IdeaEntry, HashtagGroup, StrategyRow, SocialLink, DEFAULT_PLATFORM_COLORS,
+  SetupData, WeekData, DayData, PostEntry, IdeaEntry, IdeasTable, HashtagGroup, StrategyRow, SocialLink, DEFAULT_PLATFORM_COLORS,
   ContentPlannerData, DEFAULT_SETUP, DEFAULT_TAB_ORDER, DEFAULT_SOCIAL_LINKS, createEmptyPost,
 } from "./types";
 import { format, startOfWeek, addDays, parseISO } from "date-fns";
@@ -20,6 +20,19 @@ function createEmptyWeek(weekStartStr: string): WeekData {
     posts: [],
   }));
   return { weekStart: weekStartStr, weeklyGoal: "", weeklyTodos: ["", "", "", "", ""], weeklyReview: "", days };
+}
+
+const PILLAR_COLORS = ["#FFF5F0", "#F0F7FF", "#FFF0F8", "#F0FFF4", "#FFF8E0", "#F0FFFF", "#FFF0FF"];
+
+function buildDefaultIdeasTable(pillars: string[], title: string, defaultIdeas?: Record<string, IdeaEntry[]>): IdeasTable {
+  const columnColors: Record<string, string> = {};
+  pillars.forEach((p, i) => { columnColors[p] = PILLAR_COLORS[i % PILLAR_COLORS.length]; });
+  return {
+    id: crypto.randomUUID(),
+    title,
+    columnColors,
+    ideas: defaultIdeas || {},
+  };
 }
 
 const DEFAULT_IDEAS: Record<string, IdeaEntry[]> = {};
@@ -70,6 +83,11 @@ function loadFromStorage(): ContentPlannerData | null {
     if (!parsed.socialLinks) {
       parsed.socialLinks = DEFAULT_SOCIAL_LINKS;
     }
+    // Migrate old ideas format to ideasTables
+    if (!parsed.ideasTables) {
+      const pillars = parsed.setup?.contentPillars || DEFAULT_SETUP.contentPillars;
+      parsed.ideasTables = [buildDefaultIdeasTable(pillars, "Ideas", parsed.ideas || {})];
+    }
     return parsed;
   }
 
@@ -81,7 +99,8 @@ function buildDefaults(): ContentPlannerData {
   return {
     setup: DEFAULT_SETUP,
     weeks: { [weekStart]: createEmptyWeek(weekStart) },
-    ideas: DEFAULT_IDEAS,
+    ideas: {},
+    ideasTables: [buildDefaultIdeasTable(DEFAULT_SETUP.contentPillars, "Ideas", DEFAULT_IDEAS)],
     hashtagGroups: DEFAULT_HASHTAG_GROUPS,
     strategy: DEFAULT_STRATEGY,
     tabOrder: DEFAULT_TAB_ORDER,
@@ -191,6 +210,13 @@ export function useContentPlannerState() {
     }));
   }, []);
 
+  const setIdeasTables = useCallback((fn: IdeasTable[] | ((prev: IdeasTable[]) => IdeasTable[])) => {
+    setData(prev => ({
+      ...prev,
+      ideasTables: typeof fn === "function" ? fn(prev.ideasTables) : fn,
+    }));
+  }, []);
+
   const setHashtagGroups = useCallback((fn: HashtagGroup[] | ((prev: HashtagGroup[]) => HashtagGroup[])) => {
     setData(prev => ({
       ...prev,
@@ -243,6 +269,8 @@ export function useContentPlannerState() {
     updatePostAnalytics,
     ideas: data.ideas,
     setIdeas,
+    ideasTables: data.ideasTables,
+    setIdeasTables,
     hashtagGroups: data.hashtagGroups,
     setHashtagGroups,
     strategy: data.strategy,
