@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield, MoreHorizontal } from "lucide-react";
+import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
+import { useWaitingCount } from "@/hooks/useGmail";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import VoiceInput from "@/components/VoiceInput";
 import { TrialBadge } from "@/components/TrialBadge";
@@ -25,6 +26,7 @@ const defaultIconColors: Record<string, string> = {
   finance_apps: "#3B82F6",
   calendar: "#3B82F6",
   vision: "#EC4899",
+  inbox: "#7C3AED",
   team: "#6B7280",
 };
 
@@ -168,8 +170,11 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   );
   const isFinanceActive = location.pathname.startsWith("/finance");
 
+  const waitingCount = useWaitingCount();
+
   const bottomItems = [
     { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
+    { icon: Mail, label: "Priority Inbox", path: "/inbox", colorKey: "inbox" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
   ];
@@ -191,7 +196,16 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
         )}
       >
         <IconBubble icon={Icon} color={getIconColor(colorKey)} />
-        {!collapsed && <span>{label}</span>}
+        {!collapsed && (
+          <>
+            <span className="flex-1 text-left">{label}</span>
+            {colorKey === "inbox" && waitingCount > 0 && (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+                {waitingCount}
+              </span>
+            )}
+          </>
+        )}
       </button>
     </li>
   );
