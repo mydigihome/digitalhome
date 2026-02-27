@@ -173,7 +173,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const waitingCount = useWaitingCount();
 
   const bottomItems = [
-    { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
     { icon: Mail, label: "Priority Inbox", path: "/inbox", colorKey: "inbox" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
     { icon: Users, label: "Team", path: "/team", colorKey: "team" },
@@ -370,7 +369,7 @@ function MobileTabBar() {
     { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
     { icon: FolderOpen, label: "Projects", path: "/projects", colorKey: "projects" },
     { icon: DollarSign, label: "Finance", path: "/finance/wealth", colorKey: "finance" },
-    { icon: Calendar, label: "Calendar", path: "/calendar", colorKey: "calendar" },
+    { icon: Mail, label: "Inbox", path: "/inbox", colorKey: "inbox" },
     { icon: MoreHorizontal, label: "More", path: "/__more__", colorKey: "team" },
   ];
 
