@@ -448,6 +448,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gmail_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          email: string | null
+          expires_at: string | null
+          id: string
+          refresh_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
@@ -903,6 +936,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tracked_threads: {
+        Row: {
+          category: string
+          id: string
+          last_activity_at: string | null
+          preview: string | null
+          sender_email: string | null
+          sender_name: string | null
+          status: string
+          subject: string | null
+          thread_id: string
+          tracked_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          id?: string
+          last_activity_at?: string | null
+          preview?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          status?: string
+          subject?: string | null
+          thread_id: string
+          tracked_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          last_activity_at?: string | null
+          preview?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          status?: string
+          subject?: string | null
+          thread_id?: string
+          tracked_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_preferences: {
         Row: {
