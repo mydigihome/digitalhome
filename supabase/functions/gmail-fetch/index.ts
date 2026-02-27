@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ALLOWED_ORIGINS = [
   "https://digitalhome.lovable.app",
   "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "https://896dea26-170e-4d66-9e27-cee018632c91.lovableproject.com",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
@@ -92,14 +93,14 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("Auth error:", authError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     const { action, thread_id } = await req.json();
     const serviceClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);

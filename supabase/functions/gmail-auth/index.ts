@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ALLOWED_ORIGINS = [
   "https://digitalhome.lovable.app",
   "https://id-preview--896dea26-170e-4d66-9e27-cee018632c91.lovable.app",
+  "https://896dea26-170e-4d66-9e27-cee018632c91.lovableproject.com",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
@@ -21,10 +22,12 @@ async function getAuthenticatedUser(req: Request, supabaseUrl: string, anonKey: 
   const supabase = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const token = authHeader.replace("Bearer ", "");
-  const { data, error } = await supabase.auth.getClaims(token);
-  if (error || !data?.claims) return null;
-  return data.claims.sub as string;
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    console.error("Auth error:", error?.message);
+    return null;
+  }
+  return user.id;
 }
 
 Deno.serve(async (req) => {
