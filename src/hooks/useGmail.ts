@@ -52,14 +52,28 @@ export function useConnectGmail() {
   const connect = async () => {
     setConnecting(true);
     try {
-      const redirectUri = `${window.location.origin}/inbox`;
+      // Map lovableproject.com preview to the id-preview URL configured in Google Console
+      let origin = window.location.origin;
+      if (origin.includes("lovableproject.com")) {
+        const projectId = origin.match(/^https:\/\/([^.]+)\./)?.[1];
+        if (projectId) {
+          origin = `https://id-preview--${projectId}.lovable.app`;
+        }
+      }
+      const redirectUri = `${origin}/inbox`;
+      console.log("[Gmail] Requesting auth URL with redirect:", redirectUri);
       const { data, error } = await supabase.functions.invoke("gmail-auth", {
         body: { action: "get_auth_url", redirect_uri: redirectUri },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("[Gmail] get_auth_url error:", error);
+        throw error;
+      }
+      console.log("[Gmail] Got auth URL, redirecting...");
       if (data?.url) window.location.href = data.url;
     } catch (err: any) {
-      toast.error("Failed to connect Gmail");
+      console.error("[Gmail] Connect failed:", err);
+      toast.error(err?.message || "Failed to connect Gmail");
       setConnecting(false);
     }
   };
@@ -71,11 +85,23 @@ export function useHandleGmailCallback() {
   const queryClient = useQueryClient();
 
   const handleCallback = async (code: string) => {
-    const redirectUri = `${window.location.origin}/inbox`;
+    let origin = window.location.origin;
+    if (origin.includes("lovableproject.com")) {
+      const projectId = origin.match(/^https:\/\/([^.]+)\./)?.[1];
+      if (projectId) {
+        origin = `https://id-preview--${projectId}.lovable.app`;
+      }
+    }
+    const redirectUri = `${origin}/inbox`;
+    console.log("[Gmail] Exchanging code with redirect:", redirectUri);
     const { data, error } = await supabase.functions.invoke("gmail-auth", {
       body: { action: "exchange_code", code, redirect_uri: redirectUri },
     });
-    if (error) throw error;
+    if (error) {
+      console.error("[Gmail] exchange_code error:", error);
+      throw error;
+    }
+    console.log("[Gmail] Connected successfully:", data?.email);
     queryClient.invalidateQueries({ queryKey: ["gmail-connection"] });
     queryClient.invalidateQueries({ queryKey: ["gmail-emails"] });
     toast.success(`Gmail connected: ${data?.email}`);
