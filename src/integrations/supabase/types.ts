@@ -1113,42 +1113,54 @@ export type Database = {
         Row: {
           achieved: string | null
           created_at: string
+          display_format: Json
           display_style: string
           end_date: string
+          font_style: string
           goal_text: string
           id: string
           motivational_style: string
           reflection_notes: string | null
           start_date: string
           status: string
+          text_color: string
+          transparency_level: number
           user_id: string
           weekly_checkins: boolean
         }
         Insert: {
           achieved?: string | null
           created_at?: string
+          display_format?: Json
           display_style?: string
           end_date?: string
+          font_style?: string
           goal_text: string
           id?: string
           motivational_style?: string
           reflection_notes?: string | null
           start_date?: string
           status?: string
+          text_color?: string
+          transparency_level?: number
           user_id: string
           weekly_checkins?: boolean
         }
         Update: {
           achieved?: string | null
           created_at?: string
+          display_format?: Json
           display_style?: string
           end_date?: string
+          font_style?: string
           goal_text?: string
           id?: string
           motivational_style?: string
           reflection_notes?: string | null
           start_date?: string
           status?: string
+          text_color?: string
+          transparency_level?: number
           user_id?: string
           weekly_checkins?: boolean
         }

@@ -1,248 +1,158 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useActiveGoal, useGoalHistory, useGoalCheckIns, useCreateGoal, useUpdateGoal, useAddCheckIn } from "@/hooks/useNinetyDayGoals";
+import { useState, useEffect, useMemo } from "react";
+import { useActiveGoal, useGoalHistory, useCreateGoal, useUpdateGoal, type DisplayFormat } from "@/hooks/useNinetyDayGoals";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, ChevronDown, ChevronUp, History, Sparkles, Target, Settings, Trophy, Flame, Star, Medal, Zap } from "lucide-react";
+import { Pencil, MoreHorizontal, History, ChevronUp, ChevronDown, Target, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, differenceInDays, differenceInBusinessDays, addDays } from "date-fns";
+import { format, differenceInDays, addDays } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 
 const PLACEHOLDER_GOALS = [
-  "Launch my side business",
-  "Lose 15 pounds",
+  "Launch my business",
+  "Get in shape",
   "Save $5,000",
   "Learn Spanish",
-  "Build a consistent workout routine",
+  "Read 12 books",
 ];
 
-const QUOTES = [
-  "Small daily improvements are the key to staggering long-term results.",
-  "Discipline is choosing between what you want now and what you want most.",
-  "The secret of getting ahead is getting started.",
-  "You don't have to be great to start, but you have to start to be great.",
+const FONTS = [
+  { value: "SF Pro", label: "SF Pro", css: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" },
+  { value: "Helvetica Neue", label: "Helvetica Neue", css: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+  { value: "Roboto", label: "Roboto", css: "'Roboto', sans-serif" },
+  { value: "Inter", label: "Inter", css: "'Inter', sans-serif" },
+  { value: "System", label: "System Font", css: "system-ui, sans-serif" },
 ];
 
-const MICRO_INSIGHTS = [
-  (d: number, t: number, left: number) => `90 days = 2,160 hours of opportunity`,
-  (d: number, t: number, left: number) => `You're ${Math.round(((t - left) / t) * 100)}% closer than when you started`,
-  (d: number, t: number, left: number) => `${Math.ceil(left / 7)} more weekends until completion`,
-  (d: number, t: number, left: number) => `Same time as a full TV season`,
-  (d: number, t: number, left: number) => `${t - left} days invested - don't waste them!`,
-  (d: number, t: number, left: number) => left <= 24 ? `Studies show: 66 days builds habits (you're past that!)` : `${left} more sunrises to your goal`,
-  (d: number, t: number, left: number) => `${Math.ceil(left)} more sleeps until finish line`,
-];
+const DEFAULT_FORMAT: DisplayFormat = {
+  showWeeks: false,
+  showDays: true,
+  showHours: true,
+  showMinutes: true,
+  showSeconds: false,
+};
 
-const VISUAL_THEMES = [
-  { id: "purple", label: "Calm Gradient", from: "from-primary/15", via: "via-primary/5", to: "to-primary/10", glow: "shadow-primary/10" },
-  { id: "ocean", label: "Ocean Waves", from: "from-blue-500/15", via: "via-cyan-500/5", to: "to-blue-400/10", glow: "shadow-blue-500/10" },
-  { id: "sunset", label: "Sunset Fire", from: "from-orange-500/15", via: "via-red-400/5", to: "to-amber-400/10", glow: "shadow-orange-500/10" },
-  { id: "forest", label: "Forest Growth", from: "from-emerald-500/15", via: "via-green-400/5", to: "to-teal-400/10", glow: "shadow-emerald-500/10" },
-  { id: "mono", label: "Monochrome", from: "from-foreground/5", via: "via-muted/5", to: "to-foreground/3", glow: "shadow-foreground/5" },
-];
+function buildCountdownString(
+  endDate: Date,
+  now: Date,
+  fmt: DisplayFormat
+): string {
+  let diff = Math.max(0, endDate.getTime() - now.getTime());
+  if (diff === 0) return "0d";
 
-const BADGES = [
-  { id: "week1", emoji: "🏅", label: "Week Warrior", desc: "7 days in", dayReq: 7 },
-  { id: "streak10", emoji: "🔥", label: "Hot Streak", desc: "10 check-ins", checkInReq: 10 },
-  { id: "halfway", emoji: "💪", label: "Halfway Hero", desc: "45 days", dayReq: 45 },
-  { id: "consistent", emoji: "⭐", label: "Consistency King", desc: "30 check-ins", checkInReq: 30 },
-  { id: "complete", emoji: "🏆", label: "Goal Crusher", desc: "90 days complete", dayReq: 90 },
-];
+  const totalSecs = Math.floor(diff / 1000);
+  const totalMins = Math.floor(totalSecs / 60);
+  const totalHours = Math.floor(totalMins / 60);
+  const totalDays = Math.floor(totalHours / 24);
+  const totalWeeks = Math.floor(totalDays / 7);
 
-function getQuarter(date: Date) {
-  const m = date.getMonth();
-  if (m < 3) return "Q1";
-  if (m < 6) return "Q2";
-  if (m < 9) return "Q3";
-  return "Q4";
-}
+  const parts: string[] = [];
 
-function getPhase(daysPassed: number, totalDays: number) {
-  const pct = daysPassed / totalDays;
-  if (pct >= 0.97) return "lastDay"; // last ~3 days
-  if (pct >= 0.89) return "last10";
-  if (pct >= 0.67) return "final";
-  if (pct >= 0.33) return "middle";
-  return "early";
-}
-
-function getPhaseColors(phase: string) {
-  switch (phase) {
-    case "early": return { bar: "from-emerald-400 to-cyan-400", text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500/10" };
-    case "middle": return { bar: "from-primary to-indigo-400", text: "text-primary", bg: "bg-primary/10" };
-    case "final": return { bar: "from-amber-400 to-orange-400", text: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500/10" };
-    case "last10": return { bar: "from-orange-400 to-red-400", text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-500/10" };
-    case "lastDay": return { bar: "from-red-400 to-rose-500", text: "text-red-600 dark:text-red-400", bg: "bg-red-500/10" };
-    default: return { bar: "from-primary to-indigo-400", text: "text-primary", bg: "bg-primary/10" };
+  if (fmt.showWeeks) {
+    const w = totalWeeks;
+    const d = totalDays - w * 7;
+    parts.push(`${w}w`);
+    if (fmt.showDays) parts.push(`${d}d`);
+  } else if (fmt.showDays) {
+    parts.push(`${totalDays}d`);
   }
-}
 
-function getPhaseMessage(phase: string, daysLeft: number) {
-  switch (phase) {
-    case "early": return `Great start! ${daysLeft} days of opportunity ahead`;
-    case "middle": return `Halfway there! Keep pushing 💪`;
-    case "final": return `Final sprint! ${daysLeft} days left`;
-    case "last10": return `${daysLeft} days! You got this! 🔥`;
-    case "lastDay": return `Less than ${daysLeft} day${daysLeft !== 1 ? "s" : ""} - finish strong!`;
-    default: return "";
+  if (fmt.showHours) {
+    const h = totalHours % 24;
+    parts.push(`${h}h`);
   }
+  if (fmt.showMinutes) {
+    const m = totalMins % 60;
+    parts.push(`${String(m).padStart(2, "0")}m`);
+  }
+  if (fmt.showSeconds) {
+    const s = totalSecs % 60;
+    parts.push(`${String(s).padStart(2, "0")}s`);
+  }
+
+  return parts.join(" ");
 }
 
 export default function NinetyDayGoalWidget() {
   const { data: activeGoal, isLoading } = useActiveGoal();
   const { data: history = [] } = useGoalHistory();
-  const { data: checkIns = [] } = useGoalCheckIns(activeGoal?.id);
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
-  const addCheckIn = useAddCheckIn();
 
-  // Setup state
+  // Setup state (3 screens)
+  const [step, setStep] = useState(0);
   const [goalText, setGoalText] = useState("");
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [displayFormat, setDisplayFormat] = useState<DisplayFormat>(DEFAULT_FORMAT);
+  const [fontStyle, setFontStyle] = useState("Inter");
+  const [textColor, setTextColor] = useState("#FFFFFF");
+  const [transparency, setTransparency] = useState(20);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
-  const [displayStyle, setDisplayStyle] = useState("standard");
-  const [motivationalStyle, setMotivationalStyle] = useState("standard");
-  const [weeklyCheckins, setWeeklyCheckins] = useState(false);
-  const [showCommitModal, setShowCommitModal] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Active goal state
   const [showHistory, setShowHistory] = useState(false);
-  const [showCheckIn, setShowCheckIn] = useState(false);
-  const [checkInProgress, setCheckInProgress] = useState(50);
-  const [checkInNotes, setCheckInNotes] = useState("");
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [showEmergencyEdit, setShowEmergencyEdit] = useState(false);
+  const [emergencyConfirm, setEmergencyConfirm] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
   const [completionAchieved, setCompletionAchieved] = useState<string | null>(null);
   const [reflectionNotes, setReflectionNotes] = useState("");
-  const [expanded, setExpanded] = useState(false);
-  const [visualTheme, setVisualTheme] = useState("purple");
-  const [showSettings, setShowSettings] = useState(false);
-  const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
 
-  // Live ticker for final stretch
-  const [liveTime, setLiveTime] = useState(new Date());
-  const daysLeft = useMemo(() => {
-    if (!activeGoal) return 0;
-    return Math.max(0, differenceInDays(new Date(activeGoal.end_date), liveTime));
-  }, [activeGoal, liveTime]);
+  // Live time
+  const [now, setNow] = useState(new Date());
 
-  const totalDays = useMemo(() => {
-    if (!activeGoal) return 90;
-    return differenceInDays(new Date(activeGoal.end_date), new Date(activeGoal.start_date));
+  const activeFormat = useMemo<DisplayFormat>(() => {
+    if (activeGoal?.display_format) return activeGoal.display_format;
+    return DEFAULT_FORMAT;
   }, [activeGoal]);
 
-  const daysPassed = totalDays - daysLeft;
-  const progressPct = useMemo(() => {
-    if (!activeGoal || totalDays === 0) return 0;
-    return Math.min(100, Math.round((daysPassed / totalDays) * 100));
-  }, [daysPassed, totalDays, activeGoal]);
+  const needsSeconds = activeFormat.showSeconds;
 
-  const phase = useMemo(() => getPhase(daysPassed, totalDays), [daysPassed, totalDays]);
-  const phaseColors = useMemo(() => getPhaseColors(phase), [phase]);
-
-  // Live ticker: update every second in final stretch, every minute otherwise
   useEffect(() => {
-    const interval = phase === "last10" || phase === "lastDay"
-      ? setInterval(() => setLiveTime(new Date()), 1000)
-      : setInterval(() => setLiveTime(new Date()), 60_000);
-    return () => clearInterval(interval);
-  }, [phase]);
+    const ms = needsSeconds ? 1000 : 60_000;
+    const id = setInterval(() => setNow(new Date()), ms);
+    return () => clearInterval(id);
+  }, [needsSeconds]);
 
   // Rotate placeholders
   useEffect(() => {
-    const interval = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDER_GOALS.length), 3000);
-    return () => clearInterval(interval);
+    const id = setInterval(() => setPlaceholderIdx(i => (i + 1) % PLACEHOLDER_GOALS.length), 3000);
+    return () => clearInterval(id);
   }, []);
 
-  // Check if goal expired
+  // Check goal expired
   useEffect(() => {
     if (activeGoal) {
-      if (daysLeft <= 0 && !showCompletion) {
-        setShowCompletion(true);
-      }
+      const left = differenceInDays(new Date(activeGoal.end_date), new Date());
+      if (left <= 0 && !showCompletion) setShowCompletion(true);
     }
-  }, [activeGoal, daysLeft]);
-
-  // Computed metrics
-  const businessDaysLeft = useMemo(() => {
-    if (!activeGoal) return 0;
-    return Math.max(0, differenceInBusinessDays(new Date(activeGoal.end_date), new Date()));
   }, [activeGoal]);
 
-  const sleepCycles = daysLeft;
-  const pctRemaining = 100 - progressPct;
-  const endDateFormatted = activeGoal ? format(new Date(activeGoal.end_date), "MMMM d, yyyy") : "";
-  const endDayOfWeek = activeGoal ? format(new Date(activeGoal.end_date), "EEEE") : "";
+  const endDate = useMemo(() => addDays(startDate, 90), [startDate]);
 
-  // Live countdown breakdown
-  const liveCountdown = useMemo(() => {
-    if (!activeGoal) return { d: 0, h: 0, m: 0, s: 0 };
-    const diff = new Date(activeGoal.end_date).getTime() - liveTime.getTime();
-    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0 };
-    const d = Math.floor(diff / 86400000);
-    const h = Math.floor((diff % 86400000) / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    return { d, h, m, s };
-  }, [activeGoal, liveTime]);
-
-  // Streak: consecutive check-ins (weekly)
-  const streak = useMemo(() => {
-    if (checkIns.length === 0) return 0;
-    return checkIns.length; // simplified: count of check-ins as streak
-  }, [checkIns]);
-
-  // Next milestone
-  const nextMilestone = useMemo(() => {
-    const milestones = [30, 60, 90];
-    for (const m of milestones) {
-      if (daysPassed < m) return { day: m, daysUntil: m - daysPassed };
-    }
-    return null;
-  }, [daysPassed]);
-
-  // Milestone checkpoints
-  const checkpoints = useMemo(() => {
-    return [30, 60, 90].map(d => ({
-      day: d,
-      reached: daysPassed >= d,
-      daysUntil: Math.max(0, d - daysPassed),
-    }));
-  }, [daysPassed]);
-
-  // Earned badges
-  const earnedBadges = useMemo(() => {
-    return BADGES.filter(b => {
-      if (b.dayReq && daysPassed >= b.dayReq) return true;
-      if (b.checkInReq && checkIns.length >= b.checkInReq) return true;
-      return false;
-    });
-  }, [daysPassed, checkIns]);
-
-  // Daily micro-insight
-  const microInsight = useMemo(() => {
-    const idx = new Date().getDate() % MICRO_INSIGHTS.length;
-    return MICRO_INSIGHTS[idx](daysPassed, totalDays, daysLeft);
-  }, [daysPassed, totalDays, daysLeft]);
-
-  // Theme
-  const currentTheme = VISUAL_THEMES.find(t => t.id === visualTheme) || VISUAL_THEMES[0];
-
-  const handleCommit = async () => {
-    const startDate = new Date();
-    const endDate = addDays(startDate, 90);
+  const handleLockIn = async () => {
     await createGoal.mutateAsync({
       goal_text: goalText.trim(),
       start_date: format(startDate, "yyyy-MM-dd"),
       end_date: format(endDate, "yyyy-MM-dd"),
-      display_style: displayStyle,
-      motivational_style: motivationalStyle,
-      weekly_checkins: weeklyCheckins,
+      display_style: "standard",
+      motivational_style: "standard",
+      weekly_checkins: false,
+      display_format: displayFormat,
+      font_style: fontStyle,
+      text_color: textColor,
+      transparency_level: transparency,
     });
-    setShowCommitModal(false);
     setShowCelebration(true);
     import("canvas-confetti").then(m => {
       m.default({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-      setTimeout(() => m.default({ particleCount: 100, spread: 100, origin: { y: 0.5 } }), 300);
     });
     setTimeout(() => setShowCelebration(false), 3000);
+    setStep(0);
     setGoalText("");
   };
 
@@ -251,6 +161,21 @@ export default function NinetyDayGoalWidget() {
       updateGoal.mutate({ id: activeGoal.id, goal_text: editText.trim() });
       setEditing(false);
     }
+  };
+
+  const handleEmergencyEdit = () => {
+    if (!activeGoal) return;
+    const newStart = new Date();
+    const newEnd = addDays(newStart, 90);
+    updateGoal.mutate({
+      id: activeGoal.id,
+      goal_text: editText.trim() || activeGoal.goal_text,
+      start_date: format(newStart, "yyyy-MM-dd"),
+      end_date: format(newEnd, "yyyy-MM-dd"),
+    });
+    setShowEmergencyEdit(false);
+    setEmergencyConfirm("");
+    setShowMenu(false);
   };
 
   const handleComplete = async (achieved: string) => {
@@ -267,134 +192,253 @@ export default function NinetyDayGoalWidget() {
     import("canvas-confetti").then(m => m.default({ particleCount: 200, spread: 100 }));
   };
 
-  const handleCheckIn = async () => {
+  const handleUpdateDisplay = (updates: Partial<{ display_format: DisplayFormat; font_style: string; text_color: string; transparency_level: number }>) => {
     if (!activeGoal) return;
-    await addCheckIn.mutateAsync({ goal_id: activeGoal.id, progress_percentage: checkInProgress, notes: checkInNotes });
-    setShowCheckIn(false);
-    setCheckInNotes("");
-    setCheckInProgress(50);
+    updateGoal.mutate({ id: activeGoal.id, ...updates });
   };
 
   if (isLoading) return null;
 
-  const currentQuarter = `${getQuarter(new Date())} ${new Date().getFullYear()}`;
+  // Get font CSS
+  const getFontCSS = (name: string) => FONTS.find(f => f.value === name)?.css || "'Inter', sans-serif";
 
-  // ─── SETUP VIEW (no active goal) ───
+  // Preview countdown for setup
+  const previewCountdown = buildCountdownString(endDate, new Date(), displayFormat);
+
+  // ─── SETUP VIEW ───
   if (!activeGoal) {
     return (
       <>
-        <div className="rounded-xl border border-border bg-gradient-to-br from-primary/5 via-card to-primary/10 p-6 shadow-2xs">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">What's Your Next 90-Day Goal?</h3>
-          </div>
-          <p className="text-sm text-muted-foreground mb-5">
-            It takes 90 days to build a habit into a permanent lifestyle. Choose your focus for this quarter.
-          </p>
-
-          <input
-            type="text"
-            value={goalText}
-            onChange={e => setGoalText(e.target.value)}
-            placeholder={PLACEHOLDER_GOALS[placeholderIdx]}
-            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary transition-colors mb-4"
-          />
-
-          {/* Options */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-            <div>
-              <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Display</label>
-              <select value={displayStyle} onChange={e => setDisplayStyle(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none">
-                <option value="minimal">Minimal</option>
-                <option value="standard">Standard</option>
-                <option value="full">Full</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Energy</label>
-              <select value={motivationalStyle} onChange={e => setMotivationalStyle(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-1.5 text-xs outline-none">
-                <option value="minimal">Minimal</option>
-                <option value="standard">Standard</option>
-                <option value="high">High Energy</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 text-xs cursor-pointer">
-                <input type="checkbox" checked={weeklyCheckins} onChange={e => setWeeklyCheckins(e.target.checked)} className="rounded" />
-                Weekly check-ins
-              </label>
-            </div>
+        <div className="rounded-xl border border-border bg-card p-6 shadow-2xs">
+          {/* Steps indicator */}
+          <div className="flex items-center gap-2 mb-6">
+            {[0, 1, 2].map(s => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={cn(
+                  "h-2 w-2 rounded-full transition-colors",
+                  s <= step ? "bg-primary" : "bg-border"
+                )} />
+                {s < 2 && <div className={cn("h-px w-6", s < step ? "bg-primary" : "bg-border")} />}
+              </div>
+            ))}
           </div>
 
-          <Button
-            onClick={() => setShowCommitModal(true)}
-            disabled={!goalText.trim()}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3"
-            size="lg"
-          >
-            <Sparkles className="mr-2 h-4 w-4" /> Commit to This Goal
-          </Button>
-
-          {history.length > 0 && (
-            <button onClick={() => setShowHistory(!showHistory)} className="mt-3 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <History className="h-3.5 w-3.5" /> View Past Goals ({history.length})
-              {showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </button>
-          )}
-
-          {showHistory && (
-            <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
-              {history.map(g => (
-                <div key={g.id} className="rounded-lg border border-border bg-background p-3">
-                  <p className="text-sm font-medium text-foreground">{g.goal_text}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {format(new Date(g.start_date), "MMM d")} – {format(new Date(g.end_date), "MMM d, yyyy")}
-                    {g.achieved && <span className="ml-2">· {g.achieved === "yes" ? "✅ Achieved" : g.achieved === "partial" ? "🟡 Partial" : "❌ Not achieved"}</span>}
-                  </p>
-                  {g.reflection_notes && <p className="text-[11px] text-muted-foreground/70 mt-1 italic">"{g.reflection_notes}"</p>}
+          <AnimatePresence mode="wait">
+            {/* Screen 1: Set Goal */}
+            {step === 0 && (
+              <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold text-foreground">What's your 90-day goal?</h3>
                 </div>
-              ))}
-            </div>
+                <p className="text-sm text-muted-foreground mb-5">One goal. 90 days. Full commitment.</p>
+
+                <input
+                  type="text"
+                  value={goalText}
+                  onChange={e => setGoalText(e.target.value)}
+                  placeholder={PLACEHOLDER_GOALS[placeholderIdx]}
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-base outline-none focus:border-primary transition-colors mb-4"
+                  onKeyDown={e => e.key === "Enter" && goalText.trim() && setStep(1)}
+                />
+
+                <Button
+                  onClick={() => setStep(1)}
+                  disabled={!goalText.trim()}
+                  className="w-full py-3"
+                  size="lg"
+                >
+                  Next →
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Screen 2: Choose Start Date */}
+            {step === 1 && (
+              <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h3 className="text-lg font-semibold text-foreground mb-1">When does this begin?</h3>
+                <p className="text-sm text-muted-foreground mb-4">Defaults to today. Pick any start date.</p>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start text-left font-normal mb-3">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(startDate, "MMMM d, yyyy")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={d => d && setStartDate(d)}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <div className="rounded-xl bg-muted/50 p-4 mb-5 text-center">
+                  <p className="text-sm text-muted-foreground">Your goal ends on</p>
+                  <p className="text-lg font-semibold text-foreground">{format(endDate, "MMMM d, yyyy")}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setStep(0)} className="flex-1">← Back</Button>
+                  <Button onClick={() => setStep(2)} className="flex-1">Next →</Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Screen 3: Customize Display */}
+            {step === 2 && (
+              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Customize your countdown</h3>
+                <p className="text-sm text-muted-foreground mb-5">Choose what to show and how it looks.</p>
+
+                {/* Live preview */}
+                <div
+                  className="rounded-xl p-6 mb-5 text-center relative overflow-hidden"
+                  style={{
+                    background: `rgba(0,0,0,0.6)`,
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                  }}
+                >
+                  <p
+                    className="text-sm mb-2 truncate"
+                    style={{
+                      fontFamily: getFontCSS(fontStyle),
+                      color: textColor,
+                      opacity: 1 - transparency / 100,
+                    }}
+                  >
+                    {goalText}
+                  </p>
+                  <p
+                    className="text-3xl font-bold tracking-tight"
+                    style={{
+                      fontFamily: getFontCSS(fontStyle),
+                      color: textColor,
+                      opacity: 1 - transparency / 100,
+                      textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {previewCountdown}
+                  </p>
+                </div>
+
+                {/* Format toggles */}
+                <div className="mb-4">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Show</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(["showWeeks", "showDays", "showHours", "showMinutes", "showSeconds"] as const).map(key => {
+                      const labels = { showWeeks: "Weeks", showDays: "Days", showHours: "Hours", showMinutes: "Minutes", showSeconds: "Seconds" };
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setDisplayFormat(f => ({ ...f, [key]: !f[key] }))}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs border transition-colors",
+                            displayFormat[key]
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:bg-muted"
+                          )}
+                        >
+                          {labels[key]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Font */}
+                <div className="mb-4">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Font</p>
+                  <select
+                    value={fontStyle}
+                    onChange={e => setFontStyle(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none"
+                  >
+                    {FONTS.map(f => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Color */}
+                <div className="mb-4">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Color</p>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={e => setTextColor(e.target.value)}
+                      className="h-9 w-9 rounded-lg border border-border cursor-pointer"
+                    />
+                    <span className="text-xs text-muted-foreground">{textColor}</span>
+                  </div>
+                </div>
+
+                {/* Transparency */}
+                <div className="mb-6">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">
+                    Transparency: {transparency}%
+                  </p>
+                  <Slider
+                    value={[transparency]}
+                    onValueChange={v => setTransparency(v[0])}
+                    min={0}
+                    max={80}
+                    step={5}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setStep(1)} className="flex-1">← Back</Button>
+                  <Button
+                    onClick={handleLockIn}
+                    disabled={createGoal.isPending || !Object.values(displayFormat).some(Boolean)}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                  >
+                    Lock in My Goal 🔒
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Past goals */}
+          {history.length > 0 && (
+            <>
+              <button onClick={() => setShowHistory(!showHistory)} className="mt-4 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <History className="h-3.5 w-3.5" /> Past Goals ({history.length})
+                {showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </button>
+              {showHistory && (
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                  {history.map(g => (
+                    <div key={g.id} className="rounded-lg border border-border bg-background p-3">
+                      <p className="text-sm font-medium text-foreground">{g.goal_text}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {format(new Date(g.start_date), "MMM d")} – {format(new Date(g.end_date), "MMM d, yyyy")}
+                        {g.achieved && <span className="ml-2">· {g.achieved === "yes" ? "✅" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {/* Commit Modal */}
-        <AnimatePresence>
-          {showCommitModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 flex items-center justify-center z-[10001]"
-              style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
-              onClick={() => setShowCommitModal(false)}
-            >
-              <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-                onClick={e => e.stopPropagation()}
-                className="w-[420px] max-w-[90vw] bg-card rounded-2xl p-8 shadow-2xl text-center"
-              >
-                <h3 className="text-lg font-semibold text-foreground mb-2">Make Your Commitment</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  I commit to <span className="font-semibold text-foreground">"{goalText}"</span> over the next 90 days.
-                </p>
-                <div className="rounded-lg bg-primary/5 p-3 mb-5 text-xs text-muted-foreground">
-                  📅 {format(new Date(), "MMM d, yyyy")} → {format(addDays(new Date(), 90), "MMM d, yyyy")}
-                </div>
-                <Button onClick={handleCommit} className="w-full font-semibold py-3" size="lg" disabled={createGoal.isPending}>
-                  Yes, I'm Committed 💪
-                </Button>
-                <button onClick={() => setShowCommitModal(false)} className="mt-3 text-xs text-muted-foreground hover:text-foreground">
-                  Not yet
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Celebration toast */}
         <AnimatePresence>
           {showCelebration && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
               className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[10002] rounded-xl bg-primary px-6 py-3 text-primary-foreground text-sm font-medium shadow-2xl"
             >
-              Commitment locked in! You've got this 💪
+              Goal locked in! You've got this 💪
             </motion.div>
           )}
         </AnimatePresence>
@@ -402,266 +446,140 @@ export default function NinetyDayGoalWidget() {
     );
   }
 
-  // ─── ACTIVE GOAL VIEW ───
-  const style = activeGoal.motivational_style;
-  const quote = QUOTES[Math.floor(new Date().getDate() % QUOTES.length)];
-  const showLiveTicker = phase === "last10" || phase === "lastDay";
+  // ─── ACTIVE GOAL COUNTDOWN ───
+  const goalEndDate = new Date(activeGoal.end_date);
+  const goalFont = getFontCSS(activeGoal.font_style || "Inter");
+  const goalColor = activeGoal.text_color || "#FFFFFF";
+  const goalTransparency = activeGoal.transparency_level ?? 20;
+  const countdownStr = buildCountdownString(goalEndDate, now, activeFormat);
+  const totalDays = differenceInDays(goalEndDate, new Date(activeGoal.start_date));
+  const daysLeft = Math.max(0, differenceInDays(goalEndDate, now));
+  const progressPct = totalDays > 0 ? Math.min(100, Math.round(((totalDays - daysLeft) / totalDays) * 100)) : 0;
 
   return (
     <>
-      <motion.div
-        layout
-        className={cn(
-          "rounded-xl border border-border shadow-2xs overflow-hidden transition-shadow duration-500",
-          `bg-gradient-to-br ${currentTheme.from} ${currentTheme.via} ${currentTheme.to}`,
-          phase === "lastDay" && "animate-pulse-slow",
-          style === "high" ? "p-6" : style === "minimal" ? "p-4" : "p-5"
-        )}
+      <div
+        className="rounded-xl overflow-hidden relative"
+        style={{
+          background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid rgba(255,255,255,0.08)",
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Target className={cn("h-4 w-4", phaseColors.text)} />
-            <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-              90-Day Goal · {currentQuarter}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {/* Earned badges */}
-            {earnedBadges.length > 0 && (
-              <div className="flex items-center gap-0.5 mr-1">
-                {earnedBadges.map(b => (
-                  <div key={b.id} className="relative">
-                    <button
-                      onMouseEnter={() => setHoveredBadge(b.id)}
-                      onMouseLeave={() => setHoveredBadge(null)}
-                      className="text-sm hover:scale-110 transition-transform"
-                    >
-                      {b.emoji}
-                    </button>
-                    {hoveredBadge === b.id && (
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-0.5 rounded-md z-10">
-                        {b.label}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {activeGoal.weekly_checkins && (
-              <button onClick={() => setShowCheckIn(true)} className="text-[11px] px-2 py-0.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-                Check In
-              </button>
-            )}
-            <button onClick={() => setShowSettings(!showSettings)} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
-              <Settings className="h-3.5 w-3.5" />
-            </button>
-            <button onClick={() => setShowHistory(!showHistory)} className="text-muted-foreground hover:text-foreground transition-colors p-0.5">
-              <History className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Goal text */}
-        <div className="flex items-start gap-2 mb-3">
-          {editing ? (
-            <div className="flex-1 flex gap-2">
-              <input type="text" value={editText} onChange={e => setEditText(e.target.value)}
-                className="flex-1 rounded-lg border border-primary bg-background px-3 py-1.5 text-sm outline-none" autoFocus />
-              <Button size="sm" onClick={handleEditSave}>Save</Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
-            </div>
-          ) : (
-            <>
-              <p className={cn("flex-1 font-semibold text-foreground", style === "high" ? "text-lg" : "text-base")}>
-                🎯 {activeGoal.goal_text}
-              </p>
-              <button onClick={() => { setEditing(true); setEditText(activeGoal.goal_text); }} className="text-muted-foreground hover:text-foreground transition-colors mt-0.5">
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Primary Countdown */}
-        <div className="mb-3">
-          {showLiveTicker ? (
-            <div className="flex items-baseline gap-1 font-mono">
-              <span className="text-2xl font-bold text-foreground">{liveCountdown.d}d</span>
-              <span className="text-lg font-semibold text-foreground/80">{liveCountdown.h}h</span>
-              <span className="text-lg font-semibold text-foreground/60">{String(liveCountdown.m).padStart(2, "0")}m</span>
-              <span className="text-base font-medium text-foreground/40">{String(liveCountdown.s).padStart(2, "0")}s</span>
-            </div>
-          ) : (
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-foreground">{daysLeft}d</span>
-              {(phase === "middle" || phase === "final") && (
-                <span className="text-lg font-semibold text-foreground/60">{liveCountdown.h}h</span>
+        <div className="p-5 relative z-10">
+          {/* Header row */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1 min-w-0">
+              {editing ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm text-white outline-none"
+                    autoFocus
+                    onKeyDown={e => e.key === "Enter" && handleEditSave()}
+                  />
+                  <Button size="sm" variant="ghost" className="text-white/70 hover:text-white" onClick={handleEditSave}>Save</Button>
+                  <Button size="sm" variant="ghost" className="text-white/40" onClick={() => setEditing(false)}>Cancel</Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p
+                    className="text-sm font-medium truncate"
+                    style={{
+                      fontFamily: goalFont,
+                      color: goalColor,
+                      opacity: 1 - goalTransparency / 100,
+                    }}
+                  >
+                    {activeGoal.goal_text}
+                  </p>
+                  <button
+                    onClick={() => { setEditing(true); setEditText(activeGoal.goal_text); }}
+                    className="text-white/30 hover:text-white/60 transition-colors flex-shrink-0"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                </div>
               )}
-              <span className="text-sm text-muted-foreground ml-1">remaining</span>
             </div>
-          )}
-        </div>
 
-        {/* Progress bar */}
-        {(activeGoal.display_style === "standard" || activeGoal.display_style === "full") && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Day {daysPassed}/{totalDays}</span>
-              <span className="text-xs font-medium text-foreground">{progressPct}%</span>
+            {/* Menu */}
+            <div className="relative ml-2">
+              <button onClick={() => setShowMenu(!showMenu)} className="text-white/30 hover:text-white/60 transition-colors">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+              {showMenu && (
+                <div className="absolute right-0 top-6 bg-card rounded-lg shadow-xl border border-border p-1 z-20 min-w-[160px]">
+                  <button
+                    onClick={() => { setShowEmergencyEdit(true); setShowMenu(false); setEditText(activeGoal.goal_text); }}
+                    className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                  >
+                    Edit Goal (restarts 90 days)
+                  </button>
+                  <button
+                    onClick={() => { setShowHistory(!showHistory); setShowMenu(false); }}
+                    className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-muted rounded-md transition-colors"
+                  >
+                    View Past Goals
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+          </div>
+
+          {/* BIG COUNTDOWN */}
+          <div className="text-center my-4">
+            <p
+              className="text-4xl sm:text-5xl font-bold tracking-tight leading-none"
+              style={{
+                fontFamily: goalFont,
+                color: goalColor,
+                opacity: 1 - goalTransparency / 100,
+                textShadow: "0 2px 20px rgba(0,0,0,0.4)",
+              }}
+            >
+              {countdownStr}
+            </p>
+          </div>
+
+          {/* Subtle progress bar */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-white/30">Day {totalDays - daysLeft}/{totalDays}</span>
+              <span className="text-[10px] text-white/30">{progressPct}%</span>
+            </div>
+            <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPct}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className={cn("h-full rounded-full bg-gradient-to-r", phaseColors.bar)}
+                className="h-full rounded-full bg-white/30"
               />
             </div>
           </div>
-        )}
 
-        {activeGoal.display_style === "minimal" && (
-          <p className="text-sm text-muted-foreground mb-3">Day {daysPassed}/{totalDays} · {progressPct}%</p>
-        )}
-
-        {/* Milestone checkpoints */}
-        {activeGoal.display_style !== "minimal" && (
-          <div className="flex items-center gap-1 mb-3">
-            {checkpoints.map((cp, i) => (
-              <div key={cp.day} className="flex items-center gap-1">
-                {i > 0 && <div className={cn("h-px w-4", cp.reached ? "bg-primary" : "bg-border")} />}
-                <div className="flex items-center gap-1">
-                  <span className={cn("text-xs", cp.reached ? "text-primary" : "text-muted-foreground/50")}>
-                    {cp.reached ? "✓" : "◯"}
-                  </span>
-                  <span className={cn("text-[10px]", cp.reached ? "text-foreground" : "text-muted-foreground/50")}>
-                    {cp.day}
-                  </span>
-                  {!cp.reached && cp.daysUntil > 0 && nextMilestone?.day === cp.day && (
-                    <span className="text-[10px] text-muted-foreground">({cp.daysUntil}d)</span>
-                  )}
-                </div>
-              </div>
-            ))}
+          {/* Dates */}
+          <div className="flex justify-between mt-2">
+            <span className="text-[10px] text-white/20">
+              {format(new Date(activeGoal.start_date), "MMM d")}
+            </span>
+            <span className="text-[10px] text-white/20">
+              {format(goalEndDate, "MMM d, yyyy")}
+            </span>
           </div>
-        )}
-
-        {/* Streak + next milestone (compact) */}
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-2">
-          {streak > 0 && <span>🔥 {streak} check-in{streak !== 1 ? "s" : ""}</span>}
-          {nextMilestone && <span>Next: Day {nextMilestone.day} in {nextMilestone.daysUntil}d</span>}
         </div>
 
-        {/* Phase message */}
-        {style !== "minimal" && (
-          <div className={cn("rounded-lg px-3 py-1.5 text-xs font-medium", phaseColors.bg, phaseColors.text)}>
-            {getPhaseMessage(phase, daysLeft)}
-          </div>
-        )}
-
-        {/* Sunk cost motivator (>50%) */}
-        {progressPct > 50 && style !== "minimal" && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            {daysPassed} days invested – finish what you started!
-          </p>
-        )}
-
-        {/* Micro-insight */}
-        {style === "high" && (
-          <p className="mt-2 text-[11px] text-muted-foreground/60 italic">{microInsight}</p>
-        )}
-
-        {style === "high" && (
-          <p className="mt-1 text-xs text-muted-foreground italic">"{quote}"</p>
-        )}
-
-        {/* Expand toggle */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors w-full justify-center"
-        >
-          {expanded ? "Less details" : "More details"}
-          {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        </button>
-
-        {/* Expanded detail panel */}
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 pt-3 border-t border-border space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg bg-background/50 p-2.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Business Days</p>
-                    <p className="text-sm font-semibold text-foreground">{businessDaysLeft} work days</p>
-                  </div>
-                  <div className="rounded-lg bg-background/50 p-2.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Sleep Cycles</p>
-                    <p className="text-sm font-semibold text-foreground">{sleepCycles} sleeps left</p>
-                  </div>
-                  <div className="rounded-lg bg-background/50 p-2.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">% Remaining</p>
-                    <p className="text-sm font-semibold text-foreground">{pctRemaining}% to go</p>
-                  </div>
-                  <div className="rounded-lg bg-background/50 p-2.5">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Days Invested</p>
-                    <p className="text-sm font-semibold text-foreground">{daysPassed} days</p>
-                  </div>
-                </div>
-                <div className="rounded-lg bg-background/50 p-2.5">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Ends On</p>
-                  <p className="text-sm font-semibold text-foreground">{endDayOfWeek}, {endDateFormatted}</p>
-                </div>
-                <p className="text-[11px] text-muted-foreground/60 italic text-center">{microInsight}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Settings panel */}
-        <AnimatePresence>
-          {showSettings && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-3 pt-3 border-t border-border">
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Card Theme</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {VISUAL_THEMES.map(t => (
-                    <button
-                      key={t.id}
-                      onClick={() => setVisualTheme(t.id)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md text-[11px] border transition-colors",
-                        visualTheme === t.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-secondary"
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* History */}
+        {/* History panel */}
         {showHistory && history.length > 0 && (
-          <div className="mt-3 space-y-2 max-h-40 overflow-y-auto border-t border-border pt-3">
+          <div className="px-5 pb-4 space-y-2 border-t border-white/5 pt-3">
+            <p className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Past Goals</p>
             {history.map(g => (
-              <div key={g.id} className="rounded-lg bg-background p-2.5 text-xs">
-                <p className="font-medium text-foreground">{g.goal_text}</p>
-                <p className="text-muted-foreground">
+              <div key={g.id} className="rounded-lg bg-white/5 p-2.5">
+                <p className="text-xs font-medium text-white/80">{g.goal_text}</p>
+                <p className="text-[10px] text-white/40">
                   {format(new Date(g.start_date), "MMM d")} – {format(new Date(g.end_date), "MMM d, yyyy")}
                   {g.achieved && <span className="ml-1">· {g.achieved === "yes" ? "✅" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
                 </p>
@@ -669,32 +587,56 @@ export default function NinetyDayGoalWidget() {
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Check-in modal */}
+      {/* Emergency edit modal */}
       <AnimatePresence>
-        {showCheckIn && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        {showEmergencyEdit && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 flex items-center justify-center z-[10001]"
-            style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
-            onClick={() => setShowCheckIn(false)}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
+            onClick={() => setShowEmergencyEdit(false)}
           >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            <motion.div
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               onClick={e => e.stopPropagation()}
-              className="w-[400px] max-w-[90vw] bg-card rounded-2xl p-6 shadow-2xl"
+              className="w-[420px] max-w-[90vw] bg-card rounded-2xl p-6 shadow-2xl"
             >
-              <h3 className="text-md font-semibold text-foreground mb-1">How's your 90-day goal going?</h3>
-              <p className="text-sm text-muted-foreground mb-4">"{activeGoal.goal_text}"</p>
-              <label className="text-xs text-muted-foreground">Progress: {checkInProgress}%</label>
-              <input type="range" min={0} max={100} value={checkInProgress} onChange={e => setCheckInProgress(Number(e.target.value))}
-                className="w-full mb-3 accent-[hsl(var(--primary))]" />
-              <textarea
-                value={checkInNotes}
-                onChange={e => setCheckInNotes(e.target.value)}
-                placeholder="What did you do this week?"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none h-20 mb-4"
+              <h3 className="text-base font-semibold text-foreground mb-1">⚠️ Edit Goal</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Changing your goal restarts your commitment. This should only be used in emergencies.
+              </p>
+
+              <input
+                type="text"
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary mb-3"
               />
-              <Button onClick={handleCheckIn} className="w-full" disabled={addCheckIn.isPending}>Keep Going 💪</Button>
+
+              <p className="text-xs text-muted-foreground mb-2">
+                Type <span className="font-mono text-foreground">"I need to change my goal"</span> to confirm:
+              </p>
+              <input
+                type="text"
+                value={emergencyConfirm}
+                onChange={e => setEmergencyConfirm(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-destructive mb-4"
+                placeholder="I need to change my goal"
+              />
+
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setShowEmergencyEdit(false)} className="flex-1">Cancel</Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleEmergencyEdit}
+                  disabled={emergencyConfirm !== "I need to change my goal"}
+                  className="flex-1"
+                >
+                  Restart Goal
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -703,15 +645,17 @@ export default function NinetyDayGoalWidget() {
       {/* Completion modal */}
       <AnimatePresence>
         {showCompletion && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 flex items-center justify-center z-[10001]"
-            style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
           >
-            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            <motion.div
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="w-[420px] max-w-[90vw] bg-card rounded-2xl p-8 shadow-2xl text-center"
             >
               <p className="text-3xl mb-2">🎉</p>
-              <h3 className="text-lg font-semibold text-foreground mb-1">You did it! 90 days complete!</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-1">90 days complete!</h3>
               <p className="text-sm text-muted-foreground mb-4">Did you achieve your goal?</p>
               <div className="flex gap-2 justify-center mb-4">
                 {["yes", "partial", "no"].map(v => (
@@ -719,8 +663,8 @@ export default function NinetyDayGoalWidget() {
                     key={v}
                     onClick={() => setCompletionAchieved(v)}
                     className={cn(
-                      "px-4 py-2 rounded-lg text-sm transition-colors border",
-                      completionAchieved === v ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-secondary"
+                      "px-4 py-2 rounded-xl text-sm transition-colors border",
+                      completionAchieved === v ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"
                     )}
                   >
                     {v === "yes" ? "Yes ✅" : v === "partial" ? "Partially 🟡" : "No ❌"}
@@ -731,7 +675,7 @@ export default function NinetyDayGoalWidget() {
                 value={reflectionNotes}
                 onChange={e => setReflectionNotes(e.target.value)}
                 placeholder="What did you learn?"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary resize-none h-20 mb-4"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none resize-none h-20 mb-4"
               />
               <Button
                 onClick={() => completionAchieved && handleComplete(completionAchieved)}

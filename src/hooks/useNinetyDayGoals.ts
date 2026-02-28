@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+export interface DisplayFormat {
+  showWeeks: boolean;
+  showDays: boolean;
+  showHours: boolean;
+  showMinutes: boolean;
+  showSeconds: boolean;
+}
+
 export interface NinetyDayGoal {
   id: string;
   user_id: string;
@@ -14,6 +22,10 @@ export interface NinetyDayGoal {
   display_style: string;
   motivational_style: string;
   weekly_checkins: boolean;
+  display_format: DisplayFormat;
+  font_style: string;
+  text_color: string;
+  transparency_level: number;
   created_at: string;
 }
 
@@ -42,7 +54,7 @@ export function useActiveGoal() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as NinetyDayGoal | null;
+      return data as unknown as NinetyDayGoal | null;
     },
   });
 }
@@ -60,7 +72,7 @@ export function useGoalHistory() {
         .neq("status", "active")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as NinetyDayGoal[];
+      return data as unknown as NinetyDayGoal[];
     },
   });
 }
@@ -85,11 +97,18 @@ export function useCreateGoal() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (goal: { goal_text: string; start_date: string; end_date: string; display_style: string; motivational_style: string; weekly_checkins: boolean }) => {
-      const { error } = await supabase.from("ninety_day_goals").insert({
+    mutationFn: async (goal: {
+      goal_text: string; start_date: string; end_date: string;
+      display_style: string; motivational_style: string; weekly_checkins: boolean;
+      display_format?: DisplayFormat; font_style?: string; text_color?: string; transparency_level?: number;
+    }) => {
+      const { display_format, ...rest } = goal;
+      const payload: Record<string, unknown> = {
         user_id: user!.id,
-        ...goal,
-      });
+        ...rest,
+      };
+      if (display_format) payload.display_format = display_format as unknown as Record<string, unknown>;
+      const { error } = await supabase.from("ninety_day_goals").insert(payload as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["ninety_day_goal_active"] }),
@@ -100,7 +119,11 @@ export function useUpdateGoal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<NinetyDayGoal> & { id: string }) => {
-      const { error } = await supabase.from("ninety_day_goals").update(updates).eq("id", id);
+      const payload: Record<string, unknown> = { ...updates };
+      if (updates.display_format) {
+        payload.display_format = updates.display_format as unknown as Record<string, unknown>;
+      }
+      const { error } = await supabase.from("ninety_day_goals").update(payload as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
