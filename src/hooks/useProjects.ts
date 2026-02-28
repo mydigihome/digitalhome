@@ -16,6 +16,7 @@ export interface Project {
   icon_type: string | null;
   cover_image: string | null;
   cover_type: string | null;
+  archived: boolean;
   created_at: string;
   updated_at: string;
 }

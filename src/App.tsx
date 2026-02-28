@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import ContentPlanner from "./pages/ContentPlanner";
 import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
+import PublicEventPage from "./pages/PublicEventPage";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/inbox" element={<ProtectedRoute><PriorityInbox /><BrainDump /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/events/:token" element={<PublicEventPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           

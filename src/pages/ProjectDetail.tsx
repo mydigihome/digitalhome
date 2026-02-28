@@ -15,12 +15,13 @@ import TaskEditor from "@/components/TaskEditor";
 import DocumentsTab from "@/components/DocumentsTab";
 import AITaskGenerator from "@/components/AITaskGenerator";
 import PageHeader from "@/components/PageHeader";
+import EventDetailView from "@/components/events/EventDetailView";
 
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay,
   PointerSensor, useSensor, useSensors, closestCorners, useDroppable,
 } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 const columns = [
@@ -131,6 +132,8 @@ export default function ProjectDetail() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  const isEvent = project?.type === "event";
+
   if (!project && !isLoading) {
     return (
       <AppShell>
@@ -147,9 +150,7 @@ export default function ProjectDetail() {
     setActiveTask(task || null);
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    // This enables cross-column dragging visual feedback
-  };
+  const handleDragOver = (event: DragOverEvent) => {};
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTask(null);
@@ -163,17 +164,14 @@ export default function ProjectDetail() {
     const overId = over.id as string;
     const overData = over.data.current;
 
-    // Determine target status and position
     let targetStatus: string;
     let targetPosition: number;
 
     if (overData?.type === "column") {
-      // Dropped on empty column area
       targetStatus = overId;
       const columnTasks = tasks.filter((t) => t.status === targetStatus && t.id !== taskId);
-      targetPosition = columnTasks.length; // add to end
+      targetPosition = columnTasks.length;
     } else if (overData?.type === "task") {
-      // Dropped on another task
       const overTask = overData.task as Task;
       targetStatus = overTask.status;
       const columnTasks = tasks
@@ -185,7 +183,6 @@ export default function ProjectDetail() {
       return;
     }
 
-    // Only update if something actually changed
     if (currentTask.status !== targetStatus || currentTask.position !== targetPosition) {
       updateTask.mutate({ id: taskId, status: targetStatus, position: targetPosition });
     }
@@ -198,19 +195,6 @@ export default function ProjectDetail() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {/* Page Header */}
-        <PageHeader
-          title={project?.name || "Project"}
-          icon={project?.icon || "📋"}
-          iconType={project?.icon_type || "emoji"}
-          coverImage={project?.cover_image}
-          coverType={project?.cover_type || "none"}
-          onTitleChange={(name) => id && updateProject.mutate({ id, name })}
-          onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
-          onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
-          editable
-        />
-
         {/* Back nav */}
         <div className="mb-4">
           <button onClick={() => navigate("/projects")} className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -218,128 +202,166 @@ export default function ProjectDetail() {
           </button>
         </div>
 
-        <div className="mb-6 flex items-center gap-3">
-          {project?.type && (
-            <Badge variant="secondary" className="capitalize">{project.type}</Badge>
-          )}
-        </div>
-          {/* Progress bar */}
-          {tasks.length > 0 && (() => {
-            const doneTasks = tasks.filter(t => t.status === "done").length;
-            const progress = Math.round((doneTasks / tasks.length) * 100);
-            return (
-              <div className="mt-3 max-w-md">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">{doneTasks} of {tasks.length} tasks</span>
-                  <span className="text-xs font-medium text-foreground">{progress}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
-            );
-          })()}
+        {/* Event View */}
+        {isEvent ? (
+          <>
+            <PageHeader
+              title={project?.name || "Event"}
+              icon={project?.icon || "📅"}
+              iconType={project?.icon_type || "emoji"}
+              coverImage={project?.cover_image}
+              coverType={project?.cover_type || "none"}
+              onTitleChange={(name) => id && updateProject.mutate({ id, name })}
+              onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
+              onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
+              editable
+            />
+            <EventDetailView
+              projectId={id!}
+              projectName={project?.name || ""}
+              coverImage={project?.cover_image}
+            />
+          </>
+        ) : (
+          <>
+            {/* Page Header */}
+            <PageHeader
+              title={project?.name || "Project"}
+              icon={project?.icon || "📋"}
+              iconType={project?.icon_type || "emoji"}
+              coverImage={project?.cover_image}
+              coverType={project?.cover_type || "none"}
+              onTitleChange={(name) => id && updateProject.mutate({ id, name })}
+              onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
+              onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
+              editable
+            />
 
-          <div className="mt-3 mb-6 flex items-center gap-3">
-            <Tabs value={mainTab} onValueChange={setMainTab}>
-              <TabsList>
-                <TabsTrigger value="board" className="text-xs">Board</TabsTrigger>
-                <TabsTrigger value="documents" className="text-xs">
-                  <FileText className="mr-1 h-3 w-3" /> Playbooks
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="mb-6 flex items-center gap-3">
+              {project?.type && (
+                <Badge variant="secondary" className="capitalize">{project.type}</Badge>
+              )}
+            </div>
+
+            {/* Progress bar */}
+            {tasks.length > 0 && (() => {
+              const doneTasks = tasks.filter(t => t.status === "done").length;
+              const progress = Math.round((doneTasks / tasks.length) * 100);
+              return (
+                <div className="mt-3 max-w-md">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">{doneTasks} of {tasks.length} tasks</span>
+                    <span className="text-xs font-medium text-foreground">{progress}%</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div className="mt-3 mb-6 flex items-center gap-3">
+              <Tabs value={mainTab} onValueChange={setMainTab}>
+                <TabsList>
+                  <TabsTrigger value="board" className="text-xs">Board</TabsTrigger>
+                  <TabsTrigger value="documents" className="text-xs">
+                    <FileText className="mr-1 h-3 w-3" /> Playbooks
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {mainTab === "board" && (
+                <>
+                  <Tabs value={view} onValueChange={setView}>
+                    <TabsList>
+                      <TabsTrigger value="kanban" className="text-xs">Kanban</TabsTrigger>
+                      <TabsTrigger value="list" className="text-xs">List</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <Button variant="outline" size="sm" onClick={() => setAiGeneratorOpen(true)} className="ml-auto">
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" /> AI Generate
+                  </Button>
+                </>
+              )}
+            </div>
+
             {mainTab === "board" && (
               <>
-                <Tabs value={view} onValueChange={setView}>
-                  <TabsList>
-                    <TabsTrigger value="kanban" className="text-xs">Kanban</TabsTrigger>
-                    <TabsTrigger value="list" className="text-xs">List</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Button variant="outline" size="sm" onClick={() => setAiGeneratorOpen(true)} className="ml-auto">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" /> AI Generate
-                </Button>
-              </>
-            )}
-          </div>
-
-        {mainTab === "board" && (
-          <>
-            {/* Kanban View */}
-            {view === "kanban" && (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDragOver={handleDragOver}
-              >
-                <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
-                  {columns.map((col) => {
-                    const columnTasks = tasks.filter((t) => t.status === col.id).sort((a, b) => a.position - b.position);
-                    return (
-                      <div key={col.id} className="min-w-[320px] flex-shrink-0">
-                        <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy} id={col.id}>
-                          <DroppableColumn id={col.id} label={col.label} color={col.color} count={columnTasks.length} onAddTask={() => setAddingToColumn(col.id)}>
-                            {columnTasks.map((task) => (
-                              <SortableTaskCard key={task.id} task={task} onClick={() => setEditingTask(task)} />
-                            ))}
-                          </DroppableColumn>
-                        </SortableContext>
-                      </div>
-                    );
-                  })}
-                </div>
-                <DragOverlay>
-                  {activeTask && <TaskCardOverlay task={activeTask} />}
-                </DragOverlay>
-              </DndContext>
-            )}
-
-            {/* List View */}
-            {view === "list" && (
-              <div className="space-y-6">
-                {columns.map((col) => {
-                  const columnTasks = tasks.filter((t) => t.status === col.id);
-                  if (columnTasks.length === 0) return null;
-                  return (
-                    <div key={col.id}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className={cn("h-2 w-2 rounded-full", col.color)} />
-                        <h3 className="text-sm font-medium text-muted-foreground">{col.label} ({columnTasks.length})</h3>
-                      </div>
-                      <div className="space-y-1">
-                        {columnTasks.map((task) => (
-                          <div
-                            key={task.id}
-                            className={cn("flex cursor-pointer items-center gap-3 rounded-md border border-border border-l-[3px] p-3 transition-all duration-150 hover:shadow-sm hover:bg-secondary/30", priorityBorder[task.priority])}
-                            onClick={() => setEditingTask(task)}
-                          >
-                            <Checkbox checked={task.status === "done"} onCheckedChange={() => toggleDone(task)} onClick={(e) => e.stopPropagation()} />
-                            <span className="flex-1 text-sm">{task.title}</span>
-                            {task.due_date && <DueBadge date={task.due_date} />}
-                            <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
+                {/* Kanban View */}
+                {view === "kanban" && (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={handleDragOver}
+                  >
+                    <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
+                      {columns.map((col) => {
+                        const columnTasks = tasks.filter((t) => t.status === col.id).sort((a, b) => a.position - b.position);
+                        return (
+                          <div key={col.id} className="min-w-[320px] flex-shrink-0">
+                            <SortableContext items={columnTasks.map((t) => t.id)} strategy={verticalListSortingStrategy} id={col.id}>
+                              <DroppableColumn id={col.id} label={col.label} color={col.color} count={columnTasks.length} onAddTask={() => setAddingToColumn(col.id)}>
+                                {columnTasks.map((task) => (
+                                  <SortableTaskCard key={task.id} task={task} onClick={() => setEditingTask(task)} />
+                                ))}
+                              </DroppableColumn>
+                            </SortableContext>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-                {tasks.length === 0 && (
-                  <div className="py-20 text-center">
-                    <p className="text-muted-foreground">No tasks yet</p>
-                    <Button className="mt-4" onClick={() => setAddingToColumn("backlog")}>
-                      <Plus className="mr-1.5 h-4 w-4" /> Add a task
-                    </Button>
+                    <DragOverlay>
+                      {activeTask && <TaskCardOverlay task={activeTask} />}
+                    </DragOverlay>
+                  </DndContext>
+                )}
+
+                {/* List View */}
+                {view === "list" && (
+                  <div className="space-y-6">
+                    {columns.map((col) => {
+                      const columnTasks = tasks.filter((t) => t.status === col.id);
+                      if (columnTasks.length === 0) return null;
+                      return (
+                        <div key={col.id}>
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className={cn("h-2 w-2 rounded-full", col.color)} />
+                            <h3 className="text-sm font-medium text-muted-foreground">{col.label} ({columnTasks.length})</h3>
+                          </div>
+                          <div className="space-y-1">
+                            {columnTasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className={cn("flex cursor-pointer items-center gap-3 rounded-md border border-border border-l-[3px] p-3 transition-all duration-150 hover:shadow-sm hover:bg-secondary/30", priorityBorder[task.priority])}
+                                onClick={() => setEditingTask(task)}
+                              >
+                                <Checkbox checked={task.status === "done"} onCheckedChange={() => toggleDone(task)} onClick={(e) => e.stopPropagation()} />
+                                <span className="flex-1 text-sm">{task.title}</span>
+                                {task.due_date && <DueBadge date={task.due_date} />}
+                                <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {tasks.length === 0 && (
+                      <div className="py-20 text-center">
+                        <p className="text-muted-foreground">No tasks yet</p>
+                        <Button className="mt-4" onClick={() => setAddingToColumn("backlog")}>
+                          <Plus className="mr-1.5 h-4 w-4" /> Add a task
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
+
+            {mainTab === "documents" && id && <DocumentsTab projectId={id} />}
           </>
         )}
-
-        {mainTab === "documents" && id && <DocumentsTab projectId={id} />}
 
         {/* Delete / Archive Project */}
         <div className="mt-12 border-t border-border pt-8 pb-4">
@@ -365,7 +387,7 @@ export default function ProjectDetail() {
         )}
       </AnimatePresence>
 
-      {id && project && (
+      {id && project && !isEvent && (
         <AITaskGenerator
           open={aiGeneratorOpen}
           onOpenChange={setAiGeneratorOpen}
@@ -383,22 +405,18 @@ export default function ProjectDetail() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl"
           >
-            {/* Header */}
             <div className="flex items-start justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
                   <AlertTriangle className="h-5 w-5 text-destructive" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Are you sure?
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground">Are you sure?</h3>
               </div>
               <button onClick={() => setShowDeleteModal(false)} className="text-muted-foreground hover:text-foreground transition-colors">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* Warning */}
             <div className="mb-5 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
               <p className="text-sm font-medium text-destructive mb-1">⚠️ This action will permanently delete your project</p>
               <p className="text-xs text-muted-foreground">All project data, tasks, and files will be lost forever. You can choose to archive instead.</p>
@@ -409,7 +427,6 @@ export default function ProjectDetail() {
               <p className="text-sm font-medium text-foreground">{project?.name}</p>
             </div>
 
-            {/* Checkbox */}
             <label className="mb-5 flex cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
@@ -420,7 +437,6 @@ export default function ProjectDetail() {
               <span className="text-sm text-foreground">Yes, please delete</span>
             </label>
 
-            {/* Actions */}
             {confirmChecked ? (
               <div className="space-y-2">
                 <div className="mb-3 h-px bg-border" />
@@ -430,9 +446,7 @@ export default function ProjectDetail() {
                   className="w-full"
                   onClick={() => {
                     if (id) {
-                      deleteProject.mutate(id, {
-                        onSuccess: () => navigate("/projects"),
-                      });
+                      deleteProject.mutate(id, { onSuccess: () => navigate("/projects") });
                     }
                   }}
                 >
@@ -443,9 +457,7 @@ export default function ProjectDetail() {
                   className="w-full"
                   onClick={() => {
                     if (id) {
-                      updateProject.mutate({ id, archived: true }, {
-                        onSuccess: () => navigate("/projects"),
-                      });
+                      updateProject.mutate({ id, archived: true }, { onSuccess: () => navigate("/projects") });
                     }
                   }}
                 >
