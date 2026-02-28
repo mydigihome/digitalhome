@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus,
+  Trash2, ExternalLink, Plus, Crown, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,11 @@ import {
   type EventGuest,
 } from "@/hooks/useEvents";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  useCollaborators,
+  useCreateCollaborator,
+  useDeleteCollaborator,
+} from "@/hooks/useCollaborators";
 
 const STATUS_CONFIG: Record<string, { icon: any; color: string; label: string }> = {
   accepted: { icon: CheckCircle, color: "text-green-500", label: "Accepted" },
@@ -62,12 +67,20 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
 
+  // Co-hosts (collaborators scoped to this project)
+  const { data: allCollaborators = [] } = useCollaborators();
+  const createCollab = useCreateCollaborator();
+  const deleteCollab = useDeleteCollaborator();
+  const coHosts = allCollaborators.filter((c) => c.project_ids?.includes(projectId));
+
   const [showAddGuests, setShowAddGuests] = useState(false);
   const [newEmails, setNewEmails] = useState("");
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailFilter, setEmailFilter] = useState<"all" | "accepted">("all");
   const [emailTemplate, setEmailTemplate] = useState(0);
   const [emailBody, setEmailBody] = useState("");
+  const [showCoHostInvite, setShowCoHostInvite] = useState(false);
+  const [coHostEmail, setCoHostEmail] = useState("");
 
   if (!event) return null;
 
@@ -163,6 +176,9 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
         <Button variant="outline" size="sm" onClick={handleCopyLink}>
           <Copy className="h-4 w-4 mr-1" /> Copy Link
         </Button>
+        <Button variant="outline" size="sm" onClick={() => setShowCoHostInvite(true)}>
+          <UserPlus className="h-4 w-4 mr-1" /> Invite Co-Hosts
+        </Button>
         <Button variant="outline" size="sm" onClick={() => openEmailComposer("all")}>
           <Mail className="h-4 w-4 mr-1" /> Email All Guests
         </Button>
@@ -174,6 +190,32 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
           {event.privacy === "public" ? "Public" : "Private"}
         </Badge>
       </div>
+
+      {/* Co-Hosts Section */}
+      {coHosts.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+            <Crown className="h-4 w-4 text-primary" /> Co-Hosts
+          </h3>
+          <div className="space-y-2">
+            {coHosts.map((host) => (
+              <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary/30 transition-colors">
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                  {host.invited_email.charAt(0).toUpperCase()}
+                </div>
+                <span className="flex-1 text-sm text-foreground truncate">{host.invited_email}</span>
+                <Badge variant="secondary" className="text-[10px] capitalize">{host.status}</Badge>
+                <button
+                  onClick={() => { deleteCollab.mutate(host.id); toast.success("Co-host removed"); }}
+                  className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       {event.description && (
@@ -342,6 +384,103 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
                 <Button onClick={handleSendEmail} className="flex-1">
                   <Send className="h-4 w-4 mr-1" /> Open Email Client
                 </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Co-Host Invite Modal */}
+      <AnimatePresence>
+        {showCoHostInvite && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+            onClick={() => setShowCoHostInvite(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-primary" /> Invite Co-Hosts
+                </h3>
+                <button onClick={() => setShowCoHostInvite(false)}>
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Co-hosts can help manage this event, view guest lists, and send communications.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={coHostEmail}
+                  onChange={e => setCoHostEmail(e.target.value)}
+                  placeholder="co-host@example.com"
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      const trimmed = coHostEmail.trim().toLowerCase();
+                      if (!trimmed || !trimmed.includes("@")) { toast.error("Enter a valid email"); return; }
+                      createCollab.mutateAsync({
+                        invited_email: trimmed,
+                        role: "editor",
+                        project_ids: [projectId],
+                      }).then(() => {
+                        toast.success(`${trimmed} invited as co-host`);
+                        setCoHostEmail("");
+                      }).catch((err: any) => toast.error(err.message || "Failed to invite"));
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="sm"
+                  disabled={createCollab.isPending}
+                  onClick={() => {
+                    const trimmed = coHostEmail.trim().toLowerCase();
+                    if (!trimmed || !trimmed.includes("@")) { toast.error("Enter a valid email"); return; }
+                    createCollab.mutateAsync({
+                      invited_email: trimmed,
+                      role: "editor",
+                      project_ids: [projectId],
+                    }).then(() => {
+                      toast.success(`${trimmed} invited as co-host`);
+                      setCoHostEmail("");
+                    }).catch((err: any) => toast.error(err.message || "Failed to invite"));
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </div>
+
+              {/* Current co-hosts */}
+              {coHosts.length > 0 && (
+                <div className="space-y-1 pt-2 border-t border-border">
+                  {coHosts.map((host) => (
+                    <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary/30 transition-colors">
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                        {host.invited_email.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="flex-1 text-sm text-foreground truncate">{host.invited_email}</span>
+                      <button
+                        onClick={() => { deleteCollab.mutate(host.id); toast.success("Co-host removed"); }}
+                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={() => setShowCoHostInvite(false)}>Done</Button>
               </div>
             </motion.div>
           </motion.div>
