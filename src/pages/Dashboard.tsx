@@ -24,6 +24,7 @@ import BrainDumpWidget from "@/components/BrainDumpWidget";
 import HabitTrackerWidget from "@/components/HabitTrackerWidget";
 import YourDayAgenda from "@/components/YourDayAgenda";
 import { cn } from "@/lib/utils";
+import JournalEntriesList from "@/components/journal/JournalEntriesList";
 
 interface EverydayLink {
   id: string;
@@ -391,6 +392,11 @@ export default function Dashboard() {
           {/* Brain Dump Widget */}
           <div className="xl:col-span-3 md:col-span-2">
             <BrainDumpWidget />
+          </div>
+
+          {/* Journal Entries */}
+          <div className="xl:col-span-3 md:col-span-2">
+            <JournalEntriesList />
           </div>
 
           {/* Notes Widget */}

@@ -8,7 +8,8 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { useWaitingCount } from "@/hooks/useGmail";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
-import VoiceInput from "@/components/VoiceInput";
+import FloatingCloud from "@/components/journal/FloatingCloud";
+import JournalEntryModal from "@/components/journal/JournalEntryModal";
 import { TrialBadge } from "@/components/TrialBadge";
 
 // ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
@@ -429,6 +430,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [journalOpen, setJournalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -556,8 +558,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Bottom Tab Bar — removed, using sidebar instead */}
 
-      {/* Floating Voice Input */}
-      <VoiceInput />
+      {/* Floating Cloud → Journal */}
+      <FloatingCloud onClick={() => setJournalOpen(true)} />
+      <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
 
       {/* Main Content */}
       <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>

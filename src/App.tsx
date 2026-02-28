@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import BrainDump from "@/components/BrainDump";
 import { useThemeApplicator } from "@/hooks/useThemeApplicator";
 
 import Login from "./pages/Login";
@@ -63,16 +62,16 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /><BrainDump /></ProtectedRoute>} />
-            <Route path="/projects" element={<ProtectedRoute><Projects /><BrainDump /></ProtectedRoute>} />
-            <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /><BrainDump /></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute><CalendarPage /><BrainDump /></ProtectedRoute>} />
-            <Route path="/team" element={<ProtectedRoute><TeamPage /><BrainDump /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+            <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
+            <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
             <Route path="/finance" element={<Navigate to="/finance/wealth" replace />} />
-            <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /><BrainDump /></ProtectedRoute>} />
-            <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /><BrainDump /></ProtectedRoute>} />
+            <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
+            <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
             <Route path="/vision" element={<ProtectedRoute><ContentPlanner /></ProtectedRoute>} />
-            <Route path="/inbox" element={<ProtectedRoute><PriorityInbox /><BrainDump /></ProtectedRoute>} />
+            <Route path="/inbox" element={<ProtectedRoute><PriorityInbox /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/events/:token" element={<PublicEventPage />} />

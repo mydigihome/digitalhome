@@ -1,0 +1,195 @@
+import { useState } from "react";
+import { useJournalEntries, useDeleteJournalEntry, JournalEntry } from "@/hooks/useJournal";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, Lock, Plus, Trash2, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import JournalEntryModal from "./JournalEntryModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const FILTERS = [
+  { id: "all", label: "All Entries" },
+  { id: "week", label: "This Week" },
+  { id: "month", label: "This Month" },
+  { id: "locked", label: "Locked Only" },
+];
+
+const SORT_OPTIONS = [
+  { id: "newest", label: "Newest" },
+  { id: "oldest", label: "Oldest" },
+  { id: "mood", label: "By Mood" },
+];
+
+export default function JournalEntriesList() {
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("newest");
+  const [search, setSearch] = useState("");
+  const [editEntry, setEditEntry] = useState<JournalEntry | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const { data: entries, isLoading } = useJournalEntries({
+    period: filter === "week" ? "week" : filter === "month" ? "month" : undefined,
+    locked: filter === "locked" ? true : undefined,
+    search: search || undefined,
+    sort,
+  });
+  const deleteEntry = useDeleteJournalEntry();
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteEntry.mutateAsync(deleteId);
+      toast.success("Entry deleted");
+    } catch {
+      toast.error("Failed to delete");
+    }
+    setDeleteId(null);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Journal Entries</h2>
+        <Button size="sm" onClick={() => setNewOpen(true)}>
+          <Plus className="mr-1.5 h-4 w-4" />
+          New Entry
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search entries..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Filters & Sort */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-1">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                filter === f.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div className="ml-auto flex gap-1">
+          {SORT_OPTIONS.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setSort(s.id)}
+              className={cn(
+                "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+                sort === s.id
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Entries list */}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      ) : !entries?.length ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12">
+          <Calendar className="h-8 w-8 text-muted-foreground/40 mb-2" />
+          <p className="text-sm text-muted-foreground">No journal entries yet</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => setNewOpen(true)}>
+            Write your first entry
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {entries.map((entry) => (
+            <button
+              key={entry.id}
+              onClick={() => setEditEntry(entry)}
+              className="group relative rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/30 hover:shadow-md"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {entry.mood_emoji && <span className="text-xl">{entry.mood_emoji}</span>}
+                    <h3 className="truncate text-sm font-medium text-foreground">
+                      {entry.title || "Untitled Entry"}
+                    </h3>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {format(new Date(entry.entry_date), "MMM d, yyyy")}
+                  </p>
+                  {entry.content_preview && (
+                    <p className="mt-2 line-clamp-2 text-xs text-muted-foreground/80">
+                      {entry.content_preview}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 ml-2">
+                  {entry.is_locked && <Lock className="h-3.5 w-3.5 text-primary" />}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(entry.id); }}
+                    className="rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Modals */}
+      <JournalEntryModal open={newOpen} onClose={() => setNewOpen(false)} />
+      <JournalEntryModal
+        open={!!editEntry}
+        onClose={() => setEditEntry(null)}
+        entry={editEntry}
+      />
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this journal entry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

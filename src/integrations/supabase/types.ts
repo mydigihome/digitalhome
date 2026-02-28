@@ -851,6 +851,115 @@ export type Database = {
         }
         Relationships: []
       }
+      journal_activities: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          completed_at: string | null
+          entry_id: string
+          id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          completed_at?: string | null
+          entry_id: string
+          id?: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          completed_at?: string | null
+          entry_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_activities_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journal_entries: {
+        Row: {
+          content: Json | null
+          content_preview: string | null
+          created_at: string
+          entry_date: string
+          id: string
+          is_locked: boolean
+          mood_emoji: string | null
+          mood_text: string | null
+          pin_hash: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          content_preview?: string | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          is_locked?: boolean
+          mood_emoji?: string | null
+          mood_text?: string | null
+          pin_hash?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          content_preview?: string | null
+          created_at?: string
+          entry_date?: string
+          id?: string
+          is_locked?: boolean
+          mood_emoji?: string | null
+          mood_text?: string | null
+          pin_hash?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      journal_media: {
+        Row: {
+          created_at: string
+          entry_id: string
+          file_url: string
+          id: string
+          media_type: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          file_url: string
+          id?: string
+          media_type?: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          file_url?: string
+          id?: string
+          media_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_media_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loans: {
         Row: {
           amount: number
