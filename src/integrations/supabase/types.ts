@@ -706,6 +706,44 @@ export type Database = {
         }
         Relationships: []
       }
+      goal_check_ins: {
+        Row: {
+          check_in_date: string
+          created_at: string
+          goal_id: string
+          id: string
+          notes: string | null
+          progress_percentage: number
+          user_id: string
+        }
+        Insert: {
+          check_in_date?: string
+          created_at?: string
+          goal_id: string
+          id?: string
+          notes?: string | null
+          progress_percentage?: number
+          user_id: string
+        }
+        Update: {
+          check_in_date?: string
+          created_at?: string
+          goal_id?: string
+          id?: string
+          notes?: string | null
+          progress_percentage?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_check_ins_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "ninety_day_goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_stages: {
         Row: {
           created_at: string
@@ -1071,6 +1109,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ninety_day_goals: {
+        Row: {
+          achieved: string | null
+          created_at: string
+          display_style: string
+          end_date: string
+          goal_text: string
+          id: string
+          motivational_style: string
+          reflection_notes: string | null
+          start_date: string
+          status: string
+          user_id: string
+          weekly_checkins: boolean
+        }
+        Insert: {
+          achieved?: string | null
+          created_at?: string
+          display_style?: string
+          end_date?: string
+          goal_text: string
+          id?: string
+          motivational_style?: string
+          reflection_notes?: string | null
+          start_date?: string
+          status?: string
+          user_id: string
+          weekly_checkins?: boolean
+        }
+        Update: {
+          achieved?: string | null
+          created_at?: string
+          display_style?: string
+          end_date?: string
+          goal_text?: string
+          id?: string
+          motivational_style?: string
+          reflection_notes?: string | null
+          start_date?: string
+          status?: string
+          user_id?: string
+          weekly_checkins?: boolean
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           card_color: string | null
@@ -1262,6 +1345,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           view_preference?: string
+        }
+        Relationships: []
+      }
+      quick_todos: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          order: number
+          text: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          order?: number
+          text?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          order?: number
+          text?: string
+          user_id?: string
         }
         Relationships: []
       }
