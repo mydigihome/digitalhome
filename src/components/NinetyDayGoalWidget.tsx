@@ -228,6 +228,12 @@ export default function NinetyDayGoalWidget() {
 
   // Active goal state
   const [showHistory, setShowHistory] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [customThemeIdx, setCustomThemeIdx] = useState(0);
+  const [customFontIdx, setCustomFontIdx] = useState(0);
+  const [customColor, setCustomColor] = useState("#FFFFFF");
+  const [customTransparency, setCustomTransparency] = useState(0);
+  const [customBgBlur, setCustomBgBlur] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [showMenu, setShowMenu] = useState(false);
@@ -640,6 +646,23 @@ export default function NinetyDayGoalWidget() {
             {showMenu && (
               <div className="absolute right-0 top-6 bg-card rounded-lg shadow-xl border border-border p-1 z-20 min-w-[160px]">
                 <button
+                  onClick={() => {
+                    // Init customize state from saved goal
+                    const thIdx = COUNTDOWN_THEMES.findIndex(t => t.id === (activeGoal.display_style || "minimal"));
+                    setCustomThemeIdx(thIdx >= 0 ? thIdx : 0);
+                    const fIdx = FONT_OPTIONS.findIndex(f => f.value === (activeGoal.font_style || FONT_OPTIONS[0].value));
+                    setCustomFontIdx(fIdx >= 0 ? fIdx : 0);
+                    setCustomColor(activeGoal.text_color || "#FFFFFF");
+                    setCustomTransparency(activeGoal.transparency_level || 0);
+                    setCustomBgBlur(false);
+                    setShowCustomize(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-muted rounded-md transition-colors"
+                >
+                  Customize Clock
+                </button>
+                <button
                   onClick={() => { setShowEmergencyEdit(true); setShowMenu(false); setEditText(activeGoal.goal_text); }}
                   className="w-full text-left px-3 py-2 text-xs text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                 >
@@ -707,6 +730,150 @@ export default function NinetyDayGoalWidget() {
           </div>
         )}
       </div>
+
+      {/* Customize clock modal */}
+      <AnimatePresence>
+        {showCustomize && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center z-[10001]"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
+            onClick={() => setShowCustomize(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              className="w-[480px] max-w-[90vw] max-h-[85vh] overflow-y-auto bg-card rounded-2xl p-6 shadow-2xl"
+            >
+              <h3 className="text-base font-semibold text-foreground mb-1">Customize Your Clock</h3>
+              <p className="text-sm text-muted-foreground mb-5">Changes are saved immediately.</p>
+
+              {/* Theme carousel */}
+              <div className="relative mb-5">
+                <button
+                  onClick={() => setCustomThemeIdx(i => Math.max(0, i - 1))}
+                  disabled={customThemeIdx === 0}
+                  className={cn(
+                    "absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full flex items-center justify-center transition-colors",
+                    customThemeIdx === 0 ? "text-muted-foreground/20" : "bg-card border border-border shadow-sm text-foreground hover:bg-muted"
+                  )}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setCustomThemeIdx(i => Math.min(COUNTDOWN_THEMES.length - 1, i + 1))}
+                  disabled={customThemeIdx === COUNTDOWN_THEMES.length - 1}
+                  className={cn(
+                    "absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full flex items-center justify-center transition-colors",
+                    customThemeIdx === COUNTDOWN_THEMES.length - 1 ? "text-muted-foreground/20" : "bg-card border border-border shadow-sm text-foreground hover:bg-muted"
+                  )}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                <div className="mx-4 rounded-xl overflow-hidden bg-zinc-900 border border-white/5">
+                  <LiveCountdown
+                    endDate={goalEndDate}
+                    theme={COUNTDOWN_THEMES[customThemeIdx]}
+                    fontFamily={FONT_OPTIONS[customFontIdx].value}
+                    textColor={customColor}
+                    transparency={customTransparency}
+                    showBgBlur={customBgBlur}
+                  />
+                </div>
+
+                <p className="text-center text-sm font-medium text-foreground mt-3">
+                  {COUNTDOWN_THEMES[customThemeIdx].name}
+                </p>
+
+                <div className="flex justify-center gap-1.5 mt-2">
+                  {COUNTDOWN_THEMES.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCustomThemeIdx(i)}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all",
+                        i === customThemeIdx ? "w-4 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground/30"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Customization options */}
+              <div className="space-y-4 rounded-xl bg-muted/40 p-4 mb-5">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Font Style</label>
+                  <select
+                    value={customFontIdx}
+                    onChange={e => setCustomFontIdx(Number(e.target.value))}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                  >
+                    {FONT_OPTIONS.map((f, i) => (
+                      <option key={f.label} value={i}>{f.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Color</label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {PRESET_COLORS.map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => setCustomColor(c.value)}
+                        className={cn(
+                          "h-7 w-7 rounded-full border-2 transition-all",
+                          customColor === c.value ? "border-primary scale-110" : "border-transparent hover:scale-105"
+                        )}
+                        style={{ backgroundColor: c.value }}
+                        title={c.label}
+                      />
+                    ))}
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <input type="color" value={customColor} onChange={e => setCustomColor(e.target.value)} className="h-7 w-7 rounded-full border-0 cursor-pointer" />
+                      <input type="text" value={customColor} onChange={e => setCustomColor(e.target.value)} className="w-20 rounded-md border border-border bg-background px-2 py-1 text-xs font-mono" maxLength={7} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Transparency: {customTransparency}%</label>
+                  <input type="range" min={0} max={80} value={customTransparency} onChange={e => setCustomTransparency(Number(e.target.value))} className="w-full accent-primary" />
+                  <div className="flex justify-between text-[10px] text-muted-foreground"><span>Solid</span><span>Very transparent</span></div>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={customBgBlur} onChange={e => setCustomBgBlur(e.target.checked)} className="rounded accent-primary" />
+                  <span className="text-sm text-foreground">Show subtle background blur</span>
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setShowCustomize(false)} className="flex-1">Cancel</Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    const theme = COUNTDOWN_THEMES[customThemeIdx];
+                    updateGoal.mutate({
+                      id: activeGoal.id,
+                      display_style: theme.id,
+                      display_format: themeToDisplayFormat(theme),
+                      font_style: FONT_OPTIONS[customFontIdx].value,
+                      text_color: customColor,
+                      transparency_level: customTransparency,
+                    });
+                    setShowCustomize(false);
+                  }}
+                  disabled={updateGoal.isPending}
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Emergency edit modal */}
       <AnimatePresence>
