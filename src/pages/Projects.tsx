@@ -202,28 +202,38 @@ export default function Projects() {
                     <div
                       key={project.id}
                       onClick={() => navigate(`/project/${project.id}`)}
-                      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
+                      className="group cursor-pointer rounded-xl border border-border bg-card overflow-hidden transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
                     >
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent">
-                          <FolderOpen className="h-4 w-4 text-primary" />
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-foreground mb-1">{project.name}</h3>
-                      {total > 0 && (
-                        <div className="mb-2">
-                          <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
-                            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                      {/* Cover */}
+                      <div
+                        className="h-28 w-full"
+                        style={{
+                          background: project.cover_image
+                            ? `url(${project.cover_image}) center/cover`
+                            : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.6) 100%)",
+                        }}
+                      />
+                      <div className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-foreground">{project.name}</h3>
+                            {total > 0 && (
+                              <div className="mt-2">
+                                <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
+                                  <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">{done}/{total} tasks</p>
+                              </div>
+                            )}
+                            {project.end_date && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Due {format(new Date(project.end_date), "MMM d, yyyy")}
+                              </p>
+                            )}
                           </div>
-                          <p className="mt-1 text-xs text-muted-foreground">{done}/{total} tasks</p>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 shrink-0" />
                         </div>
-                      )}
-                      {project.end_date && (
-                        <p className="text-xs text-muted-foreground">
-                          Due {format(new Date(project.end_date), "MMM d, yyyy")}
-                        </p>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
