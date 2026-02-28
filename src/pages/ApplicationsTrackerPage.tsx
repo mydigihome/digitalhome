@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AppShell from "@/components/AppShell";
 import { useApplications, useCreateApplication, useUpdateApplication, useDeleteApplication } from "@/hooks/useApplications";
 import { useResumes, useCreateResume, useDeleteResume } from "@/hooks/useResumes";
+import ResumeManager from "@/components/ResumeManager";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -288,36 +289,7 @@ export default function ApplicationsTrackerPage() {
         )}
 
         {/* Resumes Section */}
-        <div className="rounded-xl border border-border bg-card shadow-sm">
-          <div className="p-6 border-b border-border flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-semibold text-foreground">📎 Resumes</h3>
-              <p className="text-sm text-muted-foreground">Upload and store your resumes—and other files—here.</p>
-            </div>
-            <Button variant="outline" onClick={() => resumeInputRef.current?.click()}>
-              <Upload className="h-4 w-4 mr-1" /> Upload
-            </Button>
-            <input ref={resumeInputRef} type="file" accept=".pdf,.docx,.doc,.txt" className="hidden" onChange={handleResumeUpload} />
-          </div>
-          <div className="p-6 space-y-3">
-            {resumes.length === 0 && (
-              <div className="rounded-lg border-2 border-dashed border-border p-8 text-center cursor-pointer hover:border-primary transition" onClick={() => resumeInputRef.current?.click()}>
-                <Upload className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
-                <p className="text-sm text-muted-foreground">Drag & drop or click to upload (PDF, DOCX, DOC, TXT — max 10MB)</p>
-              </div>
-            )}
-            {resumes.map(r => (
-              <div key={r.id} className="flex items-center gap-3 rounded-lg border border-border p-4 hover:shadow-md transition">
-                <Paperclip className="h-5 w-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{r.title}</p>
-                  <p className="text-xs text-muted-foreground">{r.file_type.toUpperCase()} • {r.file_size ? `${(r.file_size / 1024).toFixed(0)} KB` : ""} • {format(new Date(r.created_at), "MMM d, yyyy")}</p>
-                </div>
-                <button onClick={() => { deleteResume.mutate(r.id); toast.success("Resume deleted"); }} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ResumeManager resumeInputRef={resumeInputRef} handleResumeUpload={handleResumeUpload} />
 
         {/* Application Form Modal */}
         {showForm && (

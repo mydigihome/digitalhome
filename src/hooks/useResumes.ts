@@ -11,6 +11,9 @@ export interface Resume {
   file_type: string;
   file_size: number | null;
   notes: string | null;
+  tags: string[];
+  is_starred: boolean;
+  last_sent_date: string | null;
   created_at: string;
 }
 
@@ -39,6 +42,20 @@ export function useCreateResume() {
       const { error } = await (supabase as any)
         .from("resumes")
         .insert({ ...resume, user_id: user!.id });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resumes"] }),
+  });
+}
+
+export function useUpdateResume() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Resume> & { id: string }) => {
+      const { error } = await (supabase as any)
+        .from("resumes")
+        .update(updates)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["resumes"] }),
