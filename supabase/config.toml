@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.gmail-fetch]
 verify_jwt = false
+
+[functions.journal-pin]
+verify_jwt = false
