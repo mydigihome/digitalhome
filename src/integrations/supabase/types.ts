@@ -872,7 +872,10 @@ export type Database = {
           file_type: string
           file_url: string
           id: string
+          is_starred: boolean
+          last_sent_date: string | null
           notes: string | null
+          tags: string[]
           title: string
           user_id: string
         }
@@ -883,7 +886,10 @@ export type Database = {
           file_type: string
           file_url: string
           id?: string
+          is_starred?: boolean
+          last_sent_date?: string | null
           notes?: string | null
+          tags?: string[]
           title: string
           user_id: string
         }
@@ -894,7 +900,10 @@ export type Database = {
           file_type?: string
           file_url?: string
           id?: string
+          is_starred?: boolean
+          last_sent_date?: string | null
           notes?: string | null
+          tags?: string[]
           title?: string
           user_id?: string
         }
