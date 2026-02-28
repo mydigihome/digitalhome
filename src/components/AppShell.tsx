@@ -163,7 +163,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const waitingCount = useWaitingCount();
 
   const bottomItems = [
-    { icon: Mail, label: "Priority Inbox", path: "/inbox", colorKey: "inbox" },
+    { icon: Mail, label: "Mail", path: "/inbox", colorKey: "inbox" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
   ];
 
@@ -225,7 +225,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
           <IconBubble icon={DollarSign} color={getIconColor("finance")} />
           {!collapsed && (
             <>
-              <span className="flex-1 text-left">Finance</span>
+              <span className="flex-1 text-left">Money</span>
               <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", financeOpen && "rotate-180")} />
             </>
           )}
@@ -243,20 +243,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
               >
                 <li>
                   <button
-                    onClick={() => go("/finance/wealth")}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
-                      location.pathname === "/finance/wealth"
-                        ? "font-medium text-accent-foreground"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    )}
-                  >
-                    <IconBubble icon={TrendingUp} color={getIconColor("finance_wealth")} size={16} />
-                    Wealth Tracker
-                  </button>
-                </li>
-                <li>
-                  <button
                     onClick={() => go("/finance/applications")}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
@@ -266,7 +252,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
                     )}
                   >
                     <IconBubble icon={Briefcase} color={getIconColor("finance_apps")} size={16} />
-                    Applications Tracker
+                    Applications
                   </button>
                 </li>
               </motion.ul>
@@ -298,7 +284,7 @@ function MobileTabBar() {
   const tabs = [
     { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
     { icon: FolderOpen, label: "Projects", path: "/projects", colorKey: "projects" },
-    { icon: DollarSign, label: "Finance", path: "/finance/wealth", colorKey: "finance" },
+    { icon: DollarSign, label: "Money", path: "/finance/wealth", colorKey: "finance" },
     { icon: Mail, label: "Inbox", path: "/inbox", colorKey: "inbox" },
     { icon: MoreHorizontal, label: "More", path: "/__more__", colorKey: "team" },
   ];
