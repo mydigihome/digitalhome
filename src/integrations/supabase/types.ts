@@ -1607,6 +1607,66 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_plans: {
+        Row: {
+          asset_name: string
+          created_at: string
+          current_price: number | null
+          entry_price: number | null
+          id: string
+          position_size: number | null
+          risk_reward_ratio: number | null
+          status: string
+          stop_loss: number | null
+          strategy_notes: string | null
+          symbol: string
+          take_profit_1: number | null
+          take_profit_2: number | null
+          time_frame: string
+          total_investment: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          created_at?: string
+          current_price?: number | null
+          entry_price?: number | null
+          id?: string
+          position_size?: number | null
+          risk_reward_ratio?: number | null
+          status?: string
+          stop_loss?: number | null
+          strategy_notes?: string | null
+          symbol: string
+          take_profit_1?: number | null
+          take_profit_2?: number | null
+          time_frame?: string
+          total_investment?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          created_at?: string
+          current_price?: number | null
+          entry_price?: number | null
+          id?: string
+          position_size?: number | null
+          risk_reward_ratio?: number | null
+          status?: string
+          stop_loss?: number | null
+          strategy_notes?: string | null
+          symbol?: string
+          take_profit_1?: number | null
+          take_profit_2?: number | null
+          time_frame?: string
+          total_investment?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_finances: {
         Row: {
           created_at: string
