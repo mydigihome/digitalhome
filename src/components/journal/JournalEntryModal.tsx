@@ -304,7 +304,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                 />
 
                 {/* Mood */}
-                <div className="mt-4 space-y-2">
+                <div className="mt-4">
                   <div className="flex items-center gap-2">
                     {MOODS.map((emoji) => (
                       <button
@@ -319,13 +319,6 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                       </button>
                     ))}
                   </div>
-                  <Input
-                    value={moodText}
-                    onChange={(e) => setMoodText(e.target.value)}
-                    placeholder="How do you feel?"
-                    className="text-sm border-dashed"
-                    readOnly={readOnly}
-                  />
                 </div>
 
                 {/* Rich text toolbar */}
