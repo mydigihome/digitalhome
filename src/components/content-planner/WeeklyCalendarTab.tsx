@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { format, parseISO, addDays } from "date-fns";
+import { format, parseISO, addDays, getWeek, getMonth } from "date-fns";
 import { SetupData, WeekData, PostEntry, getStatusColor, getPlatformColor, DAY_COLUMN_TINTS } from "./types";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
@@ -22,8 +22,8 @@ const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const CHECKLIST_KEYS = ["script", "graphics", "filmed", "edited", "posted"] as const;
 
-// ─── Post Card (16:9 image-first) ─────────────────────────────────────────
-function PostCard({ post, setup, onClick }: { post: PostEntry; setup: SetupData; onClick: () => void }) {
+// ─── Post Card (16:9 image-first) with date label ────────────────────────
+function PostCard({ post, setup, dateLabel, onClick }: { post: PostEntry; setup: SetupData; dateLabel: string; onClick: () => void }) {
   const checkCount = CHECKLIST_KEYS.filter(k => post.checklist[k]).length;
   const totalChecks = CHECKLIST_KEYS.length;
 
@@ -38,6 +38,11 @@ function PostCard({ post, setup, onClick }: { post: PostEntry; setup: SetupData;
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.10)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
     >
+      {/* Date label */}
+      <div className="px-2.5 pt-1.5 pb-0.5">
+        <span className="text-[10px] font-medium text-gray-400">{dateLabel}</span>
+      </div>
+
       {/* 16:9 Image — uploaded image takes priority, then link thumbnail */}
       <div className="w-full relative" style={{ aspectRatio: "16/9", background: "#F4F4F4" }}>
         {post.imageFile ? (
@@ -114,6 +119,9 @@ export default function WeeklyCalendarTab({
         <span className="text-[13px] font-semibold text-gray-800">
           {format(start, "MMM d")} — {format(end, "MMM d, yyyy")}
         </span>
+        <span className="text-[11px] text-gray-400 ml-1">
+          Week {getWeek(start, { weekStartsOn: 1 })} of {format(start, "MMMM")}
+        </span>
         <button onClick={() => navigateWeek(1)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150">
           <ChevronRight size={16} className="text-gray-500" />
         </button>
@@ -150,6 +158,7 @@ export default function WeeklyCalendarTab({
                   key={post.id}
                   post={post}
                   setup={setup}
+                  dateLabel={format(parseISO(day.date), "EEE, MMM d")}
                   onClick={() => setModalPost({ dayIdx, postId: post.id })}
                 />
               ))}

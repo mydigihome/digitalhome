@@ -3,9 +3,12 @@ import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays,
   format, isSameMonth, addMonths, subMonths,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { SetupData, PostEntry, getStatusColor, getPlatformColor } from "./types";
 import PostDetailModal from "./PostDetailModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface Props {
   setup: SetupData;
@@ -15,8 +18,66 @@ interface Props {
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function MonthlyViewTab({ setup, getAllPosts }: Props) {
+  const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedPost, setSelectedPost] = useState<{ date: string; post: PostEntry; weekStart: string; dayIndex: number } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+
+  const syncToCalendar = async () => {
+    if (!user) { toast.error("Please log in first"); return; }
+    setSyncing(true);
+    try {
+      const monthPosts = allPosts.filter(({ date }) => {
+        const d = new Date(date);
+        return d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear();
+      });
+      if (monthPosts.length === 0) { toast.info("No posts to sync this month"); setSyncing(false); return; }
+
+      let count = 0;
+      for (const { date, post } of monthPosts) {
+        const title = (post.caption || post.title || "Content Post").substring(0, 50);
+        const description = `${post.caption}\n\nPlatform: ${post.platform || "N/A"}\nStatus: ${post.status || "N/A"}`;
+        const startTime = new Date(date + "T10:00:00");
+        const endTime = new Date(date + "T10:30:00");
+
+        const { error } = await supabase.from("calendar_events").insert({
+          user_id: user.id,
+          title: `📱 ${title}`,
+          description,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          all_day: false,
+          source: "manual",
+          color: "#8B5CF6",
+        });
+        if (!error) count++;
+      }
+      toast.success(`Synced ${count} posts to Calendar`);
+    } catch {
+      toast.error("Failed to sync");
+    }
+    setSyncing(false);
+  };
+
+  const syncSinglePost = async (date: string, post: PostEntry) => {
+    if (!user) { toast.error("Please log in first"); return; }
+    const title = (post.caption || post.title || "Content Post").substring(0, 50);
+    const description = `${post.caption}\n\nPlatform: ${post.platform || "N/A"}\nStatus: ${post.status || "N/A"}`;
+    const startTime = new Date(date + "T10:00:00");
+    const endTime = new Date(date + "T10:30:00");
+    const { error } = await supabase.from("calendar_events").insert({
+      user_id: user.id,
+      title: `📱 ${title}`,
+      description,
+      start_time: startTime.toISOString(),
+      end_time: endTime.toISOString(),
+      all_day: false,
+      source: "manual",
+      color: "#8B5CF6",
+    });
+    if (error) toast.error("Failed to add to calendar");
+    else toast.success("Post added to Calendar!");
+  };
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
@@ -91,6 +152,13 @@ export default function MonthlyViewTab({ setup, getAllPosts }: Props) {
           <button onClick={() => setCurrentMonth(p => addMonths(p, 1))} className="p-1 rounded hover:bg-gray-100">
             <ChevronRight size={14} className="text-gray-500" />
           </button>
+          <button
+            onClick={syncToCalendar}
+            disabled={syncing}
+            className="ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 disabled:opacity-50"
+          >
+            📅 {syncing ? "Syncing..." : "Sync to Calendar"}
+          </button>
         </div>
 
         {/* Day headers */}
@@ -123,7 +191,7 @@ export default function MonthlyViewTab({ setup, getAllPosts }: Props) {
                         return (
                           <div
                             key={post.id}
-                            className="flex items-start gap-1 cursor-pointer hover:bg-gray-50 rounded p-0.5 transition-colors"
+                            className="flex items-start gap-1 cursor-pointer hover:bg-gray-50 rounded p-0.5 transition-colors group"
                             onClick={() => setSelectedPost({ date: dateStr, post, weekStart, dayIndex })}
                           >
                             {imgSrc ? (
@@ -148,6 +216,13 @@ export default function MonthlyViewTab({ setup, getAllPosts }: Props) {
                                 </span>
                               )}
                             </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); syncSinglePost(dateStr, post); }}
+                              className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600"
+                              title="Add to Calendar"
+                            >
+                              <CalendarIcon size={10} />
+                            </button>
                           </div>
                         );
                       })}

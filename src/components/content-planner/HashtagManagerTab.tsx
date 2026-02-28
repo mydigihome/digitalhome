@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Copy, Check, Plus, X } from "lucide-react";
 import { HashtagGroup } from "./types";
+import CaptionIdeasSection from "./CaptionIdeasSection";
+import BrandCollabsSection from "./BrandCollabsSection";
 
 interface Props {
   hashtagGroups: HashtagGroup[];
@@ -152,6 +154,16 @@ export default function HashtagManagerTab({ hashtagGroups, setHashtagGroups }: P
             </button>
           </div>
         ))}
+      </div>
+
+      {/* NEW: Caption Ideas Section */}
+      <div className="px-4 pb-2">
+        <CaptionIdeasSection />
+      </div>
+
+      {/* NEW: Brand Collaborations Section */}
+      <div className="px-4 pb-4">
+        <BrandCollabsSection />
       </div>
     </div>
   );
