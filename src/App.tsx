@@ -16,7 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import CalendarPage from "./pages/CalendarPage";
-import TeamPage from "./pages/TeamPage";
+
 import SettingsPage from "./pages/SettingsPage";
 import WealthTrackerPage from "./pages/WealthTrackerPage";
 import ApplicationsTrackerPage from "./pages/ApplicationsTrackerPage";
@@ -66,7 +66,7 @@ const App = () => (
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-            <Route path="/team" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
+            
             <Route path="/finance" element={<Navigate to="/finance/wealth" replace />} />
             <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />

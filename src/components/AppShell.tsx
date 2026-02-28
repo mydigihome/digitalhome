@@ -165,7 +165,6 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
   const bottomItems = [
     { icon: Mail, label: "Priority Inbox", path: "/inbox", colorKey: "inbox" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
-    { icon: Users, label: "Team", path: "/team", colorKey: "team" },
   ];
 
   const go = (path: string) => {
@@ -317,14 +316,13 @@ function MobileTabBar() {
 
   const moreItems = [
     { icon: Sparkles, label: "Content Planner", path: "/vision" },
-    { icon: Users, label: "Team", path: "/team" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
   const isActive = (path: string) => {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
-    if (path === "/__more__") return ["/vision", "/team", "/settings"].some(p => location.pathname.startsWith(p));
+    if (path === "/__more__") return ["/vision", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
 

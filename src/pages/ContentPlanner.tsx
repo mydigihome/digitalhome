@@ -8,6 +8,7 @@ import IdeasBankTab from "@/components/content-planner/IdeasBankTab";
 import HashtagManagerTab from "@/components/content-planner/HashtagManagerTab";
 import StrategyTab from "@/components/content-planner/StrategyTab";
 import SocialQuickLinks from "@/components/content-planner/SocialQuickLinks";
+import CollaboratorPanel from "@/components/content-planner/CollaboratorPanel";
 
 const TAB_LABELS: Record<string, string> = {
   setup: "Setup",
@@ -47,7 +48,8 @@ export default function ContentPlanner() {
     <AppShell>
       <div className="flex flex-col w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
         {/* Top bar with social quick links */}
-        <div className="flex items-center justify-end px-4 py-2 shrink-0">
+        <div className="flex items-center justify-end gap-3 px-4 py-2 shrink-0">
+          <CollaboratorPanel />
           <SocialQuickLinks links={state.socialLinks} setLinks={state.setSocialLinks} />
         </div>
 
