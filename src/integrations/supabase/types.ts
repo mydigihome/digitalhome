@@ -382,6 +382,135 @@ export type Database = {
           },
         ]
       }
+      event_details: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string | null
+          event_type: string
+          id: string
+          location: string | null
+          location_type: string
+          privacy: string
+          project_id: string
+          rsvp_deadline: string | null
+          share_token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          location_type?: string
+          privacy?: string
+          project_id: string
+          rsvp_deadline?: string | null
+          share_token?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          location_type?: string
+          privacy?: string
+          project_id?: string
+          rsvp_deadline?: string | null
+          share_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_details_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_guests: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          name: string | null
+          rsvp_answers: Json | null
+          rsvp_at: string | null
+          status: string
+          viewed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          name?: string | null
+          rsvp_answers?: Json | null
+          rsvp_at?: string | null
+          status?: string
+          viewed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          name?: string | null
+          rsvp_answers?: Json | null
+          rsvp_at?: string | null
+          status?: string
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rsvp_questions: {
+        Row: {
+          event_id: string
+          id: string
+          position: number
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          position?: number
+          question_text: string
+          question_type?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          position?: number
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvp_questions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -507,6 +636,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      goal_stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          position: number
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          position?: number
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_tasks: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          position: number
+          project_id: string
+          stage_id: string
+          title: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          project_id: string
+          stage_id: string
+          title: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          project_id?: string
+          stage_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "goal_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       google_calendar_tokens: {
         Row: {
@@ -749,6 +961,44 @@ export type Database = {
           user_number?: number
         }
         Relationships: []
+      }
+      project_resources: {
+        Row: {
+          created_at: string
+          file_path: string | null
+          id: string
+          project_id: string
+          resource_type: string
+          title: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          project_id: string
+          resource_type?: string
+          title: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          project_id?: string
+          resource_type?: string
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_resources_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_templates: {
         Row: {
