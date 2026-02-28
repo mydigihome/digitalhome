@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import JournalEntryModal from "./JournalEntryModal";
+import PinModal from "./PinModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,7 @@ export default function JournalEntriesList() {
   const [editEntry, setEditEntry] = useState<JournalEntry | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [pinVerifyEntry, setPinVerifyEntry] = useState<JournalEntry | null>(null);
 
   const { data: entries, isLoading } = useJournalEntries({
     period: filter === "week" ? "week" : filter === "month" ? "month" : undefined,
@@ -56,6 +58,14 @@ export default function JournalEntriesList() {
       toast.error("Failed to delete");
     }
     setDeleteId(null);
+  };
+
+  const handleEntryClick = (entry: JournalEntry) => {
+    if (entry.is_locked && entry.pin_hash) {
+      setPinVerifyEntry(entry);
+    } else {
+      setEditEntry(entry);
+    }
   };
 
   return (
@@ -134,10 +144,10 @@ export default function JournalEntriesList() {
           {entries.map((entry) => (
             <div
               key={entry.id}
-              onClick={() => setEditEntry(entry)}
+              onClick={() => handleEntryClick(entry)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === "Enter" && setEditEntry(entry)}
+              onKeyDown={(e) => e.key === "Enter" && handleEntryClick(entry)}
               className="group relative cursor-pointer rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/30 hover:shadow-md"
             >
               <div className="flex items-start justify-between">
@@ -151,11 +161,13 @@ export default function JournalEntriesList() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {format(new Date(entry.entry_date), "MMM d, yyyy")}
                   </p>
-                  {entry.content_preview && (
+                  {entry.is_locked ? (
+                    <p className="mt-2 text-xs text-muted-foreground/60 italic">🔒 Locked — tap to enter PIN</p>
+                  ) : entry.content_preview ? (
                     <p className="mt-2 line-clamp-2 text-xs text-muted-foreground/80">
                       {entry.content_preview}
                     </p>
-                  )}
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-1.5 ml-2">
                   {entry.is_locked && <Lock className="h-3.5 w-3.5 text-primary" />}
@@ -179,6 +191,21 @@ export default function JournalEntriesList() {
         onClose={() => setEditEntry(null)}
         entry={editEntry}
       />
+
+      {/* PIN verification for locked entries */}
+      {pinVerifyEntry && (
+        <PinModal
+          open={!!pinVerifyEntry}
+          onClose={() => setPinVerifyEntry(null)}
+          entryId={pinVerifyEntry.id}
+          mode="verify"
+          onSuccess={() => {
+            setEditEntry(pinVerifyEntry);
+            setPinVerifyEntry(null);
+          }}
+        />
+      )}
+
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

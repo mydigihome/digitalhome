@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Cloud, Lock, Unlock, Paperclip, Pencil, Puzzle, Heart, Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
+import { X, Cloud, Lock, Unlock, Paperclip, Pencil, Puzzle, Palette, Heart, Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,9 +11,13 @@ import StarterKit from "@tiptap/starter-kit";
 import UnderlineExt from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import DrawingCanvas from "./DrawingCanvas";
+import ColoringBook from "./ColoringBook";
+import PuzzleGames from "./PuzzleGames";
+import PinModal from "./PinModal";
 import TherapistFinderModal from "./TherapistFinderModal";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MOODS = ["😢", "😟", "😐", "🙂", "😊"];
 
@@ -28,6 +32,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
   const { profile } = useAuth();
   const createEntry = useCreateJournalEntry();
   const updateEntry = useUpdateJournalEntry();
+  const qc = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [entryDate, setEntryDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -36,7 +41,11 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
   const [isLocked, setIsLocked] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showDrawing, setShowDrawing] = useState(false);
+  const [showColoring, setShowColoring] = useState(false);
+  const [showPuzzle, setShowPuzzle] = useState(false);
   const [showTherapist, setShowTherapist] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinMode, setPinMode] = useState<"set" | "unlock">("set");
   const [saving, setSaving] = useState(false);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
@@ -78,7 +87,6 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       setEntryId(null);
       setMediaUrls([]);
       editor?.commands.clearContent();
-      // Show welcome message for new entries
       setShowWelcome(true);
       setTimeout(() => setShowWelcome(false), 3000);
     }
@@ -129,22 +137,23 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
     }
   };
 
+  const ensureEntryId = async (): Promise<string> => {
+    if (entryId) return entryId;
+    const result = await createEntry.mutateAsync({
+      title: title || "Untitled Entry",
+      content: editor?.getJSON(),
+      content_preview: getPreview(),
+      entry_date: entryDate,
+    });
+    setEntryId(result.id);
+    return result.id;
+  };
+
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
 
-    // Need to save entry first if new
-    let currentEntryId = entryId;
-    if (!currentEntryId) {
-      const result = await createEntry.mutateAsync({
-        title: title || "Untitled Entry",
-        content: editor?.getJSON(),
-        content_preview: getPreview(),
-        entry_date: entryDate,
-      });
-      currentEntryId = result.id;
-      setEntryId(result.id);
-    }
+    const currentEntryId = await ensureEntryId();
 
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
@@ -153,40 +162,24 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       if (error) { toast.error("Upload failed"); continue; }
 
       const { data: urlData } = supabase.storage.from("journal-media").getPublicUrl(path);
-
       await supabase.from("journal_media").insert({
         entry_id: currentEntryId,
         media_type: file.type.startsWith("video") ? "video" : "image",
         file_url: urlData.publicUrl,
       });
-
       setMediaUrls((prev) => [...prev, urlData.publicUrl]);
     }
     toast.success("Media uploaded");
   };
 
-  const handleDrawingSave = async (dataUrl: string) => {
-    // Convert data URL to blob and upload
+  const handleImageSave = async (dataUrl: string) => {
     const res = await fetch(dataUrl);
     const blob = await res.blob();
-
-    let currentEntryId = entryId;
-    if (!currentEntryId) {
-      const result = await createEntry.mutateAsync({
-        title: title || "Untitled Entry",
-        content: editor?.getJSON(),
-        content_preview: getPreview(),
-        entry_date: entryDate,
-      });
-      currentEntryId = result.id;
-      setEntryId(result.id);
-    }
-
+    const currentEntryId = await ensureEntryId();
     const userId = (await supabase.auth.getUser()).data.user?.id;
-    const path = `${userId}/${currentEntryId}/drawing-${crypto.randomUUID()}.png`;
+    const path = `${userId}/${currentEntryId}/${crypto.randomUUID()}.png`;
     const { error } = await supabase.storage.from("journal-media").upload(path, blob);
-    if (error) { toast.error("Failed to save drawing"); return; }
-
+    if (error) { toast.error("Failed to save"); return; }
     const { data: urlData } = supabase.storage.from("journal-media").getPublicUrl(path);
     await supabase.from("journal_media").insert({
       entry_id: currentEntryId,
@@ -194,7 +187,49 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       file_url: urlData.publicUrl,
     });
     setMediaUrls((prev) => [...prev, urlData.publicUrl]);
-    toast.success("Drawing saved to journal");
+    toast.success("Saved to journal");
+  };
+
+  const handlePuzzleComplete = async (gameName: string, timeSeconds: number) => {
+    const currentEntryId = await ensureEntryId();
+    // Add activity record
+    await supabase.from("journal_activities").insert({
+      entry_id: currentEntryId,
+      activity_type: "puzzle",
+      activity_data: { game: gameName, time_seconds: timeSeconds },
+    });
+    // Append completion note to editor
+    if (editor) {
+      const timeStr = `${Math.floor(timeSeconds / 60)}:${(timeSeconds % 60).toString().padStart(2, "0")}`;
+      editor.commands.insertContent(`<p>🧩 I completed <strong>${gameName}</strong> in <strong>${timeStr}</strong>!</p>`);
+    }
+  };
+
+  const handleLockToggle = async () => {
+    if (!entryId) {
+      // Must save first
+      toast.error("Save the entry first before locking");
+      return;
+    }
+    if (isLocked) {
+      // Unlock
+      setPinMode("unlock");
+      setShowPinModal(true);
+    } else {
+      // Set PIN
+      setPinMode("set");
+      setShowPinModal(true);
+    }
+  };
+
+  const handlePinSuccess = () => {
+    if (pinMode === "set") {
+      setIsLocked(true);
+    } else {
+      setIsLocked(false);
+    }
+    qc.invalidateQueries({ queryKey: ["journal-entries"] });
+    qc.invalidateQueries({ queryKey: ["journal-entry"] });
   };
 
   const firstName = profile?.full_name?.split(" ")[0] || "Friend";
@@ -218,7 +253,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setIsLocked(!isLocked)}
+                  onClick={handleLockToggle}
                   className={`rounded-md p-1.5 transition-colors ${isLocked ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
                   title={isLocked ? "Unlock entry" : "Lock entry"}
                 >
@@ -344,10 +379,13 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                       <Pencil className="mr-1.5 h-4 w-4" />
                       Draw
                     </Button>
-                    <Button variant="outline" size="sm" disabled>
+                    <Button variant="outline" size="sm" onClick={() => setShowColoring(true)}>
+                      <Palette className="mr-1.5 h-4 w-4" />
+                      Coloring Book
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setShowPuzzle(true)}>
                       <Puzzle className="mr-1.5 h-4 w-4" />
                       Puzzle
-                      <span className="ml-1 text-[10px] text-muted-foreground">(Soon)</span>
                     </Button>
                   </div>
                 )}
@@ -375,8 +413,19 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
         )}
       </AnimatePresence>
 
-      <DrawingCanvas open={showDrawing} onClose={() => setShowDrawing(false)} onSave={handleDrawingSave} />
+      <DrawingCanvas open={showDrawing} onClose={() => setShowDrawing(false)} onSave={handleImageSave} />
+      <ColoringBook open={showColoring} onClose={() => setShowColoring(false)} onSave={handleImageSave} />
+      <PuzzleGames open={showPuzzle} onClose={() => setShowPuzzle(false)} onComplete={handlePuzzleComplete} />
       <TherapistFinderModal open={showTherapist} onClose={() => setShowTherapist(false)} />
+      {entryId && (
+        <PinModal
+          open={showPinModal}
+          onClose={() => setShowPinModal(false)}
+          entryId={entryId}
+          mode={pinMode}
+          onSuccess={handlePinSuccess}
+        />
+      )}
     </>
   );
 }
