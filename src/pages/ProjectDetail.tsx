@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronLeft, Plus, GripVertical, FileText, Sparkles, Calendar, Clock, User, Tag, Link2, Trash2, Archive, AlertTriangle, X } from "lucide-react";
+import { ChevronLeft, Plus, GripVertical, FileText, Sparkles, Calendar, Clock, User, Tag, Link2, Trash2, Archive, AlertTriangle, X, Pencil } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, differenceInDays, isPast, isToday, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -350,11 +350,25 @@ export default function ProjectDetail() {
                             {columnTasks.map((task) => (
                               <div
                                 key={task.id}
-                                className={cn("flex cursor-pointer items-center gap-3 rounded-md border border-border border-l-[3px] p-3 transition-all duration-150 hover:shadow-sm hover:bg-secondary/30", priorityBorder[task.priority])}
+                                className={cn("group/task flex cursor-pointer items-center gap-3 rounded-md border border-border border-l-[3px] p-3 transition-all duration-150 hover:shadow-sm hover:bg-secondary/30", priorityBorder[task.priority])}
                                 onClick={() => setEditingTask(task)}
                               >
-                                <Checkbox checked={task.status === "done"} onCheckedChange={() => toggleDone(task)} onClick={(e) => e.stopPropagation()} />
-                                <span className="flex-1 text-sm">{task.title}</span>
+                                <div className="relative flex items-center">
+                                  <Checkbox
+                                    checked={task.status === "done"}
+                                    onCheckedChange={() => toggleDone(task)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="group-hover/task:opacity-0 transition-opacity"
+                                  />
+                                  <button
+                                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/task:opacity-100 transition-opacity text-primary hover:text-primary/80"
+                                    onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
+                                    title="Edit task"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                                <span className={cn("flex-1 text-sm", task.status === "done" && "line-through text-muted-foreground")}>{task.title}</span>
                                 {task.due_date && <DueBadge date={task.due_date} />}
                                 <div className={cn("h-2 w-2 rounded-full", priorityDot[task.priority])} />
                               </div>
