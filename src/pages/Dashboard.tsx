@@ -24,6 +24,8 @@ import NoteEditor from "@/components/NoteEditor";
 import BrainDumpWidget from "@/components/BrainDumpWidget";
 import HabitTrackerWidget from "@/components/HabitTrackerWidget";
 import YourDayAgenda from "@/components/YourDayAgenda";
+import QuickTodosWidget from "@/components/QuickTodosWidget";
+import NinetyDayGoalWidget from "@/components/NinetyDayGoalWidget";
 import { cn } from "@/lib/utils";
 import JournalEntriesList from "@/components/journal/JournalEntriesList";
 
@@ -222,21 +224,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Momentum Bar */}
-        <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Overall Progress</span>
-            <span className="text-sm text-muted-foreground">{totalDone} of {totalTasks} tasks</span>
-          </div>
-          <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-1000 ease-out"
-              style={{
-                width: `${momentumPct}%`,
-                background: "linear-gradient(90deg, hsl(var(--primary)) 0%, #6366F1 100%)",
-              }}
-            />
-          </div>
+        {/* 90-Day Goal Commitment */}
+        <div className="mb-6">
+          <NinetyDayGoalWidget />
         </div>
 
         {/* Main Widget Grid */}
@@ -308,6 +298,9 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* Quick To-Dos */}
+            <QuickTodosWidget />
 
             {/* Habit Tracker Widget */}
             <HabitTrackerWidget />
