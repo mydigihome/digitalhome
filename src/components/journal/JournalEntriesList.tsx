@@ -132,10 +132,13 @@ export default function JournalEntriesList() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {entries.map((entry) => (
-            <button
+            <div
               key={entry.id}
               onClick={() => setEditEntry(entry)}
-              className="group relative rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/30 hover:shadow-md"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && setEditEntry(entry)}
+              className="group relative cursor-pointer rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/30 hover:shadow-md"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -164,7 +167,7 @@ export default function JournalEntriesList() {
                   </button>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
