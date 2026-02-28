@@ -20,6 +20,13 @@ export default function CollaboratorPanel() {
 
   const [showInvite, setShowInvite] = useState(false);
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("editor");
+
+  const ROLES = [
+    { value: "editor", label: "Content Manager" },
+    { value: "designer", label: "Graphic Designer" },
+    { value: "viewer", label: "Viewer" },
+  ];
 
   // Filter to content-planner collaborators (those with project_ids containing "content-planner" tag or empty)
   const plannerCollabs = collaborators.filter(
@@ -35,7 +42,7 @@ export default function CollaboratorPanel() {
     try {
       await createCollab.mutateAsync({
         invited_email: trimmed,
-        role: "editor",
+        role,
         project_ids: ["content-planner"],
       });
       toast.success(`Invited ${trimmed}`);
@@ -92,17 +99,28 @@ export default function CollaboratorPanel() {
               </div>
 
               {/* Invite form */}
-              <div className="flex gap-2">
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-                  className="flex-1"
-                />
-                <Button onClick={handleInvite} size="sm" disabled={createCollab.isPending}>
-                  <Plus className="h-4 w-4 mr-1" /> Invite
-                </Button>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email address"
+                    onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                    className="flex-1"
+                  />
+                  <Button onClick={handleInvite} size="sm" disabled={createCollab.isPending}>
+                    <Plus className="h-4 w-4 mr-1" /> Invite
+                  </Button>
+                </div>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full text-sm border border-border rounded-lg px-3 py-1.5 bg-background text-foreground"
+                >
+                  {ROLES.map(r => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Current collaborators */}
@@ -130,6 +148,7 @@ export default function CollaboratorPanel() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{collab.invited_email}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">{collab.role === "editor" ? "Content Manager" : collab.role === "designer" ? "Graphic Designer" : collab.role}</p>
                     </div>
                     <Badge
                       variant={collab.status === "active" ? "default" : "secondary"}

@@ -1,6 +1,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { SetupData, PostEntry, getStatusColor, getPlatformColor } from "./types";
 import AutoTextarea from "./AutoTextarea";
+import QuickEditTools from "./QuickEditTools";
 
 interface Props {
   post: PostEntry;
@@ -305,6 +306,9 @@ export default function PostDetailModal({ post, setup, onUpdate, onUpdateCheckli
             ))}
           </div>
         </div>
+
+        {/* QUICK EDIT TOOLS */}
+        <QuickEditTools />
 
         {/* ACTIONS */}
         <div className="flex justify-between mt-6">

@@ -134,6 +134,51 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_collaborations: {
+        Row: {
+          brand_name: string
+          campaign_end: string | null
+          campaign_start: string | null
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string
+          deal_value: number | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_name?: string
+          campaign_end?: string | null
+          campaign_start?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          deal_value?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_name?: string
+          campaign_end?: string | null
+          campaign_start?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string
+          deal_value?: number | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           all_day: boolean
@@ -313,6 +358,30 @@ export type Database = {
           school_link?: string | null
           status?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_caption_ideas: {
+        Row: {
+          caption_text: string
+          category: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          caption_text?: string
+          category?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          caption_text?: string
+          category?: string
+          created_at?: string
+          id?: string
           user_id?: string
         }
         Relationships: []
