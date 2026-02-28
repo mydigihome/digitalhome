@@ -200,6 +200,33 @@ export type Database = {
         }
         Relationships: []
       }
+      child_investments: {
+        Row: {
+          amount: number
+          child_name: string
+          created_at: string
+          id: string
+          investment_type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          child_name: string
+          created_at?: string
+          id?: string
+          investment_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          child_name?: string
+          created_at?: string
+          id?: string
+          investment_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       collaborators: {
         Row: {
           created_at: string
@@ -612,6 +639,48 @@ export type Database = {
         }
         Relationships: []
       }
+      loans: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          interest_rate: number
+          loan_type: string
+          monthly_payment: number
+          provider_name: string | null
+          provider_phone: string | null
+          provider_website: string | null
+          start_date: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          loan_type?: string
+          monthly_payment?: number
+          provider_name?: string | null
+          provider_phone?: string | null
+          provider_website?: string | null
+          start_date?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          loan_type?: string
+          monthly_payment?: number
+          provider_name?: string | null
+          provider_phone?: string | null
+          provider_website?: string | null
+          start_date?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           card_color: string | null
@@ -979,6 +1048,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_finances: {
+        Row: {
+          created_at: string
+          credit_score: number | null
+          current_savings: number
+          has_student_loans: boolean
+          id: string
+          investment_types: string[] | null
+          invests: boolean
+          monthly_income: number
+          onboarding_completed: boolean
+          savings_goal: number
+          total_debt: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credit_score?: number | null
+          current_savings?: number
+          has_student_loans?: boolean
+          id?: string
+          investment_types?: string[] | null
+          invests?: boolean
+          monthly_income?: number
+          onboarding_completed?: boolean
+          savings_goal?: number
+          total_debt?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credit_score?: number | null
+          current_savings?: number
+          has_student_loans?: boolean
+          id?: string
+          investment_types?: string[] | null
+          invests?: boolean
+          monthly_income?: number
+          onboarding_completed?: boolean
+          savings_goal?: number
+          total_debt?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           accent_colors: Json | null
@@ -1193,6 +1310,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wealth_layout: {
+        Row: {
+          card_order: Json
+          created_at: string
+          hidden_cards: Json
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_order?: Json
+          created_at?: string
+          hidden_cards?: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_order?: Json
+          created_at?: string
+          hidden_cards?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
