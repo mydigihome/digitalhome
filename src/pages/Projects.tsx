@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
+import { useGoalTasks } from "@/hooks/useGoals";
 import { Plus, Calendar, Target, FolderOpen, ChevronRight, LayoutGrid, List, Search, Archive, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import AppShell from "@/components/AppShell";
 import CreateEventModal from "@/components/events/CreateEventModal";
+import CreateGoalModal from "@/components/goals/CreateGoalModal";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +23,7 @@ export default function Projects() {
   const { data: projects = [], isLoading } = useProjects();
   const { data: tasks = [] } = useAllTasks();
   const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
@@ -80,7 +83,7 @@ export default function Projects() {
             </div>
           </button>
           <button
-            onClick={() => navigate("/project/new?type=goal")}
+            onClick={() => setShowCreateGoal(true)}
             className="group relative overflow-hidden rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-8 text-left transition-all hover:border-primary hover:bg-primary/10 hover:shadow-lg hover:-translate-y-0.5"
           >
             <div className="flex items-center gap-4">
@@ -277,6 +280,7 @@ export default function Projects() {
       </motion.div>
 
       <CreateEventModal open={showCreateEvent} onClose={() => setShowCreateEvent(false)} />
+      <CreateGoalModal open={showCreateGoal} onClose={() => setShowCreateGoal(false)} />
     </AppShell>
   );
 }
