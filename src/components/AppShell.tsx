@@ -12,11 +12,6 @@ import VoiceInput from "@/components/VoiceInput";
 import { TrialBadge } from "@/components/TrialBadge";
 
 // ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
-const projectFolders = [
-  { id: "personal", label: "Personal Projects", icon: Home, color: "text-primary" },
-  { id: "work", label: "Work", icon: Briefcase, color: "text-info" },
-  { id: "travel", label: "Trips", icon: Plane, color: "text-warning" },
-];
 
 const defaultIconColors: Record<string, string> = {
   home: "#8B5CF6",
@@ -153,13 +148,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
-  const [projectsOpen, setProjectsOpen] = useState(
-    location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/")
-  );
-
   const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
-  const searchParams = new URLSearchParams(location.search);
-  const activeType = searchParams.get("type");
 
   const topItems = [
     { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
@@ -216,66 +205,7 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       ))}
 
       {/* Projects with sub-folders */}
-      <li>
-       <button
-            onClick={() => {
-              if (collapsed) { go("/projects"); return; }
-              setProjectsOpen(!projectsOpen);
-              if (!isProjectsActive) go("/projects");
-            }}
-            className={cn(
-              "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium tracking-tight transition-all duration-150",
-              isProjectsActive
-                ? "bg-accent text-accent-foreground shadow-xs"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            )}
-          >
-          <IconBubble icon={FolderOpen} color={getIconColor("projects")} />
-          {!collapsed && (
-            <>
-              <span className="flex-1 text-left">Projects</span>
-              <ChevronDown
-                className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", projectsOpen && "rotate-180")}
-              />
-            </>
-          )}
-        </button>
-
-        {!collapsed && (
-          <AnimatePresence initial={false}>
-            {projectsOpen && (
-              <motion.ul
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                {projectFolders.map((folder) => {
-                  const Icon = folder.icon;
-                  const isActive = location.pathname === "/projects" && activeType === folder.id;
-                  return (
-                    <li key={folder.id}>
-                      <button
-                        onClick={() => go(`/projects?type=${folder.id}`)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
-                          isActive
-                            ? "font-medium text-accent-foreground"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        )}
-                      >
-                        <Icon className={cn("h-4 w-4 shrink-0", folder.color)} />
-                        {folder.label}
-                      </button>
-                    </li>
-                  );
-                })}
-              </motion.ul>
-            )}
-          </AnimatePresence>
-        )}
-      </li>
+      <NavItem icon={FolderOpen} label="Projects" path="/projects" isActive={isProjectsActive} colorKey="projects" />
 
       {/* Finance with sub-folders */}
       <li>
