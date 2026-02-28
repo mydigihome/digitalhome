@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { ExternalLink, Settings } from "lucide-react";
+import { ExternalLink, Settings, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 const ALL_TOOLS = [
   { id: "canva", label: "Canva", icon: "🎨", url: "https://canva.com", desc: "Design graphics" },
@@ -34,16 +42,51 @@ export default function QuickEditTools() {
 
   return (
     <div className="mt-3.5">
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Open in Editing Software</span>
-        <button onClick={() => setShowSettings(!showSettings)} className="text-gray-400 hover:text-gray-600">
-          <Settings size={13} />
-        </button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 rounded-lg transition-colors text-muted-foreground">
+            🛠️ Open in Editing Software
+            <ChevronDown size={12} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          {visibleTools.map(tool =>
+            tool.url ? (
+              <DropdownMenuItem key={tool.id} asChild>
+                <a href={tool.url} target="_blank" rel="noreferrer" className="flex items-center justify-between w-full">
+                  <span className="flex items-center gap-2">
+                    <span>{tool.icon}</span>
+                    <span>{tool.label}</span>
+                  </span>
+                  <ExternalLink size={11} className="text-muted-foreground" />
+                </a>
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem
+                key={tool.id}
+                onClick={() => alert(`${tool.label} is a desktop application.\n\nOpen it directly on your Mac to edit your content.`)}
+              >
+                <span className="flex items-center gap-2">
+                  <span>{tool.icon}</span>
+                  <span>{tool.label}</span>
+                </span>
+              </DropdownMenuItem>
+            )
+          )}
+          {visibleTools.length === 0 && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">No tools enabled</div>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={(e) => { e.preventDefault(); setShowSettings(s => !s); }}>
+            <Settings size={13} className="mr-2" />
+            <span>Manage Tools</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {showSettings && (
-        <div className="mb-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
-          <div className="text-[10px] text-gray-500 mb-1.5">Select your editing tools:</div>
+        <div className="mt-2 p-2 border border-border rounded-lg bg-muted/50">
+          <div className="text-[10px] text-muted-foreground mb-1.5">Select your editing tools:</div>
           <div className="flex flex-wrap gap-2">
             {ALL_TOOLS.map(t => (
               <label key={t.id} className="flex items-center gap-1 text-xs cursor-pointer">
@@ -54,33 +97,6 @@ export default function QuickEditTools() {
           </div>
         </div>
       )}
-
-      <div className="flex flex-wrap gap-2">
-        {visibleTools.map(tool => (
-          tool.url ? (
-            <a
-              key={tool.id}
-              href={tool.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700"
-            >
-              <span>{tool.icon}</span>
-              <span>{tool.label}</span>
-              <ExternalLink size={10} className="text-gray-400" />
-            </a>
-          ) : (
-            <button
-              key={tool.id}
-              onClick={() => alert(`${tool.label} is a desktop application.\n\nOpen it directly on your Mac to edit your content.`)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 cursor-pointer"
-            >
-              <span>{tool.icon}</span>
-              <span>{tool.label}</span>
-            </button>
-          )
-        ))}
-      </div>
     </div>
   );
 }
