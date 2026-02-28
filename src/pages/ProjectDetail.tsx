@@ -16,6 +16,7 @@ import DocumentsTab from "@/components/DocumentsTab";
 import AITaskGenerator from "@/components/AITaskGenerator";
 import PageHeader from "@/components/PageHeader";
 import EventDetailView from "@/components/events/EventDetailView";
+import GoalDetailView from "@/components/goals/GoalDetailView";
 
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay,
@@ -133,6 +134,7 @@ export default function ProjectDetail() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const isEvent = project?.type === "event";
+  const isGoal = project?.type === "goal";
 
   if (!project && !isLoading) {
     return (
@@ -221,6 +223,21 @@ export default function ProjectDetail() {
               projectName={project?.name || ""}
               coverImage={project?.cover_image}
             />
+          </>
+        ) : isGoal ? (
+          <>
+            <PageHeader
+              title={project?.name || "Goal"}
+              icon={project?.icon || "🎯"}
+              iconType={project?.icon_type || "emoji"}
+              coverImage={project?.cover_image}
+              coverType={project?.cover_type || "none"}
+              onTitleChange={(name) => id && updateProject.mutate({ id, name })}
+              onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
+              onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
+              editable
+            />
+            <GoalDetailView projectId={id!} projectName={project?.name || ""} />
           </>
         ) : (
           <>
@@ -387,7 +404,7 @@ export default function ProjectDetail() {
         )}
       </AnimatePresence>
 
-      {id && project && !isEvent && (
+      {id && project && !isEvent && !isGoal && (
         <AITaskGenerator
           open={aiGeneratorOpen}
           onOpenChange={setAiGeneratorOpen}
