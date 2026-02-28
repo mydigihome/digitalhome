@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
   Sparkles, Edit2, Check, ImageIcon, StickyNote, X,
+  TrendingUp, CheckCircle2, ListTodo, Target,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -70,6 +71,7 @@ export default function Dashboard() {
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
   // Handle payment success
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
@@ -84,7 +86,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Tutorial modal - show 5s after entering dashboard for new users
+  // Tutorial modal
   useEffect(() => {
     if (prefs && (prefs as any).welcome_video_watched === false) {
       const timer = setTimeout(() => setShowTutorial(true), 5000);
@@ -120,8 +122,12 @@ export default function Dashboard() {
     setEverydayLinks(everydayLinks.filter(link => link.id !== id));
   };
 
+  // Stats
+  const totalTasks = tasks.length;
   const totalDone = tasks.filter(t => t.status === "done").length;
-  const momentumPct = tasks.length > 0 ? Math.round((totalDone / tasks.length) * 100) : 0;
+  const totalInProgress = tasks.filter(t => t.status === "in_progress").length;
+  const momentumPct = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
+  const activeProjectCount = projects.filter(p => !p.archived).length;
 
   const projectsWithStats = projects.map((p) => {
     const ptasks = tasks.filter((t) => t.project_id === p.id);
@@ -131,7 +137,7 @@ export default function Dashboard() {
   });
   const priorityProjects = [...projectsWithStats]
     .sort((a, b) => b.pending - a.pending)
-    .slice(0, 3);
+    .slice(0, 4);
 
   return (
     <AppShell>
@@ -148,81 +154,106 @@ export default function Dashboard() {
           editable
         />
 
-        {/* Welcome Section */}
-        <div className="mb-8 rounded-xl border border-border bg-card p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div>
-                <h2 className="text-2xl font-semibold text-foreground">
-                  {profile?.full_name
-                    ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
-                    : "Digital Home"}
-                </h2>
-                <p className="text-sm text-muted-foreground" style={{ letterSpacing: "0.3px" }}>
-                  Your life in one place
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={() => setNoteEditorOpen(true)}>
-                <StickyNote className="mr-1.5 h-4 w-4" /> Add Note
-              </Button>
-              <Button onClick={() => setTaskEditorOpen(true)} size="sm">
-                <Plus className="mr-1.5 h-4 w-4" /> New Task
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" /> New Project
-              </Button>
-            </div>
+        {/* Welcome + Quick Add Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-foreground">
+              {profile?.full_name
+                ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
+                : "Digital Home"}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {format(now, "EEEE, MMMM d")} · {format(now, "h:mm a")}
+            </p>
           </div>
-
-          {/* Momentum bar */}
-          <div className="mt-5 max-w-lg">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-2xl font-medium text-foreground">{momentumPct}%</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-primary transition-all duration-1000 ease-out"
-                style={{ width: `${momentumPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Momentum score · {totalDone} of {tasks.length} tasks complete</p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setNoteEditorOpen(true)}>
+              <StickyNote className="mr-1.5 h-4 w-4" /> Note
+            </Button>
+            <Button onClick={() => setTaskEditorOpen(true)} size="sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Task
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" /> Project
+            </Button>
           </div>
         </div>
 
-        {/* Widget Grid */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {/* Your Day Agenda Widget */}
-          <div className="xl:col-span-2">
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              </div>
+            </div>
+            <p className="text-2xl font-semibold text-foreground">{momentumPct}%</p>
+            <p className="text-xs text-muted-foreground">Momentum</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-7 w-7 rounded-lg bg-success/10 flex items-center justify-center">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              </div>
+            </div>
+            <p className="text-2xl font-semibold text-foreground">{totalDone}</p>
+            <p className="text-xs text-muted-foreground">Completed</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-7 w-7 rounded-lg bg-warning/10 flex items-center justify-center">
+                <ListTodo className="h-3.5 w-3.5 text-warning" />
+              </div>
+            </div>
+            <p className="text-2xl font-semibold text-foreground">{totalInProgress}</p>
+            <p className="text-xs text-muted-foreground">In Progress</p>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="h-7 w-7 rounded-lg bg-info/10 flex items-center justify-center">
+                <FolderOpen className="h-3.5 w-3.5 text-info" />
+              </div>
+            </div>
+            <p className="text-2xl font-semibold text-foreground">{activeProjectCount}</p>
+            <p className="text-xs text-muted-foreground">Projects</p>
+          </div>
+        </div>
+
+        {/* Momentum Bar */}
+        <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-2xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-foreground">Overall Progress</span>
+            <span className="text-sm text-muted-foreground">{totalDone} of {totalTasks} tasks</span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-1000 ease-out"
+              style={{
+                width: `${momentumPct}%`,
+                background: "linear-gradient(90deg, hsl(var(--primary)) 0%, #6366F1 100%)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Main Widget Grid */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {/* Left column: Agenda (spans 2 on lg) */}
+          <div className="lg:col-span-2">
             <YourDayAgenda />
           </div>
 
-          {/* Right column widgets */}
+          {/* Right column */}
           <div className="space-y-5">
-            {/* Date & Time */}
-            <div className="rounded-lg bg-gradient-primary p-5 text-primary-foreground shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-xs font-medium opacity-80">Today</span>
-              </div>
-              <p className="text-md font-semibold">
-                {format(now, "EEEE, MMMM d, yyyy")}
-              </p>
-              <div className="flex items-center gap-2 mt-3">
-                <Clock className="h-4 w-4" />
-                <span className="text-2xl font-semibold">
-                  {format(now, "hh:mm a")}
-                </span>
-              </div>
-            </div>
-
-            {/* Top Priority Projects */}
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
+            {/* Active Projects with gradient progress */}
+            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-warning" />
-                  <h3 className="text-lg font-semibold text-foreground">Priority Projects</h3>
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Active Projects</h3>
                 </div>
                 <button
                   onClick={() => navigate("/projects")}
@@ -232,30 +263,45 @@ export default function Dashboard() {
                 </button>
               </div>
               {priorityProjects.length === 0 ? (
-                <div className="flex flex-col items-center py-6 text-center">
-                  <FolderOpen className="mb-2 h-8 w-8 text-muted-foreground/30" />
+                <div className="flex flex-col items-center py-8 text-center">
+                  <FolderOpen className="mb-2 h-8 w-8 text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground">No projects yet</p>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {priorityProjects.map((project) => {
                     const pct = project.total > 0 ? Math.round((project.done / project.total) * 100) : 0;
                     return (
                       <div
                         key={project.id}
-                        className="cursor-pointer rounded-sm p-3 transition-all duration-150 hover:bg-secondary"
+                        className="cursor-pointer rounded-lg p-3 transition-all duration-150 hover:bg-secondary/60"
                         onClick={() => navigate(`/project/${project.id}`)}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium text-foreground">{project.name}</p>
-                          <span className="text-xs text-muted-foreground">{pct}%</span>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: project.color || "hsl(var(--primary))" }}
+                            />
+                            <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">{pct}%</span>
                         </div>
-                        <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
+                        <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-primary transition-all duration-300"
-                            style={{ width: `${pct}%`, backgroundColor: project.color || undefined }}
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${pct}%`,
+                              background: `linear-gradient(90deg, ${project.color || "hsl(var(--primary))"} 0%, #6366F1 100%)`,
+                            }}
                           />
                         </div>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          {project.done}/{project.total} tasks · {project.pending} remaining
+                        </p>
                       </div>
                     );
                   })}
@@ -263,46 +309,23 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Quick Actions */}
-            <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
-              </div>
-              <div className="space-y-2">
-                <Button
-                  onClick={() => setTaskEditorOpen(true)}
-                  className="w-full justify-start"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> New Task
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setProjectModalOpen(true)}
-                  className="w-full justify-start"
-                >
-                  <Plus className="mr-2 h-4 w-4" /> New Project
-                </Button>
-              </div>
-            </div>
-
             {/* Habit Tracker Widget */}
             <HabitTrackerWidget />
           </div>
 
           {/* Everyday Links */}
-          <div className="xl:col-span-3 md:col-span-2 rounded-lg border border-border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+          <div className="lg:col-span-3 rounded-xl border border-border bg-card p-6 shadow-2xs">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">Everyday Links</h3>
+              <h3 className="text-sm font-semibold text-foreground">Everyday Links</h3>
               <div className="flex items-center gap-1">
                 {editingLinks && (
-                  <button onClick={addNewLink} className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary">
+                  <button onClick={addNewLink} className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary">
                     <Plus className="h-4 w-4" />
                   </button>
                 )}
                 <button
                   onClick={() => setEditingLinks(!editingLinks)}
-                  className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary"
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary"
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
@@ -311,11 +334,11 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
               {everydayLinks.map((link) => (
-                <div key={link.id} className="group flex items-center gap-3 rounded-sm p-3 transition-all duration-100 hover:bg-secondary">
+                <div key={link.id} className="group flex items-center gap-3 rounded-lg p-3 transition-all duration-100 hover:bg-secondary/60">
                   <button
                     onClick={() => toggleLinkCompletion(link.id)}
                     className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors",
+                      "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors flex-shrink-0",
                       link.completed
                         ? "border-primary bg-primary"
                         : "border-muted-foreground/30 hover:border-primary"
@@ -324,7 +347,6 @@ export default function Dashboard() {
                     {link.completed && <Check className="h-3 w-3 text-primary-foreground" />}
                   </button>
 
-                  {/* Link thumbnail */}
                   {(() => {
                     const imgSrc = link.image || getFaviconUrl(link.url);
                     return (
@@ -367,7 +389,7 @@ export default function Dashboard() {
                         type="text"
                         value={link.name}
                         onChange={(e) => updateLink(link.id, "name", e.target.value)}
-                        className="flex-1 rounded-sm border border-border bg-background px-2.5 py-1 text-sm"
+                        className="flex-1 rounded-md border border-border bg-background px-2.5 py-1 text-sm"
                       />
                       <button onClick={() => deleteLink(link.id)} className="text-xs text-destructive hover:text-destructive/80">✕</button>
                     </>
@@ -390,17 +412,17 @@ export default function Dashboard() {
           </div>
 
           {/* Brain Dump Widget */}
-          <div className="xl:col-span-3 md:col-span-2">
+          <div className="lg:col-span-3">
             <BrainDumpWidget />
           </div>
 
           {/* Journal Entries */}
-          <div className="xl:col-span-3 md:col-span-2">
+          <div className="lg:col-span-3">
             <JournalEntriesList />
           </div>
 
           {/* Notes Widget */}
-          <div className="xl:col-span-3 md:col-span-2">
+          <div className="lg:col-span-3">
             <NotesWidget onAddNote={() => setNoteEditorOpen(true)} />
           </div>
         </div>
@@ -425,68 +447,32 @@ export default function Dashboard() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={() => setShowTutorial(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(8px)',
-              zIndex: 10001,
-            }}
+            className="fixed inset-0 flex items-center justify-center z-[10001]"
+            style={{ backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '400px',
-                maxWidth: '90vw',
-                backgroundColor: '#FFFFFF',
-                borderRadius: '16px',
-                padding: '32px',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-              }}
+              className="w-[400px] max-w-[90vw] bg-card rounded-2xl p-8 shadow-2xl"
             >
-              <p style={{ fontSize: '17px', fontWeight: 600, color: '#1F2937', marginBottom: '8px' }}>
+              <p className="text-md font-semibold text-foreground mb-2">
                 Hi, I'm glad you're here.
               </p>
-              <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>
+              <p className="text-sm text-muted-foreground mb-6">
                 Would you like a quick 60-second tour?
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <button
-                  onClick={() => setShowVideoPlayer(true)}
-                  style={{
-                    width: '100%',
-                    height: '44px',
-                    backgroundColor: '#8B5CF6',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
+              <div className="flex flex-col gap-2">
+                <Button onClick={() => setShowVideoPlayer(true)} className="w-full">
                   Watch the guide
-                </button>
+                </Button>
                 <button
                   onClick={async () => {
                     setShowTutorial(false);
                     await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any);
                   }}
-                  style={{
-                    width: '100%',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#9CA3AF',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    padding: '8px',
-                  }}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                 >
                   Maybe later
                 </button>
@@ -503,28 +489,11 @@ export default function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(8px)',
-              zIndex: 10002,
-            }}
+            className="fixed inset-0 flex items-center justify-center z-[10002]"
+            style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
           >
-            <div
-              style={{
-                width: '640px',
-                maxWidth: '95vw',
-                backgroundColor: '#FFFFFF',
-                borderRadius: '16px',
-                padding: '24px',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <div className="w-[640px] max-w-[95vw] bg-card rounded-2xl p-6 shadow-2xl">
+              <div className="flex justify-end mb-4">
                 <button
                   onClick={async () => {
                     setShowVideoPlayer(false);
@@ -536,7 +505,7 @@ export default function Dashboard() {
                   <X size={18} className="text-muted-foreground" />
                 </button>
               </div>
-              <div style={{ width: '100%', borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9', backgroundColor: '#000' }}>
+              <div className="w-full rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', backgroundColor: 'hsl(var(--muted))' }}>
                 <iframe
                   src={(prefs as any)?.welcome_video_url || 'https://www.loom.com/embed/your-video-id'}
                   frameBorder="0"
