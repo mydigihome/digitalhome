@@ -28,7 +28,7 @@ function getSubscriptionBills(): Bill[] {
       .map((s: any) => ({
         id: `sub-${s.id}`,
         name: s.name,
-        amount: s.amount,
+        amount: s.cost || 0,
         dueDate: s.nextBillingDate,
         paid: false,
         recurring: true,
