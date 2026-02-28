@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { useActiveGoal, useGoalHistory, useCreateGoal, useUpdateGoal, type DisplayFormat } from "@/hooks/useNinetyDayGoals";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, MoreHorizontal, History, ChevronUp, ChevronDown, Target, CalendarIcon } from "lucide-react";
+import { Pencil, MoreHorizontal, History, ChevronUp, ChevronDown, Target, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, addDays } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
 
 const PLACEHOLDER_GOALS = [
   "Launch my business",
@@ -17,27 +16,103 @@ const PLACEHOLDER_GOALS = [
   "Read 12 books",
 ];
 
-const FONTS = [
-  { value: "SF Pro", label: "SF Pro", css: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" },
-  { value: "Helvetica Neue", label: "Helvetica Neue", css: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
-  { value: "Roboto", label: "Roboto", css: "'Roboto', sans-serif" },
-  { value: "Inter", label: "Inter", css: "'Inter', sans-serif" },
-  { value: "System", label: "System Font", css: "system-ui, sans-serif" },
+// ─── CLOCK THEMES ───
+interface ClockTheme {
+  id: string;
+  name: string;
+  fontFamily: string;
+  textColor: string;
+  bgStyle: React.CSSProperties;
+  countdownClass: string;
+  goalTextClass: string;
+  progressBarColor: string;
+  progressTrackColor: string;
+  dateColor: string;
+  format: DisplayFormat;
+}
+
+const CLOCK_THEMES: ClockTheme[] = [
+  {
+    id: "minimal",
+    name: "Minimal",
+    fontFamily: "'Inter', sans-serif",
+    textColor: "#FFFFFF",
+    bgStyle: { background: "rgba(0,0,0,0.55)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.08)" },
+    countdownClass: "text-4xl sm:text-5xl font-light tracking-tight",
+    goalTextClass: "text-sm font-medium",
+    progressBarColor: "bg-white/30",
+    progressTrackColor: "bg-white/10",
+    dateColor: "text-white/20",
+    format: { showWeeks: false, showDays: true, showHours: true, showMinutes: true, showSeconds: false },
+  },
+  {
+    id: "bold",
+    name: "Bold",
+    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    textColor: "#FFFFFF",
+    bgStyle: { background: "linear-gradient(135deg, rgba(99,102,241,0.7) 0%, rgba(139,92,246,0.7) 100%)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.15)" },
+    countdownClass: "text-5xl sm:text-6xl font-black tracking-tighter",
+    goalTextClass: "text-sm font-semibold uppercase tracking-widest",
+    progressBarColor: "bg-white/50",
+    progressTrackColor: "bg-white/15",
+    dateColor: "text-white/30",
+    format: { showWeeks: false, showDays: true, showHours: true, showMinutes: true, showSeconds: false },
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    fontFamily: "system-ui, sans-serif",
+    textColor: "#E0F2FE",
+    bgStyle: { background: "linear-gradient(180deg, rgba(14,116,144,0.6) 0%, rgba(21,94,117,0.7) 100%)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(165,243,252,0.1)" },
+    countdownClass: "text-4xl sm:text-5xl font-semibold tracking-tight",
+    goalTextClass: "text-sm font-medium",
+    progressBarColor: "bg-cyan-300/40",
+    progressTrackColor: "bg-cyan-900/30",
+    dateColor: "text-cyan-200/30",
+    format: { showWeeks: true, showDays: true, showHours: true, showMinutes: false, showSeconds: false },
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
+    textColor: "#FFF7ED",
+    bgStyle: { background: "linear-gradient(135deg, rgba(234,88,12,0.6) 0%, rgba(190,18,60,0.5) 100%)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(251,146,60,0.15)" },
+    countdownClass: "text-4xl sm:text-5xl font-bold tracking-tight",
+    goalTextClass: "text-sm font-medium",
+    progressBarColor: "bg-orange-200/40",
+    progressTrackColor: "bg-orange-900/20",
+    dateColor: "text-orange-200/30",
+    format: { showWeeks: false, showDays: true, showHours: true, showMinutes: true, showSeconds: true },
+  },
+  {
+    id: "mono",
+    name: "Mono",
+    fontFamily: "'Roboto Mono', 'SF Mono', 'Fira Code', monospace",
+    textColor: "#E4E4E7",
+    bgStyle: { background: "rgba(24,24,27,0.85)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.06)" },
+    countdownClass: "text-3xl sm:text-4xl font-normal tracking-widest",
+    goalTextClass: "text-xs font-normal uppercase tracking-[0.2em]",
+    progressBarColor: "bg-zinc-400/30",
+    progressTrackColor: "bg-zinc-700/40",
+    dateColor: "text-zinc-500",
+    format: { showWeeks: false, showDays: true, showHours: true, showMinutes: true, showSeconds: true },
+  },
+  {
+    id: "forest",
+    name: "Forest",
+    fontFamily: "'Inter', sans-serif",
+    textColor: "#ECFDF5",
+    bgStyle: { background: "linear-gradient(160deg, rgba(20,83,45,0.65) 0%, rgba(22,101,52,0.6) 100%)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", border: "1px solid rgba(74,222,128,0.1)" },
+    countdownClass: "text-4xl sm:text-5xl font-semibold tracking-tight",
+    goalTextClass: "text-sm font-medium",
+    progressBarColor: "bg-emerald-300/35",
+    progressTrackColor: "bg-emerald-900/25",
+    dateColor: "text-emerald-300/25",
+    format: { showWeeks: false, showDays: true, showHours: true, showMinutes: true, showSeconds: false },
+  },
 ];
 
-const DEFAULT_FORMAT: DisplayFormat = {
-  showWeeks: false,
-  showDays: true,
-  showHours: true,
-  showMinutes: true,
-  showSeconds: false,
-};
-
-function buildCountdownString(
-  endDate: Date,
-  now: Date,
-  fmt: DisplayFormat
-): string {
+function buildCountdownString(endDate: Date, now: Date, fmt: DisplayFormat): string {
   let diff = Math.max(0, endDate.getTime() - now.getTime());
   if (diff === 0) return "0d";
 
@@ -80,14 +155,11 @@ export default function NinetyDayGoalWidget() {
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
 
-  // Setup state (3 screens)
+  // Setup state
   const [step, setStep] = useState(0);
   const [goalText, setGoalText] = useState("");
   const [startDate, setStartDate] = useState<Date>(new Date());
-  const [displayFormat, setDisplayFormat] = useState<DisplayFormat>(DEFAULT_FORMAT);
-  const [fontStyle, setFontStyle] = useState("Inter");
-  const [textColor, setTextColor] = useState("#FFFFFF");
-  const [transparency, setTransparency] = useState(20);
+  const [selectedThemeIdx, setSelectedThemeIdx] = useState(0);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
 
   // Active goal state
@@ -105,18 +177,22 @@ export default function NinetyDayGoalWidget() {
   // Live time
   const [now, setNow] = useState(new Date());
 
+  const activeTheme = useMemo(() => {
+    if (!activeGoal) return CLOCK_THEMES[selectedThemeIdx];
+    const found = CLOCK_THEMES.find(t => t.id === (activeGoal.display_style || "minimal"));
+    return found || CLOCK_THEMES[0];
+  }, [activeGoal, selectedThemeIdx]);
+
   const activeFormat = useMemo<DisplayFormat>(() => {
     if (activeGoal?.display_format) return activeGoal.display_format;
-    return DEFAULT_FORMAT;
-  }, [activeGoal]);
-
-  const needsSeconds = activeFormat.showSeconds;
+    return activeTheme.format;
+  }, [activeGoal, activeTheme]);
 
   useEffect(() => {
-    const ms = needsSeconds ? 1000 : 60_000;
+    const ms = activeFormat.showSeconds ? 1000 : 60_000;
     const id = setInterval(() => setNow(new Date()), ms);
     return () => clearInterval(id);
-  }, [needsSeconds]);
+  }, [activeFormat.showSeconds]);
 
   // Rotate placeholders
   useEffect(() => {
@@ -135,17 +211,18 @@ export default function NinetyDayGoalWidget() {
   const endDate = useMemo(() => addDays(startDate, 90), [startDate]);
 
   const handleLockIn = async () => {
+    const theme = CLOCK_THEMES[selectedThemeIdx];
     await createGoal.mutateAsync({
       goal_text: goalText.trim(),
       start_date: format(startDate, "yyyy-MM-dd"),
       end_date: format(endDate, "yyyy-MM-dd"),
-      display_style: "standard",
+      display_style: theme.id,
       motivational_style: "standard",
       weekly_checkins: false,
-      display_format: displayFormat,
-      font_style: fontStyle,
-      text_color: textColor,
-      transparency_level: transparency,
+      display_format: theme.format,
+      font_style: theme.name,
+      text_color: theme.textColor,
+      transparency_level: 0,
     });
     setShowCelebration(true);
     import("canvas-confetti").then(m => {
@@ -192,18 +269,9 @@ export default function NinetyDayGoalWidget() {
     import("canvas-confetti").then(m => m.default({ particleCount: 200, spread: 100 }));
   };
 
-  const handleUpdateDisplay = (updates: Partial<{ display_format: DisplayFormat; font_style: string; text_color: string; transparency_level: number }>) => {
-    if (!activeGoal) return;
-    updateGoal.mutate({ id: activeGoal.id, ...updates });
-  };
-
   if (isLoading) return null;
 
-  // Get font CSS
-  const getFontCSS = (name: string) => FONTS.find(f => f.value === name)?.css || "'Inter', sans-serif";
-
-  // Preview countdown for setup
-  const previewCountdown = buildCountdownString(endDate, new Date(), displayFormat);
+  const previewCountdown = buildCountdownString(endDate, new Date(), CLOCK_THEMES[selectedThemeIdx].format);
 
   // ─── SETUP VIEW ───
   if (!activeGoal) {
@@ -242,12 +310,7 @@ export default function NinetyDayGoalWidget() {
                   onKeyDown={e => e.key === "Enter" && goalText.trim() && setStep(1)}
                 />
 
-                <Button
-                  onClick={() => setStep(1)}
-                  disabled={!goalText.trim()}
-                  className="w-full py-3"
-                  size="lg"
-                >
+                <Button onClick={() => setStep(1)} disabled={!goalText.trim()} className="w-full py-3" size="lg">
                   Next →
                 </Button>
               </motion.div>
@@ -289,115 +352,121 @@ export default function NinetyDayGoalWidget() {
               </motion.div>
             )}
 
-            {/* Screen 3: Customize Display */}
+            {/* Screen 3: Choose Clock Theme */}
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Customize your countdown</h3>
-                <p className="text-sm text-muted-foreground mb-5">Choose what to show and how it looks.</p>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Choose your countdown clock</h3>
+                <p className="text-sm text-muted-foreground mb-5">Swipe through themes. Each shows a live preview.</p>
 
-                {/* Live preview */}
-                <div
-                  className="rounded-xl p-6 mb-5 text-center relative overflow-hidden"
-                  style={{
-                    background: `rgba(0,0,0,0.6)`,
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                  }}
-                >
-                  <p
-                    className="text-sm mb-2 truncate"
-                    style={{
-                      fontFamily: getFontCSS(fontStyle),
-                      color: textColor,
-                      opacity: 1 - transparency / 100,
-                    }}
+                {/* Theme carousel */}
+                <div className="relative mb-5">
+                  {/* Navigation arrows */}
+                  <button
+                    onClick={() => setSelectedThemeIdx(i => Math.max(0, i - 1))}
+                    disabled={selectedThemeIdx === 0}
+                    className={cn(
+                      "absolute -left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full flex items-center justify-center transition-colors",
+                      selectedThemeIdx === 0 ? "text-muted-foreground/20" : "bg-card border border-border shadow-sm text-foreground hover:bg-muted"
+                    )}
                   >
-                    {goalText}
-                  </p>
-                  <p
-                    className="text-3xl font-bold tracking-tight"
-                    style={{
-                      fontFamily: getFontCSS(fontStyle),
-                      color: textColor,
-                      opacity: 1 - transparency / 100,
-                      textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-                    }}
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedThemeIdx(i => Math.min(CLOCK_THEMES.length - 1, i + 1))}
+                    disabled={selectedThemeIdx === CLOCK_THEMES.length - 1}
+                    className={cn(
+                      "absolute -right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full flex items-center justify-center transition-colors",
+                      selectedThemeIdx === CLOCK_THEMES.length - 1 ? "text-muted-foreground/20" : "bg-card border border-border shadow-sm text-foreground hover:bg-muted"
+                    )}
                   >
-                    {previewCountdown}
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+
+                  {/* Live preview card */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={CLOCK_THEMES[selectedThemeIdx].id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="rounded-xl overflow-hidden mx-4"
+                      style={CLOCK_THEMES[selectedThemeIdx].bgStyle}
+                    >
+                      <div className="p-6 text-center">
+                        <p
+                          className={CLOCK_THEMES[selectedThemeIdx].goalTextClass}
+                          style={{ fontFamily: CLOCK_THEMES[selectedThemeIdx].fontFamily, color: CLOCK_THEMES[selectedThemeIdx].textColor, opacity: 0.7 }}
+                        >
+                          {goalText}
+                        </p>
+                        <p
+                          className={cn(CLOCK_THEMES[selectedThemeIdx].countdownClass, "mt-2 leading-none")}
+                          style={{
+                            fontFamily: CLOCK_THEMES[selectedThemeIdx].fontFamily,
+                            color: CLOCK_THEMES[selectedThemeIdx].textColor,
+                            textShadow: "0 2px 20px rgba(0,0,0,0.3)",
+                          }}
+                        >
+                          {previewCountdown}
+                        </p>
+                        {/* Mini progress bar preview */}
+                        <div className="mt-4 mx-auto max-w-[200px]">
+                          <div className={cn("h-1 w-full rounded-full overflow-hidden", CLOCK_THEMES[selectedThemeIdx].progressTrackColor)}>
+                            <div className={cn("h-full rounded-full w-[15%]", CLOCK_THEMES[selectedThemeIdx].progressBarColor)} />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Theme name */}
+                  <p className="text-center text-sm font-medium text-foreground mt-3">
+                    {CLOCK_THEMES[selectedThemeIdx].name}
                   </p>
+
+                  {/* Dot indicators */}
+                  <div className="flex justify-center gap-1.5 mt-2">
+                    {CLOCK_THEMES.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedThemeIdx(i)}
+                        className={cn(
+                          "h-1.5 rounded-full transition-all",
+                          i === selectedThemeIdx ? "w-4 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground/30"
+                        )}
+                      />
+                    ))}
+                  </div>
                 </div>
 
-                {/* Format toggles */}
-                <div className="mb-4">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Show</p>
-                  <div className="flex flex-wrap gap-2">
+                {/* Format toggles (shows what this theme includes) */}
+                <div className="mb-5 rounded-lg bg-muted/50 p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">This theme shows</p>
+                  <div className="flex flex-wrap gap-1.5">
                     {(["showWeeks", "showDays", "showHours", "showMinutes", "showSeconds"] as const).map(key => {
                       const labels = { showWeeks: "Weeks", showDays: "Days", showHours: "Hours", showMinutes: "Minutes", showSeconds: "Seconds" };
+                      const active = CLOCK_THEMES[selectedThemeIdx].format[key];
                       return (
-                        <button
+                        <span
                           key={key}
-                          onClick={() => setDisplayFormat(f => ({ ...f, [key]: !f[key] }))}
                           className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs border transition-colors",
-                            displayFormat[key]
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-muted-foreground hover:bg-muted"
+                            "px-2 py-1 rounded text-[11px]",
+                            active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground/40"
                           )}
                         >
                           {labels[key]}
-                        </button>
+                        </span>
                       );
                     })}
                   </div>
-                </div>
-
-                {/* Font */}
-                <div className="mb-4">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Font</p>
-                  <select
-                    value={fontStyle}
-                    onChange={e => setFontStyle(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none"
-                  >
-                    {FONTS.map(f => (
-                      <option key={f.value} value={f.value}>{f.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Color */}
-                <div className="mb-4">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">Color</p>
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      value={textColor}
-                      onChange={e => setTextColor(e.target.value)}
-                      className="h-9 w-9 rounded-lg border border-border cursor-pointer"
-                    />
-                    <span className="text-xs text-muted-foreground">{textColor}</span>
-                  </div>
-                </div>
-
-                {/* Transparency */}
-                <div className="mb-6">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-2">
-                    Transparency: {transparency}%
-                  </p>
-                  <Slider
-                    value={[transparency]}
-                    onValueChange={v => setTransparency(v[0])}
-                    min={0}
-                    max={80}
-                    step={5}
-                  />
                 </div>
 
                 <div className="flex gap-2">
                   <Button variant="ghost" onClick={() => setStep(1)} className="flex-1">← Back</Button>
                   <Button
                     onClick={handleLockIn}
-                    disabled={createGoal.isPending || !Object.values(displayFormat).some(Boolean)}
+                    disabled={createGoal.isPending}
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                   >
                     Lock in My Goal 🔒
@@ -448,9 +517,6 @@ export default function NinetyDayGoalWidget() {
 
   // ─── ACTIVE GOAL COUNTDOWN ───
   const goalEndDate = new Date(activeGoal.end_date);
-  const goalFont = getFontCSS(activeGoal.font_style || "Inter");
-  const goalColor = activeGoal.text_color || "#FFFFFF";
-  const goalTransparency = activeGoal.transparency_level ?? 20;
   const countdownStr = buildCountdownString(goalEndDate, now, activeFormat);
   const totalDays = differenceInDays(goalEndDate, new Date(activeGoal.start_date));
   const daysLeft = Math.max(0, differenceInDays(goalEndDate, now));
@@ -460,12 +526,7 @@ export default function NinetyDayGoalWidget() {
     <>
       <div
         className="rounded-xl overflow-hidden relative"
-        style={{
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(255,255,255,0.08)",
-        }}
+        style={activeTheme.bgStyle}
       >
         <div className="p-5 relative z-10">
           {/* Header row */}
@@ -487,12 +548,8 @@ export default function NinetyDayGoalWidget() {
               ) : (
                 <div className="flex items-center gap-2">
                   <p
-                    className="text-sm font-medium truncate"
-                    style={{
-                      fontFamily: goalFont,
-                      color: goalColor,
-                      opacity: 1 - goalTransparency / 100,
-                    }}
+                    className={activeTheme.goalTextClass}
+                    style={{ fontFamily: activeTheme.fontFamily, color: activeTheme.textColor, opacity: 0.7 }}
                   >
                     {activeGoal.goal_text}
                   </p>
@@ -533,11 +590,10 @@ export default function NinetyDayGoalWidget() {
           {/* BIG COUNTDOWN */}
           <div className="text-center my-4">
             <p
-              className="text-4xl sm:text-5xl font-bold tracking-tight leading-none"
+              className={cn(activeTheme.countdownClass, "leading-none")}
               style={{
-                fontFamily: goalFont,
-                color: goalColor,
-                opacity: 1 - goalTransparency / 100,
+                fontFamily: activeTheme.fontFamily,
+                color: activeTheme.textColor,
                 textShadow: "0 2px 20px rgba(0,0,0,0.4)",
               }}
             >
@@ -545,28 +601,28 @@ export default function NinetyDayGoalWidget() {
             </p>
           </div>
 
-          {/* Subtle progress bar */}
+          {/* Progress bar */}
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] text-white/30">Day {totalDays - daysLeft}/{totalDays}</span>
-              <span className="text-[10px] text-white/30">{progressPct}%</span>
+              <span className={cn("text-[10px]", activeTheme.dateColor)}>Day {totalDays - daysLeft}/{totalDays}</span>
+              <span className={cn("text-[10px]", activeTheme.dateColor)}>{progressPct}%</span>
             </div>
-            <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+            <div className={cn("h-1 w-full rounded-full overflow-hidden", activeTheme.progressTrackColor)}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPct}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className="h-full rounded-full bg-white/30"
+                className={cn("h-full rounded-full", activeTheme.progressBarColor)}
               />
             </div>
           </div>
 
           {/* Dates */}
           <div className="flex justify-between mt-2">
-            <span className="text-[10px] text-white/20">
+            <span className={cn("text-[10px]", activeTheme.dateColor)}>
               {format(new Date(activeGoal.start_date), "MMM d")}
             </span>
-            <span className="text-[10px] text-white/20">
+            <span className={cn("text-[10px]", activeTheme.dateColor)}>
               {format(goalEndDate, "MMM d, yyyy")}
             </span>
           </div>

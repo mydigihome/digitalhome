@@ -181,6 +181,11 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* 90-Day Goal Commitment */}
+        <div className="mb-6">
+          <NinetyDayGoalWidget />
+        </div>
+
         {/* Quick Stats Row */}
         <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
           <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
@@ -222,11 +227,6 @@ export default function Dashboard() {
             <p className="text-2xl font-semibold text-foreground">{activeProjectCount}</p>
             <p className="text-xs text-muted-foreground">Projects</p>
           </div>
-        </div>
-
-        {/* 90-Day Goal Commitment */}
-        <div className="mb-6">
-          <NinetyDayGoalWidget />
         </div>
 
         {/* Main Widget Grid */}
