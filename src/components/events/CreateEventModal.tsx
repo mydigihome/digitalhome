@@ -2,16 +2,17 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Calendar, MapPin, Users, Clock, Image, Plus, X, Mail,
-  Globe, Lock, ChevronRight, Sparkles, Camera, Link2, Music,
+  Globe, Lock, ChevronRight, ChevronDown, Camera, Link2, Music,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
 import { useCreateProject } from "@/hooks/useProjects";
 import { useUpsertEventDetails, useAddEventGuests, useCreateRsvpQuestion } from "@/hooks/useEvents";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,6 +43,7 @@ export default function CreateEventModal({ open, onClose }: Props) {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
+  const [extrasOpen, setExtrasOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     event_type: "other",
@@ -79,7 +81,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
     if (!form.name.trim()) { toast.error("Event name is required"); return; }
     setSubmitting(true);
     try {
-      // 1. Create project
       const project = await createProject.mutateAsync({
         name: form.name,
         type: "event",
@@ -87,7 +88,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         start_date: form.event_date || undefined,
       });
 
-      // 2. Create event details
       const eventDateTime = form.event_date && form.event_time
         ? new Date(`${form.event_date}T${form.event_time}`).toISOString()
         : form.event_date ? new Date(form.event_date).toISOString() : null;
@@ -107,7 +107,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         playlist_url: form.playlist_url || null,
       });
 
-      // 3. Update project cover image if provided
       if (form.cover_image) {
         await supabase.from("projects").update({
           cover_image: form.cover_image,
@@ -115,7 +114,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         }).eq("id", project.id);
       }
 
-      // 4. Add guests
       const emails = form.guest_emails
         .split(/[,;\n]+/)
         .map(e => e.trim().toLowerCase())
@@ -126,7 +124,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         );
       }
 
-      // 5. Create RSVP questions
       if (eventDetails) {
         for (let i = 0; i < form.rsvp_questions.length; i++) {
           await createQuestion.mutateAsync({
@@ -182,7 +179,7 @@ export default function CreateEventModal({ open, onClose }: Props) {
       </div>
     </div>,
 
-    // Step 1: Date, Location, Cover
+    // Step 1: Date, Location, Cover + Collapsible Extras
     <div className="space-y-4" key="details">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
@@ -238,6 +235,64 @@ export default function CreateEventModal({ open, onClose }: Props) {
         )}
         <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       </div>
+
+      {/* Collapsible Additional Options */}
+      <Collapsible open={extrasOpen} onOpenChange={setExtrasOpen}>
+        <CollapsibleTrigger className="flex items-center gap-2 w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all">
+          {extrasOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          Additional Options
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-3 space-y-4">
+          {/* Shared Album Toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div className="flex items-center gap-3">
+              <Camera className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-foreground">📸 Shared Album</p>
+                <p className="text-xs text-muted-foreground">Guests can share event photos</p>
+              </div>
+            </div>
+            <Switch
+              checked={form.shared_album_enabled}
+              onCheckedChange={v => setForm(p => ({ ...p, shared_album_enabled: v }))}
+            />
+          </div>
+
+          {/* External Link */}
+          <div className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">🔗 Event Link</p>
+            </div>
+            <Input
+              value={form.external_link_label}
+              onChange={e => setForm(p => ({ ...p, external_link_label: e.target.value }))}
+              placeholder="Link label (e.g., Event Website)"
+              className="text-sm"
+            />
+            <Input
+              value={form.external_link_url}
+              onChange={e => setForm(p => ({ ...p, external_link_url: e.target.value }))}
+              placeholder="https://..."
+              className="text-sm"
+            />
+          </div>
+
+          {/* Playlist */}
+          <div className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Music className="h-4 w-4 text-primary" />
+              <p className="text-sm font-medium text-foreground">🎵 Playlist</p>
+            </div>
+            <Input
+              value={form.playlist_url}
+              onChange={e => setForm(p => ({ ...p, playlist_url: e.target.value }))}
+              placeholder="https://open.spotify.com/... or Apple Music link"
+              className="text-sm"
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>,
 
     // Step 2: Guests & RSVP
@@ -303,78 +358,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         </div>
       </div>
     </div>,
-
-    // Step 3: Event Extras (tiles)
-    <div className="space-y-4" key="extras">
-      <p className="text-sm text-muted-foreground">Add optional extras to your event page</p>
-
-      {/* Shared Album Tile */}
-      <button
-        onClick={() => setForm(p => ({ ...p, shared_album_enabled: !p.shared_album_enabled }))}
-        className={cn(
-          "w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all",
-          form.shared_album_enabled ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
-        )}
-      >
-        <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
-          <Camera className="h-6 w-6 text-purple-500" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-foreground">📸 Shared Album</p>
-          <p className="text-xs text-muted-foreground">Guests can see event photos and add their own</p>
-        </div>
-      </button>
-
-      {/* Link Tile */}
-      <div className={cn(
-        "rounded-xl border-2 p-4 transition-all space-y-3",
-        form.external_link_url ? "border-primary bg-primary/5" : "border-border"
-      )}>
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-            <Link2 className="h-6 w-6 text-blue-500" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">🔗 Event Link</p>
-            <p className="text-xs text-muted-foreground">Add a link visible to all guests</p>
-          </div>
-        </div>
-        <Input
-          value={form.external_link_label}
-          onChange={e => setForm(p => ({ ...p, external_link_label: e.target.value }))}
-          placeholder="Link label (e.g., Event Website)"
-          className="text-sm"
-        />
-        <Input
-          value={form.external_link_url}
-          onChange={e => setForm(p => ({ ...p, external_link_url: e.target.value }))}
-          placeholder="https://..."
-          className="text-sm"
-        />
-      </div>
-
-      {/* Playlist Tile */}
-      <div className={cn(
-        "rounded-xl border-2 p-4 transition-all space-y-3",
-        form.playlist_url ? "border-primary bg-primary/5" : "border-border"
-      )}>
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
-            <Music className="h-6 w-6 text-green-500" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">🎵 Music Playlist</p>
-            <p className="text-xs text-muted-foreground">Add a Spotify or Apple Music playlist link</p>
-          </div>
-        </div>
-        <Input
-          value={form.playlist_url}
-          onChange={e => setForm(p => ({ ...p, playlist_url: e.target.value }))}
-          placeholder="https://open.spotify.com/... or https://music.apple.com/..."
-          className="text-sm"
-        />
-      </div>
-    </div>,
   ];
 
   return (
@@ -434,11 +417,11 @@ export default function CreateEventModal({ open, onClose }: Props) {
                 if (step === 0 && !form.name.trim()) { toast.error("Event name is required"); return; }
                 setStep(s => s + 1);
               }} className="flex-1">
-                Next <ChevronRight className="h-4 w-4 ml-1" />
+                Continue <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             ) : (
               <Button onClick={handleSubmit} disabled={submitting} className="flex-1">
-                {submitting ? "Creating..." : "Create Event"} <Sparkles className="h-4 w-4 ml-1" />
+                {submitting ? "Creating..." : "Create Event"}
               </Button>
             )}
           </div>
