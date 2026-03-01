@@ -13,6 +13,11 @@ export interface EventDetails {
   privacy: string;
   share_token: string;
   event_type: string;
+  shared_album_enabled: boolean;
+  external_link_url: string | null;
+  external_link_label: string | null;
+  playlist_url: string | null;
+  background_style: string;
   created_at: string;
   updated_at: string;
 }

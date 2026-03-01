@@ -4,9 +4,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import {
-  CheckCircle2, Circle, Plus, Trash2, X, ExternalLink, Link2, Sparkles, Mail,
+  CheckCircle2, Circle, Plus, Trash2, X, ExternalLink, Link2, Sparkles,
   ChevronDown, ChevronRight, Loader2,
 } from "lucide-react";
+import QuickEmailComposer from "@/components/events/QuickEmailComposer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -448,18 +449,8 @@ export default function GoalDetailView({ projectId, projectName }: Props) {
         </AnimatePresence>
       </div>
 
-      {/* Email Quick Access */}
-      <button
-        onClick={() => {
-          const subject = encodeURIComponent(`Progress Update: ${projectName}`);
-          const body = encodeURIComponent(`Here's my progress on "${projectName}":\n\n${progress}% complete (${completedTasks}/${totalTasks} tasks done)\n\nCurrent status: ${affirmation.message}`);
-          window.open(`mailto:?subject=${subject}&body=${body}`);
-        }}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-        title="Share Progress"
-      >
-        <Mail className="h-5 w-5" />
-      </button>
+      {/* Email Quick Access - Context-Aware */}
+      <QuickEmailComposer projectName={projectName} projectType="goal" />
     </div>
   );
 }

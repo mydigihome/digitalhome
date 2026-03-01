@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus, Crown, UserPlus,
+  Trash2, ExternalLink, Plus, Crown, UserPlus, Camera, Music, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
   useCreateCollaborator,
   useDeleteCollaborator,
 } from "@/hooks/useCollaborators";
+import QuickEmailComposer from "@/components/events/QuickEmailComposer";
 
 const STATUS_CONFIG: Record<string, { icon: any; color: string; label: string }> = {
   accepted: { icon: CheckCircle, color: "text-green-500", label: "Accepted" },
@@ -389,6 +390,67 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Event Extras Tiles */}
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Event Extras</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Shared Album */}
+          <div className={cn(
+            "flex items-center gap-3 rounded-xl border p-4 transition-colors",
+            event.shared_album_enabled ? "border-primary/30 bg-primary/5" : "border-border"
+          )}>
+            <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+              <Camera className="h-5 w-5 text-purple-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Shared Album</p>
+              <p className="text-xs text-muted-foreground">{event.shared_album_enabled ? "Enabled" : "Not set up"}</p>
+            </div>
+          </div>
+
+          {/* External Link */}
+          <div className={cn(
+            "flex items-center gap-3 rounded-xl border p-4 transition-colors",
+            event.external_link_url ? "border-primary/30 bg-primary/5" : "border-border"
+          )}>
+            <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+              <Link2 className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">{event.external_link_label || "Event Link"}</p>
+              <p className="text-xs text-muted-foreground truncate">{event.external_link_url || "No link added"}</p>
+            </div>
+            {event.external_link_url && (
+              <a href={event.external_link_url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+
+          {/* Playlist */}
+          <div className={cn(
+            "flex items-center gap-3 rounded-xl border p-4 transition-colors",
+            event.playlist_url ? "border-primary/30 bg-primary/5" : "border-border"
+          )}>
+            <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+              <Music className="h-5 w-5 text-green-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">Playlist</p>
+              <p className="text-xs text-muted-foreground truncate">{event.playlist_url || "No playlist added"}</p>
+            </div>
+            {event.playlist_url && (
+              <a href={event.playlist_url} target="_blank" rel="noopener noreferrer" className="text-primary">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Email Composer */}
+      <QuickEmailComposer projectName={projectName} projectType="event" />
 
       {/* Co-Host Invite Modal */}
       <AnimatePresence>
