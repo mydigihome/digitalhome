@@ -17,6 +17,7 @@ import AITaskGenerator from "@/components/AITaskGenerator";
 import PageHeader from "@/components/PageHeader";
 import EventDetailView from "@/components/events/EventDetailView";
 import GoalDetailView from "@/components/goals/GoalDetailView";
+import QuickEmailComposer from "@/components/events/QuickEmailComposer";
 
 import {
   DndContext, DragEndEvent, DragStartEvent, DragOverEvent, DragOverlay,
@@ -505,6 +506,14 @@ export default function ProjectDetail() {
             )}
           </motion.div>
         </div>
+      )}
+
+      {/* Context-aware email icon for all project types */}
+      {project && (
+        <QuickEmailComposer
+          projectName={project.name}
+          projectType={project.type}
+        />
       )}
     </AppShell>
   );
