@@ -5,10 +5,12 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, MapPin, CheckCircle, XCircle, HelpCircle,
+  Camera, Music, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import AddToCalendarButton from "@/components/events/AddToCalendarButton";
 
 interface EventData {
   id: string;
@@ -19,6 +21,10 @@ interface EventData {
   rsvp_deadline: string | null;
   privacy: string;
   event_type: string;
+  playlist_url: string | null;
+  shared_album_enabled: boolean;
+  external_link_url: string | null;
+  external_link_label: string | null;
   projects: { name: string; cover_image: string | null; cover_type: string | null };
 }
 
@@ -227,6 +233,70 @@ export default function PublicEventPage() {
                 Submit RSVP
               </Button>
             </div>
+          )}
+        </div>
+
+        {/* Extras Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          {/* Add to Calendar */}
+          {event.event_date && (
+            <div className="rounded-xl border border-border bg-card shadow-sm p-4">
+              <AddToCalendarButton
+                eventName={event.projects.name}
+                eventDate={event.event_date}
+                location={event.location}
+                description={event.description}
+              />
+            </div>
+          )}
+
+          {/* Shared Album */}
+          {event.shared_album_enabled && (
+            <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Camera className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Shared Album</p>
+                <p className="text-xs text-muted-foreground">Photos will be shared after the event</p>
+              </div>
+            </div>
+          )}
+
+          {/* Playlist */}
+          {event.playlist_url && (
+            <a
+              href={event.playlist_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Music className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Event Playlist</p>
+                <p className="text-xs text-muted-foreground">Listen along →</p>
+              </div>
+            </a>
+          )}
+
+          {/* External Link */}
+          {event.external_link_url && (
+            <a
+              href={event.external_link_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+            >
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <ExternalLink className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">{event.external_link_label || "More Info"}</p>
+                <p className="text-xs text-muted-foreground">Open link →</p>
+              </div>
+            </a>
           )}
         </div>
 
