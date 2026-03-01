@@ -188,15 +188,7 @@ export default function ApplicationsTrackerPage() {
             <span className="text-3xl">📋</span>
             <h1 className="text-3xl font-bold text-foreground">Applications Tracker</h1>
           </div>
-          <a
-            href="/templates"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/80 transition-colors"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Template Shop
-          </a>
+          
         </div>
 
         {/* Category Toggles + Add Button */}
@@ -370,77 +362,173 @@ export default function ApplicationsTrackerPage() {
 }
 
 function TemplateLibrarySection({ userId }: { userId?: string }) {
-  const [downloads, setDownloads] = useState<any[]>([]);
-  const [loadingDownloads, setLoadingDownloads] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
-    setLoadingDownloads(true);
-    (supabase as any)
-      .from("template_downloads")
-      .select("*, shop_templates(*)")
-      .eq("user_id", userId)
-      .order("downloaded_at", { ascending: false })
-      .limit(5)
-      .then(({ data }: any) => {
-        setDownloads(data || []);
-        setLoadingDownloads(false);
+    supabase
+      .from("shop_templates")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        setTemplates(data || []);
+        setLoading(false);
       });
-  }, [userId]);
+  }, []);
+
+  const categories = [
+    { key: "resume", label: "Resumes", emoji: "📄" },
+    { key: "portfolio", label: "Portfolios", emoji: "💼" },
+    { key: "email", label: "Email Templates", emoji: "✉️" },
+  ];
+
+  const SLOTS_PER_CATEGORY = 4;
+
+  const handleDownload = async (template: any) => {
+    if (!template.file_url) { toast.error("File not available yet"); return; }
+    if (template.price_cents > 0) {
+      window.open("/templates", "_blank");
+      return;
+    }
+    // Free download
+    if (userId) {
+      await supabase.from("template_downloads").insert({ template_id: template.id, user_id: userId });
+      supabase.rpc("increment_download_count_if_exists", { tid: template.id });
+    }
+    const { data } = await supabase.storage.from("template-files").createSignedUrl(template.file_url, 300);
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, "_blank");
+      toast.success("Download started!");
+    } else {
+      toast.error("Could not generate download link");
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 mb-8">
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-1">
         <span className="text-2xl">📚</span>
         <h2 className="text-xl font-bold text-foreground">Professional Template Library</h2>
       </div>
-      <p className="text-sm text-muted-foreground mb-4">
-        Free and premium career templates — Resumes • Portfolios • Email Scripts
+      <p className="text-sm text-muted-foreground mb-6">
+        Download free career resources and premium templates
       </p>
-      <a
-        href="/templates"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors mb-5"
-      >
-        Browse Public Template Shop
-        <ArrowRight className="h-4 w-4" />
-      </a>
 
-      <div className="border-t border-border pt-4">
-        <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">My Downloaded Templates</h3>
-        {!userId ? (
-          <p className="text-sm text-muted-foreground">Sign in to see your downloads</p>
-        ) : loadingDownloads ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            Loading...
-          </div>
-        ) : downloads.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No downloads yet. Browse the template shop to get started!</p>
-        ) : (
-          <div className="space-y-2">
-            {downloads.map((dl: any) => {
-              const template = dl.shop_templates;
-              if (!template) return null;
-              return (
-                <div key={dl.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{template.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {template.price_cents === 0 ? "Free" : `$${(template.price_cents / 100).toFixed(0)}`} — Downloaded
-                      </p>
-                    </div>
-                  </div>
-                  <Download className="h-4 w-4 text-muted-foreground" />
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          Loading templates...
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {categories.map(({ key, label, emoji }) => {
+            const catTemplates = templates.filter(t => t.template_type === key);
+            const slots = Array.from({ length: SLOTS_PER_CATEGORY }, (_, i) => catTemplates[i] || null);
+
+            return (
+              <div key={key}>
+                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <span>{emoji}</span> {label}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {slots.map((template, idx) =>
+                    template ? (
+                      <button
+                        key={template.id}
+                        onClick={() => setSelectedTemplate(template)}
+                        className="rounded-xl border border-border bg-background p-3 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                      >
+                        <div className="aspect-[3/2] rounded-lg bg-muted mb-2 overflow-hidden">
+                          {template.preview_image_url ? (
+                            <img
+                              src={template.preview_image_url}
+                              alt={template.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              <FileText className="h-8 w-8" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium text-foreground truncate">{template.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
+                        </p>
+                      </button>
+                    ) : (
+                      <div
+                        key={`empty-${key}-${idx}`}
+                        className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-center"
+                      >
+                        <div className="aspect-[3/2] rounded-lg bg-muted/50 mb-2 flex items-center justify-center">
+                          <span className="text-2xl text-muted-foreground/30">+</span>
+                        </div>
+                        <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
+                        <p className="text-xs text-muted-foreground/60 mt-0.5">New template launching soon!</p>
+                      </div>
+                    )
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Bundle + Browse link */}
+      <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <a
+          href="/templates"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          💎 Get All Templates — $5 Bundle
+        </a>
+        <a
+          href="/templates"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Browse Full Shop <ArrowRight className="h-4 w-4" />
+        </a>
       </div>
+
+      {/* Template Detail Modal */}
+      {selectedTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setSelectedTemplate(null)}>
+          <div className="w-full max-w-[500px] rounded-2xl bg-card p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-foreground">{selectedTemplate.title}</h3>
+              <button onClick={() => setSelectedTemplate(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+            </div>
+            {selectedTemplate.preview_image_url && (
+              <div className="aspect-[3/2] rounded-xl overflow-hidden bg-muted mb-4">
+                <img src={selectedTemplate.preview_image_url} alt={selectedTemplate.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+            {selectedTemplate.description && (
+              <p className="text-sm text-muted-foreground mb-4">{selectedTemplate.description}</p>
+            )}
+            <div className="text-sm text-muted-foreground mb-4 space-y-1">
+              <p className="font-medium text-foreground">What's included:</p>
+              <p>• Editable template file</p>
+              <p>• PDF version</p>
+              <p>• Customization guide</p>
+            </div>
+            <Button
+              onClick={() => { handleDownload(selectedTemplate); setSelectedTemplate(null); }}
+              className="w-full"
+            >
+              {selectedTemplate.price_cents === 0 ? "Download Free" : `Buy Now — $${(selectedTemplate.price_cents / 100).toFixed(0)}`}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
