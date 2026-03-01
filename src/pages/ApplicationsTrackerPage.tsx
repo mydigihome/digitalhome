@@ -182,13 +182,15 @@ export default function ApplicationsTrackerPage() {
           <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
         </div>
 
+        {/* Professional Template Library Section — always at top */}
+        <TemplateLibrarySection userId={user?.id} />
+
         {/* Title */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <span className="text-3xl">📋</span>
             <h1 className="text-3xl font-bold text-foreground">Applications Tracker</h1>
           </div>
-          
         </div>
 
         {/* Category Toggles + Add Button */}
@@ -243,9 +245,6 @@ export default function ApplicationsTrackerPage() {
         {/* Regular Applications */}
         {activeCategory !== "college" && (
         <>
-
-        {/* Professional Template Library Section */}
-        <TemplateLibrarySection userId={user?.id} />
 
         {/* Application Cards Grid */}
         {filtered.length === 0 ? (
