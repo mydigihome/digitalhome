@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.journal-pin]
 verify_jwt = false
+
+[functions.template-checkout]
+verify_jwt = false
+
+[functions.template-webhook]
+verify_jwt = false

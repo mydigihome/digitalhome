@@ -26,6 +26,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
 import PublicEventPage from "./pages/PublicEventPage";
 import TemplateShop from "./pages/TemplateShop";
+import TemplateSuccess from "./pages/TemplateSuccess";
+import AdminTemplates from "./pages/AdminTemplates";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +79,8 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/events/:token" element={<PublicEventPage />} />
             <Route path="/templates" element={<TemplateShop />} />
+            <Route path="/templates/success" element={<TemplateSuccess />} />
+            <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplates /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           

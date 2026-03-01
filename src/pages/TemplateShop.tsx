@@ -64,11 +64,41 @@ export default function TemplateShop() {
   };
 
   const handleBuyNow = async (template: ShopTemplate) => {
-    toast.info("Stripe checkout coming in Phase 2!");
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.functions.invoke("template-checkout", {
+        body: {
+          templateIds: [template.id],
+          isBundle: false,
+          successUrl: `${origin}/templates/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/templates`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+      else toast.error("Could not create checkout session");
+    } catch (err: any) {
+      toast.error(err.message || "Checkout failed");
+    }
   };
 
   const handleBuyBundle = async () => {
-    toast.info("Bundle checkout coming in Phase 2!");
+    try {
+      const origin = window.location.origin;
+      const { data, error } = await supabase.functions.invoke("template-checkout", {
+        body: {
+          templateIds: [],
+          isBundle: true,
+          successUrl: `${origin}/templates/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/templates`,
+        },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+      else toast.error("Could not create checkout session");
+    } catch (err: any) {
+      toast.error(err.message || "Checkout failed");
+    }
   };
 
   const cta = ctaMessages[ctaIndex];
