@@ -236,67 +236,85 @@ export default function PublicEventPage() {
           )}
         </div>
 
-        {/* Extras Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        {/* Extras Cards - Always Visible */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
           {/* Add to Calendar */}
-          {event.event_date && (
-            <div className="rounded-xl border border-border bg-card shadow-sm p-4">
+          <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px]">
+            {event.event_date ? (
               <AddToCalendarButton
                 eventName={event.projects.name}
                 eventDate={event.event_date}
                 location={event.location}
                 description={event.description}
               />
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Add to Calendar</p>
+                <p className="text-xs text-muted-foreground">Date not set yet</p>
+              </>
+            )}
+          </div>
 
           {/* Shared Album */}
-          {event.shared_album_enabled && (
-            <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <Camera className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Shared Album</p>
-                <p className="text-xs text-muted-foreground">Photos will be shared after the event</p>
-              </div>
+          <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px]">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Camera className="h-5 w-5 text-primary" />
             </div>
-          )}
+            <p className="text-sm font-medium text-foreground">Shared Album</p>
+            <p className="text-xs text-muted-foreground">
+              {event.shared_album_enabled ? "Photos will be shared after the event" : "No album added"}
+            </p>
+          </div>
 
           {/* Playlist */}
-          {event.playlist_url && (
+          {event.playlist_url ? (
             <a
               href={event.playlist_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+              className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px] hover:bg-secondary/50 transition-colors"
             >
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Music className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Event Playlist</p>
-                <p className="text-xs text-muted-foreground">Listen along →</p>
-              </div>
+              <p className="text-sm font-medium text-foreground">Playlist</p>
+              <p className="text-xs text-muted-foreground">Listen along →</p>
             </a>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px] opacity-60">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Music className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Playlist</p>
+              <p className="text-xs text-muted-foreground">No playlist added</p>
+            </div>
           )}
 
           {/* External Link */}
-          {event.external_link_url && (
+          {event.external_link_url ? (
             <a
               href={event.external_link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl border border-border bg-card shadow-sm p-4 flex items-center gap-3 hover:bg-secondary/50 transition-colors"
+              className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px] hover:bg-secondary/50 transition-colors"
             >
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <ExternalLink className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">{event.external_link_label || "More Info"}</p>
-                <p className="text-xs text-muted-foreground">Open link →</p>
-              </div>
+              <p className="text-sm font-medium text-foreground">{event.external_link_label || "More Info"}</p>
+              <p className="text-xs text-muted-foreground">Open link →</p>
             </a>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[120px] opacity-60">
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <ExternalLink className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground">Link</p>
+              <p className="text-xs text-muted-foreground">No link added</p>
+            </div>
           )}
         </div>
 
