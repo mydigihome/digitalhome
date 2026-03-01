@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, MapPin, CheckCircle, XCircle, HelpCircle,
-  ExternalLink, Send, Music, Link2, Camera,
+  ExternalLink, Music, Link2, Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +35,6 @@ interface Question {
   question_text: string;
   question_type: string;
 }
-
-const APPLE_GRADIENT = "linear-gradient(135deg, #FF6B35 0%, #F72585 25%, #7209B7 50%, #3A0CA3 75%, #4361EE 100%)";
 
 export default function PublicEventPage() {
   const { token } = useParams<{ token: string }>();
@@ -100,162 +97,141 @@ export default function PublicEventPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-2">Event Not Found</h1>
-          <p className="text-white/60">This event may have been removed or the link is invalid.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Event Not Found</h1>
+          <p className="text-muted-foreground">This event may have been removed or the link is invalid.</p>
         </div>
       </div>
     );
   }
 
   const eventType = event.event_type?.replace("_", " ") || "Event";
-  const bgStyle = event.projects.cover_image
-    ? { backgroundImage: `url(${event.projects.cover_image})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : { background: APPLE_GRADIENT };
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ background: "#000" }}>
-      {/* Full-screen background */}
-      <div className="fixed inset-0 z-0" style={bgStyle} />
-      <div className="fixed inset-0 z-0 bg-black/40" />
+    <div className="min-h-screen bg-background">
+      {/* Cover Image / Header */}
+      <div className="relative w-full h-[220px] sm:h-[280px]">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: event.projects.cover_image
+              ? `url(${event.projects.cover_image}) center/cover`
+              : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.6) 100%)",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+      </div>
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Hero - takes up most of the screen */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            <span className="inline-block rounded-full bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-white/80 mb-6">
-              {eventType}
-            </span>
-            <h1 className="text-5xl sm:text-7xl font-bold text-white mb-4 tracking-tight leading-[1.1]">
-              {event.projects.name}
-            </h1>
+      {/* Content Card */}
+      <div className="max-w-xl mx-auto px-4 -mt-20 relative z-10 pb-12">
+        <div className="rounded-2xl border border-border bg-card shadow-lg p-6 space-y-5">
+          {/* Event Type Badge */}
+          <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
+            {eventType}
+          </span>
 
-            {/* Date & Location */}
-            <div className="flex flex-col items-center gap-2 mt-6">
-              {event.event_date && (
-                <p className="text-lg sm:text-xl text-white/90 font-light">
-                  {format(new Date(event.event_date), "EEEE, MMMM d, yyyy · h:mm a")}
-                </p>
-              )}
-              {event.location && (
-                <p className="text-base text-white/70 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" /> {event.location}
-                </p>
-              )}
-            </div>
-          </motion.div>
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-foreground">{event.projects.name}</h1>
 
-          {/* Action buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-10 flex flex-col sm:flex-row gap-3"
-          >
-            <Button
-              size="lg"
-              onClick={() => setShowRsvp(true)}
-              className="bg-white text-black hover:bg-white/90 rounded-full px-8 text-base font-semibold shadow-2xl"
-            >
-              RSVP Now
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                const subject = encodeURIComponent(`About ${event.projects.name}`);
-                const body = encodeURIComponent(`Hi! I wanted to reach out about ${event.projects.name}.\n\n`);
-                window.open(`mailto:?subject=${subject}&body=${body}`);
-              }}
-              className="border-white/30 text-white hover:bg-white/10 rounded-full px-8 text-base backdrop-blur-sm"
-            >
-              <Send className="h-4 w-4 mr-2" /> Send a Note
-            </Button>
-          </motion.div>
-        </div>
-
-        {/* Bottom info section */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="px-4 pb-8 max-w-2xl mx-auto w-full space-y-4"
-        >
-          {/* Description card */}
-          {event.description && (
-            <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-6">
-              <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-2">About</h3>
-              <p className="text-white/90 whitespace-pre-wrap leading-relaxed">{event.description}</p>
-            </div>
-          )}
-
-          {/* Extra tiles */}
-          <div className="flex flex-col gap-3">
-            {event.external_link_url && (
-              <a
-                href={event.external_link_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-4 hover:bg-white/15 transition-colors"
-              >
-                <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <Link2 className="h-5 w-5 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white">{event.external_link_label || "Event Link"}</p>
-                  <p className="text-xs text-white/50 truncate">{event.external_link_url}</p>
-                </div>
-                <ExternalLink className="h-4 w-4 text-white/40" />
-              </a>
+          {/* Date, Time, Location */}
+          <div className="space-y-2 text-sm text-muted-foreground">
+            {event.event_date && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <span>{format(new Date(event.event_date), "EEEE, MMMM d, yyyy")}</span>
+              </div>
             )}
-
-            {event.playlist_url && (
-              <a
-                href={event.playlist_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-4 hover:bg-white/15 transition-colors"
-              >
-                <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <Music className="h-5 w-5 text-green-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">Event Playlist</p>
-                  <p className="text-xs text-white/50">Tap to listen</p>
-                </div>
-                <ExternalLink className="h-4 w-4 text-white/40" />
-              </a>
+            {event.event_date && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <span>{format(new Date(event.event_date), "h:mm a")}</span>
+              </div>
             )}
-
-            {event.shared_album_enabled && (
-              <div className="flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/15 p-4">
-                <div className="h-10 w-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                  <Camera className="h-5 w-5 text-purple-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">Shared Album</p>
-                  <p className="text-xs text-white/50">Photos will be available after the event</p>
-                </div>
+            {event.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span>{event.location}</span>
               </div>
             )}
           </div>
 
-          {/* Add to Calendar */}
-          <div className="pt-2">
+          {/* Description */}
+          {event.description && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{event.description}</p>
+            </div>
+          )}
+
+          {/* Event Extras */}
+          {(event.external_link_url || event.playlist_url || event.shared_album_enabled) && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              {event.external_link_url && (
+                <a
+                  href={event.external_link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:bg-secondary/50 transition-colors"
+                >
+                  <Link2 className="h-4 w-4 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">{event.external_link_label || "Event Link"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{event.external_link_url}</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
+
+              {event.playlist_url && (
+                <a
+                  href={event.playlist_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:bg-secondary/50 transition-colors"
+                >
+                  <Music className="h-4 w-4 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Event Playlist</p>
+                    <p className="text-xs text-muted-foreground">Tap to listen</p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                </a>
+              )}
+
+              {event.shared_album_enabled && (
+                <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <Camera className="h-4 w-4 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Shared Album</p>
+                    <p className="text-xs text-muted-foreground">Photos will be available after the event</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* RSVP + Calendar Buttons */}
+          <div className="space-y-3 pt-2">
+            {!submitted ? (
+              <Button onClick={() => setShowRsvp(!showRsvp)} className="w-full" size="lg">
+                RSVP Now
+              </Button>
+            ) : (
+              <div className="text-center py-4">
+                <CheckCircle className="mx-auto h-10 w-10 text-green-500 mb-2" />
+                <p className="text-lg font-semibold text-foreground">You're In!</p>
+                <p className="text-sm text-muted-foreground">The host has been notified.</p>
+              </div>
+            )}
+
             <AddToCalendarButton
               eventName={event.projects.name}
               eventDate={event.event_date}
@@ -264,31 +240,9 @@ export default function PublicEventPage() {
             />
           </div>
 
-          <p className="text-center text-xs text-white/30 pt-4">
-            Powered by Digital Home
-          </p>
-        </motion.div>
-      </div>
-
-      {/* RSVP Modal */}
-      {showRsvp && !submitted && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setShowRsvp(false)}
-        >
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", damping: 25 }}
-            className="w-full max-w-md rounded-t-3xl sm:rounded-3xl bg-card p-8 shadow-2xl max-h-[85vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-12 h-1 rounded-full bg-muted-foreground/30 mx-auto mb-6 sm:hidden" />
-            <h2 className="text-2xl font-bold text-foreground mb-6">RSVP</h2>
-
-            <div className="space-y-4">
+          {/* Inline RSVP Form */}
+          {showRsvp && !submitted && (
+            <div className="space-y-4 pt-4 border-t border-border">
               <div className="space-y-2">
                 <Label>Your Name</Label>
                 <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your name" />
@@ -331,35 +285,17 @@ export default function PublicEventPage() {
                 </div>
               ))}
 
-              <Button onClick={handleSubmit} className="w-full rounded-full" size="lg">
+              <Button onClick={handleSubmit} className="w-full" size="lg">
                 Submit RSVP
               </Button>
             </div>
-          </motion.div>
-        </motion.div>
-      )}
+          )}
+        </div>
 
-      {/* Success State */}
-      {submitted && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm rounded-3xl bg-card p-8 text-center shadow-2xl"
-          >
-            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-            <h2 className="text-2xl font-bold text-foreground mb-2">You're In!</h2>
-            <p className="text-muted-foreground mb-6">The host has been notified. See you there!</p>
-            <Button onClick={() => setSubmitted(false)} variant="outline" className="rounded-full">
-              Done
-            </Button>
-          </motion.div>
-        </motion.div>
-      )}
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Powered by Digital Home
+        </p>
+      </div>
     </div>
   );
 }
