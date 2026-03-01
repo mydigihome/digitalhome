@@ -9,8 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-
 
 interface EventData {
   id: string;
@@ -111,62 +109,59 @@ export default function PublicEventPage() {
   const eventType = event.event_type?.replace("_", " ") || "Event";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Cover Image / Header */}
-      <div className="relative w-full h-[220px] sm:h-[280px]">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: event.projects.cover_image
-              ? `url(${event.projects.cover_image}) center/cover`
-              : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.6) 100%)",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-      </div>
-
-      {/* Content Card */}
-      <div className="max-w-xl mx-auto px-4 -mt-20 relative z-10 pb-12">
-        <div className="rounded-2xl border border-border bg-card shadow-lg p-6 space-y-5">
-          {/* Event Type Badge */}
-          <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
-            {eventType}
-          </span>
-
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-foreground">{event.projects.name}</h1>
-
-          {/* Date, Time, Location */}
-          <div className="space-y-2 text-sm text-muted-foreground">
-            {event.event_date && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <span>{format(new Date(event.event_date), "EEEE, MMMM d, yyyy")}</span>
-              </div>
-            )}
-            {event.event_date && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <span>{format(new Date(event.event_date), "h:mm a")}</span>
-              </div>
-            )}
-            {event.location && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>{event.location}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Description */}
-          {event.description && (
-            <div className="pt-2 border-t border-border">
-              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{event.description}</p>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+          {/* Cover image (if present) */}
+          {event.projects.cover_image && (
+            <div className="h-40 w-full">
+              <img
+                src={event.projects.cover_image}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             </div>
           )}
 
-          {/* RSVP */}
-          <div className="space-y-3 pt-2">
+          <div className="p-6 space-y-4">
+            {/* Event type badge */}
+            <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-primary">
+              {eventType}
+            </span>
+
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-foreground">{event.projects.name}</h1>
+
+            {/* Date, Time, Location */}
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              {event.event_date && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  <span>{format(new Date(event.event_date), "EEEE, MMMM d, yyyy")}</span>
+                </div>
+              )}
+              {event.event_date && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>{format(new Date(event.event_date), "h:mm a")}</span>
+                </div>
+              )}
+              {event.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span>{event.location}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            {event.description && (
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed border-t border-border pt-3">
+                {event.description}
+              </p>
+            )}
+
+            {/* RSVP */}
             {!submitted ? (
               <Button onClick={() => setShowRsvp(!showRsvp)} className="w-full" size="lg">
                 RSVP Now
@@ -178,58 +173,58 @@ export default function PublicEventPage() {
                 <p className="text-sm text-muted-foreground">The host has been notified.</p>
               </div>
             )}
+
+            {/* Inline RSVP Form */}
+            {showRsvp && !submitted && (
+              <div className="space-y-4 pt-3 border-t border-border">
+                <div className="space-y-2">
+                  <Label>Your Name</Label>
+                  <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your name" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="you@example.com" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Will you attend? *</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: "accepted", label: "Yes", icon: CheckCircle, color: "text-green-500 border-green-500 bg-green-500/5" },
+                      { value: "declined", label: "No", icon: XCircle, color: "text-red-500 border-red-500 bg-red-500/5" },
+                      { value: "maybe", label: "Maybe", icon: HelpCircle, color: "text-yellow-500 border-yellow-500 bg-yellow-500/5" },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setForm(p => ({ ...p, status: opt.value as any }))}
+                        className={cn(
+                          "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
+                          form.status === opt.value ? opt.color : "border-border hover:border-primary/30"
+                        )}
+                      >
+                        <opt.icon className={cn("h-6 w-6", form.status === opt.value ? "" : "text-muted-foreground")} />
+                        <span className="text-sm font-medium">{opt.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {questions.map(q => (
+                  <div key={q.id} className="space-y-2">
+                    <Label>{q.question_text}</Label>
+                    <Input
+                      value={form.answers[q.id] || ""}
+                      onChange={e => setForm(p => ({ ...p, answers: { ...p.answers, [q.id]: e.target.value } }))}
+                    />
+                  </div>
+                ))}
+
+                <Button onClick={handleSubmit} className="w-full" size="lg">
+                  Submit RSVP
+                </Button>
+              </div>
+            )}
           </div>
-
-          {/* Inline RSVP Form */}
-          {showRsvp && !submitted && (
-            <div className="space-y-4 pt-4 border-t border-border">
-              <div className="space-y-2">
-                <Label>Your Name</Label>
-                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Your name" />
-              </div>
-              <div className="space-y-2">
-                <Label>Email *</Label>
-                <Input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} placeholder="you@example.com" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Will you attend? *</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: "accepted", label: "Yes", icon: CheckCircle, color: "text-green-500 border-green-500 bg-green-500/5" },
-                    { value: "declined", label: "No", icon: XCircle, color: "text-red-500 border-red-500 bg-red-500/5" },
-                    { value: "maybe", label: "Maybe", icon: HelpCircle, color: "text-yellow-500 border-yellow-500 bg-yellow-500/5" },
-                  ].map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setForm(p => ({ ...p, status: opt.value as any }))}
-                      className={cn(
-                        "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
-                        form.status === opt.value ? opt.color : "border-border hover:border-primary/30"
-                      )}
-                    >
-                      <opt.icon className={cn("h-6 w-6", form.status === opt.value ? "" : "text-muted-foreground")} />
-                      <span className="text-sm font-medium">{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {questions.map(q => (
-                <div key={q.id} className="space-y-2">
-                  <Label>{q.question_text}</Label>
-                  <Input
-                    value={form.answers[q.id] || ""}
-                    onChange={e => setForm(p => ({ ...p, answers: { ...p.answers, [q.id]: e.target.value } }))}
-                  />
-                </div>
-              ))}
-
-              <Button onClick={handleSubmit} className="w-full" size="lg">
-                Submit RSVP
-              </Button>
-            </div>
-          )}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
