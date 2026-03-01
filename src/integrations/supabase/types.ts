@@ -1467,6 +1467,60 @@ export type Database = {
           },
         ]
       }
+      shop_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          download_count: number
+          file_url: string | null
+          id: string
+          is_active: boolean
+          is_in_bundle: boolean
+          pdf_url: string | null
+          preview_image_url: string | null
+          price_cents: number
+          stripe_price_id: string | null
+          tags: string[] | null
+          template_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          download_count?: number
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          is_in_bundle?: boolean
+          pdf_url?: string | null
+          preview_image_url?: string | null
+          price_cents?: number
+          stripe_price_id?: string | null
+          tags?: string[] | null
+          template_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          download_count?: number
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          is_in_bundle?: boolean
+          pdf_url?: string | null
+          preview_image_url?: string | null
+          price_cents?: number
+          stripe_price_id?: string | null
+          tags?: string[] | null
+          template_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_verification_codes: {
         Row: {
           code: string
@@ -1561,6 +1615,85 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_downloads: {
+        Row: {
+          downloaded_at: string
+          id: string
+          template_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          downloaded_at?: string
+          id?: string
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          downloaded_at?: string
+          id?: string
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_downloads_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "shop_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_purchases: {
+        Row: {
+          amount_paid: number
+          buyer_email: string
+          download_token: string
+          id: string
+          is_bundle: boolean
+          purchased_at: string
+          stripe_payment_id: string | null
+          stripe_session_id: string | null
+          template_id: string | null
+          token_expires_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          buyer_email: string
+          download_token?: string
+          id?: string
+          is_bundle?: boolean
+          purchased_at?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          template_id?: string | null
+          token_expires_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          buyer_email?: string
+          download_token?: string
+          id?: string
+          is_bundle?: boolean
+          purchased_at?: string
+          stripe_payment_id?: string | null
+          stripe_session_id?: string | null
+          template_id?: string | null
+          token_expires_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_purchases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "shop_templates"
             referencedColumns: ["id"]
           },
         ]
