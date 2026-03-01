@@ -1,22 +1,19 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Quote, RefreshCw, X, Settings2, Eye, EyeOff } from "lucide-react";
+import { Quote, RefreshCw, Settings2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserFinances } from "@/hooks/useUserFinances";
-import { useExpenses } from "@/hooks/useExpenses";
 import { useLoans } from "@/hooks/useLoans";
-import { useMarketQuote } from "@/hooks/useMarketData";
 import { useWealthLayout, useUpsertWealthLayout } from "@/hooks/useWealthLayout";
 import { getRandomQuote } from "./quotes";
 import { Button } from "@/components/ui/button";
 
 // ─── Investment components ───
+import InvestmentHero from "./InvestmentHero";
 import PortfolioOverview from "./PortfolioOverview";
 import HoldingsSection from "./HoldingsSection";
 import WatchlistSection from "./WatchlistSection";
-import LiveChart, { TIMEFRAMES } from "./LiveChart";
 import TradingPlanModal from "./TradingPlanModal";
-import BrokerSection from "./BrokerSection";
 
 // ─── Financial components ───
 import SummaryCards from "./SummaryCards";
@@ -42,13 +39,11 @@ const ALL_CARDS = [
   { id: "bills", label: "📅 Bills & Due Dates" },
   { id: "subscriptions", label: "📋 Subscriptions" },
   { id: "savings-goals", label: "🎯 Savings Goals" },
-  { id: "broker", label: "🏛️ Go to Broker" },
 ] as const;
 
 export default function WealthDashboard() {
   const { profile } = useAuth();
   const { data: finances } = useUserFinances();
-  const { data: expenses } = useExpenses();
   const { data: loans } = useLoans();
   const { data: layoutData } = useWealthLayout();
   const upsertLayout = useUpsertWealthLayout();
@@ -57,20 +52,17 @@ export default function WealthDashboard() {
   const [showCustomize, setShowCustomize] = useState(false);
   const firstName = profile?.full_name?.split(" ")[0] || "Friend";
 
-  // Auto-rotate quotes every 30s
   useEffect(() => {
     const interval = setInterval(() => setQuote(getRandomQuote()), 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Chart state
-  const [chartSymbol, setChartSymbol] = useState<string | null>(null);
-  const [chartInterval, setChartInterval] = useState("1day");
-  const [chartOutputsize, setChartOutputsize] = useState("30");
-  const { data: chartData } = useMarketQuote(chartSymbol);
-
   // Trading plan modal
   const [planTarget, setPlanTarget] = useState<{ symbol: string; name: string; price: number } | null>(null);
+
+  const openTradingPlan = (symbol: string, name: string, price: number) => {
+    setPlanTarget({ symbol, name, price });
+  };
 
   // Layout customization
   const hiddenCards: string[] = (layoutData?.hidden_cards as string[]) || [];
@@ -90,22 +82,15 @@ export default function WealthDashboard() {
     upsertLayout.mutate({ hidden_cards: next, card_order: orderedCards });
   };
 
-  const openChart = (symbol: string) => {
-    setChartSymbol(symbol);
-    setChartInterval("1day");
-    setChartOutputsize("30");
-  };
-
-  const openTradingPlan = (symbol: string, name: string, price: number) => {
-    setPlanTarget({ symbol, name, price });
-  };
-
   // Computed stats for header
   const monthlyIncome = Number(finances?.monthly_income || 0);
   const currentSavings = Number(finances?.current_savings || 0);
   const savingsGoal = Number(finances?.savings_goal || 0);
   const totalDebt = Number(finances?.total_debt || 0) + (loans || []).reduce((s, l) => s + Number(l.amount), 0);
-  const debtPaidPct = totalDebt > 0 ? Math.min(100, ((totalDebt - Number(finances?.total_debt || 0)) / totalDebt) * 100) : 0;
+
+  const openChart = (symbol: string) => {
+    // Chart is now always visible via InvestmentHero — this is kept for HoldingsSection/WatchlistSection compat
+  };
 
   const renderCard = (id: string) => {
     if (isHidden(id)) return null;
@@ -114,51 +99,8 @@ export default function WealthDashboard() {
       case "investments":
         return (
           <div key={id} className="space-y-6">
+            <InvestmentHero onOpenTradingPlan={openTradingPlan} />
             <PortfolioOverview />
-
-            {/* Live Chart */}
-            <AnimatePresence>
-              {chartSymbol && chartData && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                  <div className="rounded-2xl border border-border bg-card p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="text-sm font-bold text-foreground">{chartSymbol}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          ${chartData.quote?.price || "—"}
-                          {chartData.quote && (
-                            <span className={`ml-1 ${parseFloat(chartData.quote.change) >= 0 ? "text-success" : "text-destructive"}`}>
-                              {parseFloat(chartData.quote.change) >= 0 ? "+" : ""}{chartData.quote.change} ({chartData.quote.percent_change}%)
-                            </span>
-                          )}
-                          {chartData.mock && <span className="ml-2 text-warning text-[10px]">(mock data — add API key for live)</span>}
-                        </p>
-                      </div>
-                      <button onClick={() => setChartSymbol(null)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground">
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="flex gap-1 mb-3">
-                      {TIMEFRAMES.map((tf) => (
-                        <Button
-                          key={tf.label}
-                          variant={chartInterval === tf.interval && chartOutputsize === tf.outputsize ? "default" : "ghost"}
-                          size="sm"
-                          className="h-6 px-2 text-[10px]"
-                          onClick={() => { setChartInterval(tf.interval); setChartOutputsize(tf.outputsize); }}
-                        >
-                          {tf.label}
-                        </Button>
-                      ))}
-                    </div>
-                    {chartData.timeseries?.length > 0 && (
-                      <LiveChart data={chartData.timeseries} symbol={chartSymbol} />
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <HoldingsSection onViewChart={openChart} onTradingPlan={openTradingPlan} />
             <WatchlistSection onViewChart={openChart} />
           </div>
@@ -183,8 +125,6 @@ export default function WealthDashboard() {
         return <BillsCalendar key={id} />;
       case "subscriptions":
         return <SubscriptionsSection key={id} />;
-      case "broker":
-        return <BrokerSection key={id} />;
       default:
         return null;
     }
