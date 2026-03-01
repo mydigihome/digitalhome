@@ -2102,6 +2102,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_download_count_if_exists: {
+        Args: { tid: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "student" | "main_account" | "moderator" | "super_admin"
