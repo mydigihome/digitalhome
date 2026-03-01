@@ -7,7 +7,7 @@ import {
   CheckCircle2, Circle, Plus, Trash2, X, ExternalLink, Link2, Sparkles,
   ChevronDown, ChevronRight, Loader2,
 } from "lucide-react";
-import QuickEmailComposer from "@/components/events/QuickEmailComposer";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -448,9 +448,6 @@ export default function GoalDetailView({ projectId, projectName }: Props) {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Email Quick Access - Context-Aware */}
-      <QuickEmailComposer projectName={projectName} projectType="goal" />
     </div>
   );
 }

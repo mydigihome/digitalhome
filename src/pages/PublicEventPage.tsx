@@ -5,13 +5,12 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, MapPin, CheckCircle, XCircle, HelpCircle,
-  ExternalLink, Music, Link2, Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import AddToCalendarButton from "@/components/events/AddToCalendarButton";
+
 
 interface EventData {
   id: string;
@@ -22,11 +21,6 @@ interface EventData {
   rsvp_deadline: string | null;
   privacy: string;
   event_type: string;
-  external_link_url: string | null;
-  external_link_label: string | null;
-  playlist_url: string | null;
-  shared_album_enabled: boolean;
-  background_style: string;
   projects: { name: string; cover_image: string | null; cover_type: string | null };
 }
 
@@ -171,54 +165,7 @@ export default function PublicEventPage() {
             </div>
           )}
 
-          {/* Event Extras */}
-          {(event.external_link_url || event.playlist_url || event.shared_album_enabled) && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              {event.external_link_url && (
-                <a
-                  href={event.external_link_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:bg-secondary/50 transition-colors"
-                >
-                  <Link2 className="h-4 w-4 text-primary" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{event.external_link_label || "Event Link"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{event.external_link_url}</p>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </a>
-              )}
-
-              {event.playlist_url && (
-                <a
-                  href={event.playlist_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:bg-secondary/50 transition-colors"
-                >
-                  <Music className="h-4 w-4 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Event Playlist</p>
-                    <p className="text-xs text-muted-foreground">Tap to listen</p>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </a>
-              )}
-
-              {event.shared_album_enabled && (
-                <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-                  <Camera className="h-4 w-4 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">Shared Album</p>
-                    <p className="text-xs text-muted-foreground">Photos will be available after the event</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* RSVP + Calendar Buttons */}
+          {/* RSVP */}
           <div className="space-y-3 pt-2">
             {!submitted ? (
               <Button onClick={() => setShowRsvp(!showRsvp)} className="w-full" size="lg">
@@ -231,13 +178,6 @@ export default function PublicEventPage() {
                 <p className="text-sm text-muted-foreground">The host has been notified.</p>
               </div>
             )}
-
-            <AddToCalendarButton
-              eventName={event.projects.name}
-              eventDate={event.event_date}
-              location={event.location}
-              description={event.description}
-            />
           </div>
 
           {/* Inline RSVP Form */}

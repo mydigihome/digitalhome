@@ -5,14 +5,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Calendar, MapPin, Users, Clock, Image, Plus, X, Mail,
-  Globe, Lock, ChevronRight, ChevronDown, Camera, Link2, Music,
+  Globe, Lock, ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Switch } from "@/components/ui/switch";
 import { useCreateProject } from "@/hooks/useProjects";
 import { useUpsertEventDetails, useAddEventGuests, useCreateRsvpQuestion } from "@/hooks/useEvents";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,7 +41,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
-  const [extrasOpen, setExtrasOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     event_type: "other",
@@ -57,10 +54,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
     rsvp_deadline: "",
     privacy: "private",
     rsvp_questions: [] as string[],
-    shared_album_enabled: false,
-    external_link_url: "",
-    external_link_label: "",
-    playlist_url: "",
   });
   const [newQuestion, setNewQuestion] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -101,10 +94,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         rsvp_deadline: form.rsvp_deadline ? new Date(form.rsvp_deadline).toISOString() : null,
         privacy: form.privacy,
         event_type: form.event_type,
-        shared_album_enabled: form.shared_album_enabled,
-        external_link_url: form.external_link_url || null,
-        external_link_label: form.external_link_label || null,
-        playlist_url: form.playlist_url || null,
       });
 
       if (form.cover_image) {
@@ -236,63 +225,6 @@ export default function CreateEventModal({ open, onClose }: Props) {
         <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       </div>
 
-      {/* Collapsible Additional Options */}
-      <Collapsible open={extrasOpen} onOpenChange={setExtrasOpen}>
-        <CollapsibleTrigger className="flex items-center gap-2 w-full rounded-lg border border-border px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all">
-          {extrasOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          Additional Options
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-3 space-y-4">
-          {/* Shared Album Toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-border p-3">
-            <div className="flex items-center gap-3">
-              <Camera className="h-4 w-4 text-primary" />
-              <div>
-                <p className="text-sm font-medium text-foreground">📸 Shared Album</p>
-                <p className="text-xs text-muted-foreground">Guests can share event photos</p>
-              </div>
-            </div>
-            <Switch
-              checked={form.shared_album_enabled}
-              onCheckedChange={v => setForm(p => ({ ...p, shared_album_enabled: v }))}
-            />
-          </div>
-
-          {/* External Link */}
-          <div className="rounded-lg border border-border p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">🔗 Event Link</p>
-            </div>
-            <Input
-              value={form.external_link_label}
-              onChange={e => setForm(p => ({ ...p, external_link_label: e.target.value }))}
-              placeholder="Link label (e.g., Event Website)"
-              className="text-sm"
-            />
-            <Input
-              value={form.external_link_url}
-              onChange={e => setForm(p => ({ ...p, external_link_url: e.target.value }))}
-              placeholder="https://..."
-              className="text-sm"
-            />
-          </div>
-
-          {/* Playlist */}
-          <div className="rounded-lg border border-border p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <Music className="h-4 w-4 text-primary" />
-              <p className="text-sm font-medium text-foreground">🎵 Playlist</p>
-            </div>
-            <Input
-              value={form.playlist_url}
-              onChange={e => setForm(p => ({ ...p, playlist_url: e.target.value }))}
-              placeholder="https://open.spotify.com/... or Apple Music link"
-              className="text-sm"
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
     </div>,
 
     // Step 2: Guests & RSVP
