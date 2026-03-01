@@ -219,6 +219,9 @@ export default function ProjectDetail() {
               onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
               editable
             />
+            <div className="flex justify-end mb-2">
+              <QuickEmailComposer projectName={project?.name || ""} projectType="event" />
+            </div>
             <EventDetailView
               projectId={id!}
               projectName={project?.name || ""}
@@ -238,6 +241,9 @@ export default function ProjectDetail() {
               onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
               editable
             />
+            <div className="flex justify-end mb-2">
+              <QuickEmailComposer projectName={project?.name || ""} projectType="goal" />
+            </div>
             <GoalDetailView projectId={id!} projectName={project?.name || ""} />
           </>
         ) : (
@@ -508,13 +514,6 @@ export default function ProjectDetail() {
         </div>
       )}
 
-      {/* Context-aware email icon for all project types */}
-      {project && (
-        <QuickEmailComposer
-          projectName={project.name}
-          projectType={project.type}
-        />
-      )}
     </AppShell>
   );
 }
