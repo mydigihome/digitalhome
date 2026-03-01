@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useJournalEntries, useDeleteJournalEntry, JournalEntry } from "@/hooks/useJournal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Lock, Plus, Trash2, Calendar } from "lucide-react";
+import { Search, Lock, Plus, Trash2, Calendar, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -32,6 +32,26 @@ const SORT_OPTIONS = [
   { id: "mood", label: "By Mood" },
 ];
 
+const ENTRIES_PER_PAGE = 10;
+
+function EntrySkeleton() {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-muted" />
+            <div className="h-4 w-32 rounded bg-muted" />
+          </div>
+          <div className="h-3 w-20 rounded bg-muted" />
+          <div className="h-3 w-full rounded bg-muted mt-2" />
+          <div className="h-3 w-3/4 rounded bg-muted" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function JournalEntriesList() {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("newest");
@@ -40,6 +60,8 @@ export default function JournalEntriesList() {
   const [newOpen, setNewOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [pinVerifyEntry, setPinVerifyEntry] = useState<JournalEntry | null>(null);
+  const [visibleCount, setVisibleCount] = useState(ENTRIES_PER_PAGE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const { data: entries, isLoading } = useJournalEntries({
     period: filter === "week" ? "week" : filter === "month" ? "month" : undefined,
@@ -48,6 +70,29 @@ export default function JournalEntriesList() {
     sort,
   });
   const deleteEntry = useDeleteJournalEntry();
+
+  // Reset visible count when filter/sort/search changes
+  useEffect(() => {
+    setVisibleCount(ENTRIES_PER_PAGE);
+  }, [filter, sort, search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!sentinelRef.current || !entries) return;
+    const observer = new IntersectionObserver(
+      (observerEntries) => {
+        if (observerEntries[0].isIntersecting && entries.length > visibleCount) {
+          setVisibleCount((prev) => Math.min(prev + ENTRIES_PER_PAGE, entries.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [entries, visibleCount]);
+
+  const visibleEntries = entries?.slice(0, visibleCount) || [];
+  const hasMore = entries ? visibleCount < entries.length : false;
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -128,8 +173,10 @@ export default function JournalEntriesList() {
 
       {/* Entries list */}
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <EntrySkeleton key={i} />
+          ))}
         </div>
       ) : !entries?.length ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12">
@@ -141,7 +188,7 @@ export default function JournalEntriesList() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {entries.map((entry) => (
+          {visibleEntries.map((entry) => (
             <div
               key={entry.id}
               onClick={() => handleEntryClick(entry)}
@@ -183,6 +230,21 @@ export default function JournalEntriesList() {
           ))}
         </div>
       )}
+
+      {/* Infinite scroll sentinel */}
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      )}
+
+      {/* Privacy notice */}
+      <div className="flex items-center justify-center gap-1.5 pt-2 pb-1">
+        <Shield className="h-3 w-3 text-muted-foreground/50" />
+        <p className="text-[10px] text-muted-foreground/50">
+          Your journal is completely private. Only you can access your entries.
+        </p>
+      </div>
 
       {/* Modals */}
       <JournalEntryModal open={newOpen} onClose={() => setNewOpen(false)} />
