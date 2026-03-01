@@ -510,7 +510,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function ColoringBook({ open, onClose, onSave }: ColoringBookProps) {
-  const [selectedPage, setSelectedPage] = useState<PageKey>("zenGarden");
+  const [selectedPage, setSelectedPage] = useState<PageKey>("seaTurtle");
   const [selectedColor, setSelectedColor] = useState("#7C4DFF");
   const [sectionFills, setSectionFills] = useState<Record<string, Record<string, string>>>({});
   const [customColor, setCustomColor] = useState("#7C4DFF");
