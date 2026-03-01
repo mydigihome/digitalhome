@@ -24,7 +24,6 @@ function getEmailSuggestion(projectName: string, projectType: string): EmailSugg
     };
   }
 
-  // Goal-type context detection
   if (nameLower.includes("home") || nameLower.includes("house") || nameLower.includes("realtor") || nameLower.includes("mortgage")) {
     return {
       label: "Email your realtor",
@@ -87,16 +86,14 @@ export default function QuickEmailComposer({ projectName, projectType }: Props) 
 
   return (
     <>
-      {/* Floating Email Button */}
+      {/* Static inline email button */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all group"
+        className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
         title={suggestion.label}
       >
-        <Mail className="h-5 w-5" />
-        <span className="absolute right-14 whitespace-nowrap rounded-lg bg-card border border-border px-3 py-1.5 text-xs font-medium text-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {suggestion.label}
-        </span>
+        <Mail className="h-3.5 w-3.5" />
+        <span>{suggestion.label}</span>
       </button>
 
       {/* Modal */}
