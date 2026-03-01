@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Calendar, MapPin, Users, Clock, Image, Plus, X, Mail,
-  Globe, Lock, ChevronRight, Sparkles,
+  Globe, Lock, ChevronRight, Sparkles, Camera, Link2, Music,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
     rsvp_deadline: "",
     privacy: "private",
     rsvp_questions: [] as string[],
+    shared_album_enabled: false,
+    external_link_url: "",
+    external_link_label: "",
+    playlist_url: "",
   });
   const [newQuestion, setNewQuestion] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -97,6 +101,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
         rsvp_deadline: form.rsvp_deadline ? new Date(form.rsvp_deadline).toISOString() : null,
         privacy: form.privacy,
         event_type: form.event_type,
+        shared_album_enabled: form.shared_album_enabled,
+        external_link_url: form.external_link_url || null,
+        external_link_label: form.external_link_label || null,
+        playlist_url: form.playlist_url || null,
       });
 
       // 3. Update project cover image if provided
@@ -293,6 +301,78 @@ export default function CreateEventModal({ open, onClose }: Props) {
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+      </div>
+    </div>,
+
+    // Step 3: Event Extras (tiles)
+    <div className="space-y-4" key="extras">
+      <p className="text-sm text-muted-foreground">Add optional extras to your event page</p>
+
+      {/* Shared Album Tile */}
+      <button
+        onClick={() => setForm(p => ({ ...p, shared_album_enabled: !p.shared_album_enabled }))}
+        className={cn(
+          "w-full flex items-center gap-4 rounded-xl border-2 p-4 text-left transition-all",
+          form.shared_album_enabled ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+        )}
+      >
+        <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+          <Camera className="h-6 w-6 text-purple-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">📸 Shared Album</p>
+          <p className="text-xs text-muted-foreground">Guests can see event photos and add their own</p>
+        </div>
+      </button>
+
+      {/* Link Tile */}
+      <div className={cn(
+        "rounded-xl border-2 p-4 transition-all space-y-3",
+        form.external_link_url ? "border-primary bg-primary/5" : "border-border"
+      )}>
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+            <Link2 className="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">🔗 Event Link</p>
+            <p className="text-xs text-muted-foreground">Add a link visible to all guests</p>
+          </div>
+        </div>
+        <Input
+          value={form.external_link_label}
+          onChange={e => setForm(p => ({ ...p, external_link_label: e.target.value }))}
+          placeholder="Link label (e.g., Event Website)"
+          className="text-sm"
+        />
+        <Input
+          value={form.external_link_url}
+          onChange={e => setForm(p => ({ ...p, external_link_url: e.target.value }))}
+          placeholder="https://..."
+          className="text-sm"
+        />
+      </div>
+
+      {/* Playlist Tile */}
+      <div className={cn(
+        "rounded-xl border-2 p-4 transition-all space-y-3",
+        form.playlist_url ? "border-primary bg-primary/5" : "border-border"
+      )}>
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+            <Music className="h-6 w-6 text-green-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">🎵 Music Playlist</p>
+            <p className="text-xs text-muted-foreground">Add a Spotify or Apple Music playlist link</p>
+          </div>
+        </div>
+        <Input
+          value={form.playlist_url}
+          onChange={e => setForm(p => ({ ...p, playlist_url: e.target.value }))}
+          placeholder="https://open.spotify.com/... or https://music.apple.com/..."
+          className="text-sm"
+        />
       </div>
     </div>,
   ];

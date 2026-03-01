@@ -453,45 +453,60 @@ export type Database = {
       }
       event_details: {
         Row: {
+          background_style: string
           created_at: string
           description: string | null
           event_date: string | null
           event_type: string
+          external_link_label: string | null
+          external_link_url: string | null
           id: string
           location: string | null
           location_type: string
+          playlist_url: string | null
           privacy: string
           project_id: string
           rsvp_deadline: string | null
           share_token: string
+          shared_album_enabled: boolean
           updated_at: string
         }
         Insert: {
+          background_style?: string
           created_at?: string
           description?: string | null
           event_date?: string | null
           event_type?: string
+          external_link_label?: string | null
+          external_link_url?: string | null
           id?: string
           location?: string | null
           location_type?: string
+          playlist_url?: string | null
           privacy?: string
           project_id: string
           rsvp_deadline?: string | null
           share_token?: string
+          shared_album_enabled?: boolean
           updated_at?: string
         }
         Update: {
+          background_style?: string
           created_at?: string
           description?: string | null
           event_date?: string | null
           event_type?: string
+          external_link_label?: string | null
+          external_link_url?: string | null
           id?: string
           location?: string | null
           location_type?: string
+          playlist_url?: string | null
           privacy?: string
           project_id?: string
           rsvp_deadline?: string | null
           share_token?: string
+          shared_album_enabled?: boolean
           updated_at?: string
         }
         Relationships: [
