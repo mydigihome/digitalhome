@@ -398,7 +398,7 @@ function MobileTabBar() {
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isFullBleed = location.pathname === "/vision";
+  const isFullBleed = location.pathname === "/vision" || location.pathname === "/dashboard";
 
   if (isFullBleed) {
     return <div className="h-full">{children}</div>;
