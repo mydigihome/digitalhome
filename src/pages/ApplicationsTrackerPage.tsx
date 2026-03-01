@@ -383,7 +383,7 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
     { key: "email", label: "Email Templates", emoji: "✉️" },
   ];
 
-  const SLOTS_PER_CATEGORY = 4;
+  const MIN_SLOTS_PER_CATEGORY = 4;
 
   const handleDownload = async (template: any) => {
     if (!template.file_url) { toast.error("File not available yet"); return; }
@@ -424,7 +424,8 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
         <div className="space-y-6">
           {categories.map(({ key, label, emoji }) => {
             const catTemplates = templates.filter(t => t.template_type === key);
-            const slots = Array.from({ length: SLOTS_PER_CATEGORY }, (_, i) => catTemplates[i] || null);
+            const totalSlots = Math.max(MIN_SLOTS_PER_CATEGORY, catTemplates.length);
+            const slots = Array.from({ length: totalSlots }, (_, i) => catTemplates[i] || null);
 
             return (
               <div key={key}>
