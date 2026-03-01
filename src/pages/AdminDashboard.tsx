@@ -3,7 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Users, BarChart3, MessageSquare, CreditCard, Search, ExternalLink, FileText, Settings, Megaphone, ToggleLeft } from "lucide-react";
+import { Shield, Users, BarChart3, MessageSquare, CreditCard, Search, ExternalLink, FileText, Settings, Megaphone, ToggleLeft, Plus, Pencil, Trash2, Upload, Download, DollarSign, TrendingUp, Palette, Mail, Eye } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
@@ -1105,10 +1115,455 @@ function ResourcesTab() {
   );
 }
 
+// ── Templates Tab (Template Library Manager) ──
+const TEMPLATE_SLOTS = 4;
+const templateCategoryConfig: Record<string, { label: string; icon: React.ReactNode }> = {
+  resume: { label: "Resumes", icon: <FileText className="h-4 w-4" /> },
+  portfolio: { label: "Portfolios", icon: <Palette className="h-4 w-4" /> },
+  email: { label: "Email Templates", icon: <Mail className="h-4 w-4" /> },
+};
+
+function TemplatesTab() {
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [purchases, setPurchases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [templateType, setTemplateType] = useState("resume");
+  const [priceCents, setPriceCents] = useState(0);
+  const [isInBundle, setIsInBundle] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+  const [tags, setTags] = useState("");
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [templateFile, setTemplateFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    const [t, p] = await Promise.all([
+      supabase.from("shop_templates").select("*").order("created_at", { ascending: false }),
+      supabase.from("template_purchases").select("*").order("purchased_at", { ascending: false }),
+    ]);
+    setTemplates((t.data as any[]) || []);
+    setPurchases((p.data as any[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const resetForm = () => {
+    setTitle(""); setDescription(""); setTemplateType("resume"); setPriceCents(0);
+    setIsInBundle(false); setIsActive(true); setTags(""); setPreviewFile(null);
+    setTemplateFile(null); setEditingId(null);
+  };
+
+  const openEdit = (t: any) => {
+    setEditingId(t.id); setTitle(t.title); setDescription(t.description || "");
+    setTemplateType(t.template_type); setPriceCents(t.price_cents);
+    setIsInBundle(t.is_in_bundle); setIsActive(t.is_active);
+    setTags((t.tags || []).join(", ")); setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) { toast.error("Title is required"); return; }
+    let previewUrl: string | undefined;
+    let fileUrl: string | undefined;
+
+    if (previewFile) {
+      const ext = previewFile.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("template-previews").upload(path, previewFile, { upsert: true });
+      if (error) { toast.error("Failed to upload preview image"); return; }
+      const { data: urlData } = supabase.storage.from("template-previews").getPublicUrl(path);
+      previewUrl = urlData.publicUrl;
+    }
+    if (templateFile) {
+      const ext = templateFile.name.split(".").pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("template-files").upload(path, templateFile, { upsert: true });
+      if (error) { toast.error("Failed to upload template file"); return; }
+      fileUrl = path;
+    }
+
+    const record: any = {
+      title: title.trim(), description: description.trim() || null,
+      template_type: templateType, price_cents: priceCents,
+      is_in_bundle: isInBundle, is_active: isActive,
+      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+    };
+    if (previewUrl) record.preview_image_url = previewUrl;
+    if (fileUrl) record.file_url = fileUrl;
+
+    if (editingId) {
+      const { error } = await supabase.from("shop_templates").update(record).eq("id", editingId);
+      if (error) { toast.error("Failed to update"); return; }
+      toast.success("✓ Template updated successfully!");
+    } else {
+      const { error } = await supabase.from("shop_templates").insert(record);
+      if (error) { toast.error("Failed to create"); return; }
+      toast.success("✓ Template published successfully!");
+    }
+    resetForm(); setShowForm(false); fetchData();
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure? This will permanently delete "${name}" and remove it from the shop. This action cannot be undone.`)) return;
+    const { error } = await supabase.from("shop_templates").delete().eq("id", id);
+    if (error) toast.error("Failed to delete");
+    else { toast.success("Template deleted"); fetchData(); }
+  };
+
+  const handleToggleActive = async (id: string, current: boolean) => {
+    await supabase.from("shop_templates").update({ is_active: !current }).eq("id", id);
+    toast.success(current ? "Template unpublished" : "Template published");
+    fetchData();
+  };
+
+  const handlePreviewDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) setPreviewFile(file);
+    else toast.error("Please drop an image file");
+  };
+
+  const totalRevenue = purchases.reduce((s: number, p: any) => s + (p.amount_paid || 0), 0);
+  const thisMonthPurchases = purchases.filter((p: any) => {
+    const d = new Date(p.purchased_at); const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthRevenue = thisMonthPurchases.reduce((s: number, p: any) => s + (p.amount_paid || 0), 0);
+  const totalDownloads = templates.reduce((s: number, t: any) => s + (t.download_count || 0), 0);
+  const freeDownloads = templates.filter((t: any) => t.price_cents === 0).reduce((s: number, t: any) => s + (t.download_count || 0), 0);
+
+  const handleExportCSV = () => {
+    const rows = [
+      ["Name", "Category", "Price", "Status", "Downloads"].join(","),
+      ...templates.map((t: any) => [t.title, t.template_type, t.price_cents === 0 ? "Free" : `$${(t.price_cents/100).toFixed(0)}`, t.is_active ? "Live" : "Draft", t.download_count].join(","))
+    ].join("\n");
+    const blob = new Blob([rows], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `templates_${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  if (loading) return <div className="flex items-center justify-center py-12 text-muted-foreground">Loading templates...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">📚</span>
+          <h2 className="text-xl font-semibold text-foreground">Template Library Manager</h2>
+          <Badge variant="secondary">{templates.length} templates</Badge>
+        </div>
+        <Button onClick={() => { resetForm(); setShowForm(true); }} className="rounded-full">
+          <Plus className="h-4 w-4 mr-2" /> Upload New
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Total Templates", value: templates.length.toString() },
+          { label: "Published", value: templates.filter((t: any) => t.is_active).length.toString() },
+          { label: "Total Downloads", value: totalDownloads.toString() },
+          { label: "Total Revenue", value: `$${(totalRevenue / 100).toFixed(0)}` },
+        ].map(c => (
+          <div key={c.label} className="bg-card border border-border rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{c.value}</p>
+            <p className="text-xs text-muted-foreground">{c.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <Tabs defaultValue="manage" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="upload">Upload New</TabsTrigger>
+          <TabsTrigger value="manage">Manage All</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+
+        {/* Upload Tab */}
+        <TabsContent value="upload">
+          <Card className="rounded-2xl">
+            <CardContent className="p-6 space-y-5">
+              <h3 className="text-lg font-semibold text-foreground">Add New Template</h3>
+              <div className="space-y-1">
+                <Label>Template Category *</Label>
+                <div className="flex gap-4">
+                  {(["resume", "portfolio", "email"] as const).map(cat => (
+                    <label key={cat} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={templateType === cat} onChange={() => setTemplateType(cat)} className="accent-primary" />
+                      {cat === "resume" ? "Resume" : cat === "portfolio" ? "Portfolio Deck" : "Email Template Pack"}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Template Name *</Label>
+                <Input value={title} onChange={e => setTitle(e.target.value)} placeholder='e.g., "Creative Resume Template"' />
+              </div>
+              <div className="space-y-1">
+                <Label>Short Description *</Label>
+                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="1-2 sentences, shows on card" />
+              </div>
+              <div className="space-y-1">
+                <Label>Preview Image *</Label>
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handlePreviewDrop}
+                  className={cn(
+                    "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors",
+                    dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                  )}
+                  onClick={() => document.getElementById("preview-upload")?.click()}
+                >
+                  {previewFile ? (
+                    <p className="text-sm text-foreground">✓ {previewFile.name}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Drag image here or click to browse<br /><span className="text-xs">Recommended: 600×400px (.jpg, .png, .webp)</span></p>
+                  )}
+                </div>
+                <input id="preview-upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => setPreviewFile(e.target.files?.[0] || null)} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Main Template File *</Label>
+                  <Input type="file" accept=".docx,.pptx,.pdf,.zip" onChange={e => setTemplateFile(e.target.files?.[0] || null)} />
+                  {templateFile && <p className="text-xs text-muted-foreground">✓ {templateFile.name}</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label>Additional File (optional)</Label>
+                  <Input type="file" accept=".docx,.pptx,.pdf,.zip" disabled />
+                  <p className="text-xs text-muted-foreground">For PDF version, instructions, etc.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Pricing *</Label>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={priceCents === 0} onChange={() => setPriceCents(0)} className="accent-primary" /> Free
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={priceCents === 100} onChange={() => setPriceCents(100)} className="accent-primary" /> Premium ($1)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer mt-1">
+                      <input type="checkbox" checked={isInBundle} onChange={e => setIsInBundle(e.target.checked)} className="accent-primary" />
+                      Include in $5 bundle
+                    </label>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label>Tags</Label>
+                  <Input value={tags} onChange={e => setTags(e.target.value)} placeholder="creative, modern, colorful" />
+                  <p className="text-xs text-muted-foreground">Comma-separated</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status *</Label>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={isActive} onChange={() => setIsActive(true)} className="accent-primary" /> Published
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="radio" checked={!isActive} onChange={() => setIsActive(false)} className="accent-primary" /> Draft
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" onClick={resetForm}>Clear Form</Button>
+                <Button variant="outline" onClick={() => { setIsActive(false); handleSave(); }}>Save as Draft</Button>
+                <Button onClick={() => { setIsActive(true); handleSave(); }}>
+                  <Upload className="h-4 w-4 mr-2" /> Publish Template
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Manage Tab */}
+        <TabsContent value="manage" className="space-y-8">
+          {(["resume", "portfolio", "email"] as const).map(type => {
+            const typeTemplates = templates.filter((t: any) => t.template_type === type);
+            const emptySlotsCount = Math.max(0, TEMPLATE_SLOTS - typeTemplates.length);
+            const config = templateCategoryConfig[type];
+            return (
+              <Card key={type} className="rounded-2xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center gap-2">
+                  {config.icon}
+                  <h3 className="font-semibold text-foreground">{config.label}</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    {typeTemplates.filter((t: any) => t.is_active).length} published, {emptySlotsCount} empty slots
+                  </Badge>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Preview</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Downloads</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {typeTemplates.map((t: any) => (
+                      <TableRow key={t.id}>
+                        <TableCell>
+                          {t.preview_image_url ? (
+                            <img src={t.preview_image_url} alt="" className="w-12 h-9 object-cover rounded" />
+                          ) : (
+                            <div className="w-12 h-9 rounded bg-muted flex items-center justify-center">{config.icon}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{t.title}</TableCell>
+                        <TableCell>{t.price_cents === 0 ? "Free" : `$${(t.price_cents / 100).toFixed(0)}`}</TableCell>
+                        <TableCell>
+                          <Badge variant={t.is_active ? "default" : "secondary"} className="text-xs">
+                            {t.is_active ? "✅ Live" : "Draft"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{t.download_count} ⬇️</TableCell>
+                        <TableCell className="text-right space-x-1">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(t)} title="Edit"><Pencil className="h-3.5 w-3.5" /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleToggleActive(t.id, t.is_active)} title={t.is_active ? "Unpublish" : "Publish"}>
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => window.open("/templates", "_blank")} title="Preview on shop">
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id, t.title)} title="Delete">
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {Array.from({ length: emptySlotsCount }).map((_, i) => (
+                      <TableRow key={`empty-${type}-${i}`} className="opacity-50">
+                        <TableCell>
+                          <div className="w-12 h-9 rounded border-2 border-dashed border-border flex items-center justify-center">
+                            <Plus className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground italic">Coming Soon</TableCell>
+                        <TableCell className="text-muted-foreground">—</TableCell>
+                        <TableCell><Badge variant="secondary" className="text-xs">Draft</Badge></TableCell>
+                        <TableCell className="text-muted-foreground">—</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => { resetForm(); setTemplateType(type); setShowForm(true); }}><Plus className="h-3.5 w-3.5" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            );
+          })}
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="rounded-2xl"><CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Revenue Overview</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">Total Revenue</span><span className="font-bold text-foreground">${(totalRevenue / 100).toFixed(0)}</span></div>
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">This Month</span><span className="font-bold text-foreground">${(monthRevenue / 100).toFixed(0)}</span></div>
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">Total Purchases</span><span className="font-bold text-foreground">{purchases.length}</span></div>
+              </div>
+            </CardContent></Card>
+            <Card className="rounded-2xl"><CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Top Performers</h3>
+              </div>
+              <div className="space-y-2">
+                {[...templates].sort((a: any, b: any) => b.download_count - a.download_count).slice(0, 4).map((t: any, i: number) => (
+                  <div key={t.id} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground truncate">{i + 1}. {t.title}</span>
+                    <span className="font-medium text-foreground shrink-0 ml-2">
+                      {t.price_cents > 0 ? `$${(t.download_count * t.price_cents / 100).toFixed(0)}` : `${t.download_count} free`}
+                    </span>
+                  </div>
+                ))}
+                {templates.length === 0 && <p className="text-sm text-muted-foreground">No templates yet</p>}
+              </div>
+            </CardContent></Card>
+            <Card className="rounded-2xl"><CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Download className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Download Stats</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">Total Downloads</span><span className="font-bold text-foreground">{totalDownloads}</span></div>
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">Free</span><span className="font-bold text-foreground">{freeDownloads}</span></div>
+                <div className="flex justify-between"><span className="text-sm text-muted-foreground">Paid</span><span className="font-bold text-foreground">{totalDownloads - freeDownloads}</span></div>
+              </div>
+              <Button variant="outline" size="sm" className="mt-4 w-full" onClick={handleExportCSV}>Export Data CSV</Button>
+            </CardContent></Card>
+          </div>
+
+          <Card className="rounded-2xl"><CardContent className="p-6">
+            <h3 className="font-semibold text-foreground mb-3">Revenue Breakdown</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Free Downloads</span><span className="font-medium text-foreground">{freeDownloads}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Individual Purchases ($1)</span><span className="font-medium text-foreground">{purchases.filter((p: any) => !p.is_bundle).length}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Bundle Sales ($5)</span><span className="font-medium text-foreground">{purchases.filter((p: any) => p.is_bundle).length}</span></div>
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit Modal */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg rounded-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit Template" : "Add New Template"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Creative Resume" /></div>
+            <div><Label>Description</Label><Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Stand out with this modern design" /></div>
+            <div><Label>Category</Label>
+              <Select value={templateType} onValueChange={setTemplateType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="resume">Resume</SelectItem>
+                  <SelectItem value="portfolio">Portfolio</SelectItem>
+                  <SelectItem value="email">Email Pack</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" checked={priceCents === 0} onChange={() => setPriceCents(0)} /> Free</label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="radio" checked={priceCents === 100} onChange={() => setPriceCents(100)} /> $1</label>
+            </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={isInBundle} onChange={e => setIsInBundle(e.target.checked)} /> Include in bundle</label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} /> Published</label>
+            <div><Label>Tags</Label><Input value={tags} onChange={e => setTags(e.target.value)} placeholder="creative, modern" /></div>
+            <div><Label>Preview Image</Label><Input type="file" accept="image/*" onChange={e => setPreviewFile(e.target.files?.[0] || null)} /></div>
+            <div><Label>Template File</Label><Input type="file" accept=".docx,.pdf,.zip,.pptx" onChange={e => setTemplateFile(e.target.files?.[0] || null)} /></div>
+            <Button onClick={handleSave} className="w-full">{editingId ? "Update Template" : "Save Template"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // ── Tab Config ──
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
   { id: "users", label: "Users", icon: Users },
+  { id: "templates", label: "Templates", icon: FileText },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "resources", label: "AI Resources", icon: ExternalLink },
   { id: "content", label: "Content", icon: FileText },
@@ -1206,6 +1661,7 @@ export default function AdminDashboard() {
       <div className="p-4 md:p-6 lg:p-10 max-w-[1600px] mx-auto">
         {activeTab === "overview" && <OverviewTab />}
         {activeTab === "users" && <UsersTab />}
+        {activeTab === "templates" && <TemplatesTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "resources" && <ResourcesTab />}
         {activeTab === "content" && <ContentTab />}
