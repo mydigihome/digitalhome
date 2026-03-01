@@ -1,4 +1,9 @@
 export const WEALTH_QUOTES = [
+  { text: "The best investment you can make is in yourself.", author: "Warren Buffett" },
+  { text: "Wealth is the ability to fully experience life.", author: "Henry David Thoreau" },
+  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
+  { text: "Rich people have small TVs and big libraries, and poor people have small libraries and big TVs.", author: "Zig Ziglar" },
+  { text: "Money is only a tool. It will take you wherever you wish, but it will not replace you as the driver.", author: "Ayn Rand" },
   { text: "Whatever the mind can conceive and believe, it can achieve.", author: "Napoleon Hill" },
   { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Napoleon Hill" },
   { text: "Thoughts become things. If you see it in your mind, you will hold it in your hand.", author: "Bob Proctor" },
@@ -20,7 +25,6 @@ export const WEALTH_QUOTES = [
   { text: "Success is your duty, obligation, and responsibility.", author: "Grant Cardone" },
   { text: "Formal education will make you a living; self-education will make you a fortune.", author: "Jim Rohn" },
   { text: "The big money is not in the buying or selling, but in the waiting.", author: "Charlie Munger" },
-  { text: "An investment in knowledge pays the best interest.", author: "Benjamin Franklin" },
 ];
 
 export function getRandomQuote() {

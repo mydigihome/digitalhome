@@ -184,10 +184,10 @@ export default function SubscriptionsSection() {
                     <td className="px-3 py-2.5 font-medium text-foreground">{s.name}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{s.category}</td>
                     <td className="px-3 py-2.5 text-muted-foreground capitalize">{s.cycle}</td>
-                    <td className="px-3 py-2.5 text-right font-medium text-foreground">${s.cost.toFixed(2)}</td>
+                    <td className="px-3 py-2.5 text-right font-medium text-foreground">${(s.cost || 0).toFixed(2)}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{s.startDate || "—"}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{s.nextBillingDate || "—"}</td>
-                    <td className="px-3 py-2.5 text-right font-medium text-foreground">${s.annualCost.toFixed(0)}</td>
+                    <td className="px-3 py-2.5 text-right font-medium text-foreground">${(s.annualCost || 0).toFixed(0)}</td>
                     <td className="px-3 py-2.5">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${STATUS_STYLES[s.status]}`}>{s.status}</span>
                     </td>
