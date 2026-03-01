@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Building, Calendar, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Building, Calendar, X, FileText, ArrowRight, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -252,6 +252,8 @@ export default function ApplicationsTrackerPage() {
         {activeCategory !== "college" && (
         <>
 
+        {/* Professional Template Library Section */}
+        <TemplateLibrarySection userId={user?.id} />
 
         {/* Application Cards Grid */}
         {filtered.length === 0 ? (
@@ -364,5 +366,81 @@ export default function ApplicationsTrackerPage() {
         )}
       </motion.div>
     </AppShell>
+  );
+}
+
+function TemplateLibrarySection({ userId }: { userId?: string }) {
+  const [downloads, setDownloads] = useState<any[]>([]);
+  const [loadingDownloads, setLoadingDownloads] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoadingDownloads(true);
+    (supabase as any)
+      .from("template_downloads")
+      .select("*, shop_templates(*)")
+      .eq("user_id", userId)
+      .order("downloaded_at", { ascending: false })
+      .limit(5)
+      .then(({ data }: any) => {
+        setDownloads(data || []);
+        setLoadingDownloads(false);
+      });
+  }, [userId]);
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 mb-8">
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-2xl">📚</span>
+        <h2 className="text-xl font-bold text-foreground">Professional Template Library</h2>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Free and premium career templates — Resumes • Portfolios • Email Scripts
+      </p>
+      <a
+        href="/templates"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors mb-5"
+      >
+        Browse Public Template Shop
+        <ArrowRight className="h-4 w-4" />
+      </a>
+
+      <div className="border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">My Downloaded Templates</h3>
+        {!userId ? (
+          <p className="text-sm text-muted-foreground">Sign in to see your downloads</p>
+        ) : loadingDownloads ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            Loading...
+          </div>
+        ) : downloads.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No downloads yet. Browse the template shop to get started!</p>
+        ) : (
+          <div className="space-y-2">
+            {downloads.map((dl: any) => {
+              const template = dl.shop_templates;
+              if (!template) return null;
+              return (
+                <div key={dl.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{template.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {template.price_cents === 0 ? "Free" : `$${(template.price_cents / 100).toFixed(0)}`} — Downloaded
+                      </p>
+                    </div>
+                  </div>
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

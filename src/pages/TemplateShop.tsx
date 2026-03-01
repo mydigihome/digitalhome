@@ -4,16 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Briefcase, Download, X, ExternalLink, Sparkles, FileText, Mail, Palette } from "lucide-react";
+import { Briefcase, Download, X, ExternalLink, Sparkles, FileText, Mail, Palette, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const BUNDLE_PRICE_CENTS = 500;
+const SLOTS_PER_CATEGORY = 4;
 
 const typeIcons: Record<string, React.ReactNode> = {
-  resume: <FileText className="h-4 w-4" />,
-  portfolio: <Palette className="h-4 w-4" />,
-  email: <Mail className="h-4 w-4" />,
+  resume: <FileText className="h-5 w-5" />,
+  portfolio: <Palette className="h-5 w-5" />,
+  email: <Mail className="h-5 w-5" />,
+};
+
+const categoryLabels: Record<string, string> = {
+  resume: "📄 Resumes",
+  portfolio: "🎨 Portfolios",
+  email: "✉️ Email Templates",
 };
 
 const ctaMessages = [
@@ -42,22 +49,14 @@ export default function TemplateShop() {
     sessionStorage.setItem("template_banner_dismissed", "true");
   };
 
-  const freeTemplates = templates?.filter((t) => t.price_cents === 0) || [];
-  const premiumTemplates = templates?.filter((t) => t.price_cents > 0) || [];
-  const bundleTemplates = templates?.filter((t) => t.is_in_bundle) || [];
-
   const handleFreeDownload = async (template: ShopTemplate) => {
     if (!template.file_url) {
       toast.error("Template file not available yet");
       return;
     }
-    // Track download
     try {
-      await (supabase as any).from("template_downloads").insert({
-        template_id: template.id,
-      });
+      await (supabase as any).from("template_downloads").insert({ template_id: template.id });
     } catch {}
-    // Download
     window.open(template.file_url, "_blank");
     toast.success("Download started!");
     setSelectedTemplate(null);
@@ -101,6 +100,13 @@ export default function TemplateShop() {
     }
   };
 
+  // Group templates by category
+  const getTemplatesByType = (type: string) =>
+    templates?.filter((t) => t.template_type === type) || [];
+
+  const bundleTemplates = templates?.filter((t) => t.is_in_bundle) || [];
+  const premiumTemplates = templates?.filter((t) => t.price_cents > 0) || [];
+
   const cta = ctaMessages[ctaIndex];
 
   return (
@@ -112,19 +118,12 @@ export default function TemplateShop() {
             <span>{cta.icon}</span>
             <span>{cta.text}</span>
             {cta.link && (
-              <a
-                href={cta.link}
-                className="underline underline-offset-2 font-semibold hover:opacity-80 transition"
-              >
+              <a href={cta.link} className="underline underline-offset-2 font-semibold hover:opacity-80 transition">
                 {cta.cta}
               </a>
             )}
           </div>
-          <button
-            onClick={dismissBanner}
-            className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition"
-            aria-label="Dismiss banner"
-          >
+          <button onClick={dismissBanner} className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition" aria-label="Dismiss banner">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -154,39 +153,35 @@ export default function TemplateShop() {
           </div>
         ) : (
           <>
-            {/* Free Templates */}
-            {freeTemplates.length > 0 && (
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-1">🎁 Free Downloads</h2>
-                <p className="text-muted-foreground text-sm mb-6">No account needed</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {freeTemplates.map((t) => (
-                    <TemplateCard
-                      key={t.id}
-                      template={t}
-                      onSelect={() => setSelectedTemplate(t)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+            {/* Category Sections */}
+            {(["resume", "portfolio", "email"] as const).map((category) => {
+              const categoryTemplates = getTemplatesByType(category);
+              const slots = Array.from({ length: SLOTS_PER_CATEGORY }, (_, i) =>
+                categoryTemplates[i] || null
+              );
 
-            {/* Premium Templates */}
-            {premiumTemplates.length > 0 && (
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-1">💎 Premium Templates</h2>
-                <p className="text-muted-foreground text-sm mb-6">$1 each</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {premiumTemplates.map((t) => (
-                    <TemplateCard
-                      key={t.id}
-                      template={t}
-                      onSelect={() => setSelectedTemplate(t)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+              return (
+                <section key={category}>
+                  <h2 className="text-xl font-bold text-foreground mb-1">{categoryLabels[category]}</h2>
+                  <p className="text-muted-foreground text-sm mb-6">
+                    {categoryTemplates.length} available • {SLOTS_PER_CATEGORY - categoryTemplates.length} coming soon
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {slots.map((template, i) =>
+                      template ? (
+                        <TemplateCard
+                          key={template.id}
+                          template={template}
+                          onSelect={() => setSelectedTemplate(template)}
+                        />
+                      ) : (
+                        <ComingSoonCard key={`${category}-placeholder-${i}`} category={category} />
+                      )
+                    )}
+                  </div>
+                </section>
+              );
+            })}
 
             {/* Bundle */}
             {bundleTemplates.length > 0 && (
@@ -205,7 +200,7 @@ export default function TemplateShop() {
                       <span className="text-3xl font-bold text-foreground">
                         ${(BUNDLE_PRICE_CENTS / 100).toFixed(0)}
                       </span>
-                      <Badge className="bg-success text-success-foreground">
+                      <Badge className="bg-green-600 text-white">
                         SAVE ${((premiumTemplates.reduce((s, t) => s + t.price_cents, 0) - BUNDLE_PRICE_CENTS) / 100).toFixed(0)}
                       </Badge>
                     </div>
@@ -221,17 +216,6 @@ export default function TemplateShop() {
                 </Card>
               </section>
             )}
-
-            {/* Empty state */}
-            {(!templates || templates.length === 0) && (
-              <div className="text-center py-20">
-                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold text-foreground mb-2">Templates coming soon!</h2>
-                <p className="text-muted-foreground">
-                  We're preparing premium career templates. Check back soon.
-                </p>
-              </div>
-            )}
           </>
         )}
       </main>
@@ -239,13 +223,8 @@ export default function TemplateShop() {
       {/* Footer */}
       <footer className="border-t border-border bg-card mt-10">
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>
-            © {new Date().getFullYear()} Digital Home. Built for ambitious careers.
-          </p>
-          <a
-            href="/signup"
-            className="text-primary hover:underline mt-2 inline-block"
-          >
+          <p>© {new Date().getFullYear()} Digital Home. Built for ambitious careers.</p>
+          <a href="/signup" className="text-primary hover:underline mt-2 inline-block">
             Create your free Digital Home account →
           </a>
         </div>
@@ -261,11 +240,7 @@ export default function TemplateShop() {
               </DialogHeader>
               {selectedTemplate.preview_image_url && (
                 <div className="rounded-xl overflow-hidden border border-border bg-muted max-h-80 overflow-y-auto">
-                  <img
-                    src={selectedTemplate.preview_image_url}
-                    alt={selectedTemplate.title}
-                    className="w-full object-contain"
-                  />
+                  <img src={selectedTemplate.preview_image_url} alt={selectedTemplate.title} className="w-full object-contain" />
                 </div>
               )}
               <div className="space-y-3">
@@ -282,27 +257,19 @@ export default function TemplateShop() {
                   <h4 className="text-sm font-semibold text-foreground mb-1">Perfect for:</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedTemplate.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
+                      <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                     ))}
                   </div>
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
                 {selectedTemplate.price_cents === 0 ? (
-                  <Button
-                    className="flex-1 rounded-full bg-primary text-primary-foreground"
-                    onClick={() => handleFreeDownload(selectedTemplate)}
-                  >
+                  <Button className="flex-1 rounded-full bg-primary text-primary-foreground" onClick={() => handleFreeDownload(selectedTemplate)}>
                     <Download className="h-4 w-4 mr-2" />
                     Download Free
                   </Button>
                 ) : (
-                  <Button
-                    className="flex-1 rounded-full bg-primary text-primary-foreground"
-                    onClick={() => handleBuyNow(selectedTemplate)}
-                  >
+                  <Button className="flex-1 rounded-full bg-primary text-primary-foreground" onClick={() => handleBuyNow(selectedTemplate)}>
                     <ExternalLink className="h-4 w-4 mr-2" />
                     Buy Now — ${(selectedTemplate.price_cents / 100).toFixed(2)}
                   </Button>
@@ -316,61 +283,54 @@ export default function TemplateShop() {
   );
 }
 
-function TemplateCard({
-  template,
-  onSelect,
-}: {
-  template: ShopTemplate;
-  onSelect: () => void;
-}) {
+function TemplateCard({ template, onSelect }: { template: ShopTemplate; onSelect: () => void }) {
   const isPremium = template.price_cents > 0;
-
   return (
-    <Card
-      className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-border"
-      onClick={onSelect}
-    >
-      {/* Preview image */}
+    <Card className="group cursor-pointer rounded-3xl overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-border" onClick={onSelect}>
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
         {template.preview_image_url ? (
-          <img
-            src={template.preview_image_url}
-            alt={template.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+          <img src={template.preview_image_url} alt={template.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="flex items-center justify-center h-full">
             {typeIcons[template.template_type] || <FileText className="h-10 w-10 text-muted-foreground/50" />}
           </div>
         )}
         {isPremium && (
-          <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs">
-            💎 PREMIUM
-          </Badge>
+          <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs">💎 PREMIUM</Badge>
         )}
       </div>
-
       <CardContent className="p-4 space-y-2">
-        <h3 className="font-semibold text-foreground text-sm leading-tight line-clamp-2">
-          {template.title}
-        </h3>
+        <h3 className="font-semibold text-foreground text-sm leading-tight line-clamp-2">{template.title}</h3>
         <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
         <div className="flex items-center justify-between pt-1">
-          <span className="font-bold text-foreground">
-            {isPremium ? `$${(template.price_cents / 100).toFixed(0)}` : "$0"}
-          </span>
-          <Button
-            size="sm"
-            variant={isPremium ? "default" : "secondary"}
-            className="rounded-full text-xs h-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect();
-            }}
-          >
+          <span className="font-bold text-foreground">{isPremium ? `$${(template.price_cents / 100).toFixed(0)}` : "$0"}</span>
+          <Button size="sm" variant={isPremium ? "default" : "secondary"} className="rounded-full text-xs h-8" onClick={(e) => { e.stopPropagation(); onSelect(); }}>
             {isPremium ? "Buy Now" : "Download Free"}
           </Button>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ComingSoonCard({ category }: { category: string }) {
+  return (
+    <Card className="rounded-3xl overflow-hidden border-dashed border-2 border-border opacity-70">
+      <div className="aspect-[4/3] bg-muted/50 flex items-center justify-center">
+        <div className="text-center p-4">
+          <div className="text-muted-foreground/40 mb-2">
+            {typeIcons[category] || <FileText className="h-10 w-10 mx-auto" />}
+          </div>
+        </div>
+      </div>
+      <CardContent className="p-4 text-center space-y-2">
+        <h3 className="font-semibold text-muted-foreground text-sm">Coming Soon</h3>
+        <p className="text-xs text-muted-foreground">New template launching soon!</p>
+        <p className="text-xs font-medium text-muted-foreground">$TBD</p>
+        <Button size="sm" variant="outline" className="rounded-full text-xs h-8" onClick={() => toast.success("We'll notify you when new templates drop!")}>
+          <Bell className="h-3 w-3 mr-1" />
+          Notify Me
+        </Button>
       </CardContent>
     </Card>
   );
