@@ -460,21 +460,6 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
         </div>
       </div>
 
-      {/* ═══ FAB ═══ */}
-      <button
-        className="fixed z-50 flex items-center justify-center cursor-pointer"
-        style={{
-          bottom: 32, right: 24, width: 64, height: 64, borderRadius: "50%",
-          background: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
-          boxShadow: "0 8px 24px rgba(139,92,246,0.4)",
-          animation: "event-pulse-shadow 2s ease-in-out infinite",
-        }}
-        onClick={() => setShowAddGuests(true)}
-        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(139,92,246,0.6)"; }}
-        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(139,92,246,0.4)"; }}
-      >
-        <Plus className="h-7 w-7 text-white" style={{ strokeWidth: 2.5 }} />
-      </button>
 
       {/* ═══ MODALS ═══ */}
 
@@ -664,13 +649,6 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
         )}
       </AnimatePresence>
 
-      {/* Pulse animation */}
-      <style>{`
-        @keyframes event-pulse-shadow {
-          0%, 100% { box-shadow: 0 8px 24px rgba(139,92,246,0.4); }
-          50% { box-shadow: 0 12px 32px rgba(139,92,246,0.5), 0 0 0 8px rgba(139,92,246,0.1); }
-        }
-      `}</style>
     </motion.div>
   );
 }
