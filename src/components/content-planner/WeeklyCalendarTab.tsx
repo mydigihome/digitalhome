@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { format, parseISO, addDays, getWeek } from "date-fns";
 import { SetupData, WeekData, PostEntry, IdeasTable, getStatusColor, getPlatformColor, DAY_COLUMN_TINTS } from "./types";
-import { ChevronLeft, ChevronRight, Plus, PanelRightOpen, PanelRightClose, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, PanelRightOpen, PanelRightClose, X, FileText, Newspaper } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import PostDetailModal from "./PostDetailModal";
 
@@ -11,7 +11,7 @@ interface Props {
   weekStart: string;
   setWeek: (fn: WeekData | ((prev: WeekData) => WeekData)) => void;
   navigateWeek: (dir: -1 | 1) => void;
-  addPost: (dayIndex: number) => void;
+  addPost: (dayIndex: number, contentType?: string) => void;
   updatePost: (dayIndex: number, postId: string, patch: Partial<PostEntry>) => void;
   deletePost: (dayIndex: number, postId: string) => void;
   movePost: (fromDay: number, toDay: number, postId: string) => void;
@@ -127,6 +127,49 @@ function IdeasSidebar({ ideasTables }: { ideasTables: IdeasTable[] }) {
   );
 }
 
+// ─── Add Post Dropdown ────────────────────────
+function AddPostDropdown({ onAdd }: { onAdd: (type: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative mx-2 mb-2">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full py-1.5 text-[12px] text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150 cursor-pointer"
+        style={{ border: "1px dashed #DDD", borderRadius: 8, background: "none" }}
+      >
+        <Plus size={12} /> Add Post
+      </button>
+      {open && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
+          <button
+            onClick={() => { onAdd("Text"); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <FileText size={14} className="text-gray-400" /> Text
+          </button>
+          <button
+            onClick={() => { onAdd("Article"); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-[12px] text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Newspaper size={14} className="text-gray-400" /> Article
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────
 export default function WeeklyCalendarTab({
   setup, week, weekStart, setWeek, navigateWeek,
@@ -234,14 +277,8 @@ export default function WeeklyCalendarTab({
                 ))}
               </div>
 
-              {/* Add post */}
-              <button
-                onClick={() => addPost(dayIdx)}
-                className="mx-2 mb-2 py-1.5 text-[12px] text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 transition-all duration-150 cursor-pointer"
-                style={{ border: "1px dashed #DDD", borderRadius: 8, background: "none" }}
-              >
-                <Plus size={12} /> Add Post
-              </button>
+              {/* Add post dropdown */}
+              <AddPostDropdown onAdd={(type) => addPost(dayIdx, type)} />
             </div>
           ))}
         </div>

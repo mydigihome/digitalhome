@@ -216,10 +216,12 @@ export function useContentPlannerState() {
     });
   }, [currentWeekStart]);
 
-  const addPost = useCallback((dayIndex: number) => {
+  const addPost = useCallback((dayIndex: number, contentType?: string) => {
     setCurrentWeek(prev => {
       const days = [...prev.days];
-      days[dayIndex] = { ...days[dayIndex], posts: [...days[dayIndex].posts, createEmptyPost()] };
+      const newPost = createEmptyPost();
+      if (contentType) newPost.contentType = contentType;
+      days[dayIndex] = { ...days[dayIndex], posts: [...days[dayIndex].posts, newPost] };
       return { ...prev, days };
     });
   }, [setCurrentWeek]);
