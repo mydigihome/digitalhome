@@ -208,27 +208,6 @@
   }
 }
 
-/* ── Dashboard dark glass theme: reset modals to light ── */
-.dashboard-dark-scope > .fixed,
-.dashboard-dark-scope .fixed {
-  --background: 40 7% 98%;
-  --foreground: 30 15% 20%;
-  --card: 0 0% 100%;
-  --card-foreground: 30 15% 20%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 30 15% 20%;
-  --muted: 40 3% 93%;
-  --muted-foreground: 30 3% 47%;
-  --secondary: 40 3% 93%;
-  --secondary-foreground: 30 15% 20%;
-  --border: 40 5% 90%;
-  --input: 40 5% 90%;
-  --accent: 258 89% 93%;
-  --accent-foreground: 263 70% 50%;
-  --destructive: 0 65% 55%;
-  --destructive-foreground: 0 0% 100%;
-}
-
 /* Root styles */
 #root {
   max-width: 100%;
