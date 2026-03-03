@@ -266,7 +266,7 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="w-full max-w-lg mx-auto px-4 pb-32">
+        <div className="w-full max-w-3xl mx-auto px-4 pb-32">
 
           {/* ═══ HERO HEADER — Clickable upload area ═══ */}
           <div className="pt-4">
@@ -457,24 +457,24 @@ export default function Dashboard() {
             <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
             <div className="space-y-0">
               {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-3">
+                <div key={todo.id} className="flex items-center gap-2.5 py-2">
                   <button
                     onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                    className="h-5 w-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+                    className="h-[18px] w-[18px] rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
                     style={{ borderColor: "#D1D5DB" }}
                   />
-                  <span className="text-[15px] flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
+                  <span className="text-sm flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
                 </div>
               ))}
               {todos.filter(t => t.completed).slice(0, 3).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-3">
+                <div key={todo.id} className="flex items-center gap-2.5 py-2">
                   <div
-                    className="h-5 w-5 rounded-full flex-shrink-0 flex items-center justify-center"
+                    className="h-[18px] w-[18px] rounded-full flex-shrink-0 flex items-center justify-center"
                     style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </div>
-                  <span className="text-[15px] flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                  <span className="text-sm flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
                 </div>
               ))}
               <input
@@ -482,7 +482,7 @@ export default function Dashboard() {
                 onChange={(e) => setNewTodoText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
                 placeholder="Add a quick note..."
-                className="w-full mt-2 py-[10px] px-3 text-sm bg-transparent outline-none rounded-lg"
+                className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
                 style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
               />
             </div>
@@ -551,7 +551,12 @@ export default function Dashboard() {
               </button>
             </div>
             {recentEntry ? (
-              <div className="rounded-2xl p-5" style={{ background: "white", border: "1px solid #F3F4F6" }}>
+              <div className="relative rounded-2xl p-5" style={{ background: "white", border: "1px solid #F3F4F6" }}>
+                <button className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors">
+                  <svg className="w-4 h-4" style={{ color: "#D1D5DB" }} fill="currentColor" viewBox="0 0 20 20">
+                    <circle cx="10" cy="4" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="10" cy="16" r="1.5" />
+                  </svg>
+                </button>
                 <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>
                   {(recentEntry as any).title || "Untitled Entry"}
                 </p>
@@ -571,7 +576,22 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Voice button removed */}
+        {/* FLOATING VOICE BUTTON */}
+        <button
+          className="fixed bottom-24 right-6 z-50 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
+            animation: "dashboard-pulse-glow 2s ease-in-out infinite",
+          }}
+        >
+          <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 10v2a7 7 0 01-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="23" />
+            <line x1="8" y1="23" x2="16" y2="23" />
+          </svg>
+        </button>
       </div>
 
       {/* Modals */}
