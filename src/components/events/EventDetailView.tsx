@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast } from "date-fns";
@@ -6,7 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus, Crown, UserPlus,
+  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,6 @@ import {
   useCreateCollaborator,
   useDeleteCollaborator,
 } from "@/hooks/useCollaborators";
-
 
 const STATUS_CONFIG: Record<string, { icon: any; color: string; label: string }> = {
   accepted: { icon: CheckCircle, color: "text-green-500", label: "Accepted" },
@@ -54,6 +54,25 @@ const EMAIL_TEMPLATES = [
   },
 ];
 
+/* ── Animated Counter ── */
+function AnimatedCount({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const duration = 800;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [value]);
+  return <span>{display}</span>;
+}
+
 interface Props {
   projectId: string;
   projectName: string;
@@ -61,6 +80,7 @@ interface Props {
 }
 
 export default function EventDetailView({ projectId, projectName, coverImage }: Props) {
+  const navigate = useNavigate();
   const { data: event } = useEventDetails(projectId);
   const { data: guests = [] } = useEventGuests(event?.id);
   const { data: questions = [] } = useRsvpQuestions(event?.id);
@@ -68,7 +88,6 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
 
-  // Co-hosts (collaborators scoped to this project)
   const { data: allCollaborators = [] } = useCollaborators();
   const createCollab = useCreateCollaborator();
   const deleteCollab = useDeleteCollaborator();
@@ -97,7 +116,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
-    toast.success("Event link copied!");
+    toast.success("Link copied!");
   };
 
   const handleAddGuests = async () => {
@@ -133,201 +152,355 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   };
 
   const eventType = event.event_type?.replace("_", " ") || "Event";
+  const staggerDelay = (i: number) => ({ delay: i * 0.1 });
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <div className="relative rounded-2xl overflow-hidden">
-        <div
-          className="h-[200px] w-full"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="min-h-screen -mx-4 sm:-mx-6 -mt-4"
+      style={{ background: "white" }}
+    >
+      {/* ═══ HERO SECTION ═══ */}
+      <div className="relative w-full overflow-hidden" style={{ height: "45vh", minHeight: 360, background: "#1F2937" }}>
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt={projectName}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ zIndex: 0, maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 80%, transparent 100%)" }}
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #374151 0%, #1F2937 100%)", zIndex: 0 }} />
+        )}
+
+        {/* Dark Overlay */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%)", zIndex: 1 }} />
+
+        {/* Back Button */}
+        <button
+          onClick={() => navigate("/projects")}
+          className="absolute flex items-center justify-center rounded-full cursor-pointer transition-all duration-200"
           style={{
-            background: coverImage
-              ? `url(${coverImage}) center/cover`
-              : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.6) 100%)",
+            top: 56, left: 20, width: 44, height: 44, zIndex: 10,
+            background: "rgba(255,255,255,0.95)",
+            backdropFilter: "blur(10px)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
           }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <Badge className="mb-2 capitalize bg-background/20 text-background border-0">
-            {eventType}
-          </Badge>
-          <h1 className="text-3xl font-bold text-background mb-2">{projectName}</h1>
-          <div className="flex items-center gap-4 text-background/80 text-sm">
-            {event.event_date && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" /> {format(new Date(event.event_date), "EEEE, MMMM d, yyyy")}
-              </span>
-            )}
-            {event.event_date && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" /> {format(new Date(event.event_date), "h:mm a")}
-              </span>
-            )}
-            {event.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" /> {event.location}
-              </span>
-            )}
-          </div>
+          onMouseEnter={e => (e.currentTarget.style.background = "white")}
+          onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.95)")}
+        >
+          <ChevronLeft className="h-6 w-6" style={{ color: "#1F2937" }} />
+        </button>
+
+        {/* Event Type Badge */}
+        <div
+          className="absolute"
+          style={{
+            bottom: 140, left: 24, zIndex: 2,
+            padding: "8px 16px",
+            background: "rgba(139,92,246,0.15)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(139,92,246,0.3)",
+            borderRadius: 20,
+            fontSize: 12, fontWeight: 700,
+            textTransform: "uppercase" as const,
+            letterSpacing: "0.5px",
+            color: "#A78BFA",
+          }}
+        >
+          {eventType}
         </div>
+
+        {/* Event Title */}
+        <h1
+          className="absolute font-bold"
+          style={{
+            bottom: 80, left: 24, right: 24, zIndex: 2,
+            fontSize: 36, color: "white", lineHeight: 1.2,
+            textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {projectName}
+        </h1>
       </div>
 
-      {/* Share & Actions Bar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="outline" size="sm" onClick={handleCopyLink}>
-          <Copy className="h-4 w-4 mr-1" /> Copy Link
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setShowCoHostInvite(true)}>
-          <UserPlus className="h-4 w-4 mr-1" /> Invite Co-Hosts
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => openEmailComposer("all")}>
-          <Mail className="h-4 w-4 mr-1" /> Email All Guests
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => openEmailComposer("accepted")}>
-          <Send className="h-4 w-4 mr-1" /> Email Accepted
-        </Button>
-        <Badge variant="secondary" className="ml-auto">
-          {event.privacy === "public" ? <Globe className="h-3 w-3 mr-1" /> : <Lock className="h-3 w-3 mr-1" />}
-          {event.privacy === "public" ? "Public" : "Private"}
-        </Badge>
-      </div>
-
-      {/* Co-Hosts Section */}
-      {coHosts.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
-            <Crown className="h-4 w-4 text-primary" /> Co-Hosts
-          </h3>
-          <div className="space-y-2">
-            {coHosts.map((host) => (
-              <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary/30 transition-colors">
-                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
-                  {host.invited_email.charAt(0).toUpperCase()}
-                </div>
-                <span className="flex-1 text-sm text-foreground truncate">{host.invited_email}</span>
-                <Badge variant="secondary" className="text-[10px] capitalize">{host.status}</Badge>
-                <button
-                  onClick={() => { deleteCollab.mutate(host.id); toast.success("Co-host removed"); }}
-                  className="p-1 text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Description */}
-      {event.description && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">About</h3>
-          <p className="text-foreground whitespace-pre-wrap">{event.description}</p>
-        </div>
-      )}
-
-      {/* Guest Management Dashboard */}
-      <div className="rounded-xl border border-border bg-card shadow-sm">
-        <div className="p-5 border-b border-border flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" /> Guest List
-            </h3>
-            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-              <span>{counts.total} invited</span>
-              <span className="text-green-500">{counts.accepted} accepted</span>
-              <span className="text-yellow-500">{counts.pending} pending</span>
-              <span className="text-red-500">{counts.declined} declined</span>
-              <span className="text-blue-500">{counts.viewed} viewed</span>
+      {/* ═══ WHITE CONTENT CARD ═══ */}
+      <div
+        className="relative"
+        style={{
+          marginTop: -32,
+          background: "white",
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+          padding: "32px 20px 100px 20px",
+          minHeight: "60vh",
+          zIndex: 2,
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+          maxWidth: 800,
+          marginLeft: "auto",
+          marginRight: "auto",
+        }}
+      >
+        {/* ═══ INFO CARDS ═══ */}
+        {event.event_date && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ ...staggerDelay(0), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="flex items-start gap-4 mb-4"
+            style={{ background: "#F9FAFB", borderRadius: 20, padding: 20 }}
+          >
+            <div className="flex items-center justify-center shrink-0" style={{ width: 48, height: 48, background: "rgba(139,92,246,0.1)", borderRadius: 12 }}>
+              <Calendar className="h-6 w-6" style={{ color: "#8B5CF6" }} />
             </div>
-          </div>
-          <Button size="sm" onClick={() => setShowAddGuests(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add Guests
-          </Button>
-        </div>
+            <div>
+              <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Date & Time</p>
+              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>
+                {format(new Date(event.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(event.event_date), "h:mm a")}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Guest Rows */}
-        <div className="divide-y divide-border">
-          {guests.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-              <Users className="mx-auto h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">No guests yet. Add emails to get started.</p>
+        {event.location && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ ...staggerDelay(1), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            className="flex items-start gap-4 mb-4"
+            style={{ background: "#F9FAFB", borderRadius: 20, padding: 20 }}
+          >
+            <div className="flex items-center justify-center shrink-0" style={{ width: 48, height: 48, background: "rgba(139,92,246,0.1)", borderRadius: 12 }}>
+              <MapPin className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+            </div>
+            <div>
+              <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Location</p>
+              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>{event.location}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ ACTION ROW ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ ...staggerDelay(2), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="flex gap-3 flex-wrap my-6"
+        >
+          {[
+            { icon: Link, text: "Copy Link", onClick: handleCopyLink },
+            { icon: UserPlus, text: "Invite Co-Hosts", onClick: () => setShowCoHostInvite(true) },
+            { icon: Mail, text: "Email All", onClick: () => openEmailComposer("all") },
+            { icon: Send, text: "Email Accepted", onClick: () => openEmailComposer("accepted") },
+          ].map((btn, i) => (
+            <button
+              key={i}
+              onClick={btn.onClick}
+              className="inline-flex items-center gap-2 whitespace-nowrap cursor-pointer transition-all duration-200 active:scale-95 hover:-translate-y-px"
+              style={{
+                padding: "12px 20px",
+                background: "white",
+                border: "1.5px solid #E5E7EB",
+                borderRadius: 24,
+                fontSize: 14, fontWeight: 600,
+                color: "#1F2937",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#F9FAFB"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#E5E7EB"; }}
+            >
+              <btn.icon className="h-4 w-4" style={{ color: "#6B7280" }} />
+              {btn.text}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* ═══ CO-HOSTS ═══ */}
+        {coHosts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ ...staggerDelay(3), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <p className="font-bold uppercase mb-4" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", marginTop: 32 }}>
+              Co-Hosts
+            </p>
+            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 16, padding: 20 }}>
+              {coHosts.map((host) => (
+                <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
+                  onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <div className="flex items-center justify-center shrink-0" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(139,92,246,0.1)", color: "#8B5CF6", fontSize: 12, fontWeight: 600 }}>
+                    {host.invited_email.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 text-sm truncate" style={{ color: "#1F2937" }}>{host.invited_email}</span>
+                  <span className="text-[10px] capitalize px-2 py-0.5 rounded-full" style={{ background: "#F3F4F6", color: "#6B7280" }}>{host.status}</span>
+                  <button onClick={() => { deleteCollab.mutate(host.id); toast.success("Co-host removed"); }} className="p-1 transition-colors cursor-pointer" style={{ color: "#9CA3AF" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#EF4444")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#9CA3AF")}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ ABOUT ═══ */}
+        {event.description && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ ...staggerDelay(3), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>About</p>
+            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 16, padding: 20, fontSize: 15, color: "#4B5563", lineHeight: 1.7, whiteSpace: "pre-wrap" as const }}>
+              {event.description}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ GUEST LIST ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ ...staggerDelay(4), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <div className="flex items-center justify-between" style={{ margin: "32px 0 16px" }}>
+            <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF" }}>Guest List</p>
+            <button
+              onClick={() => setShowAddGuests(true)}
+              className="cursor-pointer transition-colors hover:underline"
+              style={{ fontSize: 14, fontWeight: 600, color: "#8B5CF6" }}
+            >
+              + Add Guests
+            </button>
+          </div>
+
+          {guests.length === 0 ? (
+            <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "48px 24px" }}>
+              <UserPlus className="mx-auto mb-4" style={{ width: 48, height: 48, color: "#D1D5DB" }} />
+              <p className="font-semibold mb-2" style={{ fontSize: 18, color: "#1F2937" }}>No guests yet</p>
+              <p style={{ fontSize: 14, color: "#9CA3AF", lineHeight: 1.5 }}>Add emails to get started with your guest list management.</p>
+            </div>
+          ) : (
+            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
+              {guests.map((guest, i) => {
+                const config = STATUS_CONFIG[guest.status] || STATUS_CONFIG.pending;
+                const StatusIcon = config.icon;
+                return (
+                  <div
+                    key={guest.id}
+                    className="group flex items-center gap-3 transition-colors"
+                    style={{ padding: 16, borderBottom: i < guests.length - 1 ? "1px solid #F3F4F6" : "none" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <StatusIcon className={cn("h-5 w-5 shrink-0", config.color)} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: "#1F2937" }}>
+                        {guest.name || guest.email}
+                      </p>
+                      {guest.name && <p className="text-xs" style={{ color: "#9CA3AF" }}>{guest.email}</p>}
+                      {guest.viewed_at && (
+                        <p className="text-xs" style={{ color: "#9CA3AF" }}>
+                          Viewed {formatDistanceToNow(new Date(guest.viewed_at), { addSuffix: true })}
+                        </p>
+                      )}
+                    </div>
+                    <span className={cn("text-xs capitalize px-2 py-0.5 rounded-full", config.color)} style={{ background: "#F3F4F6" }}>
+                      {config.label}
+                    </span>
+                    <button
+                      onClick={() => { deleteGuest.mutate(guest.id); toast.success("Guest removed"); }}
+                      className="p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      style={{ color: "#9CA3AF" }}
+                      onMouseEnter={e => (e.currentTarget.style.color = "#EF4444")}
+                      onMouseLeave={e => (e.currentTarget.style.color = "#9CA3AF")}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {/* Counts Row */}
+              <div className="flex justify-around text-center" style={{ borderTop: "1px solid #F3F4F6", paddingTop: 24, paddingBottom: 8, margin: "0 16px" }}>
+                <div>
+                  <span className="block font-bold" style={{ fontSize: 28, color: "#1F2937", marginBottom: 4 }}><AnimatedCount value={counts.accepted} /></span>
+                  <span className="uppercase font-semibold" style={{ fontSize: 12, letterSpacing: "0.5px", color: "#9CA3AF" }}>Accepted</span>
+                </div>
+                <div>
+                  <span className="block font-bold" style={{ fontSize: 28, color: "#1F2937", marginBottom: 4 }}><AnimatedCount value={counts.pending} /></span>
+                  <span className="uppercase font-semibold" style={{ fontSize: 12, letterSpacing: "0.5px", color: "#9CA3AF" }}>Pending</span>
+                </div>
+              </div>
             </div>
           )}
-          {guests.map(guest => {
-            const config = STATUS_CONFIG[guest.status] || STATUS_CONFIG.pending;
-            const StatusIcon = config.icon;
-            return (
-              <div key={guest.id} className="flex items-center gap-3 p-4 hover:bg-secondary/30 transition">
-                <StatusIcon className={cn("h-5 w-5 shrink-0", config.color)} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {guest.name || guest.email}
-                  </p>
-                  {guest.name && <p className="text-xs text-muted-foreground">{guest.email}</p>}
-                  {guest.viewed_at && (
-                    <p className="text-xs text-muted-foreground">
-                      Viewed {formatDistanceToNow(new Date(guest.viewed_at), { addSuffix: true })}
-                    </p>
-                  )}
-                </div>
-                <Badge variant="secondary" className={cn("text-xs capitalize", config.color)}>
-                  {config.label}
-                </Badge>
-                <button
-                  onClick={() => { deleteGuest.mutate(guest.id); toast.success("Guest removed"); }}
-                  className="p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            );
-          })}
-        </div>
 
-        {/* RSVP Info */}
-        {event.rsvp_deadline && (
-          <div className="p-4 border-t border-border bg-secondary/30">
-            <p className="text-xs text-muted-foreground">
+          {/* RSVP Deadline */}
+          {event.rsvp_deadline && (
+            <p className="text-center mt-6" style={{ fontSize: 13, color: "#9CA3AF" }}>
               RSVP Deadline: {format(new Date(event.rsvp_deadline), "MMMM d, yyyy")}
               {isPast(new Date(event.rsvp_deadline)) && (
-                <span className="text-destructive ml-2">• Expired</span>
+                <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444" }}>Expired</span>
               )}
             </p>
-          </div>
-        )}
+          )}
+        </motion.div>
+
+        {/* ═══ DELETE SECTION ═══ */}
+        <div className="text-center" style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #F3F4F6" }}>
+          <button
+            className="cursor-pointer transition-all duration-200"
+            style={{ background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#EF4444", padding: "12px 24px", borderRadius: 8 }}
+            onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.05)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+          >
+            Delete Event
+          </button>
+        </div>
       </div>
+
+      {/* ═══ FAB ═══ */}
+      <button
+        className="fixed z-50 flex items-center justify-center cursor-pointer"
+        style={{
+          bottom: 32, right: 24, width: 64, height: 64, borderRadius: "50%",
+          background: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+          boxShadow: "0 8px 24px rgba(139,92,246,0.4)",
+          animation: "event-pulse-shadow 2s ease-in-out infinite",
+        }}
+        onClick={() => setShowAddGuests(true)}
+        onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.1)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(139,92,246,0.6)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(139,92,246,0.4)"; }}
+      >
+        <Plus className="h-7 w-7 text-white" style={{ strokeWidth: 2.5 }} />
+      </button>
+
+      {/* ═══ MODALS ═══ */}
 
       {/* Add Guests Modal */}
       <AnimatePresence>
         {showAddGuests && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
             onClick={() => setShowAddGuests(false)}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl space-y-4"
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="w-full max-w-md space-y-4"
+              style={{ background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Add Guests</h3>
-                <button onClick={() => setShowAddGuests(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
+                <h3 className="text-lg font-semibold" style={{ color: "#1F2937" }}>Add Guests</h3>
+                <button onClick={() => setShowAddGuests(false)} className="cursor-pointer"><X className="h-5 w-5" style={{ color: "#9CA3AF" }} /></button>
               </div>
-              <Textarea
-                value={newEmails}
-                onChange={e => setNewEmails(e.target.value)}
-                placeholder="email1@example.com, email2@example.com"
-                rows={4}
-              />
+              <Textarea value={newEmails} onChange={e => setNewEmails(e.target.value)} placeholder="email1@example.com, email2@example.com" rows={4} />
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowAddGuests(false)} className="flex-1">Cancel</Button>
-                <Button onClick={handleAddGuests} className="flex-1">Add Guests</Button>
+                <button onClick={() => setShowAddGuests(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}>Cancel</button>
+                <button onClick={handleAddGuests} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white" style={{ background: "#8B5CF6", fontSize: 14 }}>Add Guests</button>
               </div>
             </motion.div>
           </motion.div>
@@ -338,30 +511,28 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
       <AnimatePresence>
         {showEmailModal && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
             onClick={() => setShowEmailModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="w-full max-w-lg rounded-2xl bg-card border border-primary/20 p-6 shadow-xl space-y-4"
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="w-full max-w-lg space-y-4"
+              style={{ background: "white", borderRadius: 24, padding: 24, border: "1px solid rgba(139,92,246,0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-primary" /> Email Guests
+                <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: "#1F2937" }}>
+                  <Mail className="h-5 w-5" style={{ color: "#8B5CF6" }} /> Email Guests
                 </h3>
-                <button onClick={() => setShowEmailModal(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
+                <button onClick={() => setShowEmailModal(false)} className="cursor-pointer"><X className="h-5 w-5" style={{ color: "#9CA3AF" }} /></button>
               </div>
-              <div className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
+              <div className="rounded-lg p-3 text-sm" style={{ background: "#F9FAFB", color: "#6B7280" }}>
                 Sending to: {emailFilter === "accepted" ? `${counts.accepted} accepted guests` : `${counts.total} guests`}
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Template</Label>
+                <Label className="text-xs" style={{ color: "#9CA3AF" }}>Template</Label>
                 <select
                   value={emailTemplate}
                   onChange={e => {
@@ -371,20 +542,21 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
                     const dateStr = event.event_date ? format(new Date(event.event_date), "MMMM d, yyyy") : "TBD";
                     setEmailBody(tpl.body(projectName, dateStr));
                   }}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-xl px-3 py-2 text-sm"
+                  style={{ border: "1.5px solid #E5E7EB", background: "white", color: "#1F2937" }}
                 >
                   {EMAIL_TEMPLATES.map((t, i) => <option key={i} value={i}>{t.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Message</Label>
+                <Label className="text-xs" style={{ color: "#9CA3AF" }}>Message</Label>
                 <Textarea value={emailBody} onChange={e => setEmailBody(e.target.value)} rows={6} />
               </div>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowEmailModal(false)} className="flex-1">Cancel</Button>
-                <Button onClick={handleSendEmail} className="flex-1">
-                  <Send className="h-4 w-4 mr-1" /> Open Email Client
-                </Button>
+                <button onClick={() => setShowEmailModal(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}>Cancel</button>
+                <button onClick={handleSendEmail} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white inline-flex items-center justify-center gap-2" style={{ background: "#8B5CF6", fontSize: 14 }}>
+                  <Send className="h-4 w-4" /> Open Email Client
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -395,28 +567,26 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
       <AnimatePresence>
         {showCoHostInvite && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
             onClick={() => setShowCoHostInvite(false)}
           >
             <motion.div
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.95 }}
-              className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl space-y-4"
+              initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              className="w-full max-w-md space-y-4"
+              style={{ background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-primary" /> Invite Co-Hosts
+                <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: "#1F2937" }}>
+                  <UserPlus className="h-5 w-5" style={{ color: "#8B5CF6" }} /> Invite Co-Hosts
                 </h3>
-                <button onClick={() => setShowCoHostInvite(false)}>
-                  <X className="h-5 w-5 text-muted-foreground" />
+                <button onClick={() => setShowCoHostInvite(false)} className="cursor-pointer">
+                  <X className="h-5 w-5" style={{ color: "#9CA3AF" }} />
                 </button>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm" style={{ color: "#6B7280" }}>
                 Co-hosts can help manage this event, view guest lists, and send communications.
               </p>
               <div className="flex gap-2">
@@ -440,8 +610,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
                   }}
                   className="flex-1"
                 />
-                <Button
-                  size="sm"
+                <button
                   disabled={createCollab.isPending}
                   onClick={() => {
                     const trimmed = coHostEmail.trim().toLowerCase();
@@ -455,23 +624,30 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
                       setCoHostEmail("");
                     }).catch((err: any) => toast.error(err.message || "Failed to invite"));
                   }}
+                  className="inline-flex items-center gap-1 px-4 py-2 rounded-xl font-semibold text-white text-sm cursor-pointer"
+                  style={{ background: "#8B5CF6" }}
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Add
-                </Button>
+                  <Plus className="h-4 w-4" /> Add
+                </button>
               </div>
 
-              {/* Current co-hosts */}
               {coHosts.length > 0 && (
-                <div className="space-y-1 pt-2 border-t border-border">
+                <div className="space-y-1 pt-2" style={{ borderTop: "1px solid #F3F4F6" }}>
                   {coHosts.map((host) => (
-                    <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-secondary/30 transition-colors">
-                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold">
+                    <div key={host.id} className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
+                      onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div className="flex items-center justify-center shrink-0" style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(139,92,246,0.1)", color: "#8B5CF6", fontSize: 12, fontWeight: 600 }}>
                         {host.invited_email.charAt(0).toUpperCase()}
                       </div>
-                      <span className="flex-1 text-sm text-foreground truncate">{host.invited_email}</span>
+                      <span className="flex-1 text-sm truncate" style={{ color: "#1F2937" }}>{host.invited_email}</span>
                       <button
                         onClick={() => { deleteCollab.mutate(host.id); toast.success("Co-host removed"); }}
-                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        className="p-1 transition-colors cursor-pointer"
+                        style={{ color: "#9CA3AF" }}
+                        onMouseEnter={e => (e.currentTarget.style.color = "#EF4444")}
+                        onMouseLeave={e => (e.currentTarget.style.color = "#9CA3AF")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -481,12 +657,20 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
               )}
 
               <div className="flex justify-end">
-                <Button variant="outline" size="sm" onClick={() => setShowCoHostInvite(false)}>Done</Button>
+                <button onClick={() => setShowCoHostInvite(false)} className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937" }}>Done</button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+
+      {/* Pulse animation */}
+      <style>{`
+        @keyframes event-pulse-shadow {
+          0%, 100% { box-shadow: 0 8px 24px rgba(139,92,246,0.4); }
+          50% { box-shadow: 0 12px 32px rgba(139,92,246,0.5), 0 0 0 8px rgba(139,92,246,0.1); }
+        }
+      `}</style>
+    </motion.div>
   );
 }
