@@ -266,109 +266,110 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="w-full max-w-3xl mx-auto px-4 pb-32">
+        <div className="w-full max-w-3xl mx-auto pb-24">
 
-          {/* ═══ HERO HEADER — Clickable upload area ═══ */}
-          <div className="pt-4">
-            <motion.div
-              {...stagger(0)}
-              className="relative h-52 mb-16 rounded-3xl overflow-hidden shadow-xl cursor-pointer group"
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e: any) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event: any) => {
-                      upsertPrefs.mutate({
-                        dashboard_cover: event.target.result,
-                        dashboard_cover_type: 'image'
-                      });
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                };
-                input.click();
-              }}
-            >
-              {hasCover ? (
-                <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
-              )}
+          {/* ═══ HERO HEADER — Full-width clickable upload area ═══ */}
+          <motion.div
+            {...stagger(0)}
+            className="relative h-48 sm:h-56 overflow-hidden cursor-pointer group"
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              input.onchange = (e: any) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (event: any) => {
+                    upsertPrefs.mutate({
+                      dashboard_cover: event.target.result,
+                      dashboard_cover_type: 'image'
+                    });
+                  };
+                  reader.readAsDataURL(file);
+                }
+              };
+              input.click();
+            }}
+          >
+            {hasCover ? (
+              <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
+            )}
 
-              {/* Upload overlay on hover */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
-                <div className="text-center">
-                  <svg className="w-12 h-12 text-white mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-white font-semibold text-sm">Change Cover</p>
-                </div>
-              </div>
-
-              {/* Gradient blend to white */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-white pointer-events-none" />
-
-              {/* Greeting */}
-              <div className="absolute bottom-6 left-6 z-10">
-                <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
-                  {format(now, "EEEE, MMMM d")}
-                </p>
-                <h1
-                  className="text-[32px] sm:text-[40px] leading-[1.2] mt-1"
-                  style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontStyle: "italic",
-                    fontWeight: 400,
-                    color: "white",
-                    textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-                  }}
-                >
-                  {greeting}
-                </h1>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* ═══ MOMENTUM & HABITS — SINGLE CARD ═══ */}
-          <motion.div {...stagger(1)} className="-mt-10 relative z-[5] mb-6 rounded-[20px] p-6" style={glassCard}>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Momentum */}
+            {/* Upload overlay on hover */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
               <div className="text-center">
-                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#6366F1" }}>Momentum</p>
-                <div className="flex justify-center">
-                  <ProgressRing progress={momentum} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                  </ProgressRing>
-                </div>
-                <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
-              </div>
-
-              {/* Habits — GREEN */}
-              <div className="text-center">
-                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#10B981" }}>Habits</p>
-                <div className="flex justify-center">
-                  <ProgressRing progress={habitsProgress} gradientId="habits-grad" color1="#10B981" color2="#34D399">
-                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                  </ProgressRing>
-                </div>
-                <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+                <svg className="w-10 h-10 text-white mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-white font-semibold text-xs">Change Cover</p>
               </div>
             </div>
 
-            {/* Subtitle inside same card */}
+            {/* Gradient blend to page bg */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F9FAFB] pointer-events-none" />
+
+            {/* Greeting */}
+            <div className="absolute bottom-12 left-5 z-10">
+              <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
+                {format(now, "EEEE, MMMM d")}
+              </p>
+              <h1
+                className="text-[28px] sm:text-[36px] leading-[1.15] mt-0.5"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  color: "white",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                }}
+              >
+                {greeting}
+              </h1>
+            </div>
+          </motion.div>
+
+          {/* ═══ MOMENTUM & HABITS — TWO SEPARATE CARDS overlapping banner ═══ */}
+          <div className="px-4 -mt-10 relative z-[5] mb-5">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Momentum Card */}
+              <motion.div {...stagger(1)} className="rounded-2xl p-4 text-center" style={glassCard}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#6366F1" }}>Momentum</p>
+                <div className="flex justify-center">
+                  <ProgressRing progress={momentum} size={80} strokeWidth={7} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                    <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  </ProgressRing>
+                </div>
+                <p className="text-[11px] font-medium mt-2" style={{ color: "#6B7280" }}>Daily Goal</p>
+              </motion.div>
+
+              {/* Habits Card — GREEN */}
+              <motion.div {...stagger(1.5)} className="rounded-2xl p-4 text-center" style={glassCard}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#10B981" }}>Habits</p>
+                <div className="flex justify-center">
+                  <ProgressRing progress={habitsProgress} size={80} strokeWidth={7} gradientId="habits-grad" color1="#10B981" color2="#34D399">
+                    <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                  </ProgressRing>
+                </div>
+                <p className="text-[11px] font-medium mt-2" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+              </motion.div>
+            </div>
+
+            {/* Subtitle */}
             {tasksAhead > 0 && (
-              <div className="mt-4 text-[13px] font-medium py-[10px] px-4 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.1)" }}>
+              <div className="mt-3 text-[12px] font-medium py-2 px-3 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.08)" }}>
                 🎯 You're on track! {tasksAhead} tasks ahead.
               </div>
             )}
-          </motion.div>
+          </div>
+
+          {/* Wrap remaining content with horizontal padding */}
+          <div className="px-4 space-y-5">
 
           {/* ═══ EVERYDAY LINKS ═══ */}
-          <motion.div {...stagger(2)} className="mb-6">
+          <motion.div {...stagger(2)}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h2>
               <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
@@ -427,7 +428,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ TODAY'S AGENDA ═══ */}
-          <motion.div {...stagger(3)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
+          <motion.div {...stagger(3)} className="rounded-2xl p-5" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
               <button onClick={() => navigate("/calendar")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
@@ -453,7 +454,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ QUICK TO-DOS ═══ */}
-          <motion.div {...stagger(4)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
+          <motion.div {...stagger(4)} className="rounded-2xl p-5" style={glassCard}>
             <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
             <div className="space-y-0">
               {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
@@ -489,7 +490,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ ACTIVE PROJECTS ═══ */}
-          <motion.div {...stagger(5)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
+          <motion.div {...stagger(5)} className="rounded-2xl p-5" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
               <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
@@ -526,7 +527,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ MONEY REMINDERS ═══ */}
-          <motion.div {...stagger(6)} className="mb-6 rounded-[20px] p-6 bg-red-50/50 border border-red-100" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
+          <motion.div {...stagger(6)} className="rounded-2xl p-5 bg-red-50/50 border border-red-100" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
             <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Money Reminders</h2>
             {moneyReminders.length > 0 ? (
               <div className="space-y-0">
@@ -543,7 +544,7 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ RECENT JOURNAL ═══ */}
-          <motion.div {...stagger(7)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
+          <motion.div {...stagger(7)} className="rounded-2xl p-5" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
               <button onClick={() => navigate("/journal")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
@@ -574,24 +575,8 @@ export default function Dashboard() {
             )}
           </motion.div>
 
-        </div>
-
-        {/* FLOATING VOICE BUTTON */}
-        <button
-          className="fixed bottom-24 right-6 z-50 w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95"
-          style={{
-            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-            boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
-            animation: "dashboard-pulse-glow 2s ease-in-out infinite",
-          }}
-        >
-          <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 10v2a7 7 0 01-14 0v-2" />
-            <line x1="12" y1="19" x2="12" y2="23" />
-            <line x1="8" y1="23" x2="16" y2="23" />
-          </svg>
-        </button>
+          </div>{/* end space-y-5 */}
+        </div>{/* end max-w-3xl */}
       </div>
 
       {/* Modals */}
@@ -659,12 +644,6 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <style>{`
-        @keyframes dashboard-pulse-glow {
-          0%, 100% { box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
-          50% { box-shadow: 0 12px 40px rgba(99,102,241,0.6), 0 0 0 12px rgba(99,102,241,0.1); }
-        }
-      `}</style>
     </AppShell>
   );
 }
