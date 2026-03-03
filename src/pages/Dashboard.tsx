@@ -270,12 +270,12 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="w-full max-w-3xl mx-auto pb-24">
+        <div className="w-full max-w-3xl mx-auto pb-24 lg:max-w-5xl">
 
           {/* ═══ HERO HEADER — Full-width clickable upload area ═══ */}
           <motion.div
             {...stagger(0)}
-            className="relative h-48 sm:h-56 overflow-hidden cursor-pointer group"
+            className="relative h-52 sm:h-64 lg:h-72 overflow-hidden cursor-pointer group"
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
@@ -334,27 +334,41 @@ export default function Dashboard() {
 
           {/* ═══ MOMENTUM & HABITS — TWO SEPARATE CARDS overlapping banner ═══ */}
           <div className="px-4 -mt-10 relative z-[5] mb-5">
-            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto sm:max-w-sm">
+            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto sm:max-w-sm lg:max-w-md">
               {/* Momentum Card */}
-              <motion.div {...stagger(1)} className="rounded-2xl p-3 text-center" style={glassCard}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1.5" style={{ color: "#6366F1" }}>Momentum</p>
+              <motion.div {...stagger(1)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
+                <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#6366F1" }}>Momentum</p>
                 <div className="flex justify-center">
-                  <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                  </ProgressRing>
+                  <div className="lg:hidden">
+                    <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                      <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                    </ProgressRing>
+                  </div>
+                  <div className="hidden lg:block">
+                    <ProgressRing progress={momentum} size={100} strokeWidth={8} gradientId="momentum-grad-lg" color1="#6366F1" color2="#8B5CF6">
+                      <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                    </ProgressRing>
+                  </div>
                 </div>
-                <p className="text-[10px] font-medium mt-1.5" style={{ color: "#6B7280" }}>Daily Goal</p>
+                <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
               </motion.div>
 
               {/* Habits Card — GREEN */}
-              <motion.div {...stagger(1.5)} className="rounded-2xl p-3 text-center" style={glassCard}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1.5" style={{ color: "#10B981" }}>Habits</p>
+              <motion.div {...stagger(1.5)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
+                <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#10B981" }}>Habits</p>
                 <button onClick={() => habits.length > 0 && setSelectedHabit(habits[0])} className="flex justify-center mx-auto hover:opacity-80 transition">
-                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
-                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                  </ProgressRing>
+                  <div className="lg:hidden">
+                    <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
+                      <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                    </ProgressRing>
+                  </div>
+                  <div className="hidden lg:block">
+                    <ProgressRing progress={habitsProgress} size={100} strokeWidth={8} gradientId="habits-grad-lg" color1="#10B981" color2="#34D399">
+                      <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                    </ProgressRing>
+                  </div>
                 </button>
-                <p className="text-[10px] font-medium mt-1.5" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+                <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
               </motion.div>
             </div>
 
