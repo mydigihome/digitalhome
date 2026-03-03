@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo } from "@/hooks/useQuickTodos";
-import { useHabits, useHabitLogs, getCurrentWeekStart } from "@/hooks/useHabits";
+import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
@@ -112,6 +112,8 @@ export default function Dashboard() {
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
   const [editingLinks, setEditingLinks] = useState(false);
   const [newTodoText, setNewTodoText] = useState("");
+  const [selectedHabit, setSelectedHabit] = useState<any>(null);
+  const [logHours, setLogHours] = useState("");
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
@@ -119,6 +121,8 @@ export default function Dashboard() {
   const addTodo = useAddQuickTodo();
   const updateTodo = useUpdateQuickTodo();
   const deleteTodo = useDeleteQuickTodo();
+  const createHabit = useCreateHabit();
+  const logHabitHours = useLogHabitHours();
 
   // Handle payment success
   useEffect(() => {
@@ -345,11 +349,11 @@ export default function Dashboard() {
               {/* Habits Card — GREEN */}
               <motion.div {...stagger(1.5)} className="rounded-2xl p-3 text-center" style={glassCard}>
                 <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1.5" style={{ color: "#10B981" }}>Habits</p>
-                <div className="flex justify-center">
+                <button onClick={() => habits.length > 0 && setSelectedHabit(habits[0])} className="flex justify-center mx-auto hover:opacity-80 transition">
                   <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
                     <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
                   </ProgressRing>
-                </div>
+                </button>
                 <p className="text-[10px] font-medium mt-1.5" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
               </motion.div>
             </div>
@@ -543,22 +547,66 @@ export default function Dashboard() {
             )}
           </motion.div>
 
-          {/* ═══ RECENT JOURNAL ═══ */}
+          {/* ═══ HABIT TRACKER ═══ */}
           <motion.div {...stagger(7)} className="rounded-2xl p-5" style={glassCard}>
+            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Habit Tracker</h2>
+            <div className="space-y-1">
+              {habits.slice(0, 4).map(habit => {
+                const habitHours = (habitLogs || [])
+                  .filter(log => log.habit_id === habit.id && log.week_start_date === currentWeekStart)
+                  .reduce((sum, log) => sum + (log.hours || 0), 0);
+                return (
+                  <button
+                    key={habit.id}
+                    onClick={() => setSelectedHabit(habit)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition text-left"
+                  >
+                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{habit.name}</span>
+                    <span className="text-xs" style={{ color: "#9CA3AF" }}>{habitHours}h this week</span>
+                  </button>
+                );
+              })}
+              {habits.length === 0 && (
+                <button
+                  onClick={() => {
+                    const name = prompt('Enter habit name:');
+                    if (name) createHabit.mutate(name);
+                  }}
+                  className="w-full text-sm text-center py-6 hover:bg-gray-50 rounded-xl transition"
+                  style={{ color: "#9CA3AF" }}
+                >
+                  + Add your first habit
+                </button>
+              )}
+            </div>
+          </motion.div>
+
+          {/* ═══ RECENT JOURNAL ═══ */}
+          <motion.div {...stagger(8)} className="rounded-2xl p-5" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
-              <button onClick={() => navigate("/journal")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+              <button
+                onClick={() => navigate('/journal')}
+                className="text-lg font-bold hover:opacity-70 transition"
+                style={{ color: "#1F2937" }}
+              >
+                Recent Journal
+              </button>
+              <button onClick={() => navigate("/journal?new=true")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
                 New Entry
               </button>
             </div>
             {recentEntry ? (
-              <div className="relative rounded-2xl p-5" style={{ background: "white", border: "1px solid #F3F4F6" }}>
-                <button className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-full transition-colors">
+              <button
+                onClick={() => navigate('/journal')}
+                className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
+                style={{ background: "white", border: "1px solid #F3F4F6" }}
+              >
+                <div className="absolute top-4 right-4 p-1">
                   <svg className="w-4 h-4" style={{ color: "#D1D5DB" }} fill="currentColor" viewBox="0 0 20 20">
                     <circle cx="10" cy="4" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="10" cy="16" r="1.5" />
                   </svg>
-                </button>
-                <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>
+                </div>
+                <p className="text-[17px] font-semibold mb-1 pr-8" style={{ color: "#1F2937" }}>
                   {(recentEntry as any).title || "Untitled Entry"}
                 </p>
                 <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>
@@ -567,12 +615,32 @@ export default function Dashboard() {
                 <p className="text-sm leading-relaxed" style={{ color: "#4B5563", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                   {(recentEntry as any).content_preview || "No content yet..."}
                 </p>
-              </div>
+              </button>
             ) : (
-              <p className="text-sm text-center py-8" style={{ color: "#9CA3AF" }}>
-                The page is blank. What's on your mind, {profile?.full_name?.split(" ")[0] || "there"}?
-              </p>
+              <button
+                onClick={() => navigate('/journal?new=true')}
+                className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
+                style={{ background: "white", border: "1px solid #F3F4F6" }}
+              >
+                <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>Untitled Entry</p>
+                <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>{format(new Date(), "MMM d, yyyy")}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "#4B5563" }}>
+                  Today I finally finished the vision pro design sync and the team loved the new glassmorphic direction...
+                </p>
+              </button>
             )}
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => navigate('/journal')}
+                className="text-xs flex items-center gap-1 transition hover:opacity-70"
+                style={{ color: "#9CA3AF" }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <span>View all entries</span>
+              </button>
+            </div>
           </motion.div>
 
           </div>{/* end space-y-5 */}
@@ -643,6 +711,83 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Log Habit Hours Modal */}
+      {selectedHabit && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setSelectedHabit(null); }}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Log Habit Hours</h3>
+              <button onClick={() => setSelectedHabit(null)} className="p-1 hover:bg-gray-100 rounded-full transition">
+                <X className="w-5 h-5" style={{ color: "#9CA3AF" }} />
+              </button>
+            </div>
+            <div className="space-y-1 mb-6">
+              {habits.map(h => (
+                <label key={h.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio" name="habit"
+                    checked={selectedHabit.id === h.id}
+                    onChange={() => setSelectedHabit(h)}
+                    className="w-4 h-4 accent-indigo-600"
+                  />
+                  <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{h.name}</span>
+                </label>
+              ))}
+              <button
+                onClick={() => {
+                  const name = prompt('Enter habit name:');
+                  if (name) createHabit.mutate(name);
+                }}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 w-full text-left"
+              >
+                <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }} />
+                <span className="text-sm font-medium" style={{ color: "#9CA3AF" }}>+ Add Custom Habit</span>
+              </button>
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>Hours this week</label>
+              <input
+                type="number" min="0" step="0.5" value={logHours}
+                onChange={(e) => setLogHours(e.target.value)}
+                className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                style={{ borderColor: "#D1D5DB" }}
+                placeholder="0"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setSelectedHabit(null); setLogHours(''); }}
+                className="flex-1 px-4 py-3 font-semibold rounded-xl hover:bg-gray-100 transition"
+                style={{ color: "#374151" }}
+              >Cancel</button>
+              <button
+                onClick={() => {
+                  if (logHours && parseFloat(logHours) > 0) {
+                    logHabitHours.mutate({
+                      habit_id: selectedHabit.id,
+                      hours: parseFloat(logHours),
+                      week_start_date: currentWeekStart,
+                    });
+                    setSelectedHabit(null);
+                    setLogHours('');
+                    toast.success('Hours logged!');
+                  }
+                }}
+                className="flex-1 px-4 py-3 text-white font-semibold rounded-xl transition"
+                style={{ background: "#6366F1" }}
+              >Save</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
     </AppShell>
   );
