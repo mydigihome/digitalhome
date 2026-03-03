@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -12,6 +12,7 @@ import {
   Plus, FolderOpen, Calendar, Clock, ExternalLink,
   Sparkles, Edit2, Check, ImageIcon, StickyNote, X,
   TrendingUp, CheckCircle2, ListTodo, Target,
+  Settings, Mic, Book, Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -28,6 +29,7 @@ import QuickTodosWidget from "@/components/QuickTodosWidget";
 import NinetyDayGoalWidget from "@/components/NinetyDayGoalWidget";
 import { cn } from "@/lib/utils";
 import JournalEntriesList from "@/components/journal/JournalEntriesList";
+import "@fontsource/playfair-display/400-italic.css";
 
 interface EverydayLink {
   id: string;
@@ -56,6 +58,40 @@ function useCurrentTime() {
     return () => clearInterval(id);
   }, []);
   return now;
+}
+
+/* ── Animated SVG Progress Ring ── */
+function ProgressRing({ progress, size = 100, strokeWidth = 8, gradientId, color1, color2, children }: {
+  progress: number; size?: number; strokeWidth?: number; gradientId: string; color1: string; color2: string; children: React.ReactNode;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color1} />
+            <stop offset="100%" stopColor={color2} />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={`${color1}26`} strokeWidth={strokeWidth} />
+        <motion.circle
+          cx={size / 2} cy={size / 2} r={radius} fill="none"
+          stroke={`url(#${gradientId})`} strokeWidth={strokeWidth}
+          strokeLinecap="round" strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export default function Dashboard() {
@@ -97,9 +133,9 @@ export default function Dashboard() {
   }, [prefs]);
 
   const [everydayLinks, setEverydayLinks] = useState<EverydayLink[]>([
-    { id: "1", name: "Check your email", icon: "📧", url: "mailto:", completed: false },
-    { id: "2", name: "Review Shopify Sales", icon: "🛍️", url: "https://shopify.com", completed: false },
-    { id: "3", name: "Check Application Status", icon: "📝", url: "#applications", completed: false },
+    { id: "1", name: "Email", icon: "📧", url: "mailto:", completed: false },
+    { id: "2", name: "Shopify", icon: "🛍️", url: "https://shopify.com", completed: false },
+    { id: "3", name: "Status", icon: "📝", url: "#applications", completed: false },
   ]);
 
   const toggleLinkCompletion = (id: string) => {
@@ -110,7 +146,7 @@ export default function Dashboard() {
 
   const addNewLink = () => {
     setEverydayLinks([...everydayLinks, {
-      id: Date.now().toString(), name: "New Link", icon: "🔗", url: "#", completed: false,
+      id: Date.now().toString(), name: "New", icon: "🔗", url: "#", completed: false,
     }]);
   };
 
@@ -130,6 +166,7 @@ export default function Dashboard() {
   const totalInProgress = tasks.filter(t => t.status === "in_progress").length;
   const momentumPct = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
   const activeProjectCount = projects.filter(p => !p.archived).length;
+  const tasksAhead = tasks.filter(t => t.status !== "done").length;
 
   const projectsWithStats = projects.map((p) => {
     const ptasks = tasks.filter((t) => t.project_id === p.id);
@@ -141,286 +178,297 @@ export default function Dashboard() {
     .sort((a, b) => b.pending - a.pending)
     .slice(0, 4);
 
+  const hasCover = prefs?.dashboard_cover_type && prefs.dashboard_cover_type !== "none" && prefs.dashboard_cover;
+  const coverStyle = hasCover
+    ? prefs.dashboard_cover_type === "gradient"
+      ? { background: prefs.dashboard_cover! }
+      : { backgroundImage: `url(${prefs.dashboard_cover})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: "linear-gradient(135deg, #4fd1c5 0%, #f6ad55 30%, #fefcbf 60%, #e2e8f0 100%)" };
+
+  const greeting = profile?.full_name
+    ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
+    : "Welcome back";
+
+  // Animation stagger helper
+  const stagger = (i: number) => ({ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] } });
+
+  const linkColors: Record<string, string> = {
+    "📧": "#3B82F6", "🛍️": "#10B981", "📝": "#F59E0B", "🔗": "#8B5CF6",
+  };
+
   return (
     <AppShell>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {/* Page Header */}
-        <PageHeader
-          title=""
-          icon={prefs?.dashboard_icon || "🏠"}
-          iconType={prefs?.dashboard_icon_type || "emoji"}
-          coverImage={prefs?.dashboard_cover}
-          coverType={prefs?.dashboard_cover_type || "none"}
-          onIconChange={(icon, type) => upsertPrefs.mutate({ dashboard_icon: icon, dashboard_icon_type: type })}
-          onCoverChange={(cover, type) => upsertPrefs.mutate({ dashboard_cover: cover, dashboard_cover_type: type })}
-          editable
-        />
+      {/* Ambient background */}
+      <div
+        className="min-h-screen"
+        style={{
+          background: `
+            radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 100% 0%, rgba(251, 146, 60, 0.05) 0%, transparent 50%),
+            #F9FAFB
+          `,
+        }}
+      >
+        <div className="px-5 sm:px-8 lg:px-10 pb-32 max-w-[1200px] mx-auto">
 
-        {/* Welcome + Quick Add Bar */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-foreground">
-              {profile?.full_name
-                ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
-                : "Digital Home"}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {format(now, "EEEE, MMMM d")} · {format(now, "h:mm a")}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setNoteEditorOpen(true)}>
-              <StickyNote className="mr-1.5 h-4 w-4" /> Note
-            </Button>
-            <Button onClick={() => setTaskEditorOpen(true)} size="sm">
-              <Plus className="mr-1.5 h-4 w-4" /> Task
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setProjectModalOpen(true)}>
-              <Plus className="mr-1.5 h-4 w-4" /> Project
-            </Button>
-          </div>
-        </div>
-
-        {/* 90-Day Goal Commitment */}
-        <div className="mb-6">
-          <NinetyDayGoalWidget />
-        </div>
-
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-2 gap-3 mb-6 sm:grid-cols-4">
-          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              </div>
+          {/* ═══ HERO HEADER ═══ */}
+          <motion.div {...stagger(0)} className="relative rounded-3xl overflow-hidden mb-0" style={{ height: "clamp(200px, 30vh, 240px)" }}>
+            <div className="absolute inset-0" style={coverStyle} />
+            <div
+              className="absolute inset-0"
+              style={{
+                maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+              }}
+            >
+              <div className="absolute inset-0" style={coverStyle} />
             </div>
-            <p className="text-2xl font-semibold text-foreground">{momentumPct}%</p>
-            <p className="text-xs text-muted-foreground">Momentum</p>
-          </div>
+            {/* Dark gradient overlay */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }} />
 
-          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-7 w-7 rounded-lg bg-success/10 flex items-center justify-center">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-              </div>
+            {/* Top controls */}
+            <div className="absolute top-5 left-5 right-5 flex justify-between z-10">
+              <button
+                onClick={() => {/* icon picker - keep existing PageHeader logic */}}
+                className="h-11 w-11 rounded-full flex items-center justify-center text-xl backdrop-blur-[10px]"
+                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+              >
+                {prefs?.dashboard_icon || "🏠"}
+              </button>
+              <button
+                onClick={() => navigate("/settings")}
+                className="h-11 w-11 rounded-full flex items-center justify-center backdrop-blur-[10px]"
+                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+              >
+                <Settings className="h-5 w-5" style={{ color: "#1F2937" }} />
+              </button>
             </div>
-            <p className="text-2xl font-semibold text-foreground">{totalDone}</p>
-            <p className="text-xs text-muted-foreground">Completed</p>
-          </div>
 
-          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-7 w-7 rounded-lg bg-warning/10 flex items-center justify-center">
-                <ListTodo className="h-3.5 w-3.5 text-warning" />
-              </div>
+            {/* Greeting overlay */}
+            <div className="absolute bottom-6 left-6 right-6 z-[2]">
+              <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
+                {format(now, "EEEE, MMMM d")}
+              </p>
+              <h1
+                className="text-[32px] sm:text-[40px] leading-[1.2] mt-1"
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontStyle: "italic",
+                  fontWeight: 400,
+                  color: "white",
+                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {greeting}
+              </h1>
             </div>
-            <p className="text-2xl font-semibold text-foreground">{totalInProgress}</p>
-            <p className="text-xs text-muted-foreground">In Progress</p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-xl border border-border bg-card p-4 shadow-2xs">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-7 w-7 rounded-lg bg-info/10 flex items-center justify-center">
-                <FolderOpen className="h-3.5 w-3.5 text-info" />
+          {/* ═══ PROGRESS RINGS (overlap hero) ═══ */}
+          <motion.div {...stagger(1)} className="grid grid-cols-2 gap-4 -mt-10 relative z-[5] mb-6">
+            {/* Momentum Ring */}
+            <div
+              className="text-center p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#6366F1" }}>Momentum</p>
+              <div className="flex justify-center">
+                <ProgressRing progress={momentumPct} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                  <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentumPct}%</span>
+                </ProgressRing>
               </div>
+              <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
             </div>
-            <p className="text-2xl font-semibold text-foreground">{activeProjectCount}</p>
-            <p className="text-xs text-muted-foreground">Projects</p>
-          </div>
-        </div>
 
-        {/* Main Widget Grid */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {/* Left column: Agenda (spans 2 on lg) */}
-          <div className="lg:col-span-2">
-            <YourDayAgenda />
-          </div>
+            {/* Habits Ring */}
+            <div
+              className="text-center p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#8B5CF6" }}>Habits</p>
+              <div className="flex justify-center">
+                <ProgressRing progress={Math.min(100, totalDone * 10)} gradientId="habits-grad" color1="#8B5CF6" color2="#EC4899">
+                  <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalDone}</span>
+                </ProgressRing>
+              </div>
+              <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>🔥 {totalDone} days</p>
+            </div>
+          </motion.div>
 
-          {/* Right column */}
-          <div className="space-y-5">
-            {/* Active Projects with gradient progress */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-2xs">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FolderOpen className="h-4 w-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">Active Projects</h3>
+          {/* Motivational subtitle */}
+          {tasksAhead > 0 && (
+            <motion.div {...stagger(2)} className="mb-6">
+              <div className="text-[13px] font-medium py-[10px] px-4 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.1)" }}>
+                🎯 You're on track! {tasksAhead} tasks ahead.
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══ 90-DAY GOAL ═══ */}
+          <motion.div {...stagger(3)} className="mb-6">
+            <NinetyDayGoalWidget />
+          </motion.div>
+
+          {/* ═══ EVERYDAY LINKS ═══ */}
+          <motion.div {...stagger(4)} className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h3>
+              <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
+                <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
+              </button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+              {everydayLinks.map((link) => {
+                const iconColor = linkColors[link.icon] || "#8B5CF6";
+                const imgSrc = link.image || getFaviconUrl(link.url);
+                return (
+                  <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-shrink-0">
+                    {editingLinks ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                          {imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>}
+                        </div>
+                        <input value={link.name} onChange={(e) => updateLink(link.id, "name", e.target.value)} className="w-16 text-center text-[10px] bg-transparent outline-none border-b border-dashed border-gray-300" />
+                        <button onClick={() => deleteLink(link.id)} className="text-[10px] text-red-400">✕</button>
+                      </div>
+                    ) : (
+                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-[6px] cursor-pointer">
+                        <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center transition-all" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                          {imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>}
+                        </div>
+                        <span className="text-[10px] font-semibold uppercase text-center" style={{ color: "#6B7280" }}>{link.name}</span>
+                      </a>
+                    )}
+                  </motion.div>
+                );
+              })}
+              {/* Add new link button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={addNewLink}
+                className="flex flex-col items-center gap-[6px] flex-shrink-0 cursor-pointer"
+              >
+                <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                  <Plus className="h-6 w-6" style={{ color: "#8B5CF6" }} />
                 </div>
-                <button
-                  onClick={() => navigate("/projects")}
-                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  View all
+                <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* ═══ TODAY'S AGENDA ═══ */}
+          <motion.div {...stagger(5)} className="mb-6">
+            <YourDayAgenda />
+          </motion.div>
+
+          {/* ═══ QUICK TO-DOS ═══ */}
+          <motion.div {...stagger(6)} className="mb-6">
+            <QuickTodosWidget />
+          </motion.div>
+
+          {/* ═══ ACTIVE PROJECTS ═══ */}
+          <motion.div {...stagger(7)} className="mb-6">
+            <div
+              className="p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" style={{ color: "#6366F1" }} />
+                  <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h3>
+                </div>
+                <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+                  View All
                 </button>
               </div>
               {priorityProjects.length === 0 ? (
                 <div className="flex flex-col items-center py-8 text-center">
-                  <FolderOpen className="mb-2 h-8 w-8 text-muted-foreground/20" />
-                  <p className="text-sm text-muted-foreground">No projects yet</p>
+                  <FolderOpen className="mb-2 h-8 w-8" style={{ color: "#D1D5DB" }} />
+                  <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
                   <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
                     <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   {priorityProjects.map((project) => {
                     const pct = project.total > 0 ? Math.round((project.done / project.total) * 100) : 0;
                     return (
-                      <div
+                      <motion.div
                         key={project.id}
-                        className="cursor-pointer rounded-lg p-3 transition-all duration-150 hover:bg-secondary/60"
+                        whileHover={{ borderColor: "rgba(99,102,241,0.3)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="cursor-pointer rounded-2xl p-4 transition-all"
+                        style={{ background: "white", border: "1px solid #F3F4F6" }}
                         onClick={() => navigate(`/project/${project.id}`)}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: project.color || "hsl(var(--primary))" }}
-                            />
-                            <p className="text-sm font-medium text-foreground truncate">{project.name}</p>
-                          </div>
-                          <span className="text-xs font-medium text-muted-foreground">{pct}%</span>
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-xl"
+                          style={{ background: "rgba(99,102,241,0.1)" }}
+                        >
+                          {project.icon || "📁"}
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${pct}%`,
-                              background: `linear-gradient(90deg, ${project.color || "hsl(var(--primary))"} 0%, #6366F1 100%)`,
-                            }}
-                          />
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          {project.done}/{project.total} tasks · {project.pending} remaining
-                        </p>
-                      </div>
+                        <p className="text-[15px] font-semibold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
+                        <p className="text-xs font-semibold" style={{ color: pct > 50 ? "#10B981" : "#6366F1" }}>{pct}% complete</p>
+                      </motion.div>
                     );
                   })}
                 </div>
               )}
             </div>
+          </motion.div>
 
-            {/* Quick To-Dos */}
-            <QuickTodosWidget />
-
-            {/* Habit Tracker Widget */}
+          {/* ═══ HABIT TRACKER ═══ */}
+          <motion.div {...stagger(8)} className="mb-6">
             <HabitTrackerWidget />
-          </div>
+          </motion.div>
 
-          {/* Everyday Links */}
-          <div className="lg:col-span-3 rounded-xl border border-border bg-card p-6 shadow-2xs">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">Everyday Links</h3>
-              <div className="flex items-center gap-1">
-                {editingLinks && (
-                  <button onClick={addNewLink} className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary">
-                    <Plus className="h-4 w-4" />
-                  </button>
-                )}
-                <button
-                  onClick={() => setEditingLinks(!editingLinks)}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+          {/* ═══ BRAIN DUMP ═══ */}
+          <BrainDumpWidget />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-              {everydayLinks.map((link) => (
-                <div key={link.id} className="group flex items-center gap-3 rounded-lg p-3 transition-all duration-100 hover:bg-secondary/60">
-                  <button
-                    onClick={() => toggleLinkCompletion(link.id)}
-                    className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors flex-shrink-0",
-                      link.completed
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30 hover:border-primary"
-                    )}
-                  >
-                    {link.completed && <Check className="h-3 w-3 text-primary-foreground" />}
-                  </button>
-
-                  {(() => {
-                    const imgSrc = link.image || getFaviconUrl(link.url);
-                    return (
-                      <div className="relative h-8 w-8 flex-shrink-0 rounded-md bg-secondary overflow-hidden flex items-center justify-center">
-                        {imgSrc ? (
-                          <img
-                            src={imgSrc}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <span className="text-sm">{link.icon}</span>
-                        )}
-                        {editingLinks && (
-                          <label className="absolute inset-0 flex cursor-pointer items-center justify-center bg-foreground/40 opacity-0 transition-opacity hover:opacity-100">
-                            <ImageIcon className="h-3.5 w-3.5 text-primary-foreground" />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (ev) => updateLink(link.id, "image", ev.target?.result as string);
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                            />
-                          </label>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {editingLinks ? (
-                    <>
-                      <input
-                        type="text"
-                        value={link.name}
-                        onChange={(e) => updateLink(link.id, "name", e.target.value)}
-                        className="flex-1 rounded-md border border-border bg-background px-2.5 py-1 text-sm"
-                      />
-                      <button onClick={() => deleteLink(link.id)} className="text-xs text-destructive hover:text-destructive/80">✕</button>
-                    </>
-                  ) : (
-                    <>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={cn("flex-1 text-sm", link.completed ? "text-muted-foreground line-through" : "text-foreground")}
-                      >
-                        {link.name}
-                      </a>
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Brain Dump Widget */}
-          <div className="lg:col-span-3">
-            <BrainDumpWidget />
-          </div>
-
-          {/* Journal Entries */}
-          <div className="lg:col-span-3">
+          {/* ═══ JOURNAL ═══ */}
+          <motion.div {...stagger(9)} className="mb-6">
             <JournalEntriesList />
-          </div>
+          </motion.div>
 
-          {/* Notes Widget */}
-          <div className="lg:col-span-3">
+          {/* ═══ NOTES ═══ */}
+          <motion.div {...stagger(10)} className="mb-6">
             <NotesWidget onAddNote={() => setNoteEditorOpen(true)} />
-          </div>
+          </motion.div>
         </div>
-      </motion.div>
 
+        {/* ═══ FLOATING VOICE BUTTON ═══ */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="fixed z-50 h-16 w-16 rounded-full flex items-center justify-center cursor-pointer"
+          style={{
+            bottom: "88px",
+            right: "24px",
+            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
+            animation: "dashboard-pulse-glow 2s ease-in-out infinite",
+          }}
+          onClick={() => toast.info("Voice input coming soon!")}
+        >
+          <Mic className="h-7 w-7 text-white" strokeWidth={2.5} />
+        </motion.button>
+      </div>
+
+      {/* Modals - preserved exactly */}
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
@@ -511,6 +559,14 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pulse glow animation */}
+      <style>{`
+        @keyframes dashboard-pulse-glow {
+          0%, 100% { box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
+          50% { box-shadow: 0 12px 40px rgba(99,102,241,0.6), 0 0 0 12px rgba(99,102,241,0.1); }
+        }
+      `}</style>
     </AppShell>
   );
 }
