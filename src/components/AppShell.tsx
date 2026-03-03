@@ -1,147 +1,22 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Calendar, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, ChevronUp, Briefcase, Plane, Users, DollarSign, TrendingUp, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail } from "lucide-react";
+import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, DollarSign, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { supabase } from "@/integrations/supabase/client";
-import { useWaitingCount } from "@/hooks/useGmail";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
-import { TrialBadge } from "@/components/TrialBadge";
 
-// ... keep existing code (projectFolders, defaultIconColors, IconBubble, NotionProfileMenu, SidebarNav - lines 11-341)
-
-const defaultIconColors: Record<string, string> = {
-  home: "#8B5CF6",
-  projects: "#F59E0B",
-  finance: "#10B981",
-  finance_wealth: "#10B981",
-  finance_apps: "#3B82F6",
-  calendar: "#3B82F6",
-  vision: "#EC4899",
-  inbox: "#7C3AED",
-  team: "#6B7280",
-};
-
-/** Refined icon wrapper — subtle tint, clean lines, no heavy shadows */
-function IconBubble({ icon: Icon, color, size = 17 }: { icon: any; color: string; size?: number }) {
-  return (
-    <span
-      className="inline-flex shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-105"
-      style={{
-        width: size + 8,
-        height: size + 8,
-        background: `${color}12`,
-      }}
-    >
-      <Icon
-        className="shrink-0"
-        style={{ color, width: size, height: size, strokeWidth: 1.75 }}
-      />
-    </span>
-  );
-}
-
-function NotionProfileMenu({ collapsed }: { collapsed?: boolean }) {
-  const { profile, user, signOut } = useAuth();
-  const { data: prefs } = useUserPreferences();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
-  const initials = displayName.charAt(0).toUpperCase();
-  const avatarUrl = prefs?.profile_photo;
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-secondary"
-      >
-        {/* Avatar */}
-        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-primary text-sm font-semibold text-primary-foreground">
-              {initials}
-            </div>
-          )}
-        </div>
-        {!collapsed && (
-          <>
-            <div className="flex-1 min-w-0 text-left">
-              <div className="truncate text-sm font-medium text-foreground">{displayName}</div>
-              <div className="truncate text-xs text-muted-foreground">{user?.email}</div>
-            </div>
-            <ChevronUp
-              className={cn(
-                "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                !open && "rotate-180"
-              )}
-            />
-          </>
-        )}
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 4, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 right-0 z-[1000] mb-2 rounded-xl border border-border bg-card p-1.5 shadow-lg"
-          >
-            <button
-              onClick={() => { setOpen(false); navigate("/settings"); }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
-            >
-              <Settings className="h-[18px] w-[18px] text-muted-foreground" />
-              Settings
-            </button>
-            <button
-              onClick={() => { setOpen(false); navigate("/settings?tab=support"); }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
-            >
-              <MessageSquareHeart className="h-[18px] w-[18px] text-muted-foreground" />
-              Feedback
-            </button>
-            <div className="mx-2 my-1 h-px bg-border" />
-            <button
-              onClick={async () => { setOpen(false); await signOut(); navigate("/login"); }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-              Log out
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
+function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { data: prefs } = useUserPreferences();
   const [isAdmin, setIsAdmin] = useState(false);
-  const iconColors = (prefs?.accent_colors as any)?.icon_colors || {};
-  const getIconColor = (key: string) => iconColors[key] || defaultIconColors[key] || "#6B7280";
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -149,144 +24,323 @@ function SidebarNav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate
       .then(({ data }) => setIsAdmin(!!data));
   }, [user]);
 
+  useEffect(() => {
+    setDarkMode(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  const toggleDarkMode = () => {
+    document.documentElement.classList.toggle("dark");
+    setDarkMode(!darkMode);
+  };
+
   const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
-
-  const topItems = [
-    { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
-  ];
-
-  const [financeOpen, setFinanceOpen] = useState(
-    location.pathname.startsWith("/finance")
-  );
   const isFinanceActive = location.pathname.startsWith("/finance");
 
-  const waitingCount = useWaitingCount();
-
-  const bottomItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", colorKey: "inbox" },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", colorKey: "vision" },
-  ];
+  const [financeOpen, setFinanceOpen] = useState(isFinanceActive);
 
   const go = (path: string) => {
     navigate(path);
     onNavigate?.();
   };
 
-  const NavItem = ({ icon: Icon, label, path, isActive, colorKey }: { icon: any; label: string; path: string; isActive: boolean; colorKey: string }) => (
-    <li>
-      <button
-        onClick={() => go(path)}
-        className={cn(
-          "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium tracking-tight transition-all duration-150",
-          isActive
-            ? "bg-accent text-accent-foreground shadow-xs"
-            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-        )}
-      >
-        <IconBubble icon={Icon} color={getIconColor(colorKey)} />
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-left">{label}</span>
-            {colorKey === "inbox" && waitingCount > 0 && (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
-                {waitingCount}
-              </span>
-            )}
-          </>
-        )}
-      </button>
-    </li>
-  );
+  const navItems = [
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
+    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive },
+  ];
+
+  const bottomNavItems = [
+    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+  ];
+
+  const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
+  const avatarUrl = prefs?.profile_photo;
 
   return (
-    <ul role="list" className="flex flex-1 flex-col gap-y-0.5">
-      {topItems.map((item) => (
-        <NavItem key={item.path} {...item} isActive={location.pathname.startsWith(item.path)} />
-      ))}
+    <div className="flex flex-1 flex-col h-full">
+      {/* Logo */}
+      <div className="px-6 py-6">
+        <div className="flex items-center gap-2.5">
+          <div className="h-3 w-3 rounded-full bg-indigo-500" />
+          <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>
+        </div>
+      </div>
 
-      {/* Projects with sub-folders */}
-      <NavItem icon={FolderOpen} label="Projects" path="/projects" isActive={isProjectsActive} colorKey="projects" />
-
-      {/* Finance with sub-folders */}
-      <li>
-       <button
-            onClick={() => {
-              if (collapsed) { go("/finance/wealth"); return; }
-              setFinanceOpen(!financeOpen);
-              if (!isFinanceActive) go("/finance/wealth");
-            }}
-            className={cn(
-              "group flex w-full items-center gap-3 rounded-sm px-3 py-1.5 text-sm font-medium transition-all duration-150",
-              isFinanceActive
-                ? "bg-accent text-accent-foreground shadow-xs"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            )}
-          >
-          <IconBubble icon={DollarSign} color={getIconColor("finance")} />
-          {!collapsed && (
-            <>
-              <span className="flex-1 text-left">Money</span>
-              <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200", financeOpen && "rotate-180")} />
-            </>
-          )}
-        </button>
-
-        {!collapsed && (
-          <AnimatePresence initial={false}>
-            {financeOpen && (
-              <motion.ul
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <li>
-                  <button
-                    onClick={() => go("/finance/applications")}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-sm py-1.5 pl-10 pr-3 text-sm transition-all duration-150",
-                      location.pathname === "/finance/applications"
-                        ? "font-medium text-accent-foreground"
-                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    )}
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-4 py-2">
+        <ul className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <button
+                  onClick={() => go(item.path)}
+                  className={cn(
+                    "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
+                    item.active
+                      ? "font-medium"
+                      : "hover:bg-gray-100"
+                  )}
+                  style={item.active ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+                >
+                  <span
+                    className="inline-flex shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      width: 36, height: 36,
+                      backgroundColor: item.active ? '#E0E7FF' : '#F3F4F6',
+                    }}
                   >
-                    <IconBubble icon={Briefcase} color={getIconColor("finance_apps")} size={16} />
-                    Applications
-                  </button>
-                </li>
-              </motion.ul>
+                    <Icon style={{ width: 20, height: 20, color: item.active ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                  </span>
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              </li>
+            );
+          })}
+
+          {/* Money - Expandable */}
+          <li>
+            <button
+              onClick={() => {
+                if (isFinanceActive) {
+                  setFinanceOpen(!financeOpen);
+                } else {
+                  go("/finance/wealth");
+                  setFinanceOpen(true);
+                }
+              }}
+              className={cn(
+                "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
+                isFinanceActive
+                  ? "font-medium"
+                  : "hover:bg-gray-100"
+              )}
+              style={isFinanceActive ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+            >
+              <span
+                className="inline-flex shrink-0 items-center justify-center rounded-full"
+                style={{
+                  width: 36, height: 36,
+                  backgroundColor: isFinanceActive ? '#E0E7FF' : '#F3F4F6',
+                }}
+              >
+                <DollarSign style={{ width: 20, height: 20, color: isFinanceActive ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+              </span>
+              <span className="flex-1 text-left">Money</span>
+              <ChevronDown
+                className="shrink-0 transition-transform duration-200"
+                style={{
+                  width: 16, height: 16,
+                  color: isFinanceActive ? '#4338CA' : '#9CA3AF',
+                  transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {financeOpen && (
+                <motion.ul
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <li>
+                    <button
+                      onClick={() => go("/finance/applications")}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl py-3 pl-16 pr-4 text-[14px] transition-all duration-200",
+                        location.pathname === "/finance/applications"
+                          ? "font-medium"
+                          : "hover:text-gray-700"
+                      )}
+                      style={{
+                        color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
+                      }}
+                    >
+                      <span
+                        className="inline-flex shrink-0 items-center justify-center rounded-full"
+                        style={{
+                          width: 28, height: 28,
+                          backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
+                        }}
+                      >
+                        <Briefcase style={{ width: 16, height: 16, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
+                      </span>
+                      Applications
+                    </button>
+                  </li>
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </li>
+
+          {bottomNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.path}>
+                <button
+                  onClick={() => go(item.path)}
+                  className={cn(
+                    "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
+                    item.active
+                      ? "font-medium"
+                      : "hover:bg-gray-100"
+                  )}
+                  style={item.active ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+                >
+                  <span
+                    className="inline-flex shrink-0 items-center justify-center rounded-full"
+                    style={{
+                      width: 36, height: 36,
+                      backgroundColor: item.active ? '#E0E7FF' : '#F3F4F6',
+                    }}
+                  >
+                    <Icon style={{ width: 20, height: 20, color: item.active ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                  </span>
+                  <span className="flex-1 text-left">{item.label}</span>
+                </button>
+              </li>
+            );
+          })}
+
+          {isAdmin && (
+            <li>
+              <button
+                onClick={() => go("/admin")}
+                className={cn(
+                  "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
+                  location.pathname === "/admin"
+                    ? "font-medium"
+                    : "hover:bg-gray-100"
+                )}
+                style={location.pathname === "/admin" ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+              >
+                <span
+                  className="inline-flex shrink-0 items-center justify-center rounded-full"
+                  style={{
+                    width: 36, height: 36,
+                    backgroundColor: location.pathname === "/admin" ? '#E0E7FF' : '#F3F4F6',
+                  }}
+                >
+                  <Shield style={{ width: 20, height: 20, color: location.pathname === "/admin" ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                </span>
+                <span className="flex-1 text-left">Admin</span>
+              </button>
+            </li>
+          )}
+        </ul>
+      </nav>
+
+      {/* Bottom Section */}
+      <div className="shrink-0 px-4 pb-4">
+        {/* Settings / Feedback / Logout */}
+        <ul className="space-y-1 mb-3">
+          <li>
+            <button
+              onClick={() => go("/settings")}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-gray-100"
+              style={{ color: '#4B5563' }}
+            >
+              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#F3F4F6' }}>
+                <Settings style={{ width: 20, height: 20, color: '#6B7280', strokeWidth: 1.75 }} />
+              </span>
+              Settings
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => go("/settings?tab=support")}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-gray-100"
+              style={{ color: '#4B5563' }}
+            >
+              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#F3F4F6' }}>
+                <MessageSquareHeart style={{ width: 20, height: 20, color: '#6B7280', strokeWidth: 1.75 }} />
+              </span>
+              Feedback
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate("/login");
+                onNavigate?.();
+              }}
+              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-red-50"
+              style={{ color: '#DC2626' }}
+            >
+              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#FEF2F2' }}>
+                <LogOut style={{ width: 20, height: 20, color: '#DC2626', strokeWidth: 1.75 }} />
+              </span>
+              Log out
+            </button>
+          </li>
+        </ul>
+
+        {/* Profile Card */}
+        <div
+          className="flex items-center gap-3 rounded-2xl p-3"
+          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+        >
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="h-10 w-10 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            {/* Green online dot */}
+            <div
+              className="absolute bottom-0 right-0 h-3 w-3 rounded-full"
+              style={{ backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
+            />
+          </div>
+
+          {/* Name & Email */}
+          <div className="flex-1 min-w-0">
+            <div className="truncate text-[14px] font-medium" style={{ fontFamily: 'Georgia, serif', color: '#1F2937' }}>
+              {displayName}
+            </div>
+            <div className="truncate text-[12px]" style={{ color: '#9CA3AF' }}>
+              {user?.email || ''}
+            </div>
+          </div>
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+            style={{ width: 32, height: 32 }}
+          >
+            {darkMode ? (
+              <Sun style={{ width: 16, height: 16, color: '#F59E0B' }} />
+            ) : (
+              <Moon style={{ width: 16, height: 16, color: '#6B7280' }} />
             )}
-          </AnimatePresence>
-        )}
-      </li>
-
-      {bottomItems.map((item) => (
-        <NavItem key={item.path} {...item} isActive={location.pathname.startsWith(item.path)} />
-      ))}
-
-      {/* Admin link - only for super_admin */}
-      {isAdmin && (
-        <NavItem icon={Shield} label="Admin" path="/admin" isActive={location.pathname === "/admin"} colorKey="home" />
-      )}
-    </ul>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
-/** Fixed bottom tab bar for mobile — iOS/Android native feel */
+/** Fixed bottom tab bar for mobile */
 function MobileTabBar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: prefs } = useUserPreferences();
-  const iconColors = (prefs?.accent_colors as any)?.icon_colors || {};
-  const getIconColor = (key: string) => iconColors[key] || defaultIconColors[key] || "#6B7280";
 
   const tabs = [
-    { icon: Home, label: "Home", path: "/dashboard", colorKey: "home" },
-    { icon: FolderOpen, label: "Projects", path: "/projects", colorKey: "projects" },
-    { icon: DollarSign, label: "Money", path: "/finance/wealth", colorKey: "finance" },
-    { icon: Mail, label: "Inbox", path: "/inbox", colorKey: "inbox" },
-    { icon: MoreHorizontal, label: "More", path: "/__more__", colorKey: "team" },
+    { icon: Home, label: "Home", path: "/dashboard" },
+    { icon: FolderOpen, label: "Projects", path: "/projects" },
+    { icon: DollarSign, label: "Money", path: "/finance/wealth" },
+    { icon: Mail, label: "Inbox", path: "/inbox" },
+    { icon: MoreHorizontal, label: "More", path: "/__more__" },
   ];
 
   const [moreOpen, setMoreOpen] = useState(false);
@@ -321,7 +375,6 @@ function MobileTabBar() {
         {tabs.map((tab) => {
           const active = isActive(tab.path);
           const Icon = tab.icon;
-          const color = active ? getIconColor(tab.colorKey) : undefined;
 
           if (tab.path === "/__more__") {
             return (
@@ -333,7 +386,7 @@ function MobileTabBar() {
                     active ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  <Icon className="h-5 w-5" style={color ? { color } : undefined} strokeWidth={active ? 2 : 1.5} />
+                  <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
                   <span className="text-[10px] font-medium">{tab.label}</span>
                 </button>
 
@@ -379,7 +432,7 @@ function MobileTabBar() {
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon className="h-5 w-5" style={color ? { color } : undefined} strokeWidth={active ? 2 : 1.5} />
+              <Icon className="h-5 w-5" strokeWidth={active ? 2 : 1.5} />
               <span className="text-[10px] font-medium">{tab.label}</span>
               {active && (
                 <motion.div
@@ -413,71 +466,21 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Announcement Banner */}
       <AnnouncementBanner />
-      
-      {/* Desktop Sidebar — unchanged, hidden on mobile via lg: prefix */}
-      <div
-        className={cn(
-          "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-200",
-          collapsed ? "lg:w-[60px]" : "lg:w-[240px]"
-        )}
-      >
-        <div className="flex grow flex-col border-r border-border bg-card">
-          {/* Logo area */}
-          <div className="flex h-16 shrink-0 items-center justify-between px-4">
-            {!collapsed ? (
-              <div className="flex items-center gap-2.5">
-                <span className="text-md font-semibold text-foreground">Digital Home</span>
-                <TrialBadge />
-              </div>
-            ) : (
-              <div className="mx-auto">
-                <span className="text-sm font-bold text-foreground">DH</span>
-              </div>
-            )}
-          </div>
 
-          {/* Scrollable navigation */}
-          <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5">
-            <SidebarNav collapsed={collapsed} />
-          </nav>
-
-          {/* Bottom profile section - Notion style */}
-          <div className="shrink-0 border-t border-border px-2 py-2">
-            <div className="flex items-center gap-1">
-              <div className="flex-1 min-w-0">
-                <NotionProfileMenu collapsed={collapsed} />
-              </div>
-              {!collapsed && (
-                <button
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  aria-label="Collapse sidebar"
-                >
-                  <ChevronDown className="h-4 w-4 rotate-90 transition-transform" />
-                </button>
-              )}
-            </div>
-            {collapsed && (
-              <button
-                onClick={() => setCollapsed(!collapsed)}
-                className="mt-1 flex w-full justify-center rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                aria-label="Expand sidebar"
-              >
-                <ChevronDown className="h-4 w-4 -rotate-90 transition-transform" />
-              </button>
-            )}
-          </div>
+      {/* Desktop Sidebar — Fixed 280px, no collapse */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col lg:w-[280px]" style={{ backgroundColor: '#F5F5F7' }}>
+        <div className="flex grow flex-col" style={{ borderRight: '1px solid #E5E7EB' }}>
+          <SidebarNav />
         </div>
       </div>
 
-      {/* Mobile Header — slim top bar */}
+      {/* Mobile Header */}
       <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -487,10 +490,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <div className="flex items-center gap-2 flex-1">
+          <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
           <span className="text-sm font-semibold text-foreground">Digital Home</span>
-          <TrialBadge />
         </div>
-        <NotionProfileMenu collapsed />
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -510,44 +512,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="fixed inset-y-0 left-0 z-50 w-[260px] flex flex-col border-r border-border bg-card lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden"
+              style={{ backgroundColor: '#F5F5F7' }}
             >
-              {/* Mobile sidebar header */}
-              <div className="flex h-14 shrink-0 items-center justify-between px-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-md font-semibold text-foreground">Digital Home</span>
-                  <TrialBadge />
-                </div>
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Scrollable navigation */}
-              <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5">
-                <SidebarNav onNavigate={() => setMobileOpen(false)} />
-              </nav>
-
-              {/* Bottom profile section */}
-              <div className="shrink-0 border-t border-border px-2 py-2">
-                <NotionProfileMenu />
-              </div>
+              <SidebarNav onNavigate={() => setMobileOpen(false)} />
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Mobile Bottom Tab Bar — removed, using sidebar instead */}
-
       {/* Floating Cloud → Journal */}
       <FloatingCloud onClick={() => setJournalOpen(true)} />
       <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
 
-      {/* Main Content */}
-      <main className={cn("transition-all duration-200", collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]")}>
+      {/* Main Content — fixed offset */}
+      <main className="lg:pl-[280px]">
         <ContentWrapper>{children}</ContentWrapper>
       </main>
     </div>
