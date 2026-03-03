@@ -298,13 +298,10 @@ export default function Dashboard() {
               <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
             )}
 
-            {/* Upload overlay on hover */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
-              <div className="text-center">
-                <svg className="w-10 h-10 text-white mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-white font-semibold text-xs">Change Cover</p>
+            {/* Pencil edit icon — top right corner on hover */}
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+              <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <Edit2 className="w-4 h-4 text-white" />
               </div>
             </div>
 
@@ -333,27 +330,27 @@ export default function Dashboard() {
 
           {/* ═══ MOMENTUM & HABITS — TWO SEPARATE CARDS overlapping banner ═══ */}
           <div className="px-4 -mt-10 relative z-[5] mb-5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto sm:max-w-sm">
               {/* Momentum Card */}
-              <motion.div {...stagger(1)} className="rounded-2xl p-4 text-center" style={glassCard}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#6366F1" }}>Momentum</p>
+              <motion.div {...stagger(1)} className="rounded-2xl p-3 text-center" style={glassCard}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1.5" style={{ color: "#6366F1" }}>Momentum</p>
                 <div className="flex justify-center">
-                  <ProgressRing progress={momentum} size={80} strokeWidth={7} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
                   </ProgressRing>
                 </div>
-                <p className="text-[11px] font-medium mt-2" style={{ color: "#6B7280" }}>Daily Goal</p>
+                <p className="text-[10px] font-medium mt-1.5" style={{ color: "#6B7280" }}>Daily Goal</p>
               </motion.div>
 
               {/* Habits Card — GREEN */}
-              <motion.div {...stagger(1.5)} className="rounded-2xl p-4 text-center" style={glassCard}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#10B981" }}>Habits</p>
+              <motion.div {...stagger(1.5)} className="rounded-2xl p-3 text-center" style={glassCard}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-1.5" style={{ color: "#10B981" }}>Habits</p>
                 <div className="flex justify-center">
-                  <ProgressRing progress={habitsProgress} size={80} strokeWidth={7} gradientId="habits-grad" color1="#10B981" color2="#34D399">
-                    <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
+                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
                   </ProgressRing>
                 </div>
-                <p className="text-[11px] font-medium mt-2" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+                <p className="text-[10px] font-medium mt-1.5" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
               </motion.div>
             </div>
 
@@ -376,7 +373,7 @@ export default function Dashboard() {
                 <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
               </button>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+            <div className="flex justify-between pb-2" style={{ scrollbarWidth: "none" }}>
               {everydayLinks.map((link) => {
                 const colorMap: Record<string, { bg: string; text: string }> = {
                   "📧": { bg: "bg-blue-100", text: "text-blue-600" },
@@ -392,7 +389,7 @@ export default function Dashboard() {
                 };
                 const imgSrc = link.image || getFaviconUrl(link.url);
                 return (
-                  <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-shrink-0">
+                  <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-1 min-w-0">
                     {editingLinks ? (
                       <div className="flex flex-col items-center gap-1">
                         <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
@@ -416,7 +413,7 @@ export default function Dashboard() {
                   </motion.div>
                 );
               })}
-              <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-shrink-0 cursor-pointer">
+              <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-1 min-w-0 cursor-pointer">
                 <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
                   <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
                     <Plus className="h-6 w-6 text-purple-600" />
@@ -505,21 +502,24 @@ export default function Dashboard() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2.5">
                 {activeProjects.map((project, idx) => (
                   <motion.div
                     key={project.id}
-                    whileHover={{ y: -2 }}
+                    whileHover={{ x: 2 }}
                     whileTap={{ scale: 0.98 }}
-                    className="cursor-pointer rounded-2xl p-4 transition-all hover:shadow-md"
+                    className="cursor-pointer rounded-xl p-3 flex items-center gap-3 transition-all hover:shadow-md"
                     style={{ background: "white", border: "1px solid #F3F4F6" }}
                     onClick={() => navigate(`/project/${project.id}`)}
                   >
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-xl ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
+                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
                       {project.icon || "📁"}
                     </div>
-                    <p className="text-[15px] font-semibold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
-                    <p className={`text-xs font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: "#1F2937" }}>{project.name}</p>
+                      <p className={`text-[11px] font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
+                    </div>
+                    <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#D1D5DB" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </motion.div>
                 ))}
               </div>
