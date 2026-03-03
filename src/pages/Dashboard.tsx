@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -9,15 +9,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
-  Plus, FolderOpen, Calendar, Edit2, X,
-  Settings, Mic,
+  Plus, FolderOpen, Calendar, Clock, ExternalLink,
+  Sparkles, Edit2, Check, ImageIcon, StickyNote, X,
+  TrendingUp, CheckCircle2, ListTodo, Target,
+  Settings, Mic, Book, Wallet,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
+import PageHeader from "@/components/PageHeader";
+
+import NotesWidget from "@/components/NotesWidget";
 import NoteEditor from "@/components/NoteEditor";
+import BrainDumpWidget from "@/components/BrainDumpWidget";
+import HabitTrackerWidget from "@/components/HabitTrackerWidget";
 import YourDayAgenda from "@/components/YourDayAgenda";
 import QuickTodosWidget from "@/components/QuickTodosWidget";
+import NinetyDayGoalWidget from "@/components/NinetyDayGoalWidget";
+import { cn } from "@/lib/utils";
 import JournalEntriesList from "@/components/journal/JournalEntriesList";
 import "@fontsource/playfair-display/400-italic.css";
 
@@ -51,7 +61,7 @@ function useCurrentTime() {
 }
 
 /* ── Animated SVG Progress Ring ── */
-function ProgressRing({ progress, size = 96, strokeWidth = 8, gradientId, color1, color2, children }: {
+function ProgressRing({ progress, size = 100, strokeWidth = 8, gradientId, color1, color2, children }: {
   progress: number; size?: number; strokeWidth?: number; gradientId: string; color1: string; color2: string; children: React.ReactNode;
 }) {
   const radius = (size - strokeWidth) / 2;
@@ -59,7 +69,7 @@ function ProgressRing({ progress, size = 96, strokeWidth = 8, gradientId, color1
   const offset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative mx-auto" style={{ width: size, height: size }}>
+    <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -83,13 +93,6 @@ function ProgressRing({ progress, size = 96, strokeWidth = 8, gradientId, color1
     </div>
   );
 }
-
-const glassCard = {
-  background: "rgba(255,255,255,0.7)",
-  border: "1px solid rgba(255,255,255,0.8)",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-  backdropFilter: "blur(24px)",
-};
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -135,6 +138,12 @@ export default function Dashboard() {
     { id: "3", name: "Status", icon: "📝", url: "#applications", completed: false },
   ]);
 
+  const toggleLinkCompletion = (id: string) => {
+    setEverydayLinks(everydayLinks.map(link =>
+      link.id === id ? { ...link, completed: !link.completed } : link
+    ));
+  };
+
   const addNewLink = () => {
     setEverydayLinks([...everydayLinks, {
       id: Date.now().toString(), name: "New", icon: "🔗", url: "#", completed: false,
@@ -154,7 +163,9 @@ export default function Dashboard() {
   // Stats
   const totalTasks = tasks.length;
   const totalDone = tasks.filter(t => t.status === "done").length;
+  const totalInProgress = tasks.filter(t => t.status === "in_progress").length;
   const momentumPct = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
+  const activeProjectCount = projects.filter(p => !p.archived).length;
   const tasksAhead = tasks.filter(t => t.status !== "done").length;
 
   const projectsWithStats = projects.map((p) => {
@@ -178,6 +189,7 @@ export default function Dashboard() {
     ? `Good ${new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
     : "Welcome back";
 
+  // Animation stagger helper
   const stagger = (i: number) => ({ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] } });
 
   const linkColors: Record<string, string> = {
@@ -186,6 +198,7 @@ export default function Dashboard() {
 
   return (
     <AppShell>
+      {/* Ambient background */}
       <div
         className="min-h-screen"
         style={{
@@ -196,31 +209,42 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="max-w-md mx-auto px-5 pb-32">
+        <div className="px-5 sm:px-8 lg:px-10 pb-32 max-w-[1200px] mx-auto">
 
-          {/* ═══ 1. HERO HEADER ═══ */}
+          {/* ═══ HERO HEADER ═══ */}
           <motion.div {...stagger(0)} className="relative rounded-3xl overflow-hidden mb-0" style={{ height: "clamp(200px, 30vh, 240px)" }}>
             <div className="absolute inset-0" style={coverStyle} />
+            <div
+              className="absolute inset-0"
+              style={{
+                maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+              }}
+            >
+              <div className="absolute inset-0" style={coverStyle} />
+            </div>
+            {/* Dark gradient overlay */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%)" }} />
 
             {/* Top controls */}
             <div className="absolute top-5 left-5 right-5 flex justify-between z-10">
               <button
-                className="h-11 w-11 rounded-full flex items-center justify-center text-xl"
-                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", backdropFilter: "blur(10px)" }}
+                onClick={() => {/* icon picker - keep existing PageHeader logic */}}
+                className="h-11 w-11 rounded-full flex items-center justify-center text-xl backdrop-blur-[10px]"
+                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
               >
                 {prefs?.dashboard_icon || "🏠"}
               </button>
               <button
                 onClick={() => navigate("/settings")}
-                className="h-11 w-11 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", backdropFilter: "blur(10px)" }}
+                className="h-11 w-11 rounded-full flex items-center justify-center backdrop-blur-[10px]"
+                style={{ background: "rgba(255,255,255,0.95)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
               >
                 <Settings className="h-5 w-5" style={{ color: "#1F2937" }} />
               </button>
             </div>
 
-            {/* Greeting */}
+            {/* Greeting overlay */}
             <div className="absolute bottom-6 left-6 right-6 z-[2]">
               <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
                 {format(now, "EEEE, MMMM d")}
@@ -233,6 +257,7 @@ export default function Dashboard() {
                   fontWeight: 400,
                   color: "white",
                   textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                  letterSpacing: "-0.02em",
                 }}
               >
                 {greeting}
@@ -240,48 +265,70 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ═══ 2. MOMENTUM & HABITS (ONE CARD) ═══ */}
-          <motion.div {...stagger(1)} className="-mt-10 relative z-[5] mb-6">
-            <div className="p-6 rounded-[20px]" style={glassCard}>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Momentum */}
-                <div className="text-center">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#6366F1" }}>Momentum</p>
-                  <ProgressRing progress={momentumPct} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-2xl font-bold" style={{ color: "#1F2937" }}>{momentumPct}%</span>
-                  </ProgressRing>
-                  <p className="text-sm font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
-                </div>
-                {/* Habits */}
-                <div className="text-center">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#8B5CF6" }}>Habits</p>
-                  <ProgressRing progress={Math.min(100, totalDone * 10)} gradientId="habits-grad" color1="#8B5CF6" color2="#EC4899">
-                    <span className="text-2xl font-bold" style={{ color: "#1F2937" }}>{totalDone}h</span>
-                  </ProgressRing>
-                  <p className="text-sm font-medium mt-3" style={{ color: "#6B7280" }}>
-                    <span style={{ color: "#F59E0B" }}>🔥</span> {totalDone} days
-                  </p>
-                </div>
+          {/* ═══ PROGRESS RINGS (overlap hero) ═══ */}
+          <motion.div {...stagger(1)} className="grid grid-cols-2 gap-4 -mt-10 relative z-[5] mb-6">
+            {/* Momentum Ring */}
+            <div
+              className="text-center p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#6366F1" }}>Momentum</p>
+              <div className="flex justify-center">
+                <ProgressRing progress={momentumPct} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                  <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentumPct}%</span>
+                </ProgressRing>
               </div>
-              {/* Subtitle inside same card */}
-              <div className="mt-6 p-3 rounded-xl text-center" style={{ background: "rgba(99,102,241,0.1)" }}>
-                <p className="text-sm font-medium" style={{ color: "#6366F1" }}>
-                  🎯 You're on track! {tasksAhead} tasks ahead.
-                </p>
+              <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
+            </div>
+
+            {/* Habits Ring */}
+            <div
+              className="text-center p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#8B5CF6" }}>Habits</p>
+              <div className="flex justify-center">
+                <ProgressRing progress={Math.min(100, totalDone * 10)} gradientId="habits-grad" color1="#8B5CF6" color2="#EC4899">
+                  <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalDone}</span>
+                </ProgressRing>
               </div>
+              <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>🔥 {totalDone} days</p>
             </div>
           </motion.div>
 
-          {/* ═══ 3. EVERYDAY LINKS ═══ */}
-          <motion.div {...stagger(2)} className="mb-6">
+          {/* Motivational subtitle */}
+          {tasksAhead > 0 && (
+            <motion.div {...stagger(2)} className="mb-6">
+              <div className="text-[13px] font-medium py-[10px] px-4 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.1)" }}>
+                🎯 You're on track! {tasksAhead} tasks ahead.
+              </div>
+            </motion.div>
+          )}
+
+          {/* ═══ 90-DAY GOAL ═══ */}
+          <motion.div {...stagger(3)} className="mb-6">
+            <NinetyDayGoalWidget />
+          </motion.div>
+
+          {/* ═══ EVERYDAY LINKS ═══ */}
+          <motion.div {...stagger(4)} className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h2>
-              <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md hover:bg-black/5">
+              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h3>
+              <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
                 <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
               </button>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
               {everydayLinks.map((link) => {
+                const iconColor = linkColors[link.icon] || "#8B5CF6";
                 const imgSrc = link.image || getFaviconUrl(link.url);
                 return (
                   <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-shrink-0">
@@ -304,7 +351,13 @@ export default function Dashboard() {
                   </motion.div>
                 );
               })}
-              <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-shrink-0 cursor-pointer">
+              {/* Add new link button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                onClick={addNewLink}
+                className="flex flex-col items-center gap-[6px] flex-shrink-0 cursor-pointer"
+              >
                 <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
                   <Plus className="h-6 w-6" style={{ color: "#8B5CF6" }} />
                 </div>
@@ -313,21 +366,31 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ═══ 4. TODAY'S AGENDA ═══ */}
-          <motion.div {...stagger(3)} className="mb-6">
+          {/* ═══ TODAY'S AGENDA ═══ */}
+          <motion.div {...stagger(5)} className="mb-6">
             <YourDayAgenda />
           </motion.div>
 
-          {/* ═══ 5. QUICK TO-DOS ═══ */}
-          <motion.div {...stagger(4)} className="mb-6">
+          {/* ═══ QUICK TO-DOS ═══ */}
+          <motion.div {...stagger(6)} className="mb-6">
             <QuickTodosWidget />
           </motion.div>
 
-          {/* ═══ 6. ACTIVE PROJECTS ═══ */}
-          <motion.div {...stagger(5)} className="mb-6">
-            <div className="p-6 rounded-[20px]" style={glassCard}>
+          {/* ═══ ACTIVE PROJECTS ═══ */}
+          <motion.div {...stagger(7)} className="mb-6">
+            <div
+              className="p-6 rounded-[20px] backdrop-blur-[24px]"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+              }}
+            >
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-5 w-5" style={{ color: "#6366F1" }} />
+                  <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h3>
+                </div>
                 <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
                   View All
                 </button>
@@ -347,8 +410,9 @@ export default function Dashboard() {
                     return (
                       <motion.div
                         key={project.id}
+                        whileHover={{ borderColor: "rgba(99,102,241,0.3)", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", y: -2 }}
                         whileTap={{ scale: 0.98 }}
-                        className="cursor-pointer rounded-2xl p-4 transition-all hover:shadow-md"
+                        className="cursor-pointer rounded-2xl p-4 transition-all"
                         style={{ background: "white", border: "1px solid #F3F4F6" }}
                         onClick={() => navigate(`/project/${project.id}`)}
                       >
@@ -367,23 +431,26 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* ═══ 7. MONEY REMINDERS ═══ */}
-          <motion.div {...stagger(6)} className="mb-6">
-            <div className="p-6 rounded-[20px]" style={glassCard}>
-              <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Money Reminders</h2>
-              <div className="text-center py-6">
-                <p className="text-sm" style={{ color: "#9CA3AF" }}>No upcoming bills</p>
-              </div>
-            </div>
+          {/* ═══ HABIT TRACKER ═══ */}
+          <motion.div {...stagger(8)} className="mb-6">
+            <HabitTrackerWidget />
           </motion.div>
 
-          {/* ═══ 8. RECENT JOURNAL ═══ */}
-          <motion.div {...stagger(7)} className="mb-6">
+          {/* ═══ BRAIN DUMP ═══ */}
+          <BrainDumpWidget />
+
+          {/* ═══ JOURNAL ═══ */}
+          <motion.div {...stagger(9)} className="mb-6">
             <JournalEntriesList />
+          </motion.div>
+
+          {/* ═══ NOTES ═══ */}
+          <motion.div {...stagger(10)} className="mb-6">
+            <NotesWidget onAddNote={() => setNoteEditorOpen(true)} />
           </motion.div>
         </div>
 
-        {/* ═══ 9. FLOATING VOICE BUTTON ═══ */}
+        {/* ═══ FLOATING VOICE BUTTON ═══ */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
@@ -401,35 +468,55 @@ export default function Dashboard() {
         </motion.button>
       </div>
 
-      {/* Modals */}
+      {/* Modals - preserved exactly */}
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
-        <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
+        <TaskEditor
+          projectId={projects[0].id}
+          defaultStatus="backlog"
+          onClose={() => setTaskEditorOpen(false)}
+        />
       )}
 
       {/* Tutorial prompt modal */}
       <AnimatePresence>
         {showTutorial && !showVideoPlayer && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             onClick={() => setShowTutorial(false)}
             className="fixed inset-0 flex items-center justify-center z-[10001]"
             style={{ backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
               className="w-[400px] max-w-[90vw] bg-card rounded-2xl p-8 shadow-2xl"
             >
-              <p className="text-md font-semibold text-foreground mb-2">Hi, I'm glad you're here.</p>
-              <p className="text-sm text-muted-foreground mb-6">Would you like a quick 60-second tour?</p>
+              <p className="text-md font-semibold text-foreground mb-2">
+                Hi, I'm glad you're here.
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                Would you like a quick 60-second tour?
+              </p>
               <div className="flex flex-col gap-2">
-                <Button onClick={() => setShowVideoPlayer(true)} className="w-full">Watch the guide</Button>
+                <Button onClick={() => setShowVideoPlayer(true)} className="w-full">
+                  Watch the guide
+                </Button>
                 <button
-                  onClick={async () => { setShowTutorial(false); await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any); }}
+                  onClick={async () => {
+                    setShowTutorial(false);
+                    await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any);
+                  }}
                   className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                >Maybe later</button>
+                >
+                  Maybe later
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -440,21 +527,31 @@ export default function Dashboard() {
       <AnimatePresence>
         {showVideoPlayer && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="fixed inset-0 flex items-center justify-center z-[10002]"
             style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
           >
             <div className="w-[640px] max-w-[95vw] bg-card rounded-2xl p-6 shadow-2xl">
               <div className="flex justify-end mb-4">
                 <button
-                  onClick={async () => { setShowVideoPlayer(false); setShowTutorial(false); await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any); }}
+                  onClick={async () => {
+                    setShowVideoPlayer(false);
+                    setShowTutorial(false);
+                    await upsertPrefs.mutateAsync({ welcome_video_watched: true } as any);
+                  }}
                   className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
-                ><X size={18} className="text-muted-foreground" /></button>
+                >
+                  <X size={18} className="text-muted-foreground" />
+                </button>
               </div>
               <div className="w-full rounded-xl overflow-hidden" style={{ aspectRatio: '16/9', backgroundColor: 'hsl(var(--muted))' }}>
                 <iframe
                   src={(prefs as any)?.welcome_video_url || 'https://www.loom.com/embed/your-video-id'}
-                  frameBorder="0" allow="autoplay; fullscreen" allowFullScreen
+                  frameBorder="0"
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
                   style={{ width: '100%', height: '100%' }}
                 />
               </div>
@@ -463,6 +560,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
+      {/* Pulse glow animation */}
       <style>{`
         @keyframes dashboard-pulse-glow {
           0%, 100% { box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
