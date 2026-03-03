@@ -33,6 +33,10 @@ function PostCard({
   const checkCount = CHECKLIST_KEYS.filter(k => post.checklist[k]).length;
   const totalChecks = CHECKLIST_KEYS.length;
 
+  const isText = post.contentType === "Text";
+  const isArticle = post.contentType === "Article";
+  const hasImage = !!(post.imageFile || post.imageUrl);
+
   return (
     <div
       draggable
@@ -50,48 +54,126 @@ function PostCard({
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.10)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"; }}
     >
-      <div className="px-2.5 pt-1.5 pb-0.5">
-        <span className="text-[10px] font-medium text-gray-400">{dateLabel}</span>
-      </div>
-      <div className="w-full relative" style={{ aspectRatio: "16/9", background: "#F4F4F4" }}>
-        {post.imageFile ? (
-          <img src={post.imageFile} alt="" className="w-full h-full object-cover block" />
-        ) : post.imageUrl ? (
-          <img src={post.imageUrl} alt="" className="w-full h-full object-cover block" />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300" style={{ border: "2px dashed #E8E8E8" }}>
-            <div className="text-[24px]">📷</div>
-            <div className="text-[11px] mt-1">Add Image</div>
+      {/* ── Text-only card ── */}
+      {isText && !hasImage ? (
+        <div className="p-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <FileText size={12} className="text-blue-400" />
+            <span className="text-[10px] font-medium text-gray-400">{dateLabel}</span>
           </div>
-        )}
-        {checkCount > 0 && (
-          <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "rgba(0,0,0,0.1)" }}>
-            <div style={{ height: "100%", width: `${(checkCount / totalChecks) * 100}%`, background: "#2ECC71", transition: "width 0.3s ease" }} />
+          <div className="text-[13px] font-medium text-gray-800 leading-snug mb-2" style={{ display: "-webkit-box", WebkitLineClamp: 4, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
+            {post.caption || post.title || <span className="text-gray-300 italic">Write your text...</span>}
           </div>
-        )}
-      </div>
-      <div style={{ padding: "8px 10px" }}>
-        <div className="flex gap-1.5 mb-1 flex-wrap">
-          {post.platform && (
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-white" style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 20, padding: "2px 8px" }}>
-              {post.platform}
-            </span>
-          )}
-          {post.status && (
-            <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ background: getStatusColor(setup.statuses, post.status), borderRadius: 20, padding: "2px 8px", color: "#374151" }}>
-              {post.status}
-            </span>
+          <div className="flex gap-1.5 flex-wrap">
+            {post.platform && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white" style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 20, padding: "2px 8px" }}>
+                {post.platform}
+              </span>
+            )}
+            {post.status && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ background: getStatusColor(setup.statuses, post.status), borderRadius: 20, padding: "2px 8px", color: "#374151" }}>
+                {post.status}
+              </span>
+            )}
+          </div>
+          {checkCount > 0 && (
+            <div className="mt-2" style={{ height: 3, background: "rgba(0,0,0,0.06)", borderRadius: 2 }}>
+              <div style={{ height: "100%", width: `${(checkCount / totalChecks) * 100}%`, background: "#2ECC71", borderRadius: 2, transition: "width 0.3s ease" }} />
+            </div>
           )}
         </div>
-        <div className="text-[12px] font-medium text-gray-800 overflow-hidden" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
-          {post.title || <span className="text-gray-300">Untitled</span>}
-        </div>
-        {post.postLink && (
-          <div className="text-[10px] text-gray-400 mt-1 truncate">
-            🔗 {post.postLink.replace(/^https?:\/\/(www\.)?/, "").substring(0, 30)}…
+
+      /* ── Article card ── */
+      ) : isArticle ? (
+        <div>
+          <div className="px-3 pt-2 pb-1 flex items-center gap-1.5">
+            <Newspaper size={12} className="text-orange-400" />
+            <span className="text-[10px] font-medium text-gray-400">{dateLabel}</span>
           </div>
-        )}
-      </div>
+          {hasImage && (
+            <div className="mx-3 rounded-lg overflow-hidden" style={{ aspectRatio: "2/1", background: "#F4F4F4" }}>
+              <img src={post.imageFile || post.imageUrl} alt="" className="w-full h-full object-cover block" />
+            </div>
+          )}
+          <div className="p-3 pt-2" style={{ borderLeft: "3px solid #F59E0B" }}>
+            <div className="text-[13px] font-bold text-gray-900 leading-snug mb-1" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
+              {post.title || <span className="text-gray-300">Article headline...</span>}
+            </div>
+            <div className="text-[11px] text-gray-500 leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>
+              {post.caption || <span className="text-gray-300 italic">Add a summary...</span>}
+            </div>
+          </div>
+          <div className="px-3 pb-2 flex gap-1.5 flex-wrap">
+            {post.platform && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-white" style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 20, padding: "2px 8px" }}>
+                {post.platform}
+              </span>
+            )}
+            {post.status && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ background: getStatusColor(setup.statuses, post.status), borderRadius: 20, padding: "2px 8px", color: "#374151" }}>
+                {post.status}
+              </span>
+            )}
+          </div>
+          {checkCount > 0 && (
+            <div className="mx-3 mb-2" style={{ height: 3, background: "rgba(0,0,0,0.06)", borderRadius: 2 }}>
+              <div style={{ height: "100%", width: `${(checkCount / totalChecks) * 100}%`, background: "#2ECC71", borderRadius: 2, transition: "width 0.3s ease" }} />
+            </div>
+          )}
+          {post.postLink && (
+            <div className="text-[10px] text-gray-400 px-3 pb-2 truncate">
+              🔗 {post.postLink.replace(/^https?:\/\/(www\.)?/, "").substring(0, 30)}…
+            </div>
+          )}
+        </div>
+
+      /* ── Default (visual/image) card ── */
+      ) : (
+        <>
+          <div className="px-2.5 pt-1.5 pb-0.5">
+            <span className="text-[10px] font-medium text-gray-400">{dateLabel}</span>
+          </div>
+          <div className="w-full relative" style={{ aspectRatio: "16/9", background: "#F4F4F4" }}>
+            {post.imageFile ? (
+              <img src={post.imageFile} alt="" className="w-full h-full object-cover block" />
+            ) : post.imageUrl ? (
+              <img src={post.imageUrl} alt="" className="w-full h-full object-cover block" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300" style={{ border: "2px dashed #E8E8E8" }}>
+                <div className="text-[24px]">📷</div>
+                <div className="text-[11px] mt-1">Add Image</div>
+              </div>
+            )}
+            {checkCount > 0 && (
+              <div className="absolute bottom-0 left-0 right-0" style={{ height: 3, background: "rgba(0,0,0,0.1)" }}>
+                <div style={{ height: "100%", width: `${(checkCount / totalChecks) * 100}%`, background: "#2ECC71", transition: "width 0.3s ease" }} />
+              </div>
+            )}
+          </div>
+          <div style={{ padding: "8px 10px" }}>
+            <div className="flex gap-1.5 mb-1 flex-wrap">
+              {post.platform && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-white" style={{ background: getPlatformColor(setup.platforms, post.platform), borderRadius: 20, padding: "2px 8px" }}>
+                  {post.platform}
+                </span>
+              )}
+              {post.status && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ background: getStatusColor(setup.statuses, post.status), borderRadius: 20, padding: "2px 8px", color: "#374151" }}>
+                  {post.status}
+                </span>
+              )}
+            </div>
+            <div className="text-[12px] font-medium text-gray-800 overflow-hidden" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>
+              {post.title || <span className="text-gray-300">Untitled</span>}
+            </div>
+            {post.postLink && (
+              <div className="text-[10px] text-gray-400 mt-1 truncate">
+                🔗 {post.postLink.replace(/^https?:\/\/(www\.)?/, "").substring(0, 30)}…
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
