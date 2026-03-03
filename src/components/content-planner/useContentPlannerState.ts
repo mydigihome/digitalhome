@@ -241,6 +241,18 @@ export function useContentPlannerState() {
     });
   }, [setCurrentWeek]);
 
+  const movePost = useCallback((fromDay: number, toDay: number, postId: string) => {
+    if (fromDay === toDay) return;
+    setCurrentWeek(prev => {
+      const days = [...prev.days];
+      const post = days[fromDay].posts.find(p => p.id === postId);
+      if (!post) return prev;
+      days[fromDay] = { ...days[fromDay], posts: days[fromDay].posts.filter(p => p.id !== postId) };
+      days[toDay] = { ...days[toDay], posts: [...days[toDay].posts, post] };
+      return { ...prev, days };
+    });
+  }, [setCurrentWeek]);
+
   const updatePostChecklist = useCallback((dayIndex: number, postId: string, key: string, val: boolean) => {
     setCurrentWeek(prev => {
       const days = [...prev.days];
@@ -346,6 +358,7 @@ export function useContentPlannerState() {
     addPost,
     updatePost,
     deletePost,
+    movePost,
     updatePostChecklist,
     updatePostAnalytics,
     ideas: data.ideas,
