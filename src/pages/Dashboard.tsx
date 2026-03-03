@@ -13,8 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, isToday } from "date-fns";
 import {
-  Plus, FolderOpen, Calendar, Edit2, X,
-  Settings, Mic, Book, Wallet, CheckCircle2,
+  Plus, Edit2, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -183,7 +182,7 @@ export default function Dashboard() {
       return { ...p, percentage, total, done };
     })
     .sort((a, b) => b.total - a.total)
-    .slice(0, 4);
+    .slice(0, 2);
 
   // Agenda items
   const agendaItems = [
@@ -267,49 +266,72 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="px-5 sm:px-8 pb-32 max-w-md sm:max-w-[600px] mx-auto">
+        <div className="w-full max-w-lg mx-auto px-4 pb-32">
 
-          {/* ═══ HERO HEADER ═══ */}
-          <motion.div {...stagger(0)} className="relative rounded-3xl overflow-hidden mb-0" style={{ height: "clamp(200px, 30vh, 240px)" }}>
-            <div className="absolute inset-0" style={coverStyle} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%)" }} />
+          {/* ═══ HERO HEADER — Clickable upload area ═══ */}
+          <div className="pt-4">
+            <motion.div
+              {...stagger(0)}
+              className="relative h-52 mb-16 rounded-3xl overflow-hidden shadow-xl cursor-pointer group"
+              onClick={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e: any) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event: any) => {
+                      upsertPrefs.mutate({
+                        dashboard_cover: event.target.result,
+                        dashboard_cover_type: 'image'
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                };
+                input.click();
+              }}
+            >
+              {hasCover ? (
+                <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
+              )}
 
-            {/* Top controls */}
-            <div className="absolute top-5 left-5 right-5 flex justify-between z-10">
-              <button
-                className="h-11 w-11 rounded-full flex items-center justify-center text-xl"
-                style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-              >
-                {prefs?.dashboard_icon || "🏠"}
-              </button>
-              <button
-                onClick={() => navigate("/settings")}
-                className="h-11 w-11 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-              >
-                <Settings className="h-5 w-5" style={{ color: "#1F2937" }} />
-              </button>
-            </div>
+              {/* Upload overlay on hover */}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-20">
+                <div className="text-center">
+                  <svg className="w-12 h-12 text-white mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-white font-semibold text-sm">Change Cover</p>
+                </div>
+              </div>
 
-            {/* Greeting */}
-            <div className="absolute bottom-6 left-6 right-6 z-[2]">
-              <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
-                {format(now, "EEEE, MMMM d")}
-              </p>
-              <h1
-                className="text-[32px] sm:text-[40px] leading-[1.2] mt-1"
-                style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  color: "white",
-                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-                }}
-              >
-                {greeting}
-              </h1>
-            </div>
-          </motion.div>
+              {/* Gradient blend to white */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-white pointer-events-none" />
+
+              {/* Greeting */}
+              <div className="absolute bottom-6 left-6 z-10">
+                <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  {format(now, "EEEE, MMMM d")}
+                </p>
+                <h1
+                  className="text-[32px] sm:text-[40px] leading-[1.2] mt-1"
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontStyle: "italic",
+                    fontWeight: 400,
+                    color: "white",
+                    textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  {greeting}
+                </h1>
+              </div>
+            </motion.div>
+          </div>
 
           {/* ═══ MOMENTUM & HABITS — SINGLE CARD ═══ */}
           <motion.div {...stagger(1)} className="-mt-10 relative z-[5] mb-6 rounded-[20px] p-6" style={glassCard}>
@@ -325,11 +347,11 @@ export default function Dashboard() {
                 <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
               </div>
 
-              {/* Habits */}
+              {/* Habits — GREEN */}
               <div className="text-center">
-                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#8B5CF6" }}>Habits</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#10B981" }}>Habits</p>
                 <div className="flex justify-center">
-                  <ProgressRing progress={habitsProgress} gradientId="habits-grad" color1="#8B5CF6" color2="#EC4899">
+                  <ProgressRing progress={habitsProgress} gradientId="habits-grad" color1="#10B981" color2="#34D399">
                     <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
                   </ProgressRing>
                 </div>
@@ -348,28 +370,44 @@ export default function Dashboard() {
           {/* ═══ EVERYDAY LINKS ═══ */}
           <motion.div {...stagger(2)} className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h3>
+              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h2>
               <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
                 <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
               </button>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
               {everydayLinks.map((link) => {
+                const colorMap: Record<string, { bg: string; text: string }> = {
+                  "📧": { bg: "bg-blue-100", text: "text-blue-600" },
+                  "🛍️": { bg: "bg-green-100", text: "text-green-600" },
+                  "📝": { bg: "bg-orange-100", text: "text-orange-600" },
+                  "🔗": { bg: "bg-purple-100", text: "text-purple-600" },
+                };
+                const colors = colorMap[link.icon] || { bg: "bg-gray-100", text: "text-gray-600" };
+                const svgIcons: Record<string, React.ReactNode> = {
+                  "📧": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+                  "🛍️": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
+                  "📝": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+                };
                 const imgSrc = link.image || getFaviconUrl(link.url);
                 return (
                   <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-shrink-0">
                     {editingLinks ? (
                       <div className="flex flex-col items-center gap-1">
-                        <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                          {imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>}
+                        <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                          <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
+                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                          </div>
                         </div>
                         <input value={link.name} onChange={(e) => updateLink(link.id, "name", e.target.value)} className="w-16 text-center text-[10px] bg-transparent outline-none border-b border-dashed border-gray-300" />
                         <button onClick={() => deleteLink(link.id)} className="text-[10px] text-red-400">✕</button>
                       </div>
                     ) : (
                       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-[6px] cursor-pointer">
-                        <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center transition-all" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                          {imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>}
+                        <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                          <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
+                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                          </div>
                         </div>
                         <span className="text-[10px] font-semibold uppercase text-center" style={{ color: "#6B7280" }}>{link.name}</span>
                       </a>
@@ -378,8 +416,10 @@ export default function Dashboard() {
                 );
               })}
               <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-shrink-0 cursor-pointer">
-                <div className="h-[72px] w-[72px] rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-                  <Plus className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+                <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Plus className="h-6 w-6 text-purple-600" />
+                  </div>
                 </div>
                 <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
               </motion.button>
@@ -389,10 +429,7 @@ export default function Dashboard() {
           {/* ═══ TODAY'S AGENDA ═══ */}
           <motion.div {...stagger(3)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" style={{ color: "#6366F1" }} />
-                <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h3>
-              </div>
+              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
               <button onClick={() => navigate("/calendar")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
                 View All
               </button>
@@ -417,10 +454,7 @@ export default function Dashboard() {
 
           {/* ═══ QUICK TO-DOS ═══ */}
           <motion.div {...stagger(4)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
-            <div className="flex items-center gap-2 mb-5">
-              <CheckCircle2 className="h-5 w-5" style={{ color: "#6366F1" }} />
-              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Quick To-Dos</h3>
-            </div>
+            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
             <div className="space-y-0">
               {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
                 <div key={todo.id} className="flex items-center gap-3 py-3">
@@ -457,17 +491,13 @@ export default function Dashboard() {
           {/* ═══ ACTIVE PROJECTS ═══ */}
           <motion.div {...stagger(5)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-5 w-5" style={{ color: "#6366F1" }} />
-                <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h3>
-              </div>
+              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
               <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
                 View All
               </button>
             </div>
             {activeProjects.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-center">
-                <FolderOpen className="mb-2 h-8 w-8" style={{ color: "#D1D5DB" }} />
                 <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
                 <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
@@ -475,7 +505,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {activeProjects.map((project) => (
+                {activeProjects.map((project, idx) => (
                   <motion.div
                     key={project.id}
                     whileHover={{ y: -2 }}
@@ -484,11 +514,11 @@ export default function Dashboard() {
                     style={{ background: "white", border: "1px solid #F3F4F6" }}
                     onClick={() => navigate(`/project/${project.id}`)}
                   >
-                    <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-xl" style={{ background: "rgba(99,102,241,0.1)" }}>
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-xl ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
                       {project.icon || "📁"}
                     </div>
                     <p className="text-[15px] font-semibold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
-                    <p className="text-xs font-semibold" style={{ color: project.percentage > 50 ? "#10B981" : "#6366F1" }}>{project.percentage}% complete</p>
+                    <p className={`text-xs font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
                   </motion.div>
                 ))}
               </div>
@@ -496,15 +526,12 @@ export default function Dashboard() {
           </motion.div>
 
           {/* ═══ MONEY REMINDERS ═══ */}
-          <motion.div {...stagger(6)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
-            <div className="flex items-center gap-2 mb-5">
-              <Wallet className="h-5 w-5" style={{ color: "#6366F1" }} />
-              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Money Reminders</h3>
-            </div>
+          <motion.div {...stagger(6)} className="mb-6 rounded-[20px] p-6 bg-red-50/50 border border-red-100" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
+            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Money Reminders</h2>
             {moneyReminders.length > 0 ? (
               <div className="space-y-0">
                 {moneyReminders.map((reminder, idx) => (
-                  <div key={idx} className="flex justify-between py-4" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
+                  <div key={idx} className="flex justify-between py-4" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.15)" : "none" }}>
                     <span className="text-[15px] font-medium" style={{ color: "#1F2937" }}>{reminder.name}</span>
                     <span className="text-base font-bold" style={{ color: "#EF4444" }}>${reminder.amount.toFixed(2)}</span>
                   </div>
@@ -518,10 +545,7 @@ export default function Dashboard() {
           {/* ═══ RECENT JOURNAL ═══ */}
           <motion.div {...stagger(7)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <Book className="h-5 w-5" style={{ color: "#6366F1" }} />
-                <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Recent Journal</h3>
-              </div>
+              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
               <button onClick={() => navigate("/journal")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
                 New Entry
               </button>
@@ -547,22 +571,7 @@ export default function Dashboard() {
 
         </div>
 
-        {/* ═══ FLOATING VOICE BUTTON ═══ */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="fixed z-50 h-16 w-16 rounded-full flex items-center justify-center cursor-pointer"
-          style={{
-            bottom: "88px",
-            right: "24px",
-            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-            boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
-            animation: "dashboard-pulse-glow 2s ease-in-out infinite",
-          }}
-          onClick={() => toast.info("Voice input coming soon!")}
-        >
-          <Mic className="h-7 w-7 text-white" strokeWidth={2.5} />
-        </motion.button>
+        {/* Voice button removed */}
       </div>
 
       {/* Modals */}
