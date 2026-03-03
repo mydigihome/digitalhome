@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo } from "@/hooks/useQuickTodos";
-import { useHabits, useHabitLogs, getCurrentWeekStart } from "@/hooks/useHabits";
+import { useHabits, useHabitLogs, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
@@ -12,9 +12,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, isToday } from "date-fns";
-import {
-  Plus, Edit2, X,
-} from "lucide-react";
+import { Plus, Edit2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
@@ -52,40 +50,6 @@ function useCurrentTime() {
   return now;
 }
 
-/* ── Animated SVG Progress Ring ── */
-function ProgressRing({ progress, size = 100, strokeWidth = 8, gradientId, color1, color2, children }: {
-  progress: number; size?: number; strokeWidth?: number; gradientId: string; color1: string; color2: string; children: React.ReactNode;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(100, Math.max(0, progress)) / 100) * circumference;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={color1} />
-            <stop offset="100%" stopColor={color2} />
-          </linearGradient>
-        </defs>
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={`${color1}26`} strokeWidth={strokeWidth} />
-        <motion.circle
-          cx={size / 2} cy={size / 2} r={radius} fill="none"
-          stroke={`url(#${gradientId})`} strokeWidth={strokeWidth}
-          strokeLinecap="round" strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: [0.4, 0, 0.2, 1], delay: 0.1 }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {children}
-      </div>
-    </div>
-  );
-}
-
 const glassCard = {
   background: "rgba(255,255,255,0.7)",
   border: "1px solid rgba(255,255,255,0.8)",
@@ -93,6 +57,12 @@ const glassCard = {
   backdropFilter: "blur(24px)",
   WebkitBackdropFilter: "blur(24px)",
 };
+
+const stagger = (i: number) => ({
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] },
+});
 
 export default function Dashboard() {
   const { profile, user } = useAuth();
@@ -105,6 +75,7 @@ export default function Dashboard() {
   const { data: expenses = [] } = useExpenses();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
+  const addHabitLog = useLogHabitHours();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -115,6 +86,10 @@ export default function Dashboard() {
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+  // Habit tracker modal state
+  const [selectedHabit, setSelectedHabit] = useState<any>(null);
+  const [habitHours, setHabitHours] = useState("1");
 
   const addTodo = useAddQuickTodo();
   const updateTodo = useUpdateQuickTodo();
@@ -168,8 +143,11 @@ export default function Dashboard() {
   const currentWeekStart = getCurrentWeekStart();
   const thisWeekLogs = (habitLogs || []).filter(log => log.week_start_date === currentWeekStart);
   const totalHours = thisWeekLogs.reduce((sum, log) => sum + (log.hours || 0), 0);
-  const habitsProgress = habits.length > 0 ? Math.min(100, Math.round((totalHours / Math.max(1, habits.length * 7)) * 100)) : 0;
   const streakDays = thisWeekLogs.length;
+
+  const getHabitHours = (habitId: string) => {
+    return thisWeekLogs.filter(l => l.habit_id === habitId).reduce((s, l) => s + (l.hours || 0), 0);
+  };
 
   // Active projects with progress
   const activeProjects = projects
@@ -238,21 +216,40 @@ export default function Dashboard() {
     ? `Good ${hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"}, ${profile.full_name.split(" ")[0]}`
     : "Welcome back";
 
-  const stagger = (i: number) => ({
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6, delay: i * 0.1, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] },
-  });
-
-  const linkColors: Record<string, string> = {
-    "📧": "#3B82F6", "🛍️": "#10B981", "📝": "#F59E0B", "🔗": "#8B5CF6",
-  };
-
   const handleAddTodo = () => {
     if (!newTodoText.trim()) return;
     addTodo.mutate({ text: newTodoText.trim(), order: todos.length });
     setNewTodoText("");
   };
+
+  const handleSaveHabitHours = () => {
+    if (!selectedHabit || !habitHours) return;
+    addHabitLog.mutate({
+      habit_id: selectedHabit.id,
+      hours: parseFloat(habitHours),
+      week_start_date: currentWeekStart,
+    });
+    setSelectedHabit(null);
+    setHabitHours("1");
+    toast.success("Hours logged!");
+  };
+
+  const colorMap: Record<string, { bg: string; text: string }> = {
+    "📧": { bg: "bg-blue-100", text: "text-blue-600" },
+    "🛍️": { bg: "bg-green-100", text: "text-green-600" },
+    "📝": { bg: "bg-orange-100", text: "text-orange-600" },
+    "🔗": { bg: "bg-purple-100", text: "text-purple-600" },
+  };
+
+  const svgIcons: Record<string, (cls: string) => React.ReactNode> = {
+    "📧": (cls) => <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+    "🛍️": (cls) => <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
+    "📝": (cls) => <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+  };
+
+  // Momentum ring math
+  const mRadius = 42;
+  const mCirc = 2 * Math.PI * mRadius;
 
   return (
     <AppShell>
@@ -266,13 +263,14 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="w-full max-w-lg mx-auto px-4 pb-32">
+        {/* Wide on desktop, full on mobile */}
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 pb-32">
 
           {/* ═══ HERO HEADER — Clickable upload area ═══ */}
           <div className="pt-4">
             <motion.div
               {...stagger(0)}
-              className="relative h-52 mb-16 rounded-3xl overflow-hidden shadow-xl cursor-pointer group"
+              className="relative h-44 sm:h-52 mb-12 rounded-3xl overflow-hidden shadow-xl cursor-pointer group"
               onClick={() => {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -313,12 +311,12 @@ export default function Dashboard() {
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-white pointer-events-none" />
 
               {/* Greeting */}
-              <div className="absolute bottom-6 left-6 z-10">
-                <p className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
+              <div className="absolute bottom-5 left-5 sm:bottom-6 sm:left-6 z-10">
+                <p className="text-xs sm:text-sm font-medium" style={{ color: "rgba(255,255,255,0.9)" }}>
                   {format(now, "EEEE, MMMM d")}
                 </p>
                 <h1
-                  className="text-[32px] sm:text-[40px] leading-[1.2] mt-1"
+                  className="text-[28px] sm:text-[40px] leading-[1.2] mt-1"
                   style={{
                     fontFamily: "'Playfair Display', serif",
                     fontStyle: "italic",
@@ -333,38 +331,54 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          {/* ═══ MOMENTUM & HABITS — SINGLE CARD ═══ */}
-          <motion.div {...stagger(1)} className="-mt-10 relative z-[5] mb-6 rounded-[20px] p-6" style={glassCard}>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Momentum */}
-              <div className="text-center">
-                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#6366F1" }}>Momentum</p>
-                <div className="flex justify-center">
-                  <ProgressRing progress={momentum} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                  </ProgressRing>
+          {/* ═══ MOMENTUM SCORE — Single ring with lightning bolt ═══ */}
+          <motion.div {...stagger(1)} className="-mt-6 relative z-[5] mb-6 rounded-[20px] p-6" style={glassCard}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#6366F1" }}>
+                  MOMENTUM SCORE
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  <span className="text-sm" style={{ color: "#6B7280" }}>of daily goal</span>
                 </div>
-                <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
               </div>
 
-              {/* Habits — GREEN */}
-              <div className="text-center">
-                <p className="text-[11px] font-bold uppercase tracking-[0.8px] mb-4" style={{ color: "#10B981" }}>Habits</p>
-                <div className="flex justify-center">
-                  <ProgressRing progress={habitsProgress} gradientId="habits-grad" color1="#10B981" color2="#34D399">
-                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                  </ProgressRing>
+              {/* Single progress ring with lightning icon */}
+              <div className="relative w-20 h-20 flex-shrink-0">
+                <svg className="transform -rotate-90 w-20 h-20" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r={mRadius} fill="none" stroke="rgba(99,102,241,0.15)" strokeWidth="8" />
+                  <motion.circle
+                    cx="50" cy="50" r={mRadius} fill="none"
+                    stroke="url(#momentum-single-grad)" strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={mCirc}
+                    initial={{ strokeDashoffset: mCirc }}
+                    animate={{ strokeDashoffset: mCirc - (momentum / 100) * mCirc }}
+                    transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+                  />
+                  <defs>
+                    <linearGradient id="momentum-single-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#6366F1" />
+                      <stop offset="100%" stopColor="#8B5CF6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg className="w-8 h-8" style={{ color: "#6366F1" }} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  </svg>
                 </div>
-                <p className="text-[13px] font-medium mt-3" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
               </div>
             </div>
 
-            {/* Subtitle inside same card */}
-            {tasksAhead > 0 && (
-              <div className="mt-4 text-[13px] font-medium py-[10px] px-4 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.1)" }}>
-                🎯 You're on track! {tasksAhead} tasks ahead.
-              </div>
-            )}
+            {/* Motivational message box */}
+            <div className="p-4 rounded-2xl" style={{ background: "rgba(99,102,241,0.08)" }}>
+              <p className="text-sm font-medium flex items-center gap-2" style={{ color: "#6366F1" }}>
+                <span>🎯</span>
+                <span>You're crushing it! {tasksAhead} tasks ahead of schedule.</span>
+              </p>
+            </div>
           </motion.div>
 
           {/* ═══ EVERYDAY LINKS ═══ */}
@@ -377,18 +391,8 @@ export default function Dashboard() {
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
               {everydayLinks.map((link) => {
-                const colorMap: Record<string, { bg: string; text: string }> = {
-                  "📧": { bg: "bg-blue-100", text: "text-blue-600" },
-                  "🛍️": { bg: "bg-green-100", text: "text-green-600" },
-                  "📝": { bg: "bg-orange-100", text: "text-orange-600" },
-                  "🔗": { bg: "bg-purple-100", text: "text-purple-600" },
-                };
                 const colors = colorMap[link.icon] || { bg: "bg-gray-100", text: "text-gray-600" };
-                const svgIcons: Record<string, React.ReactNode> = {
-                  "📧": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-                  "🛍️": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
-                  "📝": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-                };
+                const iconFn = svgIcons[link.icon];
                 const imgSrc = link.image || getFaviconUrl(link.url);
                 return (
                   <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-shrink-0">
@@ -396,7 +400,7 @@ export default function Dashboard() {
                       <div className="flex flex-col items-center gap-1">
                         <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
                           <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
-                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                            {iconFn ? iconFn(`w-6 h-6 ${colors.text}`) : (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
                           </div>
                         </div>
                         <input value={link.name} onChange={(e) => updateLink(link.id, "name", e.target.value)} className="w-16 text-center text-[10px] bg-transparent outline-none border-b border-dashed border-gray-300" />
@@ -406,7 +410,7 @@ export default function Dashboard() {
                       <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-[6px] cursor-pointer">
                         <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
                           <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
-                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                            {iconFn ? iconFn(`w-6 h-6 ${colors.text}`) : (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
                           </div>
                         </div>
                         <span className="text-[10px] font-semibold uppercase text-center" style={{ color: "#6B7280" }}>{link.name}</span>
@@ -438,7 +442,7 @@ export default function Dashboard() {
               <div className="space-y-0">
                 {agendaItems.map((item, idx) => (
                   <div key={idx} className="flex gap-4 py-4" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                    <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
+                    <div className="w-1 rounded-sm flex-shrink-0 self-stretch" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
                     <div>
                       <p className="text-sm font-semibold" style={{ color: "#6B7280" }}>{item.time}</p>
                       <p className="text-base font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
@@ -452,39 +456,41 @@ export default function Dashboard() {
             )}
           </motion.div>
 
-          {/* ═══ QUICK TO-DOS ═══ */}
+          {/* ═══ QUICK TO-DOS — Compact ═══ */}
           <motion.div {...stagger(4)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
-            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
-            <div className="space-y-0">
+            <h2 className="text-lg font-bold mb-4" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
+            <div className="space-y-1">
               {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-3">
+                <div key={todo.id} className="flex items-center gap-2 py-1">
                   <button
                     onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                    className="h-5 w-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+                    className="h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all hover:border-indigo-500"
                     style={{ borderColor: "#D1D5DB" }}
                   />
-                  <span className="text-[15px] flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
+                  <span className="text-sm flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
                 </div>
               ))}
-              {todos.filter(t => t.completed).slice(0, 3).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-3">
+              {todos.filter(t => t.completed).slice(0, 2).map(todo => (
+                <div key={todo.id} className="flex items-center gap-2 py-1">
                   <div
-                    className="h-5 w-5 rounded-full flex-shrink-0 flex items-center justify-center"
+                    className="h-4 w-4 rounded-full flex-shrink-0 flex items-center justify-center"
                     style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </div>
-                  <span className="text-[15px] flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                  <span className="text-sm flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
                 </div>
               ))}
-              <input
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
-                placeholder="Add a quick note..."
-                className="w-full mt-2 py-[10px] px-3 text-sm bg-transparent outline-none rounded-lg"
-                style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
-              />
+              <div className="pt-2">
+                <input
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
+                  placeholder="Add a quick note..."
+                  className="w-full py-2 px-3 text-sm bg-transparent outline-none rounded-lg"
+                  style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
+                />
+              </div>
             </div>
           </motion.div>
 
@@ -517,7 +523,7 @@ export default function Dashboard() {
                     <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-3 text-xl ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
                       {project.icon || "📁"}
                     </div>
-                    <p className="text-[15px] font-semibold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
+                    <p className="text-sm font-semibold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
                     <p className={`text-xs font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
                   </motion.div>
                 ))}
@@ -532,7 +538,7 @@ export default function Dashboard() {
               <div className="space-y-0">
                 {moneyReminders.map((reminder, idx) => (
                   <div key={idx} className="flex justify-between py-4" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.15)" : "none" }}>
-                    <span className="text-[15px] font-medium" style={{ color: "#1F2937" }}>{reminder.name}</span>
+                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{reminder.name}</span>
                     <span className="text-base font-bold" style={{ color: "#EF4444" }}>${reminder.amount.toFixed(2)}</span>
                   </div>
                 ))}
@@ -542,23 +548,52 @@ export default function Dashboard() {
             )}
           </motion.div>
 
-          {/* ═══ RECENT JOURNAL ═══ */}
+          {/* ═══ HABIT TRACKER ═══ */}
           <motion.div {...stagger(7)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
+            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Habit Tracker</h2>
+            {habits.length > 0 ? (
+              <div className="space-y-1">
+                {habits.slice(0, 5).map(habit => (
+                  <button
+                    key={habit.id}
+                    onClick={() => { setSelectedHabit(habit); setHabitHours("1"); }}
+                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition text-left"
+                  >
+                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{habit.name}</span>
+                    <span className="text-xs font-semibold" style={{ color: "#10B981" }}>
+                      {getHabitHours(habit.id)}h this week
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No habits tracked yet</p>
+            )}
+          </motion.div>
+
+          {/* ═══ RECENT JOURNAL ═══ */}
+          <motion.div {...stagger(8)} className="mb-6 rounded-[20px] p-6" style={glassCard}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
-              <button onClick={() => navigate("/journal")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+              <button onClick={() => navigate("/journal")} className="text-sm font-semibold cursor-pointer hover:underline uppercase tracking-wide" style={{ color: "#6366F1" }}>
                 New Entry
               </button>
             </div>
             {recentEntry ? (
-              <div className="rounded-2xl p-5" style={{ background: "white", border: "1px solid #F3F4F6" }}>
-                <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>
+              <div className="rounded-2xl p-5 relative" style={{ background: "white", border: "1px solid #F3F4F6" }}>
+                {/* Three-dot menu */}
+                <button className="absolute top-4 right-4 hover:opacity-70" style={{ color: "#D1D5DB" }}>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
+                <h3 className="text-xl font-bold mb-1 pr-8" style={{ color: "#1F2937" }}>
                   {(recentEntry as any).title || "Untitled Entry"}
-                </p>
-                <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>
+                </h3>
+                <p className="text-sm mb-4" style={{ color: "#9CA3AF" }}>
                   {format(new Date(recentEntry.created_at), "MMM d, yyyy")}
                 </p>
-                <p className="text-sm leading-relaxed" style={{ color: "#4B5563", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                <p className="text-sm leading-relaxed line-clamp-3" style={{ color: "#4B5563" }}>
                   {(recentEntry as any).content_preview || "No content yet..."}
                 </p>
               </div>
@@ -570,8 +605,6 @@ export default function Dashboard() {
           </motion.div>
 
         </div>
-
-        {/* Voice button removed */}
       </div>
 
       {/* Modals */}
@@ -580,6 +613,71 @@ export default function Dashboard() {
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
       )}
+
+      {/* Log Habit Hours Modal */}
+      <AnimatePresence>
+        {selectedHabit && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedHabit(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Log Habit Hours</h3>
+                <button onClick={() => setSelectedHabit(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-2 mb-6">
+                {habits.map(h => (
+                  <label key={h.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="habit"
+                      checked={selectedHabit.id === h.id}
+                      onChange={() => setSelectedHabit(h)}
+                      className="w-4 h-4 text-indigo-600"
+                    />
+                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{h.name}</span>
+                    <span className="ml-auto text-xs" style={{ color: "#10B981" }}>{getHabitHours(h.id)}h</span>
+                  </label>
+                ))}
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>Hours this week</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={habitHours}
+                  onChange={(e) => setHabitHours(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setSelectedHabit(null)}
+                  className="flex-1 px-4 py-3 font-semibold rounded-xl hover:bg-gray-100 transition"
+                  style={{ color: "#374151" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveHabitHours}
+                  className="flex-1 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition"
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tutorial prompt modal */}
       <AnimatePresence>
@@ -638,13 +736,6 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style>{`
-        @keyframes dashboard-pulse-glow {
-          0%, 100% { box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
-          50% { box-shadow: 0 12px 40px rgba(99,102,241,0.6), 0 0 0 12px rgba(99,102,241,0.1); }
-        }
-      `}</style>
     </AppShell>
   );
 }
