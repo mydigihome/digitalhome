@@ -66,8 +66,11 @@ export default function ContentPlanner() {
               addPost={state.addPost}
               updatePost={state.updatePost}
               deletePost={state.deletePost}
+              movePost={state.movePost}
               updatePostChecklist={state.updatePostChecklist}
               updatePostAnalytics={state.updatePostAnalytics}
+              ideasTables={state.ideasTables}
+              setIdeasTables={state.setIdeasTables}
             />
           )}
           {activeTab === "monthly" && <MonthlyViewTab setup={state.setup} getAllPosts={state.getAllPosts} />}
