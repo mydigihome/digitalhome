@@ -207,27 +207,11 @@ export default function ProjectDetail() {
 
         {/* Event View */}
         {isEvent ? (
-          <>
-            <PageHeader
-              title={project?.name || "Event"}
-              icon={project?.icon || "📅"}
-              iconType={project?.icon_type || "emoji"}
-              coverImage={project?.cover_image}
-              coverType={project?.cover_type || "none"}
-              onTitleChange={(name) => id && updateProject.mutate({ id, name })}
-              onIconChange={(icon, icon_type) => id && updateProject.mutate({ id, icon, icon_type })}
-              onCoverChange={(cover_image, cover_type) => id && updateProject.mutate({ id, cover_image, cover_type })}
-              editable
-            />
-            <div className="flex justify-end mb-2">
-              <QuickEmailComposer projectName={project?.name || ""} projectType="event" />
-            </div>
-            <EventDetailView
-              projectId={id!}
-              projectName={project?.name || ""}
-              coverImage={project?.cover_image}
-            />
-          </>
+          <EventDetailView
+            projectId={id!}
+            projectName={project?.name || ""}
+            coverImage={project?.cover_image}
+          />
         ) : isGoal ? (
           <GoalDetailView projectId={id!} projectName={project?.name || ""} coverImage={project?.cover_image} />
         ) : (
