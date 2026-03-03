@@ -198,12 +198,14 @@ export default function ProjectDetail() {
   return (
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-        {/* Back nav */}
-        <div className="mb-4">
-          <button onClick={() => navigate("/projects")} className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
-            <ChevronLeft className="h-4 w-4" /> Projects
-          </button>
-        </div>
+        {/* Back nav (only for non-event, non-goal views) */}
+        {!isEvent && !isGoal && (
+          <div className="mb-4">
+            <button onClick={() => navigate("/projects")} className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <ChevronLeft className="h-4 w-4" /> Projects
+            </button>
+          </div>
+        )}
 
         {/* Event View */}
         {isEvent ? (

@@ -718,32 +718,6 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
         </div>
       </div>
 
-      {/* ═══ FLOATING ACTION BUTTON ═══ */}
-      <button
-        className="fixed z-50 flex items-center justify-center cursor-pointer"
-        style={{
-          bottom: 32, right: 32,
-          width: 64, height: 64,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
-          boxShadow: "0 8px 24px rgba(99,102,241,0.4)",
-          animation: "subtle-pulse 2s ease-in-out infinite",
-        }}
-        onClick={() => {
-          // Placeholder for AI quick actions
-          toast("✨ Stitch AI coming soon!", { description: "AI-powered task suggestions for your goal" });
-        }}
-      >
-        <Zap className="h-7 w-7 text-white" style={{ strokeWidth: 2.5 }} />
-      </button>
-
-      {/* Pulse animation keyframes */}
-      <style>{`
-        @keyframes subtle-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
-          50% { transform: scale(1.05); box-shadow: 0 12px 32px rgba(99,102,241,0.5); }
-        }
-      `}</style>
     </motion.div>
   );
 }
