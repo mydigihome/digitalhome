@@ -189,8 +189,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   )}
                   style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
+                  <span className={iconCircleCn(item.active)}>
+                    <Icon className={iconCn(item.active)} strokeWidth={1.5} />
                   </span>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
