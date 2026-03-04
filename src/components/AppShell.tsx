@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, DollarSign, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
+import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Wallet, Grid3x3, DollarSign, Sparkles, MessageCircle, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -45,36 +45,28 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard"), color: "purple" as const },
+    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive, color: "amber" as const },
   ];
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "violet" as const },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "pink" as const },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
 
-  const activeStyle = (isActive: boolean) => ({
-    backgroundColor: isActive ? '#EEF2FF' : undefined,
-    color: isActive ? '#4338CA' : '#4B5563',
-    boxShadow: isActive
-      ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
-      : undefined,
-  });
+  const colorMap = {
+    purple:  { activeBg: 'bg-purple-50',  activeRing: 'ring-purple-200',  hoverRing: 'group-hover:ring-purple-100',  activeText: 'text-purple-600',  activeRowBg: 'bg-purple-50/60' },
+    amber:   { activeBg: 'bg-amber-50',   activeRing: 'ring-amber-200',   hoverRing: 'group-hover:ring-amber-100',   activeText: 'text-amber-600',   activeRowBg: 'bg-amber-50/60' },
+    emerald: { activeBg: 'bg-emerald-50',  activeRing: 'ring-emerald-200',  hoverRing: 'group-hover:ring-emerald-100',  activeText: 'text-emerald-600',  activeRowBg: 'bg-emerald-50/60' },
+    violet:  { activeBg: 'bg-violet-50',   activeRing: 'ring-violet-200',   hoverRing: 'group-hover:ring-violet-100',   activeText: 'text-violet-600',   activeRowBg: 'bg-violet-50/60' },
+    pink:    { activeBg: 'bg-pink-50',     activeRing: 'ring-pink-200',     hoverRing: 'group-hover:ring-pink-100',     activeText: 'text-pink-600',     activeRowBg: 'bg-pink-50/60' },
+    slate:   { activeBg: 'bg-slate-50',    activeRing: 'ring-slate-200',    hoverRing: 'group-hover:ring-slate-100',    activeText: 'text-slate-600',    activeRowBg: 'bg-slate-50/60' },
+  } as const;
 
-  const iconCircleStyle = (isActive: boolean) => ({
-    width: 32, height: 32,
-    backgroundColor: isActive ? '#E0E7FF' : '#F3F4F6',
-  });
-
-  const iconStyle = (isActive: boolean) => ({
-    width: 18, height: 18,
-    color: isActive ? '#4338CA' : '#6B7280',
-    strokeWidth: 1.75,
-  });
+  type ColorKey = keyof typeof colorMap;
 
   return (
     <div className="flex flex-1 flex-col h-full">
@@ -91,26 +83,28 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         <ul className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const c = colorMap[item.color];
             return (
               <li key={item.path}>
                 <button
                   onClick={() => go(item.path)}
                   className={cn(
                     "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                    item.active ? `${c.activeRowBg} font-medium ${c.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
                   )}
-                  style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
-                  </span>
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                    item.active ? `${c.activeBg} ${c.activeRing}` : `bg-gray-50 ring-gray-200 ${c.hoverRing}`
+                  )}>
+                    <Icon className={cn("w-[18px] h-[18px]", item.active ? c.activeText : "text-gray-500")} strokeWidth={1.5} />
+                  </div>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
               </li>
             );
           })}
 
-          {/* Money - Expandable */}
           <li>
             <button
               onClick={() => {
@@ -123,21 +117,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               }}
               className={cn(
                 "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                isFinanceActive ? `${colorMap.emerald.activeRowBg} font-medium ${colorMap.emerald.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
               )}
-              style={activeStyle(isFinanceActive)}
             >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(isFinanceActive)}>
-                <DollarSign style={iconStyle(isFinanceActive)} />
-              </span>
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                isFinanceActive ? "bg-emerald-50 ring-emerald-200" : "bg-gray-50 ring-gray-200 group-hover:ring-emerald-100"
+              )}>
+                <Wallet className={cn("w-[18px] h-[18px]", isFinanceActive ? "text-emerald-600" : "text-gray-500")} strokeWidth={1.5} />
+              </div>
               <span className="flex-1 text-left">Money</span>
               <ChevronDown
-                className="shrink-0 transition-transform duration-200"
-                style={{
-                  width: 14, height: 14,
-                  color: isFinanceActive ? '#4338CA' : '#9CA3AF',
-                  transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
+                className={cn("shrink-0 transition-transform duration-200 w-3.5 h-3.5", isFinanceActive ? "text-emerald-500" : "text-gray-400")}
+                style={{ transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
 
@@ -156,22 +148,16 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
                         location.pathname === "/finance/applications"
-                          ? "font-medium bg-indigo-50/50"
-                          : "hover:text-gray-700 hover:bg-gray-50"
+                          ? "font-medium text-blue-700 bg-blue-50/50"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                       )}
-                      style={{
-                        color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
-                      }}
                     >
-                      <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                          width: 24, height: 24,
-                          backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
-                        }}
-                      >
-                        <Briefcase style={{ width: 14, height: 14, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
-                      </span>
+                      <div className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ring-1",
+                        location.pathname === "/finance/applications" ? "bg-blue-50 ring-blue-200" : "bg-gray-50 ring-gray-200"
+                      )}>
+                        <Grid3x3 className={cn("w-3.5 h-3.5", location.pathname === "/finance/applications" ? "text-blue-600" : "text-gray-400")} strokeWidth={1.5} />
+                      </div>
                       Applications
                     </button>
                   </li>
@@ -182,19 +168,22 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
+            const c = colorMap[item.color];
             return (
               <li key={item.path}>
                 <button
                   onClick={() => go(item.path)}
                   className={cn(
                     "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                    item.active ? `${c.activeRowBg} font-medium ${c.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
                   )}
-                  style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
-                  </span>
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                    item.active ? `${c.activeBg} ${c.activeRing}` : `bg-gray-50 ring-gray-200 ${c.hoverRing}`
+                  )}>
+                    <Icon className={cn("w-[18px] h-[18px]", item.active ? c.activeText : "text-gray-500")} strokeWidth={1.5} />
+                  </div>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
               </li>
@@ -207,13 +196,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 onClick={() => go("/admin")}
                 className={cn(
                   "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                  location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                  location.pathname === "/admin" ? `${colorMap.slate.activeRowBg} font-medium ${colorMap.slate.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
                 )}
-                style={activeStyle(location.pathname === "/admin")}
               >
-                <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(location.pathname === "/admin")}>
-                  <Shield style={iconStyle(location.pathname === "/admin")} />
-                </span>
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                  location.pathname === "/admin" ? "bg-slate-50 ring-slate-200" : "bg-gray-50 ring-gray-200 group-hover:ring-slate-100"
+                )}>
+                  <Shield className={cn("w-[18px] h-[18px]", location.pathname === "/admin" ? "text-slate-600" : "text-gray-500")} strokeWidth={1.5} />
+                </div>
                 <span className="flex-1 text-left">Admin</span>
               </button>
             </li>
@@ -298,12 +289,11 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     go("/settings");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px] text-gray-600"
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
-                    <Settings style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 ring-1 ring-gray-200 flex items-center justify-center flex-shrink-0">
+                    <Settings className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                  </div>
                   Settings
                 </button>
 
@@ -314,12 +304,11 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     go("/settings?tab=support");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px] text-gray-600"
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
-                    <MessageSquareHeart style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 ring-1 ring-gray-200 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                  </div>
                   Feedback
                 </button>
 
@@ -335,12 +324,11 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     onNavigate?.();
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition text-left text-[13px]"
-                  style={{ color: '#DC2626' }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition text-left text-[13px] text-red-600"
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#FEF2F2' }}>
-                    <LogOut style={{ width: 14, height: 14, color: '#DC2626', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-red-50 ring-1 ring-red-200 flex items-center justify-center flex-shrink-0">
+                    <LogOut className="w-[18px] h-[18px] text-red-500" strokeWidth={1.5} />
+                  </div>
                   Log out
                 </button>
               </motion.div>
