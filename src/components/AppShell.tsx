@@ -162,15 +162,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                         color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
                       }}
                     >
-                      <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                          width: 24, height: 24,
-                          backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
-                        }}
-                      >
-                        <Briefcase style={{ width: 14, height: 14, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
-                      </span>
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        location.pathname === "/finance/applications"
+                          ? 'bg-indigo-50 border border-indigo-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}>
+                        <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                      </div>
                       Applications
                     </button>
                   </li>
