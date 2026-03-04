@@ -8,12 +8,14 @@ import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWe
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
+import { useMarketQuote, useTimeseries } from "@/hooks/useMarketData";
+import LiveChart, { TIMEFRAMES } from "@/components/wealth/LiveChart";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, isToday } from "date-fns";
 import {
-  Plus, Edit2, X,
+  Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -94,6 +96,14 @@ const glassCard = {
   WebkitBackdropFilter: "blur(24px)",
 };
 
+const stockOptions = [
+  { symbol: "AAPL", name: "Apple Inc." },
+  { symbol: "BTC/USD", name: "Bitcoin" },
+  { symbol: "ETH/USD", name: "Ethereum" },
+  { symbol: "TSLA", name: "Tesla Inc." },
+  { symbol: "SPY", name: "S&P 500 ETF" },
+];
+
 export default function Dashboard() {
   const { profile, user } = useAuth();
   const { data: projects = [] } = useProjects();
@@ -117,6 +127,26 @@ export default function Dashboard() {
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+
+  // Stock chart state
+  const [selectedStock, setSelectedStock] = useState("AAPL");
+  const [stockDropdownOpen, setStockDropdownOpen] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAMES[2]); // 1M default
+
+  const { data: quoteData } = useMarketQuote(selectedStock);
+  const { data: tsData } = useTimeseries(selectedStock, selectedTimeframe.interval, selectedTimeframe.outputsize);
+
+  // Close stock dropdown on outside click
+  useEffect(() => {
+    if (!stockDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest("[data-stock-dropdown]")) {
+        setStockDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [stockDropdownOpen]);
 
   const addTodo = useAddQuickTodo();
   const updateTodo = useUpdateQuickTodo();
@@ -258,6 +288,12 @@ export default function Dashboard() {
     setNewTodoText("");
   };
 
+  const quote = quoteData?.quote;
+  const priceChange = quote ? parseFloat(quote.change) : 0;
+  const priceChangePercent = quote ? parseFloat(quote.percent_change) : 0;
+  const currentPrice = quote ? parseFloat(quote.price) : 0;
+  const chartData = tsData?.timeseries || quoteData?.timeseries || [];
+
   return (
     <AppShell>
       <div
@@ -270,395 +306,489 @@ export default function Dashboard() {
           `,
         }}
       >
-        <div className="w-full max-w-3xl mx-auto pb-24 lg:max-w-5xl">
+        {/* ═══ HERO HEADER — Full-bleed ═══ */}
+        <motion.div
+          {...stagger(0)}
+          className="relative w-full h-52 sm:h-64 lg:h-80 overflow-hidden cursor-pointer group"
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e: any) => {
+              const file = e.target.files[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (event: any) => {
+                  upsertPrefs.mutate({
+                    dashboard_cover: event.target.result,
+                    dashboard_cover_type: 'image'
+                  });
+                };
+                reader.readAsDataURL(file);
+              }
+            };
+            input.click();
+          }}
+        >
+          {hasCover ? (
+            <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
+          )}
 
-          {/* ═══ HERO HEADER — Full-width clickable upload area ═══ */}
-          <motion.div
-            {...stagger(0)}
-            className="relative h-52 sm:h-64 lg:h-72 overflow-hidden cursor-pointer group"
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = 'image/*';
-              input.onchange = (e: any) => {
-                const file = e.target.files[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (event: any) => {
-                    upsertPrefs.mutate({
-                      dashboard_cover: event.target.result,
-                      dashboard_cover_type: 'image'
-                    });
-                  };
-                  reader.readAsDataURL(file);
-                }
-              };
-              input.click();
-            }}
-          >
-            {hasCover ? (
-              <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
-            )}
-
-            {/* Pencil edit icon — top right corner on hover */}
-            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-              <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                <Edit2 className="w-4 h-4 text-white" />
-              </div>
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+            <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+              <Edit2 className="w-4 h-4 text-white" />
             </div>
-
-            {/* Gradient blend to page bg */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#F9FAFB] pointer-events-none" />
-
-            {/* Greeting */}
-            <div className="absolute bottom-12 left-5 z-10">
-              <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
-                {format(now, "EEEE, MMMM d")}
-              </p>
-              <h1
-                className="text-[28px] sm:text-[36px] leading-[1.15] mt-0.5"
-                style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  color: "white",
-                  textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-                }}
-              >
-                {greeting}
-              </h1>
-            </div>
-          </motion.div>
-
-          {/* ═══ MOMENTUM & HABITS — TWO SEPARATE CARDS overlapping banner ═══ */}
-          <div className="px-4 -mt-10 relative z-[5] mb-5">
-            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto sm:max-w-sm lg:max-w-md">
-              {/* Momentum Card */}
-              <motion.div {...stagger(1)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
-                <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#6366F1" }}>Momentum</p>
-                <div className="flex justify-center">
-                  <div className="lg:hidden">
-                    <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
-                      <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                    </ProgressRing>
-                  </div>
-                  <div className="hidden lg:block">
-                    <ProgressRing progress={momentum} size={100} strokeWidth={8} gradientId="momentum-grad-lg" color1="#6366F1" color2="#8B5CF6">
-                      <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                    </ProgressRing>
-                  </div>
-                </div>
-                <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
-              </motion.div>
-
-              {/* Habits Card — GREEN */}
-              <motion.div {...stagger(1.5)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
-                <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#10B981" }}>Habits</p>
-                <button onClick={() => habits.length > 0 && setSelectedHabit(habits[0])} className="flex justify-center mx-auto hover:opacity-80 transition">
-                  <div className="lg:hidden">
-                    <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
-                      <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                    </ProgressRing>
-                  </div>
-                  <div className="hidden lg:block">
-                    <ProgressRing progress={habitsProgress} size={100} strokeWidth={8} gradientId="habits-grad-lg" color1="#10B981" color2="#34D399">
-                      <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                    </ProgressRing>
-                  </div>
-                </button>
-                <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
-              </motion.div>
-            </div>
-
-            {/* Subtitle */}
-            {tasksAhead > 0 && (
-              <div className="mt-3 text-[12px] font-medium py-2 px-3 rounded-xl text-center" style={{ color: "#6366F1", background: "rgba(99,102,241,0.08)" }}>
-                🎯 You're on track! {tasksAhead} tasks ahead.
-              </div>
-            )}
           </div>
 
-          {/* Wrap remaining content with horizontal padding */}
-          <div className="px-4 space-y-5">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#F9FAFB] pointer-events-none" />
 
-          {/* ═══ EVERYDAY LINKS ═══ */}
-          <motion.div {...stagger(2)}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h2>
-              <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
-                <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
-              </button>
-            </div>
-            <div className="flex justify-between pb-2" style={{ scrollbarWidth: "none" }}>
-              {everydayLinks.map((link) => {
-                const colorMap: Record<string, { bg: string; text: string }> = {
-                  "📧": { bg: "bg-blue-100", text: "text-blue-600" },
-                  "🛍️": { bg: "bg-green-100", text: "text-green-600" },
-                  "📝": { bg: "bg-orange-100", text: "text-orange-600" },
-                  "🔗": { bg: "bg-purple-100", text: "text-purple-600" },
-                };
-                const colors = colorMap[link.icon] || { bg: "bg-gray-100", text: "text-gray-600" };
-                const svgIcons: Record<string, React.ReactNode> = {
-                  "📧": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-                  "🛍️": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
-                  "📝": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-                };
-                const imgSrc = link.image || getFaviconUrl(link.url);
-                return (
-                  <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-1 min-w-0">
-                    {editingLinks ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
-                          <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
-                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
-                          </div>
-                        </div>
-                        <input value={link.name} onChange={(e) => updateLink(link.id, "name", e.target.value)} className="w-16 text-center text-[10px] bg-transparent outline-none border-b border-dashed border-gray-300" />
-                        <button onClick={() => deleteLink(link.id)} className="text-[10px] text-red-400">✕</button>
-                      </div>
-                    ) : (
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-[6px] cursor-pointer">
-                        <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
-                          <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
-                            {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-semibold uppercase text-center" style={{ color: "#6B7280" }}>{link.name}</span>
-                      </a>
-                    )}
-                  </motion.div>
-                );
-              })}
-              <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-1 min-w-0 cursor-pointer">
-                <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                    <Plus className="h-6 w-6 text-purple-600" />
-                  </div>
+          <div className="absolute bottom-12 left-8 lg:left-12 z-10">
+            <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
+              {format(now, "EEEE, MMMM d")}
+            </p>
+            <h1
+              className="text-[28px] sm:text-[36px] lg:text-[44px] leading-[1.15] mt-0.5"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontStyle: "italic",
+                fontWeight: 400,
+                color: "white",
+                textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+              }}
+            >
+              {greeting}
+            </h1>
+          </div>
+        </motion.div>
+
+        {/* ═══ MOMENTUM & HABITS — overlapping hero ═══ */}
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 -mt-10 relative z-[5] mb-6">
+          <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto sm:max-w-sm lg:max-w-md">
+            {/* Momentum Card */}
+            <motion.div {...stagger(1)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
+              <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#6366F1" }}>Momentum</p>
+              <div className="flex justify-center">
+                <div className="lg:hidden">
+                  <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="momentum-grad" color1="#6366F1" color2="#8B5CF6">
+                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  </ProgressRing>
                 </div>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* ═══ TODAY'S AGENDA ═══ */}
-          <motion.div {...stagger(3)} className="rounded-2xl p-5" style={glassCard}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
-              <button onClick={() => navigate("/calendar")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
-                View All
-              </button>
-            </div>
-            {agendaItems.length > 0 ? (
-              <div className="space-y-0">
-                {agendaItems.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 py-4" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                    <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: "#6B7280" }}>{item.time}</p>
-                      <p className="text-base font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
-                      {item.subtitle && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
-                    </div>
-                  </div>
-                ))}
+                <div className="hidden lg:block">
+                  <ProgressRing progress={momentum} size={100} strokeWidth={8} gradientId="momentum-grad-lg" color1="#6366F1" color2="#8B5CF6">
+                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  </ProgressRing>
+                </div>
               </div>
-            ) : (
-              <p className="text-sm text-center py-8" style={{ color: "#9CA3AF" }}>No events today</p>
-            )}
-          </motion.div>
+              <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>Daily Goal</p>
+            </motion.div>
 
-          {/* ═══ QUICK TO-DOS ═══ */}
-          <motion.div {...stagger(4)} className="rounded-2xl p-5" style={glassCard}>
-            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
-            <div className="space-y-0">
-              {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
-                <div key={todo.id} className="flex items-center gap-2.5 py-2">
+            {/* Habits Card */}
+            <motion.div {...stagger(1.5)} className="rounded-2xl p-3 lg:p-5 text-center" style={glassCard}>
+              <p className="text-[10px] lg:text-xs font-bold uppercase tracking-[0.8px] mb-1.5 lg:mb-3" style={{ color: "#10B981" }}>Habits</p>
+              <button onClick={() => habits.length > 0 && setSelectedHabit(habits[0])} className="flex justify-center mx-auto hover:opacity-80 transition">
+                <div className="lg:hidden">
+                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="habits-grad" color1="#10B981" color2="#34D399">
+                    <span className="text-[20px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                  </ProgressRing>
+                </div>
+                <div className="hidden lg:block">
+                  <ProgressRing progress={habitsProgress} size={100} strokeWidth={8} gradientId="habits-grad-lg" color1="#10B981" color2="#34D399">
+                    <span className="text-[28px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                  </ProgressRing>
+                </div>
+              </button>
+              <p className="text-[10px] lg:text-xs font-medium mt-1.5 lg:mt-3" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+            </motion.div>
+          </div>
+
+          {tasksAhead > 0 && (
+            <div className="mt-3 text-[12px] font-medium py-2 px-3 rounded-xl text-center max-w-md mx-auto" style={{ color: "#6366F1", background: "rgba(99,102,241,0.08)" }}>
+              🎯 You're on track! {tasksAhead} tasks ahead.
+            </div>
+          )}
+        </div>
+
+        {/* ═══ MAIN DASHBOARD GRID ═══ */}
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-12 pb-24">
+          <div className="grid grid-cols-12 gap-6">
+
+            {/* ═══ ROW 1: STOCK CHART — full width ═══ */}
+            <motion.div {...stagger(2)} className="col-span-12 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* Header */}
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Stock selector */}
+                <div className="relative" data-stock-dropdown>
                   <button
-                    onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                    className="h-[18px] w-[18px] rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
-                    style={{ borderColor: "#D1D5DB" }}
-                  />
-                  <span className="text-sm flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
-                </div>
-              ))}
-              {todos.filter(t => t.completed).slice(0, 3).map(todo => (
-                <div key={todo.id} className="flex items-center gap-2.5 py-2">
-                  <div
-                    className="h-[18px] w-[18px] rounded-full flex-shrink-0 flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
+                    onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
+                    className="flex items-center gap-3 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition"
                   >
-                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </div>
-                  <span className="text-sm flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
-                </div>
-              ))}
-              <input
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
-                placeholder="Add a quick note..."
-                className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
-                style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
-              />
-            </div>
-          </motion.div>
-
-          {/* ═══ ACTIVE PROJECTS ═══ */}
-          <motion.div {...stagger(5)} className="rounded-2xl p-5" style={glassCard}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
-              <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
-                View All
-              </button>
-            </div>
-            {activeProjects.length === 0 ? (
-              <div className="flex flex-col items-center py-8 text-center">
-                <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {activeProjects.map((project, idx) => (
-                  <motion.div
-                    key={project.id}
-                    whileHover={{ x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="cursor-pointer rounded-xl p-3 flex items-center gap-3 transition-all hover:shadow-md"
-                    style={{ background: "white", border: "1px solid #F3F4F6" }}
-                    onClick={() => navigate(`/project/${project.id}`)}
-                  >
-                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
-                      {project.icon || "📁"}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-gray-900">{selectedStock}</span>
+                      <span className="text-xs text-gray-500">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: "#1F2937" }}>{project.name}</p>
-                      <p className={`text-[11px] font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
-                    </div>
-                    <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#D1D5DB" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-
-          {/* ═══ MONEY REMINDERS ═══ */}
-          <motion.div {...stagger(6)} className="rounded-2xl p-5 bg-red-50/50 border border-red-100" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
-            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Money Reminders</h2>
-            {moneyReminders.length > 0 ? (
-              <div className="space-y-0">
-                {moneyReminders.map((reminder, idx) => (
-                  <div key={idx} className="flex justify-between py-4" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.15)" : "none" }}>
-                    <span className="text-[15px] font-medium" style={{ color: "#1F2937" }}>{reminder.name}</span>
-                    <span className="text-base font-bold" style={{ color: "#EF4444" }}>${reminder.amount.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No recurring expenses</p>
-            )}
-          </motion.div>
-
-          {/* ═══ HABIT TRACKER ═══ */}
-          <motion.div {...stagger(7)} className="rounded-2xl p-5" style={glassCard}>
-            <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Habit Tracker</h2>
-            <div className="space-y-1">
-              {habits.slice(0, 4).map(habit => {
-                const habitHours = (habitLogs || [])
-                  .filter(log => log.habit_id === habit.id && log.week_start_date === currentWeekStart)
-                  .reduce((sum, log) => sum + (log.hours || 0), 0);
-                return (
-                  <button
-                    key={habit.id}
-                    onClick={() => setSelectedHabit(habit)}
-                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition text-left"
-                  >
-                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{habit.name}</span>
-                    <span className="text-xs" style={{ color: "#9CA3AF" }}>{habitHours}h this week</span>
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
-                );
-              })}
-              {habits.length === 0 && (
-                <button
-                  onClick={() => {
-                    const name = prompt('Enter habit name:');
-                    if (name) createHabit.mutate(name);
-                  }}
-                  className="w-full text-sm text-center py-6 hover:bg-gray-50 rounded-xl transition"
-                  style={{ color: "#9CA3AF" }}
-                >
-                  + Add your first habit
-                </button>
-              )}
-            </div>
-          </motion.div>
 
-          {/* ═══ RECENT JOURNAL ═══ */}
-          <motion.div {...stagger(8)} className="rounded-2xl p-5" style={glassCard}>
-            <div className="flex items-center justify-between mb-5">
-              <button
-                onClick={() => navigate('/journal')}
-                className="text-lg font-bold hover:opacity-70 transition"
-                style={{ color: "#1F2937" }}
-              >
-                Recent Journal
-              </button>
-              <button onClick={() => navigate("/journal?new=true")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
-                New Entry
-              </button>
-            </div>
-            {recentEntry ? (
-              <button
-                onClick={() => navigate('/journal')}
-                className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
-                style={{ background: "white", border: "1px solid #F3F4F6" }}
-              >
-                <div className="absolute top-4 right-4 p-1">
-                  <svg className="w-4 h-4" style={{ color: "#D1D5DB" }} fill="currentColor" viewBox="0 0 20 20">
-                    <circle cx="10" cy="4" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="10" cy="16" r="1.5" />
-                  </svg>
+                  {stockDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                      {stockOptions.map((stock) => (
+                        <button
+                          key={stock.symbol}
+                          onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
+                          className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition ${selectedStock === stock.symbol ? 'bg-indigo-50' : ''}`}
+                        >
+                          <div className="flex flex-col items-start">
+                            <span className="text-sm font-bold text-gray-900">{stock.symbol}</span>
+                            <span className="text-xs text-gray-500">{stock.name}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className="text-[17px] font-semibold mb-1 pr-8" style={{ color: "#1F2937" }}>
-                  {(recentEntry as any).title || "Untitled Entry"}
-                </p>
-                <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>
-                  {format(new Date(recentEntry.created_at), "MMM d, yyyy")}
-                </p>
-                <p className="text-sm leading-relaxed" style={{ color: "#4B5563", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {(recentEntry as any).content_preview || "No content yet..."}
-                </p>
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate('/journal?new=true')}
-                className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
-                style={{ background: "white", border: "1px solid #F3F4F6" }}
-              >
-                <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>Untitled Entry</p>
-                <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>{format(new Date(), "MMM d, yyyy")}</p>
-                <p className="text-sm leading-relaxed" style={{ color: "#4B5563" }}>
-                  Today I finally finished the vision pro design sync and the team loved the new glassmorphic direction...
-                </p>
-              </button>
-            )}
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => navigate('/journal')}
-                className="text-xs flex items-center gap-1 transition hover:opacity-70"
-                style={{ color: "#9CA3AF" }}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-                <span>View all entries</span>
-              </button>
-            </div>
-          </motion.div>
 
-          </div>{/* end space-y-5 */}
-        </div>{/* end max-w-3xl */}
+                {/* Price + controls */}
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  {/* Current price */}
+                  <div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                      ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div className={`text-sm font-semibold flex items-center gap-1 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {priceChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+                    </div>
+                  </div>
+
+                  {/* Timeframe selector */}
+                  <div className="flex gap-1">
+                    {TIMEFRAMES.map((tf) => (
+                      <button
+                        key={tf.label}
+                        onClick={() => setSelectedTimeframe(tf)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
+                          selectedTimeframe.label === tf.label
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {tf.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Open in Webull */}
+                  <a
+                    href={`https://app.webull.com/stocks/${selectedStock}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:inline-flex px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    Open in Webull →
+                  </a>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div className="p-4 sm:p-6">
+                {chartData.length > 0 ? (
+                  <LiveChart data={chartData} symbol={selectedStock} />
+                ) : (
+                  <div className="h-96 flex items-center justify-center text-gray-400 text-sm">
+                    Loading chart data...
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            {/* ═══ ROW 2: EVERYDAY LINKS + TODAY'S AGENDA ═══ */}
+            <motion.div {...stagger(3)} className="col-span-12 lg:col-span-6">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Everyday Links</h2>
+                  <button onClick={() => setEditingLinks(!editingLinks)} className="p-1.5 rounded-md transition-colors hover:bg-black/5">
+                    <Edit2 className="h-4 w-4" style={{ color: "#6B7280" }} />
+                  </button>
+                </div>
+                <div className="flex justify-between pb-2" style={{ scrollbarWidth: "none" }}>
+                  {everydayLinks.map((link) => {
+                    const colorMap: Record<string, { bg: string; text: string }> = {
+                      "📧": { bg: "bg-blue-100", text: "text-blue-600" },
+                      "🛍️": { bg: "bg-green-100", text: "text-green-600" },
+                      "📝": { bg: "bg-orange-100", text: "text-orange-600" },
+                      "🔗": { bg: "bg-purple-100", text: "text-purple-600" },
+                    };
+                    const colors = colorMap[link.icon] || { bg: "bg-gray-100", text: "text-gray-600" };
+                    const svgIcons: Record<string, React.ReactNode> = {
+                      "📧": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+                      "🛍️": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
+                      "📝": <svg className={`w-6 h-6 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+                    };
+                    const imgSrc = link.image || getFaviconUrl(link.url);
+                    return (
+                      <motion.div key={link.id} whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} className="flex flex-col items-center gap-[6px] flex-1 min-w-0">
+                        {editingLinks ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                              <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
+                                {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                              </div>
+                            </div>
+                            <input value={link.name} onChange={(e) => updateLink(link.id, "name", e.target.value)} className="w-16 text-center text-[10px] bg-transparent outline-none border-b border-dashed border-gray-300" />
+                            <button onClick={() => deleteLink(link.id)} className="text-[10px] text-red-400">✕</button>
+                          </div>
+                        ) : (
+                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-[6px] cursor-pointer">
+                            <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                              <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
+                                {svgIcons[link.icon] || (imgSrc ? <img src={imgSrc} alt="" className="h-6 w-6 object-contain" /> : <span className="text-2xl">{link.icon}</span>)}
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-semibold uppercase text-center" style={{ color: "#6B7280" }}>{link.name}</span>
+                          </a>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                  <motion.button whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} onClick={addNewLink} className="flex flex-col items-center gap-[6px] flex-1 min-w-0 cursor-pointer">
+                    <div className="w-16 h-16 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <Plus className="h-6 w-6 text-purple-600" />
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div {...stagger(3.5)} className="col-span-12 lg:col-span-6">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
+                  <button onClick={() => navigate("/calendar")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+                    View All
+                  </button>
+                </div>
+                {agendaItems.length > 0 ? (
+                  <div className="space-y-0">
+                    {agendaItems.map((item, idx) => (
+                      <div key={idx} className="flex gap-4 py-4" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
+                        <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
+                        <div>
+                          <p className="text-sm font-semibold" style={{ color: "#6B7280" }}>{item.time}</p>
+                          <p className="text-base font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
+                          {item.subtitle && <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-center py-8" style={{ color: "#9CA3AF" }}>No events today</p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* ═══ ROW 3: TODOS + PROJECTS + MONEY ═══ */}
+            <motion.div {...stagger(4)} className="col-span-12 md:col-span-6 lg:col-span-4">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
+                <div className="space-y-0">
+                  {todos.filter(t => !t.completed).slice(0, 5).map(todo => (
+                    <div key={todo.id} className="flex items-center gap-2.5 py-2">
+                      <button
+                        onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
+                        className="h-[18px] w-[18px] rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+                        style={{ borderColor: "#D1D5DB" }}
+                      />
+                      <span className="text-sm flex-1" style={{ color: "#1F2937" }}>{todo.text}</span>
+                    </div>
+                  ))}
+                  {todos.filter(t => t.completed).slice(0, 3).map(todo => (
+                    <div key={todo.id} className="flex items-center gap-2.5 py-2">
+                      <div
+                        className="h-[18px] w-[18px] rounded-full flex-shrink-0 flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
+                      >
+                        <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      </div>
+                      <span className="text-sm flex-1 line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                    </div>
+                  ))}
+                  <input
+                    value={newTodoText}
+                    onChange={(e) => setNewTodoText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
+                    placeholder="Add a quick note..."
+                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
+                    style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div {...stagger(5)} className="col-span-12 md:col-span-6 lg:col-span-4">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
+                  <button onClick={() => navigate("/projects")} className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+                    View All
+                  </button>
+                </div>
+                {activeProjects.length === 0 ? (
+                  <div className="flex flex-col items-center py-8 text-center">
+                    <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
+                    <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {activeProjects.map((project, idx) => (
+                      <motion.div
+                        key={project.id}
+                        whileHover={{ x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="cursor-pointer rounded-xl p-3 flex items-center gap-3 transition-all hover:shadow-md"
+                        style={{ background: "white", border: "1px solid #F3F4F6" }}
+                        onClick={() => navigate(`/project/${project.id}`)}
+                      >
+                        <div className={`h-9 w-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0 ${idx === 0 ? 'bg-indigo-100' : 'bg-green-100'}`}>
+                          {project.icon || "📁"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: "#1F2937" }}>{project.name}</p>
+                          <p className={`text-[11px] font-semibold ${idx === 0 ? 'text-indigo-600' : 'text-green-600'}`}>{project.percentage}% complete</p>
+                        </div>
+                        <svg className="w-4 h-4 flex-shrink-0" style={{ color: "#D1D5DB" }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
+            <motion.div {...stagger(6)} className="col-span-12 md:col-span-6 lg:col-span-4">
+              <div className="rounded-2xl p-5 bg-red-50/50 border border-red-100" style={{ backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", boxShadow: "0 8px 24px rgba(0,0,0,0.06)" }}>
+                <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Money Reminders</h2>
+                {moneyReminders.length > 0 ? (
+                  <div className="space-y-0">
+                    {moneyReminders.map((reminder, idx) => (
+                      <div key={idx} className="flex justify-between py-4" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.15)" : "none" }}>
+                        <span className="text-[15px] font-medium" style={{ color: "#1F2937" }}>{reminder.name}</span>
+                        <span className="text-base font-bold" style={{ color: "#EF4444" }}>${reminder.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No recurring expenses</p>
+                )}
+              </div>
+            </motion.div>
+
+            {/* ═══ ROW 4: HABIT TRACKER + JOURNAL ═══ */}
+            <motion.div {...stagger(7)} className="col-span-12 md:col-span-6 lg:col-span-4">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <h2 className="text-lg font-bold mb-5" style={{ color: "#1F2937" }}>Habit Tracker</h2>
+                <div className="space-y-1">
+                  {habits.slice(0, 4).map(habit => {
+                    const habitHours = (habitLogs || [])
+                      .filter(log => log.habit_id === habit.id && log.week_start_date === currentWeekStart)
+                      .reduce((sum, log) => sum + (log.hours || 0), 0);
+                    return (
+                      <button
+                        key={habit.id}
+                        onClick={() => setSelectedHabit(habit)}
+                        className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition text-left"
+                      >
+                        <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{habit.name}</span>
+                        <span className="text-xs" style={{ color: "#9CA3AF" }}>{habitHours}h this week</span>
+                      </button>
+                    );
+                  })}
+                  {habits.length === 0 && (
+                    <button
+                      onClick={() => {
+                        const name = prompt('Enter habit name:');
+                        if (name) createHabit.mutate(name);
+                      }}
+                      className="w-full text-sm text-center py-6 hover:bg-gray-50 rounded-xl transition"
+                      style={{ color: "#9CA3AF" }}
+                    >
+                      + Add your first habit
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div {...stagger(8)} className="col-span-12 md:col-span-6 lg:col-span-8">
+              <div className="rounded-2xl p-5" style={glassCard}>
+                <div className="flex items-center justify-between mb-5">
+                  <button
+                    onClick={() => navigate('/journal')}
+                    className="text-lg font-bold hover:opacity-70 transition"
+                    style={{ color: "#1F2937" }}
+                  >
+                    Recent Journal
+                  </button>
+                  <button onClick={() => navigate("/journal?new=true")} className="text-sm font-bold cursor-pointer hover:underline" style={{ color: "#6366F1" }}>
+                    New Entry
+                  </button>
+                </div>
+                {recentEntry ? (
+                  <button
+                    onClick={() => navigate('/journal')}
+                    className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
+                    style={{ background: "white", border: "1px solid #F3F4F6" }}
+                  >
+                    <div className="absolute top-4 right-4 p-1">
+                      <svg className="w-4 h-4" style={{ color: "#D1D5DB" }} fill="currentColor" viewBox="0 0 20 20">
+                        <circle cx="10" cy="4" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="10" cy="16" r="1.5" />
+                      </svg>
+                    </div>
+                    <p className="text-[17px] font-semibold mb-1 pr-8" style={{ color: "#1F2937" }}>
+                      {(recentEntry as any).title || "Untitled Entry"}
+                    </p>
+                    <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>
+                      {format(new Date(recentEntry.created_at), "MMM d, yyyy")}
+                    </p>
+                    <p className="text-sm leading-relaxed" style={{ color: "#4B5563", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {(recentEntry as any).content_preview || "No content yet..."}
+                    </p>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/journal?new=true')}
+                    className="w-full relative rounded-2xl p-5 text-left hover:shadow-md transition"
+                    style={{ background: "white", border: "1px solid #F3F4F6" }}
+                  >
+                    <p className="text-[17px] font-semibold mb-1" style={{ color: "#1F2937" }}>Untitled Entry</p>
+                    <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>{format(new Date(), "MMM d, yyyy")}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: "#4B5563" }}>
+                      Today I finally finished the vision pro design sync and the team loved the new glassmorphic direction...
+                    </p>
+                  </button>
+                )}
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => navigate('/journal')}
+                    className="text-xs flex items-center gap-1 transition hover:opacity-70"
+                    style={{ color: "#9CA3AF" }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                    </svg>
+                    <span>View all entries</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
       </div>
 
       {/* Modals */}
