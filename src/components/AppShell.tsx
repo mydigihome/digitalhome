@@ -65,16 +65,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       : undefined,
   });
 
-  const iconCircleStyle = (isActive: boolean) => ({
-    width: 32, height: 32,
-    backgroundColor: isActive ? '#E0E7FF' : '#F3F4F6',
-  });
+  const iconCircleCn = (isActive: boolean) =>
+    `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+      isActive
+        ? 'bg-indigo-50 border border-indigo-200'
+        : 'bg-gray-50 border border-gray-200 group-hover:border-indigo-100'
+    }`;
 
-  const iconStyle = (isActive: boolean) => ({
-    width: 18, height: 18,
-    color: isActive ? '#4338CA' : '#6B7280',
-    strokeWidth: 1.75,
-  });
+  const iconCn = (isActive: boolean) =>
+    `w-[18px] h-[18px] ${isActive ? 'text-indigo-600' : 'text-gray-500'}`;
 
   return (
     <div className="flex flex-1 flex-col h-full">
