@@ -357,7 +357,7 @@ function MobileTabBar() {
   const tabs = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: FolderOpen, label: "Projects", path: "/projects" },
-    { icon: DollarSign, label: "Money", path: "/finance/wealth" },
+    { icon: Wallet, label: "Money", path: "/finance/wealth" },
     { icon: Mail, label: "Inbox", path: "/inbox" },
     { icon: MoreHorizontal, label: "More", path: "/__more__" },
   ];
