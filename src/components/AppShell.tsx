@@ -196,13 +196,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 onClick={() => go("/admin")}
                 className={cn(
                   "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                  location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                  location.pathname === "/admin" ? `${colorMap.slate.activeRowBg} font-medium ${colorMap.slate.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
                 )}
-                style={activeStyle(location.pathname === "/admin")}
               >
-                <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(location.pathname === "/admin")}>
-                  <Shield style={iconStyle(location.pathname === "/admin")} />
-                </span>
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                  location.pathname === "/admin" ? "bg-slate-50 ring-slate-200" : "bg-gray-50 ring-gray-200 group-hover:ring-slate-100"
+                )}>
+                  <Shield className={cn("w-[18px] h-[18px]", location.pathname === "/admin" ? "text-slate-600" : "text-gray-500")} strokeWidth={1.5} />
+                </div>
                 <span className="flex-1 text-left">Admin</span>
               </button>
             </li>
