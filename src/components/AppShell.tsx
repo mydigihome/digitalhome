@@ -304,12 +304,11 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     go("/settings?tab=support");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px] text-gray-600"
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
-                    <MessageSquareHeart style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 ring-1 ring-gray-200 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                  </div>
                   Feedback
                 </button>
 
