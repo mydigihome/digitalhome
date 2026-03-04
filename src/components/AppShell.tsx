@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, DollarSign, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
+import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Wallet, Grid3x3, DollarSign, Sparkles, MessageCircle, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
