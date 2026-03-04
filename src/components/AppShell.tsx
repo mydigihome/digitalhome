@@ -335,9 +335,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition text-left text-[13px]"
                   style={{ color: '#DC2626' }}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#FEF2F2' }}>
-                    <LogOut style={{ width: 14, height: 14, color: '#DC2626', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                    <LogOut className="w-[18px] h-[18px] text-red-500" strokeWidth={1.5} />
+                  </div>
                   Log out
                 </button>
               </motion.div>
