@@ -45,36 +45,28 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   };
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard"), color: "purple" as const },
+    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive, color: "amber" as const },
   ];
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "violet" as const },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "pink" as const },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
 
-  const activeStyle = (isActive: boolean) => ({
-    backgroundColor: isActive ? '#EEF2FF' : undefined,
-    color: isActive ? '#4338CA' : '#4B5563',
-    boxShadow: isActive
-      ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
-      : undefined,
-  });
+  const colorMap = {
+    purple:  { activeBg: 'bg-purple-50',  activeRing: 'ring-purple-200',  hoverRing: 'group-hover:ring-purple-100',  activeText: 'text-purple-600',  activeRowBg: 'bg-purple-50/60' },
+    amber:   { activeBg: 'bg-amber-50',   activeRing: 'ring-amber-200',   hoverRing: 'group-hover:ring-amber-100',   activeText: 'text-amber-600',   activeRowBg: 'bg-amber-50/60' },
+    emerald: { activeBg: 'bg-emerald-50',  activeRing: 'ring-emerald-200',  hoverRing: 'group-hover:ring-emerald-100',  activeText: 'text-emerald-600',  activeRowBg: 'bg-emerald-50/60' },
+    violet:  { activeBg: 'bg-violet-50',   activeRing: 'ring-violet-200',   hoverRing: 'group-hover:ring-violet-100',   activeText: 'text-violet-600',   activeRowBg: 'bg-violet-50/60' },
+    pink:    { activeBg: 'bg-pink-50',     activeRing: 'ring-pink-200',     hoverRing: 'group-hover:ring-pink-100',     activeText: 'text-pink-600',     activeRowBg: 'bg-pink-50/60' },
+    slate:   { activeBg: 'bg-slate-50',    activeRing: 'ring-slate-200',    hoverRing: 'group-hover:ring-slate-100',    activeText: 'text-slate-600',    activeRowBg: 'bg-slate-50/60' },
+  } as const;
 
-  const iconCircleStyle = (isActive: boolean) => ({
-    width: 32, height: 32,
-    backgroundColor: isActive ? '#E0E7FF' : '#F3F4F6',
-  });
-
-  const iconStyle = (isActive: boolean) => ({
-    width: 18, height: 18,
-    color: isActive ? '#4338CA' : '#6B7280',
-    strokeWidth: 1.75,
-  });
+  type ColorKey = keyof typeof colorMap;
 
   return (
     <div className="flex flex-1 flex-col h-full">
