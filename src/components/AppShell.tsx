@@ -17,6 +17,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { data: prefs } = useUserPreferences();
   const [isAdmin, setIsAdmin] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -56,10 +57,29 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
 
+  const activeStyle = (isActive: boolean) => ({
+    backgroundColor: isActive ? '#EEF2FF' : undefined,
+    color: isActive ? '#4338CA' : '#4B5563',
+    boxShadow: isActive
+      ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
+      : undefined,
+  });
+
+  const iconCircleStyle = (isActive: boolean) => ({
+    width: 32, height: 32,
+    backgroundColor: isActive ? '#E0E7FF' : '#F3F4F6',
+  });
+
+  const iconStyle = (isActive: boolean) => ({
+    width: 18, height: 18,
+    color: isActive ? '#4338CA' : '#6B7280',
+    strokeWidth: 1.75,
+  });
+
   return (
     <div className="flex flex-1 flex-col h-full">
       {/* Logo */}
-      <div className="px-6 py-6">
+      <div className="px-5 py-5">
         <div className="flex items-center gap-2.5">
           <div className="h-3 w-3 rounded-full bg-indigo-500" />
           <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>
@@ -67,8 +87,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-4 py-2">
-        <ul className="space-y-1">
+      <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <ul className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -76,21 +96,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 <button
                   onClick={() => go(item.path)}
                   className={cn(
-                    "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
-                    item.active
-                      ? "font-medium"
-                      : "hover:bg-gray-100"
+                    "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
+                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
                   )}
-                  style={item.active ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+                  style={activeStyle(item.active)}
                 >
-                  <span
-                    className="inline-flex shrink-0 items-center justify-center rounded-full"
-                    style={{
-                      width: 36, height: 36,
-                      backgroundColor: item.active ? '#E0E7FF' : '#F3F4F6',
-                    }}
-                  >
-                    <Icon style={{ width: 20, height: 20, color: item.active ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
+                    <Icon style={iconStyle(item.active)} />
                   </span>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
@@ -110,27 +122,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 }
               }}
               className={cn(
-                "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
-                isFinanceActive
-                  ? "font-medium"
-                  : "hover:bg-gray-100"
+                "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
+                isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
               )}
-              style={isFinanceActive ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+              style={activeStyle(isFinanceActive)}
             >
-              <span
-                className="inline-flex shrink-0 items-center justify-center rounded-full"
-                style={{
-                  width: 36, height: 36,
-                  backgroundColor: isFinanceActive ? '#E0E7FF' : '#F3F4F6',
-                }}
-              >
-                <DollarSign style={{ width: 20, height: 20, color: isFinanceActive ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(isFinanceActive)}>
+                <DollarSign style={iconStyle(isFinanceActive)} />
               </span>
               <span className="flex-1 text-left">Money</span>
               <ChevronDown
                 className="shrink-0 transition-transform duration-200"
                 style={{
-                  width: 16, height: 16,
+                  width: 14, height: 14,
                   color: isFinanceActive ? '#4338CA' : '#9CA3AF',
                   transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                 }}
@@ -150,23 +154,23 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     <button
                       onClick={() => go("/finance/applications")}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-xl py-3 pl-16 pr-4 text-[14px] transition-all duration-200",
+                        "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
                         location.pathname === "/finance/applications"
-                          ? "font-medium"
-                          : "hover:text-gray-700"
+                          ? "font-medium bg-indigo-50/50"
+                          : "hover:text-gray-700 hover:bg-gray-50"
                       )}
                       style={{
                         color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
                       }}
                     >
                       <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-full"
+                        className="inline-flex shrink-0 items-center justify-center rounded-lg"
                         style={{
-                          width: 28, height: 28,
+                          width: 24, height: 24,
                           backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
                         }}
                       >
-                        <Briefcase style={{ width: 16, height: 16, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
+                        <Briefcase style={{ width: 14, height: 14, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
                       </span>
                       Applications
                     </button>
@@ -183,21 +187,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 <button
                   onClick={() => go(item.path)}
                   className={cn(
-                    "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
-                    item.active
-                      ? "font-medium"
-                      : "hover:bg-gray-100"
+                    "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
+                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
                   )}
-                  style={item.active ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+                  style={activeStyle(item.active)}
                 >
-                  <span
-                    className="inline-flex shrink-0 items-center justify-center rounded-full"
-                    style={{
-                      width: 36, height: 36,
-                      backgroundColor: item.active ? '#E0E7FF' : '#F3F4F6',
-                    }}
-                  >
-                    <Icon style={{ width: 20, height: 20, color: item.active ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
+                    <Icon style={iconStyle(item.active)} />
                   </span>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
@@ -210,21 +206,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               <button
                 onClick={() => go("/admin")}
                 className={cn(
-                  "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200",
-                  location.pathname === "/admin"
-                    ? "font-medium"
-                    : "hover:bg-gray-100"
+                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
+                  location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
                 )}
-                style={location.pathname === "/admin" ? { backgroundColor: '#EEF2FF', color: '#4338CA' } : { color: '#4B5563' }}
+                style={activeStyle(location.pathname === "/admin")}
               >
-                <span
-                  className="inline-flex shrink-0 items-center justify-center rounded-full"
-                  style={{
-                    width: 36, height: 36,
-                    backgroundColor: location.pathname === "/admin" ? '#E0E7FF' : '#F3F4F6',
-                  }}
-                >
-                  <Shield style={{ width: 20, height: 20, color: location.pathname === "/admin" ? '#4338CA' : '#6B7280', strokeWidth: 1.75 }} />
+                <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(location.pathname === "/admin")}>
+                  <Shield style={iconStyle(location.pathname === "/admin")} />
                 </span>
                 <span className="flex-1 text-left">Admin</span>
               </button>
@@ -233,98 +221,132 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         </ul>
       </nav>
 
-      {/* Bottom Section */}
-      <div className="shrink-0 px-4 pb-4">
-        {/* Settings / Feedback / Logout */}
-        <ul className="space-y-1 mb-3">
-          <li>
-            <button
-              onClick={() => go("/settings")}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-gray-100"
-              style={{ color: '#4B5563' }}
-            >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#F3F4F6' }}>
-                <Settings style={{ width: 20, height: 20, color: '#6B7280', strokeWidth: 1.75 }} />
-              </span>
-              Settings
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => go("/settings?tab=support")}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-gray-100"
-              style={{ color: '#4B5563' }}
-            >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#F3F4F6' }}>
-                <MessageSquareHeart style={{ width: 20, height: 20, color: '#6B7280', strokeWidth: 1.75 }} />
-              </span>
-              Feedback
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={async () => {
-                await signOut();
-                navigate("/login");
-                onNavigate?.();
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-[15px] transition-all duration-200 hover:bg-red-50"
-              style={{ color: '#DC2626' }}
-            >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 36, height: 36, backgroundColor: '#FEF2F2' }}>
-                <LogOut style={{ width: 20, height: 20, color: '#DC2626', strokeWidth: 1.75 }} />
-              </span>
-              Log out
-            </button>
-          </li>
-        </ul>
-
-        {/* Profile Card */}
-        <div
-          className="flex items-center gap-3 rounded-2xl p-3"
+      {/* Bottom Profile Section */}
+      <div className="shrink-0 px-3 pb-4 relative">
+        {/* Profile Card - Clickable */}
+        <button
+          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+          className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md"
           style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
         >
           {/* Avatar */}
           <div className="relative shrink-0">
-            <div className="h-10 w-10 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+            <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
               {avatarUrl ? (
                 <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
             {/* Green online dot */}
             <div
-              className="absolute bottom-0 right-0 h-3 w-3 rounded-full"
-              style={{ backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
+              className="absolute bottom-0 right-0 rounded-full"
+              style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
             />
           </div>
 
           {/* Name & Email */}
           <div className="flex-1 min-w-0">
-            <div className="truncate text-[14px] font-medium" style={{ fontFamily: 'Georgia, serif', color: '#1F2937' }}>
+            <div className="truncate text-[14px] font-normal" style={{ color: '#1F2937' }}>
               {displayName}
             </div>
-            <div className="truncate text-[12px]" style={{ color: '#9CA3AF' }}>
+            <div className="truncate text-[11px]" style={{ color: '#9CA3AF' }}>
               {user?.email || ''}
             </div>
           </div>
 
           {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
+          <div
+            role="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleDarkMode();
+            }}
             className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            style={{ width: 32, height: 32 }}
+            style={{ width: 32, height: 32, backgroundColor: '#F9FAFB' }}
           >
             {darkMode ? (
-              <Sun style={{ width: 16, height: 16, color: '#F59E0B' }} />
+              <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
             ) : (
-              <Moon style={{ width: 16, height: 16, color: '#6B7280' }} />
+              <Moon style={{ width: 14, height: 14, color: '#6B7280' }} />
             )}
-          </button>
-        </div>
+          </div>
+        </button>
+
+        {/* Popup Menu */}
+        <AnimatePresence>
+          {profileMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+
+              {/* Menu */}
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute bottom-full left-3 right-3 mb-2 z-50 rounded-xl border bg-white p-1.5 shadow-lg"
+                style={{ borderColor: '#E5E7EB' }}
+              >
+                {/* Settings */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    go("/settings");
+                    setProfileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
+                  style={{ color: '#4B5563' }}
+                >
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
+                    <Settings style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
+                  </span>
+                  Settings
+                </button>
+
+                {/* Feedback */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    go("/settings?tab=support");
+                    setProfileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
+                  style={{ color: '#4B5563' }}
+                >
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
+                    <MessageSquareHeart style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
+                  </span>
+                  Feedback
+                </button>
+
+                {/* Divider */}
+                <div className="my-1 border-t" style={{ borderColor: '#F3F4F6' }} />
+
+                {/* Log out */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await signOut();
+                    navigate("/login");
+                    onNavigate?.();
+                    setProfileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition text-left text-[13px]"
+                  style={{ color: '#DC2626' }}
+                >
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#FEF2F2' }}>
+                    <LogOut style={{ width: 14, height: 14, color: '#DC2626', strokeWidth: 1.75 }} />
+                  </span>
+                  Log out
+                </button>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
