@@ -46,7 +46,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
   ];
 
   const bottomNavItems = [
