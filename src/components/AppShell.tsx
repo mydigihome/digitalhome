@@ -105,7 +105,6 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             );
           })}
 
-          {/* Money - Expandable */}
           <li>
             <button
               onClick={() => {
@@ -118,21 +117,19 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               }}
               className={cn(
                 "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                isFinanceActive ? `${colorMap.emerald.activeRowBg} font-medium ${colorMap.emerald.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
               )}
-              style={activeStyle(isFinanceActive)}
             >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(isFinanceActive)}>
-                <DollarSign style={iconStyle(isFinanceActive)} />
-              </span>
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                isFinanceActive ? "bg-emerald-50 ring-emerald-200" : "bg-gray-50 ring-gray-200 group-hover:ring-emerald-100"
+              )}>
+                <Wallet className={cn("w-[18px] h-[18px]", isFinanceActive ? "text-emerald-600" : "text-gray-500")} strokeWidth={1.5} />
+              </div>
               <span className="flex-1 text-left">Money</span>
               <ChevronDown
-                className="shrink-0 transition-transform duration-200"
-                style={{
-                  width: 14, height: 14,
-                  color: isFinanceActive ? '#4338CA' : '#9CA3AF',
-                  transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
+                className={cn("shrink-0 transition-transform duration-200 w-3.5 h-3.5", isFinanceActive ? "text-emerald-500" : "text-gray-400")}
+                style={{ transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
 
@@ -151,22 +148,16 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
                         location.pathname === "/finance/applications"
-                          ? "font-medium bg-indigo-50/50"
-                          : "hover:text-gray-700 hover:bg-gray-50"
+                          ? "font-medium text-blue-700 bg-blue-50/50"
+                          : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                       )}
-                      style={{
-                        color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
-                      }}
                     >
-                      <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                          width: 24, height: 24,
-                          backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
-                        }}
-                      >
-                        <Briefcase style={{ width: 14, height: 14, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
-                      </span>
+                      <div className={cn(
+                        "w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ring-1",
+                        location.pathname === "/finance/applications" ? "bg-blue-50 ring-blue-200" : "bg-gray-50 ring-gray-200"
+                      )}>
+                        <Grid3x3 className={cn("w-3.5 h-3.5", location.pathname === "/finance/applications" ? "text-blue-600" : "text-gray-400")} strokeWidth={1.5} />
+                      </div>
                       Applications
                     </button>
                   </li>
