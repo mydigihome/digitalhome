@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, FolderOpen, Menu, X, Settings, LogOut, ChevronDown, Briefcase, DollarSign, Sparkles, MessageSquareHeart, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -46,7 +46,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: FolderOpen, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
   ];
 
   const bottomNavItems = [
@@ -65,16 +65,15 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       : undefined,
   });
 
-  const iconCircleStyle = (isActive: boolean) => ({
-    width: 32, height: 32,
-    backgroundColor: isActive ? '#E0E7FF' : '#F3F4F6',
-  });
+  const iconCircleCn = (isActive: boolean) =>
+    `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+      isActive
+        ? 'bg-indigo-50 border border-indigo-200'
+        : 'bg-gray-50 border border-gray-200 group-hover:border-indigo-100'
+    }`;
 
-  const iconStyle = (isActive: boolean) => ({
-    width: 18, height: 18,
-    color: isActive ? '#4338CA' : '#6B7280',
-    strokeWidth: 1.75,
-  });
+  const iconCn = (isActive: boolean) =>
+    `w-[18px] h-[18px] ${isActive ? 'text-indigo-600' : 'text-gray-500'}`;
 
   return (
     <div className="flex flex-1 flex-col h-full">
@@ -101,8 +100,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   )}
                   style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
+                  <span className={iconCircleCn(item.active)}>
+                    <Icon className={iconCn(item.active)} strokeWidth={1.5} />
                   </span>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
@@ -127,8 +126,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               )}
               style={activeStyle(isFinanceActive)}
             >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(isFinanceActive)}>
-                <DollarSign style={iconStyle(isFinanceActive)} />
+              <span className={iconCircleCn(isFinanceActive)}>
+                <Wallet className={iconCn(isFinanceActive)} strokeWidth={1.5} />
               </span>
               <span className="flex-1 text-left">Money</span>
               <ChevronDown
@@ -163,15 +162,13 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                         color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
                       }}
                     >
-                      <span
-                        className="inline-flex shrink-0 items-center justify-center rounded-lg"
-                        style={{
-                          width: 24, height: 24,
-                          backgroundColor: location.pathname === "/finance/applications" ? '#E0E7FF' : '#F3F4F6',
-                        }}
-                      >
-                        <Briefcase style={{ width: 14, height: 14, color: location.pathname === "/finance/applications" ? '#4338CA' : '#9CA3AF', strokeWidth: 1.75 }} />
-                      </span>
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        location.pathname === "/finance/applications"
+                          ? 'bg-indigo-50 border border-indigo-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}>
+                        <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                      </div>
                       Applications
                     </button>
                   </li>
@@ -192,8 +189,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   )}
                   style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
+                  <span className={iconCircleCn(item.active)}>
+                    <Icon className={iconCn(item.active)} strokeWidth={1.5} />
                   </span>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
@@ -211,8 +208,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 )}
                 style={activeStyle(location.pathname === "/admin")}
               >
-                <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(location.pathname === "/admin")}>
-                  <Shield style={iconStyle(location.pathname === "/admin")} />
+                <span className={iconCircleCn(location.pathname === "/admin")}>
+                  <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
                 </span>
                 <span className="flex-1 text-left">Admin</span>
               </button>
@@ -301,9 +298,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
                   style={{ color: '#4B5563' }}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
-                    <Settings style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                    <Settings className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                  </div>
                   Settings
                 </button>
 
@@ -317,9 +314,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
                   style={{ color: '#4B5563' }}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#F3F4F6' }}>
-                    <MessageSquareHeart style={{ width: 14, height: 14, color: '#6B7280', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
+                    <MessageSquare className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                  </div>
                   Feedback
                 </button>
 
@@ -338,9 +335,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition text-left text-[13px]"
                   style={{ color: '#DC2626' }}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={{ width: 28, height: 28, backgroundColor: '#FEF2F2' }}>
-                    <LogOut style={{ width: 14, height: 14, color: '#DC2626', strokeWidth: 1.75 }} />
-                  </span>
+                  <div className="w-8 h-8 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+                    <LogOut className="w-[18px] h-[18px] text-red-500" strokeWidth={1.5} />
+                  </div>
                   Log out
                 </button>
               </motion.div>
@@ -359,8 +356,8 @@ function MobileTabBar() {
 
   const tabs = [
     { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: FolderOpen, label: "Projects", path: "/projects" },
-    { icon: DollarSign, label: "Money", path: "/finance/wealth" },
+    { icon: Folder, label: "Projects", path: "/projects" },
+    { icon: Wallet, label: "Money", path: "/finance/wealth" },
     { icon: Mail, label: "Inbox", path: "/inbox" },
     { icon: MoreHorizontal, label: "More", path: "/__more__" },
   ];
