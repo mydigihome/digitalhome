@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -10,7 +10,11 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+// Context for sidebar collapsed state
+const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
+export const useSidebar = () => useContext(SidebarContext);
+
+function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
@@ -75,13 +79,26 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const iconCn = (isActive: boolean) =>
     `w-[18px] h-[18px] ${isActive ? 'text-indigo-600' : 'text-gray-500'}`;
 
+  // Tooltip wrapper for collapsed mode
+  const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
+    if (!collapsed) return <>{children}</>;
+    return (
+      <div className="relative group/tip">
+        {children}
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-gray-900 text-white text-xs font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50">
+          {label}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-1 flex-col h-full">
       {/* Logo */}
-      <div className="px-5 py-5">
+      <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
-          <div className="h-3 w-3 rounded-full bg-indigo-500" />
-          <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>
+          <div className="h-3 w-3 rounded-full bg-indigo-500 flex-shrink-0" />
+          {!collapsed && <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>}
         </div>
       </div>
 
@@ -92,127 +109,149 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             const Icon = item.icon;
             return (
               <li key={item.path}>
-                <button
-                  onClick={() => go(item.path)}
-                  className={cn(
-                    "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                  )}
-                  style={activeStyle(item.active)}
-                >
-                  <span className={iconCircleCn(item.active)}>
-                    <Icon className={iconCn(item.active)} strokeWidth={1.5} />
-                  </span>
-                  <span className="flex-1 text-left">{item.label}</span>
-                </button>
+                <NavTooltip label={item.label}>
+                  <button
+                    onClick={() => go(item.path)}
+                    className={cn(
+                      "group flex w-full items-center rounded-xl transition-all duration-200",
+                      collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                    )}
+                    style={activeStyle(item.active)}
+                  >
+                    <span className={iconCircleCn(item.active)}>
+                      <Icon className={iconCn(item.active)} strokeWidth={1.5} />
+                    </span>
+                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
+                  </button>
+                </NavTooltip>
               </li>
             );
           })}
 
           {/* Money - Expandable */}
           <li>
-            <button
-              onClick={() => {
-                if (isFinanceActive) {
-                  setFinanceOpen(!financeOpen);
-                } else {
-                  go("/finance/wealth");
-                  setFinanceOpen(true);
-                }
-              }}
-              className={cn(
-                "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-              )}
-              style={activeStyle(isFinanceActive)}
-            >
-              <span className={iconCircleCn(isFinanceActive)}>
-                <Wallet className={iconCn(isFinanceActive)} strokeWidth={1.5} />
-              </span>
-              <span className="flex-1 text-left">Money</span>
-              <ChevronDown
-                className="shrink-0 transition-transform duration-200"
-                style={{
-                  width: 14, height: 14,
-                  color: isFinanceActive ? '#4338CA' : '#9CA3AF',
-                  transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            <NavTooltip label="Money">
+              <button
+                onClick={() => {
+                  if (collapsed) {
+                    go("/finance/wealth");
+                    return;
+                  }
+                  if (isFinanceActive) {
+                    setFinanceOpen(!financeOpen);
+                  } else {
+                    go("/finance/wealth");
+                    setFinanceOpen(true);
+                  }
                 }}
-              />
-            </button>
-
-            <AnimatePresence initial={false}>
-              {financeOpen && (
-                <motion.ul
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <li>
-                    <button
-                      onClick={() => go("/finance/applications")}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
-                        location.pathname === "/finance/applications"
-                          ? "font-medium bg-indigo-50/50"
-                          : "hover:text-gray-700 hover:bg-gray-50"
-                      )}
+                className={cn(
+                  "group flex w-full items-center rounded-xl transition-all duration-200",
+                  collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+                  isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                )}
+                style={activeStyle(isFinanceActive)}
+              >
+                <span className={iconCircleCn(isFinanceActive)}>
+                  <Wallet className={iconCn(isFinanceActive)} strokeWidth={1.5} />
+                </span>
+                {!collapsed && (
+                  <>
+                    <span className="flex-1 text-left text-[14px]">Money</span>
+                    <ChevronDown
+                      className="shrink-0 transition-transform duration-200"
                       style={{
-                        color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
+                        width: 14, height: 14,
+                        color: isFinanceActive ? '#4338CA' : '#9CA3AF',
+                        transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       }}
-                    >
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        location.pathname === "/finance/applications"
-                          ? 'bg-indigo-50 border border-indigo-200'
-                          : 'bg-gray-50 border border-gray-200'
-                      }`}>
-                        <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
-                      </div>
-                      Applications
-                    </button>
-                  </li>
-                </motion.ul>
-              )}
-            </AnimatePresence>
+                    />
+                  </>
+                )}
+              </button>
+            </NavTooltip>
+
+            {!collapsed && (
+              <AnimatePresence initial={false}>
+                {financeOpen && (
+                  <motion.ul
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <li>
+                      <button
+                        onClick={() => go("/finance/applications")}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
+                          location.pathname === "/finance/applications"
+                            ? "font-medium bg-indigo-50/50"
+                            : "hover:text-gray-700 hover:bg-gray-50"
+                        )}
+                        style={{
+                          color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
+                        }}
+                      >
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          location.pathname === "/finance/applications"
+                            ? 'bg-indigo-50 border border-indigo-200'
+                            : 'bg-gray-50 border border-gray-200'
+                        }`}>
+                          <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                        </div>
+                        Applications
+                      </button>
+                    </li>
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            )}
           </li>
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <li key={item.path}>
-                <button
-                  onClick={() => go(item.path)}
-                  className={cn(
-                    "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                  )}
-                  style={activeStyle(item.active)}
-                >
-                  <span className={iconCircleCn(item.active)}>
-                    <Icon className={iconCn(item.active)} strokeWidth={1.5} />
-                  </span>
-                  <span className="flex-1 text-left">{item.label}</span>
-                </button>
+                <NavTooltip label={item.label}>
+                  <button
+                    onClick={() => go(item.path)}
+                    className={cn(
+                      "group flex w-full items-center rounded-xl transition-all duration-200",
+                      collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                    )}
+                    style={activeStyle(item.active)}
+                  >
+                    <span className={iconCircleCn(item.active)}>
+                      <Icon className={iconCn(item.active)} strokeWidth={1.5} />
+                    </span>
+                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
+                  </button>
+                </NavTooltip>
               </li>
             );
           })}
 
           {isAdmin && (
             <li>
-              <button
-                onClick={() => go("/admin")}
-                className={cn(
-                  "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                  location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                )}
-                style={activeStyle(location.pathname === "/admin")}
-              >
-                <span className={iconCircleCn(location.pathname === "/admin")}>
-                  <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
-                </span>
-                <span className="flex-1 text-left">Admin</span>
-              </button>
+              <NavTooltip label="Admin">
+                <button
+                  onClick={() => go("/admin")}
+                  className={cn(
+                    "group flex w-full items-center rounded-xl transition-all duration-200",
+                    collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+                    location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                  )}
+                  style={activeStyle(location.pathname === "/admin")}
+                >
+                  <span className={iconCircleCn(location.pathname === "/admin")}>
+                    <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
+                  </span>
+                  {!collapsed && <span className="flex-1 text-left text-[14px]">Admin</span>}
+                </button>
+              </NavTooltip>
             </li>
           )}
         </ul>
@@ -220,75 +259,97 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Bottom Profile Section */}
       <div className="shrink-0 px-3 pb-4 relative">
-        {/* Profile Card - Clickable */}
-        <button
-          onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-          className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md"
-          style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
-        >
-          {/* Avatar */}
-          <div className="relative shrink-0">
-            <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
-                  {displayName.charAt(0).toUpperCase()}
+        {collapsed ? (
+          /* Collapsed: just avatar */
+          <NavTooltip label={displayName}>
+            <button
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              className="w-full flex justify-center py-2"
+            >
+              <div className="relative">
+                <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
+                <div
+                  className="absolute bottom-0 right-0 rounded-full"
+                  style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #F5F5F7' }}
+                />
+              </div>
+            </button>
+          </NavTooltip>
+        ) : (
+          /* Expanded: full profile card */
+          <button
+            onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md"
+            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+          >
+            <div className="relative shrink-0">
+              <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div
+                className="absolute bottom-0 right-0 rounded-full"
+                style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
+              />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="truncate text-[14px] font-normal" style={{ color: '#1F2937' }}>
+                {displayName}
+              </div>
+              <div className="truncate text-[11px]" style={{ color: '#9CA3AF' }}>
+                {user?.email || ''}
+              </div>
+            </div>
+
+            <div
+              role="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDarkMode();
+              }}
+              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
+              style={{ width: 32, height: 32, backgroundColor: '#F9FAFB' }}
+            >
+              {darkMode ? (
+                <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
+              ) : (
+                <Moon style={{ width: 14, height: 14, color: '#6B7280' }} />
               )}
             </div>
-            {/* Green online dot */}
-            <div
-              className="absolute bottom-0 right-0 rounded-full"
-              style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
-            />
-          </div>
-
-          {/* Name & Email */}
-          <div className="flex-1 min-w-0">
-            <div className="truncate text-[14px] font-normal" style={{ color: '#1F2937' }}>
-              {displayName}
-            </div>
-            <div className="truncate text-[11px]" style={{ color: '#9CA3AF' }}>
-              {user?.email || ''}
-            </div>
-          </div>
-
-          {/* Dark Mode Toggle */}
-          <div
-            role="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleDarkMode();
-            }}
-            className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            style={{ width: 32, height: 32, backgroundColor: '#F9FAFB' }}
-          >
-            {darkMode ? (
-              <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
-            ) : (
-              <Moon style={{ width: 14, height: 14, color: '#6B7280' }} />
-            )}
-          </div>
-        </button>
+          </button>
+        )}
 
         {/* Popup Menu */}
         <AnimatePresence>
           {profileMenuOpen && (
             <>
-              {/* Backdrop */}
               <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
 
-              {/* Menu */}
               <motion.div
                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute bottom-full left-3 right-3 mb-2 z-50 rounded-xl border bg-white p-1.5 shadow-lg"
-                style={{ borderColor: '#E5E7EB' }}
+                className={cn(
+                  "absolute bottom-full mb-2 z-50 rounded-xl border bg-white p-1.5 shadow-lg",
+                  collapsed ? "left-0 right-0" : "left-3 right-3"
+                )}
+                style={{ borderColor: '#E5E7EB', minWidth: collapsed ? 200 : undefined, ...(collapsed ? { left: 0, right: 'auto' } : {}) }}
               >
-                {/* Settings */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -304,7 +365,6 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   Settings
                 </button>
 
-                {/* Feedback */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -320,10 +380,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   Feedback
                 </button>
 
-                {/* Divider */}
                 <div className="my-1 border-t" style={{ borderColor: '#F3F4F6' }} />
 
-                {/* Log out */}
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
@@ -471,8 +529,9 @@ function MobileTabBar() {
 function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isFullBleed = location.pathname === "/vision";
+  const isDashboard = location.pathname.startsWith("/dashboard");
 
-  if (isFullBleed) {
+  if (isFullBleed || isDashboard) {
     return <div className="h-full">{children}</div>;
   }
 
@@ -486,68 +545,94 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const sidebarWidth = collapsed ? 72 : 280;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Announcement Banner */}
-      <AnnouncementBanner />
+    <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
+      <div className="min-h-screen bg-background">
+        <AnnouncementBanner />
 
-      {/* Desktop Sidebar — Fixed 280px, no collapse */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col lg:w-[280px]" style={{ backgroundColor: '#F5F5F7' }}>
-        <div className="flex grow flex-col" style={{ borderRight: '1px solid #E5E7EB' }}>
-          <SidebarNav />
-        </div>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          aria-label="Toggle sidebar"
+        {/* Desktop Sidebar */}
+        <div
+          className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30"
+          style={{ backgroundColor: '#F5F5F7', width: sidebarWidth }}
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-        <div className="flex items-center gap-2 flex-1">
-          <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
-          <span className="text-sm font-semibold text-foreground">Digital Home</span>
-        </div>
-      </div>
+          <div className="flex grow flex-col relative" style={{ borderRight: '1px solid #E5E7EB' }}>
+            <SidebarNav collapsed={collapsed} />
 
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-black/50 lg:hidden"
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
-              className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden"
-              style={{ backgroundColor: '#F5F5F7' }}
+            {/* Collapse toggle button */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all"
             >
-              <SidebarNav onNavigate={() => setMobileOpen(false)} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              {collapsed ? (
+                <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+              ) : (
+                <ChevronLeft className="w-3.5 h-3.5 text-gray-500" />
+              )}
+            </button>
+          </div>
+        </div>
 
-      {/* Floating Cloud → Journal */}
-      <FloatingCloud onClick={() => setJournalOpen(true)} />
-      <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
+        {/* Mobile Header */}
+        <div className="mobile-header sticky top-0 z-40 flex h-12 items-center gap-x-3 border-b border-border bg-card/95 px-4 backdrop-blur-xl lg:hidden">
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label="Toggle sidebar"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          <div className="flex items-center gap-2 flex-1">
+            <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+            <span className="text-sm font-semibold text-foreground">Digital Home</span>
+          </div>
+        </div>
 
-      {/* Main Content — fixed offset */}
-      <main className="lg:pl-[280px]">
-        <ContentWrapper>{children}</ContentWrapper>
-      </main>
-    </div>
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-50 bg-black/50 lg:hidden"
+                onClick={() => setMobileOpen(false)}
+              />
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden"
+                style={{ backgroundColor: '#F5F5F7' }}
+              >
+                <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        <FloatingCloud onClick={() => setJournalOpen(true)} />
+        <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
+
+        {/* Main Content */}
+        <main className="transition-all duration-300" style={{ paddingLeft: `${sidebarWidth}px` }}>
+          <div className="lg:block hidden" /> {/* spacer for transition */}
+          <ContentWrapper>{children}</ContentWrapper>
+        </main>
+
+        {/* Override padding on mobile */}
+        <style>{`
+          @media (max-width: 1023px) {
+            main { padding-left: 0 !important; }
+          }
+        `}</style>
+      </div>
+    </SidebarContext.Provider>
   );
 }
