@@ -126,8 +126,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               )}
               style={activeStyle(isFinanceActive)}
             >
-              <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(isFinanceActive)}>
-                <DollarSign style={iconStyle(isFinanceActive)} />
+              <span className={iconCircleCn(isFinanceActive)}>
+                <Wallet className={iconCn(isFinanceActive)} strokeWidth={1.5} />
               </span>
               <span className="flex-1 text-left">Money</span>
               <ChevronDown
