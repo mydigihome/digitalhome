@@ -208,8 +208,8 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 )}
                 style={activeStyle(location.pathname === "/admin")}
               >
-                <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(location.pathname === "/admin")}>
-                  <Shield style={iconStyle(location.pathname === "/admin")} />
+                <span className={iconCircleCn(location.pathname === "/admin")}>
+                  <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
                 </span>
                 <span className="flex-1 text-left">Admin</span>
               </button>
