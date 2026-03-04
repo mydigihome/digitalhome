@@ -83,19 +83,22 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         <ul className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const c = colorMap[item.color];
             return (
               <li key={item.path}>
                 <button
                   onClick={() => go(item.path)}
                   className={cn(
                     "group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[14px] transition-all duration-200",
-                    item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                    item.active ? `${c.activeRowBg} font-medium ${c.activeText}` : "text-gray-600 hover:bg-gray-100 hover:shadow-sm"
                   )}
-                  style={activeStyle(item.active)}
                 >
-                  <span className="inline-flex shrink-0 items-center justify-center rounded-full" style={iconCircleStyle(item.active)}>
-                    <Icon style={iconStyle(item.active)} />
-                  </span>
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ring-1 transition-all",
+                    item.active ? `${c.activeBg} ${c.activeRing}` : `bg-gray-50 ring-gray-200 ${c.hoverRing}`
+                  )}>
+                    <Icon className={cn("w-[18px] h-[18px]", item.active ? c.activeText : "text-gray-500")} strokeWidth={1.5} />
+                  </div>
                   <span className="flex-1 text-left">{item.label}</span>
                 </button>
               </li>
