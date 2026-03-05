@@ -308,7 +308,7 @@ export default function Dashboard() {
             <h1
               className="text-[32px] sm:text-[40px] leading-[1.15] mt-0.5"
               style={{
-                fontFamily: "'Playfair Display', 'Instrument Serif', Georgia, serif",
+                fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif",
                 fontStyle: "italic",
                 fontWeight: 400,
                 color: "white",
