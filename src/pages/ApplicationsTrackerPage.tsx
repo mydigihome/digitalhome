@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Building, Calendar, X, FileText, ArrowRight, Download } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Building, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -16,6 +16,7 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import CollegeApplicationsTab from "@/components/CollegeApplicationsTab";
+import { useNavigate } from "react-router-dom";
 
 type AppCategory = "all" | "job" | "internship" | "fellowship" | "brand_collab" | "college";
 
@@ -53,6 +54,7 @@ const gradientPresets = [
 ];
 
 export default function ApplicationsTrackerPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
@@ -119,7 +121,6 @@ export default function ApplicationsTrackerPage() {
     const path = `${user.id}/${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from("resumes").upload(path, file);
     if (error) { toast.error("Upload failed"); return; }
-    const { data } = await supabase.storage.from("resumes").createSignedUrl(path, 3600);
     await createResume.mutateAsync({
       title: file.name.replace(/\.[^/.]+$/, ""),
       file_url: path,
@@ -153,15 +154,33 @@ export default function ApplicationsTrackerPage() {
           className="relative w-full overflow-hidden group"
           style={{
             background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? "linear-gradient(135deg, hsl(var(--primary)/0.08) 0%, hsl(var(--accent)/0.1) 100%)" : undefined,
+              : !bannerUrl ? "linear-gradient(135deg, hsl(262 80% 50% / 0.08) 0%, hsl(330 80% 70% / 0.1) 100%)" : undefined,
             backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
             backgroundSize: "cover", backgroundPosition: "center",
             borderRadius: "0 0 40px 40px",
-            paddingTop: 64,
+            paddingTop: 48,
             paddingBottom: 40,
           }}
         >
-          <div className="max-w-xl lg:max-w-6xl mx-auto px-4">
+          <div className="max-w-xl lg:max-w-6xl mx-auto px-5">
+            {/* Top Nav */}
+            <div className="flex items-center justify-between mb-8">
+              <button
+                onClick={() => navigate(-1)}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition"
+              >
+                <ChevronLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex items-center gap-2">
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
+                  <Search className="h-4 w-4 text-foreground" />
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
+                  <Bell className="h-4 w-4 text-foreground" />
+                </button>
+              </div>
+            </div>
+
             <h1 className="text-5xl font-medium tracking-tight text-foreground" style={{ fontFamily: "'Instrument Serif', serif" }}>
               Resource Studio
             </h1>
@@ -192,22 +211,24 @@ export default function ApplicationsTrackerPage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-xl lg:max-w-6xl mx-auto px-4 py-8 space-y-8">
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-5 py-8 space-y-10">
 
-          {/* Professional Template Library */}
-          <TemplateLibrarySection userId={user?.id} />
+          {/* SECTION 1: Featured Templates (MAX 4) */}
+          <FeaturedTemplatesSection userId={user?.id} />
 
-          {/* Applications Tracker Section */}
+          {/* SECTION 2: Applications Tracker */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-primary text-xl">📋</span>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-primary" />
+                </div>
                 <h2 className="text-xl font-bold text-foreground">Applications Tracker</h2>
               </div>
               {activeCategory !== "college" && (
                 <button
                   onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition shadow-lg shadow-primary/25"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -215,7 +236,7 @@ export default function ApplicationsTrackerPage() {
             </div>
 
             {/* Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar mb-4">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar mb-5">
               {(["all", "job", "internship", "fellowship", "brand_collab"] as AppCategory[]).map(cat => (
                 <button
                   key={cat}
@@ -223,7 +244,7 @@ export default function ApplicationsTrackerPage() {
                   className={cn(
                     "px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all",
                     activeCategory === cat
-                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25"
                       : "bg-card text-muted-foreground font-semibold border border-border hover:border-primary/30"
                   )}
                 >
@@ -236,7 +257,7 @@ export default function ApplicationsTrackerPage() {
                   className={cn(
                     "px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all",
                     activeCategory === "college"
-                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/25"
                       : "bg-card text-muted-foreground font-semibold border border-border hover:border-primary/30"
                   )}
                 >
@@ -260,14 +281,13 @@ export default function ApplicationsTrackerPage() {
             {activeCategory !== "college" && (
               <>
                 {filtered.length === 0 ? (
-                  /* Stitch Empty State */
-                  <div className="rounded-[32px] border-2 border-dashed border-primary/20 p-10 text-center" style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" }}>
+                  <div className="rounded-[32px] border-2 border-dashed border-primary/20 p-10 text-center bg-card/70 backdrop-blur-xl">
                     <div className="relative mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-accent/10 mb-4">
                       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 animate-pulse" />
                       <Building className="h-10 w-10 text-primary relative z-10" />
                     </div>
                     <p className="text-lg font-bold text-foreground">Your next big break starts here.</p>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[220px] mx-auto">
                       Click the + button to begin tracking your professional journey.
                     </p>
                   </div>
@@ -278,7 +298,7 @@ export default function ApplicationsTrackerPage() {
                       return (
                         <div key={app.id} className="rounded-3xl border border-border bg-card p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
                           <div className="flex items-start gap-3 mb-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-lg font-bold text-foreground shrink-0">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-bold text-primary shrink-0">
                               {app.company_name.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -381,7 +401,10 @@ export default function ApplicationsTrackerPage() {
   );
 }
 
-function TemplateLibrarySection({ userId }: { userId?: string }) {
+/* ─── Featured Templates Section (MAX 4 total) ─── */
+
+function FeaturedTemplatesSection({ userId }: { userId?: string }) {
+  const navigate = useNavigate();
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
@@ -392,19 +415,12 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
       .select("*")
       .eq("is_active", true)
       .order("created_at", { ascending: true })
+      .limit(4)
       .then(({ data }) => {
         setTemplates(data || []);
         setLoading(false);
       });
   }, []);
-
-  const categories = [
-    { key: "resume", label: "Resumes", emoji: "📄" },
-    { key: "portfolio", label: "Portfolios", emoji: "💼" },
-    { key: "email", label: "Email Templates", emoji: "✉️" },
-  ];
-
-  const MIN_SLOTS_PER_CATEGORY = 4;
 
   const handleDownload = async (template: any) => {
     if (!template.file_url) { toast.error("File not available yet"); return; }
@@ -426,21 +442,38 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
   };
 
   const templateGradients = [
-    "linear-gradient(135deg, hsl(239 84% 67% / 0.15), hsl(280 65% 60% / 0.2))",
+    "linear-gradient(135deg, hsl(262 80% 60% / 0.15), hsl(280 65% 60% / 0.2))",
     "linear-gradient(135deg, hsl(330 80% 70% / 0.15), hsl(350 70% 65% / 0.2))",
+    "linear-gradient(135deg, hsl(200 70% 55% / 0.15), hsl(220 65% 60% / 0.2))",
     "linear-gradient(135deg, hsl(160 60% 50% / 0.15), hsl(180 60% 55% / 0.2))",
-    "linear-gradient(135deg, hsl(40 80% 60% / 0.15), hsl(25 80% 55% / 0.2))",
   ];
 
+  const fallbackTemplates = [
+    { id: "f1", title: "Creative Resume", description: "Modern & Minimalist", price_cents: 0, icon: <FileText className="h-10 w-10 text-primary/40" /> },
+    { id: "f2", title: "Portfolio Kit", description: "Designer Edition", price_cents: 100, icon: <FileText className="h-10 w-10 text-primary/40" /> },
+    { id: "f3", title: "Email Templates", description: "Professional Outreach", price_cents: 0, icon: <FileText className="h-10 w-10 text-primary/40" /> },
+    { id: "f4", title: "Cover Letters", description: "Standout Intros", price_cents: 100, icon: <FileText className="h-10 w-10 text-primary/40" /> },
+  ];
+
+  const displayTemplates = templates.length > 0 ? templates.slice(0, 4) : fallbackTemplates;
+
   return (
-    <div className="rounded-3xl border border-border bg-card p-6" style={{ backdropFilter: "blur(20px)" }}>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-primary text-xl">✨</span>
-        <h2 className="text-xl font-bold text-foreground">Featured Templates</h2>
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <span className="text-primary text-sm">✨</span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Featured Templates</h2>
+        </div>
+        <button
+          onClick={() => navigate('/templates')}
+          className="text-primary font-semibold text-sm hover:underline flex items-center gap-1"
+        >
+          See All
+          <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
-      <p className="text-sm text-muted-foreground mb-6">
-        Download free career resources and premium templates
-      </p>
 
       {loading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
@@ -448,80 +481,46 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
           Loading templates...
         </div>
       ) : (
-        <div className="space-y-6">
-          {categories.map(({ key, label, emoji }) => {
-            const catTemplates = templates.filter(t => t.template_type === key);
-            const totalSlots = Math.max(MIN_SLOTS_PER_CATEGORY, catTemplates.length);
-            const slots = Array.from({ length: totalSlots }, (_, i) => catTemplates[i] || null);
-
-            return (
-              <div key={key}>
-                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                  <span>{emoji}</span> {label}
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {slots.map((template, idx) =>
-                    template ? (
-                      <button
-                        key={template.id}
-                        onClick={() => setSelectedTemplate(template)}
-                        className="rounded-3xl border border-border bg-card p-4 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group"
-                      >
-                        <div className="aspect-[3/4] rounded-2xl mb-3 overflow-hidden relative flex items-center justify-center" style={{ background: templateGradients[idx % templateGradients.length] }}>
-                          {template.preview_image_url ? (
-                            <img
-                              src={template.preview_image_url}
-                              alt={template.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <FileText className="h-10 w-10 text-primary/40" />
-                          )}
-                          {/* Price Badge */}
-                          <span className="absolute top-2 right-2 bg-card/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-foreground">
-                            {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
-                          </span>
-                        </div>
-                        <p className="text-sm font-bold text-foreground truncate">{template.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 mb-3">{template.description?.slice(0, 30) || "Professional template"}</p>
-                        <div className="w-full py-2 bg-secondary rounded-xl text-primary font-bold text-xs flex items-center justify-center gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                          {template.price_cents === 0 ? <><Download className="h-3 w-3" /> Download</> : <><ArrowRight className="h-3 w-3" /> Get Template</>}
-                        </div>
-                      </button>
-                    ) : (
-                      <div
-                        key={`empty-${key}-${idx}`}
-                        className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 text-center"
-                      >
-                        <div className="aspect-[3/4] rounded-2xl bg-muted/50 mb-3 flex items-center justify-center">
-                          <span className="text-2xl text-muted-foreground/30">+</span>
-                        </div>
-                        <p className="text-sm font-bold text-muted-foreground">Coming Soon</p>
-                        <p className="text-xs text-muted-foreground/60 mt-0.5">Launching soon!</p>
-                      </div>
-                    )
-                  )}
-                </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {displayTemplates.map((template: any, idx: number) => (
+            <button
+              key={template.id}
+              onClick={() => templates.length > 0 ? setSelectedTemplate(template) : navigate('/templates')}
+              className="rounded-3xl border border-border bg-card p-4 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group"
+            >
+              <div
+                className="aspect-[3/4] rounded-2xl mb-3 overflow-hidden relative flex items-center justify-center"
+                style={{ background: templateGradients[idx % templateGradients.length] }}
+              >
+                {template.preview_image_url ? (
+                  <img src={template.preview_image_url} alt={template.title} className="w-full h-full object-cover" />
+                ) : (
+                  <FileText className="h-10 w-10 text-primary/40" />
+                )}
+                <span className="absolute top-2 right-2 bg-card/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-foreground">
+                  {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
+                </span>
               </div>
-            );
-          })}
+              <p className="text-sm font-bold text-foreground truncate">{template.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-3 truncate">{template.description || "Professional template"}</p>
+              <div className="w-full py-2 bg-secondary rounded-xl text-primary font-bold text-xs flex items-center justify-center gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                {template.price_cents === 0 ? <><Download className="h-3 w-3" /> Download</> : <><ArrowRight className="h-3 w-3" /> Get Template</>}
+              </div>
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Bundle + Browse link */}
-      <div className="mt-6 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center gap-3">
+      {/* Bundle link */}
+      <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <a
           href="/templates"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
         >
           💎 Get All Templates — $5 Bundle
         </a>
         <a
           href="/templates"
-          target="_blank"
-          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-semibold"
         >
           Browse Full Shop <ArrowRight className="h-4 w-4" />
