@@ -146,35 +146,44 @@ export default function ApplicationsTrackerPage() {
 
   return (
     <AppShell>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        {/* Banner */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="min-h-screen bg-background">
+
+        {/* Gradient Header */}
         <div
-          className="relative w-full h-[280px] rounded-2xl overflow-hidden mb-6 group"
+          className="relative w-full overflow-hidden group"
           style={{
             background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? "linear-gradient(135deg, #DBEAFE 0%, #93C5FD 50%, #60A5FA 100%)" : undefined,
+              : !bannerUrl ? "linear-gradient(135deg, hsl(var(--primary)/0.08) 0%, hsl(var(--accent)/0.1) 100%)" : undefined,
             backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
             backgroundSize: "cover", backgroundPosition: "center",
+            borderRadius: "0 0 40px 40px",
+            paddingTop: 64,
+            paddingBottom: 40,
           }}
         >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <h1 className="text-4xl font-bold uppercase text-center px-8" style={{ color: "#1E3A5F", letterSpacing: "2px", textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-              {(prefs as any)?.app_banner_text || "TRACK YOUR CAREER"}
+          <div className="max-w-xl mx-auto px-4">
+            <h1 className="text-5xl font-medium tracking-tight text-foreground" style={{ fontFamily: "'Instrument Serif', serif" }}>
+              Resource Studio
             </h1>
+            <p className="text-sm font-medium text-muted-foreground mt-2">
+              {(prefs as any)?.app_banner_text || "Download free career resources and premium templates."}
+            </p>
           </div>
+
+          {/* Banner change controls */}
           <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="relative">
-              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)}>Change cover</Button>
+              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)} className="rounded-full backdrop-blur-md bg-card/50">Change cover</Button>
               {showBannerMenu && (
-                <div className="absolute right-0 top-10 z-50 w-56 rounded-lg border border-border bg-card p-2 shadow-lg">
-                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
+                <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-border bg-card p-2 shadow-lg">
+                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
                   <div className="px-3 py-2 text-xs text-muted-foreground">Gradients</div>
                   <div className="grid grid-cols-4 gap-1 px-3 pb-2">
                     {gradientPresets.map((g, i) => (
-                      <button key={i} onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: g } as any); setShowBannerMenu(false); toast.success("Banner updated"); }} className="h-8 w-full rounded" style={{ background: g }} />
+                      <button key={i} onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: g } as any); setShowBannerMenu(false); toast.success("Banner updated"); }} className="h-8 w-full rounded-lg" style={{ background: g }} />
                     ))}
                   </div>
-                  <button onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: null } as any); setShowBannerMenu(false); toast.success("Banner reset"); }} className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
+                  <button onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: null } as any); setShowBannerMenu(false); toast.success("Banner reset"); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
                 </div>
               )}
             </div>
@@ -182,133 +191,147 @@ export default function ApplicationsTrackerPage() {
           <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
         </div>
 
-        {/* Professional Template Library Section — always at top */}
-        <TemplateLibrarySection userId={user?.id} />
+        {/* Main Content */}
+        <div className="max-w-xl mx-auto px-4 py-8 space-y-8">
 
-        {/* Title */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">📋</span>
-            <h1 className="text-3xl font-bold text-foreground">Applications Tracker</h1>
+          {/* Professional Template Library */}
+          <TemplateLibrarySection userId={user?.id} />
+
+          {/* Applications Tracker Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-primary text-xl">📋</span>
+                <h2 className="text-xl font-bold text-foreground">Applications Tracker</h2>
+              </div>
+              {activeCategory !== "college" && (
+                <button
+                  onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar mb-4">
+              {(["all", "job", "internship", "fellowship", "brand_collab"] as AppCategory[]).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className={cn(
+                    "px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all",
+                    activeCategory === cat
+                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                      : "bg-card text-muted-foreground font-semibold border border-border hover:border-primary/30"
+                  )}
+                >
+                  {cat === "all" ? "All" : categoryLabels[cat]} ({counts[cat]})
+                </button>
+              ))}
+              {isStudent && (
+                <button
+                  onClick={() => setActiveCategory("college")}
+                  className={cn(
+                    "px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all",
+                    activeCategory === "college"
+                      ? "bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/20"
+                      : "bg-card text-muted-foreground font-semibold border border-border hover:border-primary/30"
+                  )}
+                >
+                  🎓 College
+                </button>
+              )}
+              {!isStudent && (
+                <button
+                  onClick={() => setShowStudentPrompt(true)}
+                  className="px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap border border-dashed border-border text-muted-foreground hover:border-primary/30 transition-all"
+                >
+                  🎓 College
+                </button>
+              )}
+            </div>
+
+            {/* College Applications Tab */}
+            {activeCategory === "college" && isStudent && <CollegeApplicationsTab />}
+
+            {/* Regular Applications */}
+            {activeCategory !== "college" && (
+              <>
+                {filtered.length === 0 ? (
+                  /* Stitch Empty State */
+                  <div className="rounded-[32px] border-2 border-dashed border-primary/20 p-10 text-center" style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" }}>
+                    <div className="relative mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-accent/10 mb-4">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 animate-pulse" />
+                      <Building className="h-10 w-10 text-primary relative z-10" />
+                    </div>
+                    <p className="text-lg font-bold text-foreground">Your next big break starts here.</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                      Click the + button to begin tracking your professional journey.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 mb-8">
+                    {filtered.map(app => {
+                      const appResumes = resumes.filter(r => r.application_id === app.id);
+                      return (
+                        <div key={app.id} className="rounded-3xl border border-border bg-card p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-lg font-bold text-foreground shrink-0">
+                              {app.company_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-bold text-foreground truncate">{app.company_name}</h3>
+                              <p className="text-xs text-muted-foreground truncate">{app.position_title}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mb-3 flex-wrap">
+                            <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", categoryColors[app.category])}>
+                              {categoryLabels[app.category] || app.category}
+                            </span>
+                            <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", statusColors[app.status])}>
+                              {statusLabels[app.status] || app.status}
+                            </span>
+                            {appResumes.length > 0 && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mb-3">
+                            Applied {formatDistanceToNow(new Date(app.application_date), { addSuffix: true })}
+                          </p>
+                          <div className="flex items-center gap-2 border-t border-border pt-3">
+                            {app.application_url && (
+                              <a href={app.application_url.startsWith("http") ? app.application_url : `https://${app.application_url}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-muted-foreground hover:text-primary rounded-lg hover:bg-secondary transition"><ExternalLink className="h-4 w-4" /></a>
+                            )}
+                            <button onClick={() => handleEdit(app)} className="p-1.5 text-muted-foreground hover:text-primary rounded-lg hover:bg-secondary transition"><Pencil className="h-4 w-4" /></button>
+                            <button onClick={() => { deleteApp.mutate(app.id); toast.success("Deleted"); }} className="p-1.5 text-muted-foreground hover:text-destructive rounded-lg hover:bg-destructive/10 transition"><Trash2 className="h-4 w-4" /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Resumes Section */}
+                <ResumeManager resumeInputRef={resumeInputRef} handleResumeUpload={handleResumeUpload} />
+              </>
+            )}
           </div>
         </div>
-
-        {/* Category Toggles + Add Button */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {(["all", "job", "internship", "fellowship", "brand_collab"] as AppCategory[]).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "h-9 px-4 rounded-lg text-sm font-medium border transition-all duration-150",
-                  activeCategory === cat
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-transparent border-border text-muted-foreground hover:border-primary"
-                )}
-              >
-                {cat === "all" ? "All Applications" : categoryLabels[cat]} ({counts[cat]})
-              </button>
-            ))}
-            {isStudent && (
-              <button
-                onClick={() => setActiveCategory("college")}
-                className={cn(
-                  "h-9 px-4 rounded-lg text-sm font-medium border transition-all duration-150",
-                  activeCategory === "college"
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-transparent border-border text-muted-foreground hover:border-primary"
-                )}
-              >
-                🎓 College Applications
-              </button>
-            )}
-            {!isStudent && (
-              <button
-                onClick={() => setShowStudentPrompt(true)}
-                className="h-9 px-4 rounded-lg text-sm font-medium border border-dashed border-border text-muted-foreground hover:border-primary transition-all duration-150"
-              >
-                🎓 College Apps
-              </button>
-            )}
-          </div>
-          {activeCategory !== "college" && (
-            <Button onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> Add Application
-            </Button>
-          )}
-        </div>
-
-        {/* College Applications Tab */}
-        {activeCategory === "college" && isStudent && <CollegeApplicationsTab />}
-
-        {/* Regular Applications */}
-        {activeCategory !== "college" && (
-        <>
-
-        {/* Application Cards Grid */}
-        {filtered.length === 0 ? (
-          <div className="rounded-xl border-2 border-dashed border-border p-12 text-center">
-            <Building className="mx-auto h-12 w-12 text-muted-foreground/40 mb-3" />
-            <p className="text-muted-foreground">No applications yet. Click "Add Application" to get started.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-            {filtered.map(app => {
-              const appResumes = resumes.filter(r => r.application_id === app.id);
-              return (
-                <div key={app.id} className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-foreground shrink-0">
-                      {app.company_name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-foreground truncate">{app.company_name}</h3>
-                      <p className="text-sm text-muted-foreground truncate">{app.position_title}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", categoryColors[app.category])}>
-                      {categoryLabels[app.category] || app.category}
-                    </span>
-                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", statusColors[app.status])}>
-                      {statusLabels[app.status] || app.status}
-                    </span>
-                    {appResumes.length > 0 && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Applied {formatDistanceToNow(new Date(app.application_date), { addSuffix: true })}
-                  </p>
-                  <div className="flex items-center gap-2 border-t border-border pt-3">
-                    {app.application_url && (
-                      <a href={app.application_url.startsWith("http") ? app.application_url : `https://${app.application_url}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-muted-foreground hover:text-primary"><ExternalLink className="h-4 w-4" /></a>
-                    )}
-                    <button onClick={() => handleEdit(app)} className="p-1.5 text-muted-foreground hover:text-primary"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => { deleteApp.mutate(app.id); toast.success("Deleted"); }} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Resumes Section */}
-        <ResumeManager resumeInputRef={resumeInputRef} handleResumeUpload={handleResumeUpload} />
 
         {/* Application Form Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setShowForm(false)}>
-            <div className="w-full max-w-[600px] rounded-2xl bg-card p-8 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-[600px] rounded-3xl bg-card p-8 shadow-xl space-y-4" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">{editingApp ? "Edit Application" : "Add Application"}</h3>
-                <button onClick={() => setShowForm(false)} className="p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+                <h3 className="text-lg font-bold text-foreground">{editingApp ? "Edit Application" : "Add Application"}</h3>
+                <button onClick={() => setShowForm(false)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition"><X className="h-5 w-5" /></button>
               </div>
               <div className="space-y-3">
-                <div className="space-y-1"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} /></div>
-                <div className="space-y-1"><Label>Position Title *</Label><Input value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Position Title *</Label><Input value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} className="rounded-xl" /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1"><Label>Category *</Label>
-                    <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                    <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
                       <option value="job">Job</option>
                       <option value="internship">Internship</option>
                       <option value="fellowship">Fellowship</option>
@@ -316,7 +339,7 @@ export default function ApplicationsTrackerPage() {
                     </select>
                   </div>
                   <div className="space-y-1"><Label>Status</Label>
-                    <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm">
+                    <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
                       <option value="applied">Applied</option>
                       <option value="interview_scheduled">Interview Scheduled</option>
                       <option value="interviewed">Interviewed</option>
@@ -326,31 +349,29 @@ export default function ApplicationsTrackerPage() {
                     </select>
                   </div>
                 </div>
-                <div className="space-y-1"><Label>Application Date</Label><Input type="date" value={form.application_date} onChange={e => setForm(p => ({ ...p, application_date: e.target.value }))} /></div>
-                <div className="space-y-1"><Label>Application URL (optional)</Label><Input value={form.application_url} onChange={e => setForm(p => ({ ...p, application_url: e.target.value }))} placeholder="https://..." /></div>
-                <div className="space-y-1"><Label>Notes (optional)</Label><Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>Application Date</Label><Input type="date" value={form.application_date} onChange={e => setForm(p => ({ ...p, application_date: e.target.value }))} className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Application URL (optional)</Label><Input value={form.application_url} onChange={e => setForm(p => ({ ...p, application_url: e.target.value }))} placeholder="https://..." className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Notes (optional)</Label><Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} className="rounded-xl" /></div>
               </div>
               <div className="flex gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
-                <Button onClick={handleSubmit} disabled={createApp.isPending || updateApp.isPending} className="flex-1">
+                <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1 rounded-xl">Cancel</Button>
+                <Button onClick={handleSubmit} disabled={createApp.isPending || updateApp.isPending} className="flex-1 rounded-xl">
                   {(createApp.isPending || updateApp.isPending) ? "Saving..." : "Save"}
                 </Button>
               </div>
             </div>
           </div>
         )}
-        </>
-        )}
 
         {/* Student Prompt Modal */}
         {showStudentPrompt && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setShowStudentPrompt(false)}>
-            <div className="w-full max-w-[360px] rounded-2xl bg-card p-6 shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
-              <p className="text-lg font-semibold text-foreground mb-2">🎓 Are you a student?</p>
+            <div className="w-full max-w-[360px] rounded-3xl bg-card p-6 shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
+              <p className="text-lg font-bold text-foreground mb-2">🎓 Are you a student?</p>
               <p className="text-sm text-muted-foreground mb-6">Enable the College Applications tracker to manage your college journey.</p>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowStudentPrompt(false)} className="flex-1">No</Button>
-                <Button onClick={() => { upsertPrefs.mutate({ user_type: "student" } as any); setShowStudentPrompt(false); setActiveCategory("college"); toast.success("College tracker enabled!"); }} className="flex-1">Yes, I'm a student</Button>
+                <Button variant="outline" onClick={() => setShowStudentPrompt(false)} className="flex-1 rounded-xl">No</Button>
+                <Button onClick={() => { upsertPrefs.mutate({ user_type: "student" } as any); setShowStudentPrompt(false); setActiveCategory("college"); toast.success("College tracker enabled!"); }} className="flex-1 rounded-xl">Yes, I'm a student</Button>
               </div>
             </div>
           </div>
@@ -391,7 +412,6 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
       window.open("/templates", "_blank");
       return;
     }
-    // Free download
     if (userId) {
       await supabase.from("template_downloads").insert({ template_id: template.id, user_id: userId });
       supabase.rpc("increment_download_count_if_exists", { tid: template.id });
@@ -405,11 +425,18 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
     }
   };
 
+  const templateGradients = [
+    "linear-gradient(135deg, hsl(239 84% 67% / 0.15), hsl(280 65% 60% / 0.2))",
+    "linear-gradient(135deg, hsl(330 80% 70% / 0.15), hsl(350 70% 65% / 0.2))",
+    "linear-gradient(135deg, hsl(160 60% 50% / 0.15), hsl(180 60% 55% / 0.2))",
+    "linear-gradient(135deg, hsl(40 80% 60% / 0.15), hsl(25 80% 55% / 0.2))",
+  ];
+
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 mb-8">
-      <div className="flex items-center gap-3 mb-1">
-        <span className="text-2xl">📚</span>
-        <h2 className="text-xl font-bold text-foreground">Professional Template Library</h2>
+    <div className="rounded-3xl border border-border bg-card p-6" style={{ backdropFilter: "blur(20px)" }}>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-primary text-xl">✨</span>
+        <h2 className="text-xl font-bold text-foreground">Featured Templates</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-6">
         Download free career resources and premium templates
@@ -429,7 +456,7 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
 
             return (
               <div key={key}>
-                <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3 flex items-center gap-2">
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
                   <span>{emoji}</span> {label}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -438,9 +465,9 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
                       <button
                         key={template.id}
                         onClick={() => setSelectedTemplate(template)}
-                        className="rounded-xl border border-border bg-background p-3 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group"
+                        className="rounded-3xl border border-border bg-card p-4 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group"
                       >
-                        <div className="aspect-[3/2] rounded-lg bg-muted mb-2 overflow-hidden">
+                        <div className="aspect-[3/4] rounded-2xl mb-3 overflow-hidden relative flex items-center justify-center" style={{ background: templateGradients[idx % templateGradients.length] }}>
                           {template.preview_image_url ? (
                             <img
                               src={template.preview_image_url}
@@ -448,26 +475,29 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                              <FileText className="h-8 w-8" />
-                            </div>
+                            <FileText className="h-10 w-10 text-primary/40" />
                           )}
+                          {/* Price Badge */}
+                          <span className="absolute top-2 right-2 bg-card/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-foreground">
+                            {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
+                          </span>
                         </div>
-                        <p className="text-sm font-medium text-foreground truncate">{template.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
-                        </p>
+                        <p className="text-sm font-bold text-foreground truncate">{template.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 mb-3">{template.description?.slice(0, 30) || "Professional template"}</p>
+                        <div className="w-full py-2 bg-secondary rounded-xl text-primary font-bold text-xs flex items-center justify-center gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                          {template.price_cents === 0 ? <><Download className="h-3 w-3" /> Download</> : <><ArrowRight className="h-3 w-3" /> Get Template</>}
+                        </div>
                       </button>
                     ) : (
                       <div
                         key={`empty-${key}-${idx}`}
-                        className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-center"
+                        className="rounded-3xl border border-dashed border-border bg-muted/30 p-4 text-center"
                       >
-                        <div className="aspect-[3/2] rounded-lg bg-muted/50 mb-2 flex items-center justify-center">
+                        <div className="aspect-[3/4] rounded-2xl bg-muted/50 mb-3 flex items-center justify-center">
                           <span className="text-2xl text-muted-foreground/30">+</span>
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">Coming Soon</p>
-                        <p className="text-xs text-muted-foreground/60 mt-0.5">New template launching soon!</p>
+                        <p className="text-sm font-bold text-muted-foreground">Coming Soon</p>
+                        <p className="text-xs text-muted-foreground/60 mt-0.5">Launching soon!</p>
                       </div>
                     )
                   )}
@@ -484,7 +514,7 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
           href="/templates"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
         >
           💎 Get All Templates — $5 Bundle
         </a>
@@ -492,7 +522,7 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
           href="/templates"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors font-semibold"
         >
           Browse Full Shop <ArrowRight className="h-4 w-4" />
         </a>
@@ -501,13 +531,13 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
       {/* Template Detail Modal */}
       {selectedTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setSelectedTemplate(null)}>
-          <div className="w-full max-w-[500px] rounded-2xl bg-card p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-[500px] rounded-3xl bg-card p-6 shadow-xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground">{selectedTemplate.title}</h3>
-              <button onClick={() => setSelectedTemplate(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+              <h3 className="text-lg font-bold text-foreground">{selectedTemplate.title}</h3>
+              <button onClick={() => setSelectedTemplate(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition"><X className="h-5 w-5" /></button>
             </div>
             {selectedTemplate.preview_image_url && (
-              <div className="aspect-[3/2] rounded-xl overflow-hidden bg-muted mb-4">
+              <div className="aspect-[3/2] rounded-2xl overflow-hidden bg-muted mb-4">
                 <img src={selectedTemplate.preview_image_url} alt={selectedTemplate.title} className="w-full h-full object-cover" />
               </div>
             )}
@@ -515,14 +545,14 @@ function TemplateLibrarySection({ userId }: { userId?: string }) {
               <p className="text-sm text-muted-foreground mb-4">{selectedTemplate.description}</p>
             )}
             <div className="text-sm text-muted-foreground mb-4 space-y-1">
-              <p className="font-medium text-foreground">What's included:</p>
+              <p className="font-bold text-foreground">What's included:</p>
               <p>• Editable template file</p>
               <p>• PDF version</p>
               <p>• Customization guide</p>
             </div>
             <Button
               onClick={() => { handleDownload(selectedTemplate); setSelectedTemplate(null); }}
-              className="w-full"
+              className="w-full rounded-xl"
             >
               {selectedTemplate.price_cents === 0 ? "Download Free" : `Buy Now — $${(selectedTemplate.price_cents / 100).toFixed(0)}`}
             </Button>
