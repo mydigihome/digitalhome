@@ -111,8 +111,8 @@ export default function WealthTrackerPage() {
     { symbol: "AAPL", badge: "AAPL", color: "bg-purple-100 text-purple-700" },
   ];
 
-  const btcPrice = btcQuote?.quote?.price ?? 64284.5;
-  const btcChange = btcQuote?.quote?.change_pct ?? 2.4;
+  const btcPrice = btcQuote?.quote?.price ? parseFloat(btcQuote.quote.price) : 64284.5;
+  const btcChange = btcQuote?.quote?.percent_change ? parseFloat(btcQuote.quote.percent_change) : 2.4;
 
   return (
     <AppShell>
