@@ -161,7 +161,7 @@ export default function ApplicationsTrackerPage() {
             paddingBottom: 40,
           }}
         >
-          <div className="max-w-xl mx-auto px-4">
+          <div className="max-w-xl lg:max-w-6xl mx-auto px-4">
             <h1 className="text-5xl font-medium tracking-tight text-foreground" style={{ fontFamily: "'Instrument Serif', serif" }}>
               Resource Studio
             </h1>
