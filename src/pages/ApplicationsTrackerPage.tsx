@@ -161,7 +161,7 @@ export default function ApplicationsTrackerPage() {
             paddingBottom: 40,
           }}
         >
-          <div className="max-w-xl mx-auto px-4">
+          <div className="max-w-xl lg:max-w-6xl mx-auto px-4">
             <h1 className="text-5xl font-medium tracking-tight text-foreground" style={{ fontFamily: "'Instrument Serif', serif" }}>
               Resource Studio
             </h1>
@@ -192,7 +192,7 @@ export default function ApplicationsTrackerPage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-xl mx-auto px-4 py-8 space-y-8">
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-4 py-8 space-y-8">
 
           {/* Professional Template Library */}
           <TemplateLibrarySection userId={user?.id} />
@@ -272,7 +272,7 @@ export default function ApplicationsTrackerPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 mb-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
                     {filtered.map(app => {
                       const appResumes = resumes.filter(r => r.application_id === app.id);
                       return (
