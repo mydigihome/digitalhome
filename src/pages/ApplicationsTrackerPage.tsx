@@ -272,7 +272,7 @@ export default function ApplicationsTrackerPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 mb-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-8">
                     {filtered.map(app => {
                       const appResumes = resumes.filter(r => r.application_id === app.id);
                       return (
