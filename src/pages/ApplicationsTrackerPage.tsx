@@ -192,7 +192,7 @@ export default function ApplicationsTrackerPage() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-xl mx-auto px-4 py-8 space-y-8">
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-4 py-8 space-y-8">
 
           {/* Professional Template Library */}
           <TemplateLibrarySection userId={user?.id} />
