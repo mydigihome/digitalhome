@@ -1,127 +1,77 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Mail, Search, CheckCircle2, Clock, MessageCircle, ArrowUpRight, Inbox, Loader2, X, Check, CalendarDays } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Mail, Search, Plus, Loader2, Inbox } from "lucide-react";
+import { formatDistanceToNow, isToday, isYesterday, differenceInHours, differenceInMinutes, format } from "date-fns";
 import AppShell from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useGmailConnection, useConnectGmail, useHandleGmailCallback,
-  useGmailEmails, useTrackedThreads, useTrackThread, useUntrackThread,
-  useUpdateThreadCategory, useDisconnectGmail,
-  type GmailEmail, type TrackedThread,
+  useGmailConnection,
+  useConnectGmail,
+  useHandleGmailCallback,
+  useGmailEmails,
+  useTrackedThreads,
+  useTrackThread,
+  useUntrackThread,
+  useUpdateThreadCategory,
+  useDisconnectGmail,
+  type GmailEmail,
+  type TrackedThread,
 } from "@/hooks/useGmail";
 
-const CATEGORIES = ["All", "General", "Brand Partnerships", "Collaborations", "School/Admin", "Client Work", "Personal", "Other"];
+/* ─── design tokens ─── */
+const glass: React.CSSProperties = {
+  background: "rgba(255,255,255,0.7)",
+  border: "1px solid rgba(255,255,255,0.3)",
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  borderRadius: 20,
+};
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === "Waiting for Reply") {
-    return <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs gap-1"><Clock className="h-3 w-3" />Waiting</Badge>;
+const AVATAR_COLORS = [
+  "bg-indigo-100 text-indigo-600",
+  "bg-purple-100 text-purple-600",
+  "bg-blue-100 text-blue-600",
+  "bg-emerald-100 text-emerald-600",
+  "bg-amber-100 text-amber-600",
+  "bg-rose-100 text-rose-600",
+];
+
+/* ─── helpers ─── */
+function getInitials(name?: string | null, email?: string | null) {
+  if (name?.trim()) return name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+  if (email) return email.substring(0, 2).toUpperCase();
+  return "?";
+}
+
+function getAvatarColor(sender: string) {
+  const hash = sender.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getTimeAgo(dateString: string | null) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  if (isToday(date)) {
+    const h = differenceInHours(now, date);
+    if (h < 1) return `${differenceInMinutes(now, date)}m ago`;
+    return `${h}h ago`;
   }
-  if (status === "New Response") {
-    return <Badge className="bg-violet-100 text-violet-800 border-violet-200 text-xs gap-1"><MessageCircle className="h-3 w-3" />New Response</Badge>;
-  }
-  return <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-xs gap-1"><CheckCircle2 className="h-3 w-3" />Up to Date</Badge>;
+  if (isYesterday(date)) return "Yesterday";
+  const days = Math.floor((now.getTime() - date.getTime()) / 86400000);
+  if (days < 7) return `${days}d ago`;
+  return format(date, "MMM d");
 }
 
-function EmailCard({ email, isTracked, onTrack, onUntrack }: {
-  email: GmailEmail; isTracked: boolean;
-  onTrack: (e: GmailEmail) => void; onUntrack: (threadId: string) => void;
-}) {
-  const timeAgo = email.timestamp ? formatDistanceToNow(new Date(email.timestamp), { addSuffix: true }) : "";
-
-  return (
-    <div className="group rounded-3xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-all duration-200">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              {email.senderName?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground truncate">{email.senderName}</p>
-              <p className="text-xs text-muted-foreground truncate">{email.senderEmail}</p>
-            </div>
-          </div>
-          <p className="text-sm font-medium text-foreground mt-2 line-clamp-1">{email.subject}</p>
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{email.preview}</p>
-          {timeAgo && <p className="text-xs text-muted-foreground/70 mt-2">{timeAgo}</p>}
-        </div>
-        <div className="shrink-0">
-          {isTracked ? (
-            <Button size="sm" variant="outline" onClick={() => onUntrack(email.threadId)}
-              className="gap-1.5 text-violet-600 border-violet-200 hover:bg-violet-50">
-              <Check className="h-3.5 w-3.5" /> Tracked
-            </Button>
-          ) : (
-            <Button size="sm" onClick={() => onTrack(email)}
-              className="gap-1.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white">
-              <ArrowUpRight className="h-3.5 w-3.5" /> Track
-            </Button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TrackedThreadCard({ thread, onUntrack, onCategoryChange }: {
-  thread: TrackedThread;
-  onUntrack: (threadId: string) => void;
-  onCategoryChange: (threadId: string, category: string) => void;
-}) {
-  const timeAgo = thread.last_activity_at
-    ? formatDistanceToNow(new Date(thread.last_activity_at), { addSuffix: true })
-    : "";
-
-  return (
-    <div className="rounded-3xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-all duration-200">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-              {thread.sender_name?.charAt(0)?.toUpperCase() || "?"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground truncate">{thread.sender_name}</p>
-              <p className="text-xs text-muted-foreground truncate">{thread.sender_email}</p>
-            </div>
-            <StatusBadge status={thread.status} />
-          </div>
-          <p className="text-sm font-medium text-foreground line-clamp-1">{thread.subject}</p>
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{thread.preview}</p>
-          <div className="flex items-center gap-3 mt-3">
-            <Select value={thread.category} onValueChange={(v) => onCategoryChange(thread.thread_id, v)}>
-              <SelectTrigger className="h-7 w-auto text-xs border-border rounded-full px-3">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.filter(c => c !== "All").map(c => (
-                  <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {timeAgo && <span className="text-xs text-muted-foreground">Last activity: {timeAgo}</span>}
-          </div>
-        </div>
-        <Button size="sm" variant="ghost" onClick={() => onUntrack(thread.thread_id)}
-          className="shrink-0 text-muted-foreground hover:text-destructive">
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
+/* ─── component ─── */
 export default function PriorityInbox() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [view, setView] = useState<"inbox" | "tracked">("tracked");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
 
   // Gmail hooks
   const { data: connection, isLoading: connectionLoading } = useGmailConnection();
@@ -134,195 +84,423 @@ export default function PriorityInbox() {
   const updateCategory = useUpdateThreadCategory();
   const disconnectGmail = useDisconnectGmail();
 
-  // Handle OAuth callback
+  // OAuth callback
   useEffect(() => {
     const code = searchParams.get("code");
     if (code) {
-      handleCallback(code).then(() => {
-        setSearchParams({}, { replace: true });
-      }).catch(() => {
-        setSearchParams({}, { replace: true });
-      });
+      handleCallback(code)
+        .then(() => setSearchParams({}, { replace: true }))
+        .catch(() => setSearchParams({}, { replace: true }));
     }
   }, []);
 
-  const trackedIds = useMemo(() => new Set(trackedThreads?.map(t => t.thread_id) || []), [trackedThreads]);
-
-  const filteredTracked = useMemo(() => {
-    let threads = trackedThreads || [];
-    if (activeCategory !== "All") threads = threads.filter(t => t.category === activeCategory);
-    if (search) {
-      const q = search.toLowerCase();
-      threads = threads.filter(t =>
-        t.subject?.toLowerCase().includes(q) ||
-        t.sender_name?.toLowerCase().includes(q) ||
-        t.sender_email?.toLowerCase().includes(q) ||
-        t.preview?.toLowerCase().includes(q)
-      );
-    }
-    return threads;
-  }, [trackedThreads, activeCategory, search]);
-
-  const filteredEmails = useMemo(() => {
-    if (!emailData?.emails) return [];
-    if (!search) return emailData.emails;
-    const q = search.toLowerCase();
-    return emailData.emails.filter(e =>
-      e.subject?.toLowerCase().includes(q) ||
-      e.senderName?.toLowerCase().includes(q) ||
-      e.senderEmail?.toLowerCase().includes(q) ||
-      e.preview?.toLowerCase().includes(q)
-    );
-  }, [emailData, search]);
-
-  const waitingCount = trackedThreads?.filter(t => t.status === "Waiting for Reply").length || 0;
+  const trackedIds = useMemo(
+    () => new Set(trackedThreads?.map((t) => t.thread_id) || []),
+    [trackedThreads]
+  );
 
   const isConnected = !!connection;
 
+  // Build unified thread list from tracked + emails
+  const allThreads = useMemo(() => {
+    const tracked = (trackedThreads || []).map((t) => ({
+      id: t.id,
+      threadId: t.thread_id,
+      senderName: t.sender_name,
+      senderEmail: t.sender_email,
+      subject: t.subject,
+      snippet: t.preview,
+      date: t.last_activity_at || t.tracked_at,
+      priority: t.status === "Waiting for Reply" || t.status === "New Response",
+      waiting: t.status === "Waiting for Reply",
+      isTracked: true,
+      category: t.category,
+    }));
+
+    const emails = (emailData?.emails || [])
+      .filter((e) => !trackedIds.has(e.threadId))
+      .map((e) => ({
+        id: e.id,
+        threadId: e.threadId,
+        senderName: e.senderName,
+        senderEmail: e.senderEmail,
+        subject: e.subject,
+        snippet: e.preview,
+        date: e.timestamp,
+        priority: false,
+        waiting: false,
+        isTracked: false,
+        category: "General",
+      }));
+
+    return [...tracked, ...emails];
+  }, [trackedThreads, emailData, trackedIds]);
+
+  // Filter
+  const filteredThreads = useMemo(() => {
+    let list = allThreads;
+    if (activeFilter === "important") list = list.filter((t) => t.priority || t.isTracked);
+    if (activeFilter === "unread") list = list.filter((t) => !t.isTracked);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.subject?.toLowerCase().includes(q) ||
+          t.senderName?.toLowerCase().includes(q) ||
+          t.senderEmail?.toLowerCase().includes(q) ||
+          t.snippet?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allThreads, activeFilter, search]);
+
+  const priorityThreads = filteredThreads.filter((t) => t.priority || t.isTracked).slice(0, 5);
+  const earlierThreads = filteredThreads.filter((t) => !t.priority && !t.isTracked);
+
+  // AI summary
+  const aiSummary = useMemo(() => {
+    const urgent = priorityThreads.length;
+    if (urgent === 0) return "You're all caught up! No urgent items at the moment.";
+    const names = priorityThreads
+      .slice(0, 2)
+      .map((t) => t.senderName || t.senderEmail?.split("@")[0] || "Someone");
+    if (urgent === 1) return `You have 1 urgent item from ${names[0]}.`;
+    if (urgent === 2) return `You have 2 urgent items from ${names[0]} and ${names[1]}.`;
+    return `You have ${urgent} urgent items: messages from ${names.join(", ")}, and more.`;
+  }, [priorityThreads]);
+
+  const filters = ["all", "unread", "important", "tracked"];
+
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-              <Mail className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">Priority Inbox</h1>
-              <p className="text-sm text-muted-foreground">Track and manage your important email threads</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Google Calendar">
-                <CalendarDays className="h-4 w-4" />
-              </a>
-              <a href="https://www.icloud.com/calendar" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Apple Calendar">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83"/>
-                  <path d="M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Not connected state */}
-        {connectionLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-3xl" />)}
-          </div>
-        ) : !isConnected ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-violet-100 to-purple-100 flex items-center justify-center mb-4">
-              <Mail className="h-8 w-8 text-violet-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">Connect Gmail</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Connect your Gmail account to start tracking important email threads.
-            </p>
-            <Button onClick={connect} disabled={connecting} size="lg"
-              className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-2xl gap-2">
-              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              Connect Gmail
-            </Button>
-          </div>
-        ) : (
-          <>
-            {/* Connected controls */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
-              <div className="flex gap-2">
-                <Button variant={view === "tracked" ? "default" : "outline"} size="sm"
-                  onClick={() => setView("tracked")}
-                  className={view === "tracked" ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full" : "rounded-full"}>
-                  Tracked {waitingCount > 0 && <Badge className="ml-1 bg-amber-500 text-white text-[10px] px-1.5">{waitingCount}</Badge>}
-                </Button>
-                <Button variant={view === "inbox" ? "default" : "outline"} size="sm"
-                  onClick={() => setView("inbox")}
-                  className={view === "inbox" ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-full" : "rounded-full"}>
-                  All Emails
-                </Button>
+      <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
+        <div className="max-w-xl mx-auto px-4 pt-6 pb-32">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  Priority Inbox
+                </h1>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  AI-curated • Important first
+                </p>
               </div>
-              <div className="relative flex-1 w-full sm:w-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by sender, subject, or content..." value={search} onChange={e => setSearch(e.target.value)}
-                  className="pl-9 rounded-full border-border" />
+              <div className="flex items-center gap-2">
+                <button className="w-9 h-9 bg-white/70 backdrop-blur rounded-full flex items-center justify-center border border-white/30 text-slate-500 hover:text-slate-700 transition">
+                  <Search className="w-4 h-4" />
+                </button>
+                {isConnected && (
+                  <button
+                    onClick={() => disconnectGmail.mutate()}
+                    className="text-[10px] text-slate-400 hover:text-red-500 transition"
+                  >
+                    Disconnect
+                  </button>
+                )}
               </div>
-              <Button variant="ghost" size="sm" onClick={() => disconnectGmail.mutate()}
-                className="text-xs text-muted-foreground hover:text-destructive shrink-0">
-                Disconnect
-              </Button>
             </div>
 
-            {/* Category tabs for tracked view */}
-            {view === "tracked" && (
-              <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
-                <TabsList className="bg-muted/50 rounded-full p-1 h-auto flex-wrap">
-                  {CATEGORIES.map(c => (
-                    <TabsTrigger key={c} value={c} className="rounded-full text-xs px-3 py-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
-                      {c}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+            {/* Search (toggle-able) */}
+            {isConnected && (
+              <div className="relative mt-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search by sender, subject, or content..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white/70 backdrop-blur border border-white/30 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300 transition"
+                />
+              </div>
             )}
+          </div>
 
-            {/* Content */}
-            {view === "tracked" ? (
-              trackedLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 rounded-3xl" />)}
+          {/* Not connected */}
+          {connectionLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 rounded-3xl" />
+              ))}
+            </div>
+          ) : !isConnected ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div
+                className="w-16 h-16 rounded-3xl bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center mb-4"
+              >
+                <Mail className="w-8 h-8 text-purple-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-2">
+                Connect Gmail
+              </h2>
+              <p className="text-sm text-slate-400 mb-6 max-w-sm">
+                Connect your Gmail account to start tracking important email
+                threads.
+              </p>
+              <button
+                onClick={connect}
+                disabled={connecting}
+                className="px-6 py-3 bg-[#7C3AED] text-white rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-[#6D2ECE] shadow-lg shadow-[#7C3AED]/30 active:scale-95 transition-transform disabled:opacity-50"
+              >
+                {connecting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Mail className="w-4 h-4" />
+                )}
+                Connect Gmail
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* AI Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-[20px] mb-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(99,102,241,0.08))",
+                  border: "1px solid rgba(124,58,237,0.15)",
+                  backdropFilter: "blur(20px)",
+                  borderRadius: 20,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm">✨</span>
+                  <span className="text-xs font-semibold text-purple-700">
+                    Summary
+                  </span>
                 </div>
-              ) : filteredTracked.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="h-14 w-14 rounded-3xl bg-muted flex items-center justify-center mb-4">
-                    <Inbox className="h-7 w-7 text-muted-foreground" />
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {aiSummary}
+                </p>
+              </motion.div>
+
+              {/* Filter pills */}
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+                {filters.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setActiveFilter(f)}
+                    className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
+                      activeFilter === f
+                        ? "bg-[#7C3AED] text-white shadow-lg shadow-[#7C3AED]/30"
+                        : "bg-white/70 backdrop-blur text-slate-600 border border-white/30 hover:bg-white"
+                    }`}
+                  >
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Priority Now */}
+              {priorityThreads.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mb-6"
+                >
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    Priority Now
+                  </h3>
+                  <div className="space-y-3">
+                    {priorityThreads.map((thread) => (
+                      <div
+                        key={thread.id}
+                        className="relative p-4 bg-white rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition cursor-pointer overflow-hidden"
+                        onClick={() => {}}
+                      >
+                        {/* Purple accent */}
+                        <div className="absolute left-0 top-3 bottom-3 w-1 bg-[#7C3AED] rounded-full" />
+
+                        <div className="pl-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${getAvatarColor(
+                                  thread.senderName || thread.senderEmail || ""
+                                )}`}
+                              >
+                                {getInitials(
+                                  thread.senderName,
+                                  thread.senderEmail
+                                )}
+                              </div>
+                              <span className="text-sm font-semibold text-slate-900">
+                                {thread.senderName ||
+                                  thread.senderEmail?.split("@")[0] ||
+                                  "Unknown"}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-400">
+                              {getTimeAgo(thread.date)}
+                            </span>
+                          </div>
+
+                          <p className="text-sm font-semibold text-slate-800 line-clamp-1">
+                            {thread.subject || "(No Subject)"}
+                          </p>
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-0.5">
+                            {thread.snippet || "No preview available..."}
+                          </p>
+
+                          {thread.waiting && (
+                            <div className="flex gap-2 mt-2">
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                Waiting
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Untrack button */}
+                        {thread.isTracked && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              untrackThread.mutate(thread.threadId);
+                            }}
+                            className="absolute top-3 right-3 text-[10px] text-slate-400 hover:text-red-500 transition"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-muted-foreground">
-                    {activeCategory !== "All" || search
-                      ? "No tracked emails match your filters."
-                      : "No tracked emails yet. Click 'Track' on important emails to get started."}
+                </motion.div>
+              )}
+
+              {/* Earlier */}
+              {earlierThreads.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="mb-6"
+                >
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                    Earlier
+                  </h3>
+                  <div className="space-y-2">
+                    {earlierThreads.slice(0, 10).map((thread) => (
+                      <div
+                        key={thread.id}
+                        className="p-4 bg-white/50 backdrop-blur rounded-[20px] border border-slate-100/50 hover:bg-white hover:shadow-md transition cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${getAvatarColor(
+                                thread.senderName || thread.senderEmail || ""
+                              )}`}
+                            >
+                              {getInitials(
+                                thread.senderName,
+                                thread.senderEmail
+                              )}
+                            </div>
+                            <span className="text-sm font-medium text-slate-700">
+                              {thread.senderName ||
+                                thread.senderEmail?.split("@")[0] ||
+                                "Unknown"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400">
+                              {getTimeAgo(thread.date)}
+                            </span>
+                            {!thread.isTracked && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const email: GmailEmail = {
+                                    id: thread.id,
+                                    threadId: thread.threadId,
+                                    senderName: thread.senderName || "",
+                                    senderEmail: thread.senderEmail || "",
+                                    subject: thread.subject || "",
+                                    preview: thread.snippet || "",
+                                    timestamp: thread.date || "",
+                                    labelIds: [],
+                                  };
+                                  trackThread.mutate(email);
+                                }}
+                                className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition"
+                              >
+                                Track
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-700 line-clamp-1">
+                          {thread.subject || "(No Subject)"}
+                        </p>
+                        <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
+                          {thread.snippet || "No preview available..."}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Empty */}
+              {filteredThreads.length === 0 &&
+                !emailsLoading &&
+                !trackedLoading && (
+                  <div className="flex flex-col items-center py-16 text-center">
+                    <div className="w-14 h-14 rounded-3xl bg-slate-100 flex items-center justify-center mb-4">
+                      <Inbox className="w-7 h-7 text-slate-400" />
+                    </div>
+                    <p className="text-sm text-slate-400">
+                      {activeFilter === "all"
+                        ? "Your inbox is empty! Time to relax."
+                        : `No ${activeFilter} messages found.`}
+                    </p>
+                  </div>
+                )}
+
+              {/* Loading */}
+              {(emailsLoading || trackedLoading) && (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-28 rounded-[20px]" />
+                  ))}
+                </div>
+              )}
+
+              {/* Add another account */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-8 text-center"
+                style={glass}
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-3">
+                    <Mail className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Add Another Account
                   </p>
-                  {activeCategory === "All" && !search && (
-                    <Button variant="outline" size="sm" onClick={() => setView("inbox")} className="mt-4 rounded-full">
-                      Browse Emails
-                    </Button>
-                  )}
+                  <p className="text-xs text-slate-400 mt-1 mb-4">
+                    Connect more sources to track important threads across your
+                    ecosystem.
+                  </p>
+                  <button
+                    onClick={connect}
+                    className="px-6 py-2.5 bg-[#7C3AED] text-white rounded-full text-sm font-semibold flex items-center gap-2 mx-auto hover:bg-[#6D2ECE] shadow-lg shadow-[#7C3AED]/30 active:scale-95 transition-transform"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Connect Gmail
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredTracked.map(thread => (
-                    <TrackedThreadCard key={thread.id} thread={thread}
-                      onUntrack={(id) => untrackThread.mutate(id)}
-                      onCategoryChange={(id, cat) => updateCategory.mutate({ threadId: id, category: cat })} />
-                  ))}
-                </div>
-              )
-            ) : (
-              emailsLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-28 rounded-3xl" />)}
-                </div>
-              ) : filteredEmails.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-muted-foreground">No emails found.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredEmails.map(email => (
-                    <EmailCard key={email.id} email={email}
-                      isTracked={trackedIds.has(email.threadId)}
-                      onTrack={(e) => trackThread.mutate(e)}
-                      onUntrack={(id) => untrackThread.mutate(id)} />
-                  ))}
-                </div>
-              )
-            )}
-          </>
-        )}
+              </motion.div>
+            </>
+          )}
+        </div>
       </div>
     </AppShell>
   );
