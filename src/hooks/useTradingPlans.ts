@@ -18,6 +18,9 @@ export interface TradingPlan {
   strategy_notes: string | null;
   time_frame: string;
   status: string;
+  target_price: number | null;
+  trading_pair_id: string | null;
+  completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
