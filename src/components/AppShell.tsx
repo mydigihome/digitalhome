@@ -33,9 +33,17 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     setDarkMode(document.documentElement.classList.contains("dark"));
   }, []);
 
+  const upsertPrefs = useUpsertPreferences();
+
   const toggleDarkMode = () => {
-    document.documentElement.classList.toggle("dark");
-    setDarkMode(!darkMode);
+    const newDark = !darkMode;
+    if (newDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    setDarkMode(newDark);
+    upsertPrefs.mutate({ sidebar_theme: newDark ? "dark" : "light" } as any);
   };
 
   const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");

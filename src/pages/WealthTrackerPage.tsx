@@ -778,6 +778,12 @@ export default function WealthTrackerPage() {
             onClose={() => { setShowCreatePlan(false); setSelectedPairForPlan(null); }}
           />
         )}
+        {showTradeModal && selectedPairForTrade && (
+          <TradeModal
+            pair={selectedPairForTrade}
+            onClose={() => { setShowTradeModal(false); setSelectedPairForTrade(null); }}
+          />
+        )}
         {isEditingHeader && (
           <HeaderCustomizationModal
             pageKey="money"
