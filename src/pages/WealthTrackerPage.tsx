@@ -119,6 +119,8 @@ export default function WealthTrackerPage() {
       <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
         {/* ─── Main scrollable ─── */}
         <div className="max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
+          {/* Faith Message */}
+          <FaithMessage />
           {/* Credit Score */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
