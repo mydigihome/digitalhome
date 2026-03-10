@@ -76,21 +76,31 @@ export function useThemeApplicator() {
       root.style.setProperty("--chart-1", hsl);
     }
 
-    // Apply font family (stored in accent_colors JSON)
+    // Apply font family (stored in accent_colors JSON as "font" or "font_family")
     const accentData = prefs.accent_colors as Record<string, string> | null;
-    if (accentData?.font_family) {
-      root.style.setProperty("--font-sans", accentData.font_family);
-      document.body.style.fontFamily = `${accentData.font_family}, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    const fontKey = accentData?.font_family || accentData?.font;
+    if (fontKey) {
+      const fontMap: Record<string, string> = {
+        "Inter": "Inter, sans-serif",
+        "Georgia": "Georgia, serif",
+        "Mono": "monospace",
+        "System": "-apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+      };
+      const resolvedFont = fontMap[fontKey] || fontKey;
+      root.style.setProperty("--font-sans", resolvedFont);
+      document.body.style.fontFamily = `${resolvedFont}`;
     }
 
-    // Apply font size
-    if (prefs.font_size && FONT_SIZE_MAP[prefs.font_size]) {
-      document.body.style.fontSize = FONT_SIZE_MAP[prefs.font_size];
+    // Apply font size (normalize case)
+    const fontSize = prefs.font_size?.toLowerCase();
+    if (fontSize && FONT_SIZE_MAP[fontSize]) {
+      document.body.style.fontSize = FONT_SIZE_MAP[fontSize];
     }
 
-    // Apply density / spacing
-    if (prefs.density && DENSITY_MAP[prefs.density]) {
-      root.style.setProperty("--spacing", DENSITY_MAP[prefs.density]);
+    // Apply density / spacing (normalize case)
+    const density = prefs.density?.toLowerCase();
+    if (density && DENSITY_MAP[density]) {
+      root.style.setProperty("--spacing", DENSITY_MAP[density]);
     }
 
     // Apply dark mode
