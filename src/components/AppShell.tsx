@@ -250,8 +250,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                   )}
                   style={activeStyle(location.pathname === "/admin")}
                 >
-                  <span className={iconCircleCn(location.pathname === "/admin")}>
-                    <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
+                  <span className={iconCircleCn(location.pathname === "/admin")} style={iconBgStyle(location.pathname === "/admin", '#6366F1')}>
+                    <Shield className="w-[18px] h-[18px]" style={{ color: location.pathname === "/admin" ? '#4338CA' : '#6366F1' }} strokeWidth={1.5} />
                   </span>
                   {!collapsed && <span className="flex-1 text-left text-[14px]">Admin</span>}
                 </button>
