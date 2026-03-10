@@ -72,15 +72,16 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       : undefined,
   });
 
-  const iconCircleCn = (isActive: boolean) =>
+  const iconCircleCn = (isActive: boolean, color?: string) =>
     `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
       isActive
         ? 'bg-indigo-50 border border-indigo-200'
-        : 'bg-gray-50 border border-gray-200 group-hover:border-indigo-100'
+        : 'border border-gray-200 group-hover:border-indigo-100'
     }`;
 
-  const iconCn = (isActive: boolean) =>
-    `w-[18px] h-[18px] ${isActive ? 'text-indigo-600' : 'text-gray-500'}`;
+  const iconBgStyle = (isActive: boolean, color?: string) => ({
+    backgroundColor: isActive ? undefined : color ? `${color}15` : '#F9FAFB',
+  });
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
