@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -53,10 +53,12 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive, color: "#F97316" },
   ];
 
+  const hasContentAccess = (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
+
   const bottomNavItems = [
     { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
+    { icon: hasContentAccess ? Sparkles : Lock, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";

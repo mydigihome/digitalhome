@@ -84,7 +84,12 @@ function ContentPaywall() {
           </div>
 
           <h2 className="text-2xl font-bold mb-1" style={{ color: "#0F172A" }}>Unlock Content Planner</h2>
-          <p className="text-sm text-muted-foreground mb-6">The ultimate tool for content creators</p>
+          <p className="text-sm text-muted-foreground mb-4">The ultimate tool for content creators</p>
+
+          {/* Early access badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-5 text-xs font-semibold" style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}>
+            🎉 First 50 users get FREE access!
+          </div>
 
           {/* Features */}
           <div className="text-left space-y-3 mb-6">
@@ -133,7 +138,7 @@ export default function ContentPlanner() {
   const [dragTab, setDragTab] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const hasAccess = (prefs as any)?.content_planner_access === true;
+  const hasAccess = (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   // Handle payment success
   useEffect(() => {
@@ -166,7 +171,7 @@ export default function ContentPlanner() {
 
   return (
     <AppShell>
-      <div className="flex flex-col w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
+      <div className="flex flex-col w-full bg-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
         {!hasAccess ? (
           <ContentPaywall />
         ) : (

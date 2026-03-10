@@ -154,7 +154,7 @@ export default function ApplicationsTrackerPage() {
           className="relative w-full overflow-hidden group"
           style={{
             background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? "linear-gradient(135deg, hsl(262 80% 50% / 0.08) 0%, hsl(330 80% 70% / 0.1) 100%)" : undefined,
+              : !bannerUrl ? `linear-gradient(135deg, ${(prefs as any)?.banner_color || '#6366F1'}15, ${(prefs as any)?.banner_color || '#6366F1'}05)` : undefined,
             backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
             backgroundSize: "cover", backgroundPosition: "center",
             borderRadius: "0 0 40px 40px",
@@ -175,8 +175,15 @@ export default function ApplicationsTrackerPage() {
                 <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
                   <Search className="h-4 w-4 text-foreground" />
                 </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
-                  <Bell className="h-4 w-4 text-foreground" />
+                <button 
+                  onClick={async () => {
+                    const current = (prefs as any)?.template_notifications ?? false;
+                    await upsertPrefs.mutateAsync({ template_notifications: !current } as any);
+                    toast.success(!current ? "You'll be notified of new templates! 🔔" : "Notifications turned off");
+                  }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition"
+                >
+                  <Bell className={`h-4 w-4 ${(prefs as any)?.template_notifications ? 'text-primary fill-primary' : 'text-foreground'}`} />
                 </button>
               </div>
             </div>
