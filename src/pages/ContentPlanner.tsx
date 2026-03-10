@@ -84,7 +84,12 @@ function ContentPaywall() {
           </div>
 
           <h2 className="text-2xl font-bold mb-1" style={{ color: "#0F172A" }}>Unlock Content Planner</h2>
-          <p className="text-sm text-muted-foreground mb-6">The ultimate tool for content creators</p>
+          <p className="text-sm text-muted-foreground mb-4">The ultimate tool for content creators</p>
+
+          {/* Early access badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-5 text-xs font-semibold" style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}>
+            🎉 First 50 users get FREE access!
+          </div>
 
           {/* Features */}
           <div className="text-left space-y-3 mb-6">
