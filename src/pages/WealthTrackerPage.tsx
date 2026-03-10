@@ -329,9 +329,14 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-slate-600">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                              <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
                               <button
-                                onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                                className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                              >
+                                Trade
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
                                 className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
                               >
                                 Plan
