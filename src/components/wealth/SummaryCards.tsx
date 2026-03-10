@@ -104,9 +104,9 @@ export default function SummaryCards() {
 
           return (
             <div key={card.id} className="space-y-0">
-              <button
-                onClick={() => card.id === "expenses" ? toggleExpand(card.id) : undefined}
-                className={`group w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${card.id === "expenses" ? "cursor-pointer" : "cursor-default"}`}
+              <div
+                onClick={() => (card as any).expandable ? toggleExpand(card.id) : undefined}
+                className={`group w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${(card as any).expandable ? "cursor-pointer" : "cursor-default"}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`p-2 rounded-xl ${card.iconBg}`}>
