@@ -763,6 +763,14 @@ export default function WealthTrackerPage() {
             onClose={() => { setShowCreatePlan(false); setSelectedPairForPlan(null); }}
           />
         )}
+        {isEditingHeader && (
+          <HeaderCustomizationModal
+            pageKey="money"
+            currentType={moneyHeaderType}
+            currentValue={moneyHeaderValue}
+            onClose={() => setIsEditingHeader(false)}
+          />
+        )}
       </div>
     </AppShell>
   );
