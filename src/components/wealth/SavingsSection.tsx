@@ -128,7 +128,7 @@ export default function SavingsSection() {
                       {new Date(g.targetDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })} · {monthsLeft}mo left
                     </p>
                   </div>
-                  <div className="flex gap-0.5">
+                  <div className="flex gap-0.5 opacity-0 group-hover/goal:opacity-100 transition-opacity">
                     <button onClick={() => handleEdit(g)} className="p-1 rounded hover:bg-background/50 text-muted-foreground"><Pencil className="h-3 w-3" /></button>
                     <button onClick={() => handleDelete(g.id)} className="p-1 rounded hover:bg-background/50 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>
