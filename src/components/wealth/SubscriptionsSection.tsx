@@ -195,7 +195,7 @@ export default function SubscriptionsSection() {
                     <td className="px-3 py-2.5 text-muted-foreground truncate max-w-[80px]">{s.paymentMethod || "—"}</td>
                     <td className="px-3 py-2.5 text-muted-foreground truncate max-w-[100px]">{s.notes || "—"}</td>
                     <td className="px-3 py-2.5">
-                      <div className="flex gap-0.5">
+                      <div className="flex gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity">
                         <button onClick={() => handleEdit(s)} className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="h-3 w-3" /></button>
                         <button onClick={() => handleDelete(s.id)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
                       </div>
