@@ -211,8 +211,15 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={glass}
-                className="p-6"
+                className="p-6 relative group"
               >
+                <button
+                  onClick={() => { setEditingCard("credit"); setEditValue(String(creditScore)); }}
+                  className="absolute top-4 right-14 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
+                  style={{ backgroundColor: "#6366F1" }}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Credit Score
