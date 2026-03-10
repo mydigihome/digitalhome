@@ -388,6 +388,14 @@ export default function Dashboard() {
             </button>
           </motion.div>
 
+          {/* DAILY SCRIPTURE (mobile) */}
+          {(prefs as any)?.show_scripture_card && (
+            <motion.div {...stagger(2)} className="p-6 mb-4" style={glass}>
+              <h3 className="font-bold text-sm mb-4" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+              <ScriptureContent religion={(prefs as any)?.religion} />
+            </motion.div>
+          )}
+
           {/* TODAY'S AGENDA */}
           <motion.div {...stagger(2)} className="p-5 mb-4" style={glass}>
             <div className="flex items-center justify-between mb-4">
@@ -602,16 +610,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* DAILY SCRIPTURE (mobile) */}
-          {(prefs as any)?.show_scripture_card && (
-            <motion.div {...stagger(8)} className="p-6 mb-4" style={glass}>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">📖</span>
-                <h3 className="font-bold text-sm" style={{ color: "#1F2937" }}>Daily Scripture</h3>
-              </div>
-              <ScriptureContent religion={(prefs as any)?.religion} />
-            </motion.div>
-          )}
 
         </div>
 
@@ -815,6 +813,14 @@ export default function Dashboard() {
             {/* RIGHT COLUMN (~35%) */}
             <div className="flex-1 min-w-[320px] max-w-[380px]">
 
+              {/* DAILY SCRIPTURE (desktop) */}
+              {(prefs as any)?.show_scripture_card && (
+                <motion.div {...stagger(0)} className="p-5 mb-4" style={glass}>
+                  <h3 className="font-bold text-sm mb-3" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+                  <ScriptureContent religion={(prefs as any)?.religion} />
+                </motion.div>
+              )}
+
               {/* MONEY REMINDERS — solid dark card */}
               <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px]" style={{ background: "linear-gradient(135deg, #1E293B 0%, #334155 100%)" }}>
                 <div className="flex items-center gap-2 mb-4">
@@ -918,16 +924,6 @@ export default function Dashboard() {
                 </div>
               </motion.div>
 
-              {/* DAILY SCRIPTURE (desktop) */}
-              {(prefs as any)?.show_scripture_card && (
-                <motion.div {...stagger(5)} className="p-5 mb-4" style={glass}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">📖</span>
-                    <h3 className="font-bold text-sm" style={{ color: "#1F2937" }}>Daily Scripture</h3>
-                  </div>
-                  <ScriptureContent religion={(prefs as any)?.religion} />
-                </motion.div>
-              )}
 
             </div>
           </div>
