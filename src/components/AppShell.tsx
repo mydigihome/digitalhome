@@ -61,7 +61,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive, color: "#F97316" },
   ];
 
-  const hasContentAccess = (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
+  const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   const bottomNavItems = [
     { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
