@@ -13,6 +13,7 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
+import TradeModal from "@/components/wealth/TradeModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { Skeleton } from "@/components/ui/skeleton";
