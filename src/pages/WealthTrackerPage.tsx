@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -9,11 +9,16 @@ import { useLoans } from "@/hooks/useLoans";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketQuote } from "@/hooks/useMarketData";
 import { useTradingPairs, TradingPair } from "@/hooks/useTradingPairs";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
+import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* ─── helpers ─── */
 const glass: React.CSSProperties = {
@@ -56,6 +61,13 @@ export default function WealthTrackerPage() {
   const [showAddPair, setShowAddPair] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
+  const [isEditingHeader, setIsEditingHeader] = useState(false);
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  // User preferences for header
+  const { data: prefs } = useUserPreferences();
+  const upsertPrefs = useUpsertPreferences();
 
   // Market data
   const { data: btcQuote } = useMarketQuote("BTC/USD");
@@ -141,16 +153,56 @@ export default function WealthTrackerPage() {
   const btcPrice = btcQuote?.quote?.price ? parseFloat(btcQuote.quote.price) : 64284.5;
   const btcChange = btcQuote?.quote?.percent_change ? parseFloat(btcQuote.quote.percent_change) : 2.4;
 
+  const moneyHeaderType = (prefs as any)?.money_header_type || "color";
+  const moneyHeaderValue = (prefs as any)?.money_header_value || (prefs as any)?.banner_color || "#6366F1";
+  const headerStyle = moneyHeaderType === "photo"
+    ? { backgroundImage: `url(${moneyHeaderValue})`, backgroundSize: "cover" as const, backgroundPosition: "center" as const, borderRadius: "0 0 40px 40px" }
+    : { background: `linear-gradient(135deg, ${moneyHeaderValue}20, ${moneyHeaderValue}10)`, borderRadius: "0 0 40px 40px" };
+
+  const handleCardEdit = async (card: string, value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) { toast.error("Enter a valid number"); return; }
+    const fieldMap: Record<string, string> = {
+      income: "monthly_income",
+      credit: "credit_score",
+      debt: "total_debt",
+      savings: "current_savings",
+    };
+    if (fieldMap[card]) {
+      const { error } = await (supabase as any).from("user_finances").update({ [fieldMap[card]]: num }).eq("user_id", user!.id);
+      if (error) toast.error("Update failed");
+      else { toast.success("Updated!"); setEditingCard(null); }
+    }
+  };
+
   return (
     <AppShell>
       <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
 
+        {/* Customizable Header */}
+        <div
+          className="relative group cursor-pointer"
+          style={{ ...headerStyle, paddingTop: 48, paddingBottom: 24 }}
+          onClick={() => setIsEditingHeader(true)}
+        >
+          <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Pencil className="w-3.5 h-3.5 text-foreground" />
+          </button>
+          <div className="max-w-6xl mx-auto px-6">
+            <h1 className="text-4xl font-semibold text-foreground">Money</h1>
+            <p className="text-sm text-muted-foreground mt-1">Your financial overview</p>
+            {/* Faith Quote */}
+            <div className="mt-4 text-center">
+              <p className="text-sm font-medium italic" style={{ color: moneyHeaderValue }}>
+                "{FAITH_MESSAGES[new Date().getDate() % FAITH_MESSAGES.length]}"
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* ═══ DESKTOP LAYOUT (12-col grid) ═══ */}
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
-          {/* Faith Message */}
-          <FaithMessage />
-
-          <div className="grid grid-cols-12 gap-6 mt-5">
+          <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
             <div className="col-span-8 space-y-6">
 
@@ -159,8 +211,15 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={glass}
-                className="p-6"
+                className="p-6 relative group"
               >
+                <button
+                  onClick={() => { setEditingCard("credit"); setEditValue(String(creditScore)); }}
+                  className="absolute top-4 right-14 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
+                  style={{ backgroundColor: "#6366F1" }}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Credit Score
@@ -354,15 +413,38 @@ export default function WealthTrackerPage() {
                 className="grid grid-cols-2 gap-3"
               >
                 {[
-                  { label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600" },
-                  { label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600" },
-                  { label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600" },
-                  { label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600" },
+                  { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600", editColor: "#10B981" },
+                  { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600", editColor: "#EF4444" },
+                  { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600", editColor: "#3B82F6" },
+                  { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600", editColor: "#F59E0B" },
                 ].map((c) => (
-                  <div key={c.label} style={glass} className="p-4 flex flex-col gap-2">
+                  <div key={c.label} style={glass} className="p-4 flex flex-col gap-2 relative group">
+                    {c.key !== "net" && c.key !== "expenses" && (
+                      <button
+                        onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
+                        style={{ backgroundColor: c.editColor }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    )}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
                     <span className="text-xs text-slate-500 font-medium">{c.label}</span>
-                    <span className="text-lg font-bold text-slate-900">{fmt(c.value)}</span>
+                    {editingCard === c.key ? (
+                      <div className="flex gap-1">
+                        <Input
+                          type="number"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="h-7 text-sm w-24"
+                          autoFocus
+                          onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }}
+                        />
+                        <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-white">✓</button>
+                      </div>
+                    ) : (
+                      <span className="text-lg font-bold text-slate-900">{fmt(c.value)}</span>
+                    )}
                   </div>
                 ))}
               </motion.div>
@@ -686,6 +768,14 @@ export default function WealthTrackerPage() {
           <CreatePlanModal
             pair={selectedPairForPlan}
             onClose={() => { setShowCreatePlan(false); setSelectedPairForPlan(null); }}
+          />
+        )}
+        {isEditingHeader && (
+          <HeaderCustomizationModal
+            pageKey="money"
+            currentType={moneyHeaderType}
+            currentValue={moneyHeaderValue}
+            onClose={() => setIsEditingHeader(false)}
           />
         )}
       </div>
