@@ -72,15 +72,16 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       : undefined,
   });
 
-  const iconCircleCn = (isActive: boolean) =>
+  const iconCircleCn = (isActive: boolean, color?: string) =>
     `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
       isActive
         ? 'bg-indigo-50 border border-indigo-200'
-        : 'bg-gray-50 border border-gray-200 group-hover:border-indigo-100'
+        : 'border border-gray-200 group-hover:border-indigo-100'
     }`;
 
-  const iconCn = (isActive: boolean) =>
-    `w-[18px] h-[18px] ${isActive ? 'text-indigo-600' : 'text-gray-500'}`;
+  const iconBgStyle = (isActive: boolean, color?: string) => ({
+    backgroundColor: isActive ? undefined : color ? `${color}15` : '#F9FAFB',
+  });
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
@@ -122,7 +123,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     )}
                     style={activeStyle(item.active)}
                   >
-                    <span className={iconCircleCn(item.active)}>
+                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
                       <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
                     </span>
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
@@ -155,7 +156,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 )}
                 style={activeStyle(isFinanceActive)}
               >
-                <span className={iconCircleCn(isFinanceActive)}>
+                <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
                   <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? '#4338CA' : '#10B981' }} strokeWidth={1.5} />
                 </span>
                 {!collapsed && (
@@ -227,7 +228,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     )}
                     style={activeStyle(item.active)}
                   >
-                    <span className={iconCircleCn(item.active)}>
+                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
                       <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
                     </span>
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
@@ -249,8 +250,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                   )}
                   style={activeStyle(location.pathname === "/admin")}
                 >
-                  <span className={iconCircleCn(location.pathname === "/admin")}>
-                    <Shield className={iconCn(location.pathname === "/admin")} strokeWidth={1.5} />
+                  <span className={iconCircleCn(location.pathname === "/admin")} style={iconBgStyle(location.pathname === "/admin", '#6366F1')}>
+                    <Shield className="w-[18px] h-[18px]" style={{ color: location.pathname === "/admin" ? '#4338CA' : '#6366F1' }} strokeWidth={1.5} />
                   </span>
                   {!collapsed && <span className="flex-1 text-left text-[14px]">Admin</span>}
                 </button>
