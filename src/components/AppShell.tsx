@@ -49,14 +49,14 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   };
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard"), color: "#3B82F6" },
+    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive, color: "#F97316" },
   ];
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
-    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
+    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
