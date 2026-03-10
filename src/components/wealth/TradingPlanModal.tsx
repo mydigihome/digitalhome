@@ -55,6 +55,9 @@ export default function TradingPlanModal({ symbol, assetName, currentPrice, onCl
         strategy_notes: notes || null,
         time_frame: timeFrame,
         status: "active",
+        target_price: takeProfit1,
+        trading_pair_id: null,
+        completed_at: null,
       });
       toast.success("Trading plan saved!");
       onClose();

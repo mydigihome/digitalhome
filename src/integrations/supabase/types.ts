@@ -1841,9 +1841,43 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_pairs: {
+        Row: {
+          category: string
+          created_at: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          sort_order: number | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trading_plans: {
         Row: {
           asset_name: string
+          completed_at: string | null
           created_at: string
           current_price: number | null
           entry_price: number | null
@@ -1856,13 +1890,16 @@ export type Database = {
           symbol: string
           take_profit_1: number | null
           take_profit_2: number | null
+          target_price: number | null
           time_frame: string
           total_investment: number | null
+          trading_pair_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           asset_name: string
+          completed_at?: string | null
           created_at?: string
           current_price?: number | null
           entry_price?: number | null
@@ -1875,13 +1912,16 @@ export type Database = {
           symbol: string
           take_profit_1?: number | null
           take_profit_2?: number | null
+          target_price?: number | null
           time_frame?: string
           total_investment?: number | null
+          trading_pair_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           asset_name?: string
+          completed_at?: string | null
           created_at?: string
           current_price?: number | null
           entry_price?: number | null
@@ -1894,12 +1934,22 @@ export type Database = {
           symbol?: string
           take_profit_1?: number | null
           take_profit_2?: number | null
+          target_price?: number | null
           time_frame?: string
           total_investment?: number | null
+          trading_pair_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trading_plans_trading_pair_id_fkey"
+            columns: ["trading_pair_id"]
+            isOneToOne: false
+            referencedRelation: "trading_pairs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_finances: {
         Row: {
