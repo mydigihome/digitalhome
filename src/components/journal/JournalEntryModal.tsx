@@ -319,8 +319,8 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Untitled Entry"
-                  className="w-full border-none text-4xl sm:text-5xl bg-transparent outline-none placeholder:text-slate-300"
-                  style={{ fontFamily: "'Instrument Serif', serif", color: "#0F172A", lineHeight: 1.1 }}
+                  className="w-full border-none text-4xl sm:text-5xl font-semibold bg-transparent outline-none placeholder:text-slate-300"
+                  style={{ color: "#0F172A", lineHeight: 1.1 }}
                   readOnly={readOnly}
                 />
 
