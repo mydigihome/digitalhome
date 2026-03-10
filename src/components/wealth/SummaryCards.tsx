@@ -33,6 +33,9 @@ export default function SummaryCards() {
     if (editingCard === "income") {
       await upsertFinances.mutateAsync({ monthly_income: parseFloat(editValue) || 0, onboarding_completed: true });
       toast.success("Income updated");
+    } else if (editingCard === "debt") {
+      await upsertFinances.mutateAsync({ total_debt: parseFloat(editValue) || 0, onboarding_completed: true });
+      toast.success("Debt updated");
     }
     setEditingCard(null);
   };
