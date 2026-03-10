@@ -625,6 +625,58 @@ export default function SettingsPage() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Banner Color */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">Dashboard Banner Color</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Choose a gradient color for your dashboard header</p>
+                    <div className="flex gap-3 flex-wrap">
+                      {['#6366F1','#EC4899','#8B5CF6','#10B981','#F59E0B','#EF4444'].map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => upsertPrefs.mutate({ banner_color: c } as any)}
+                          className={cn(
+                            "w-12 h-12 rounded-full transition-all",
+                            (prefs as any)?.banner_color === c ? "ring-2 ring-offset-2 ring-foreground scale-110" : "hover:scale-110"
+                          )}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Religion & Scripture */}
+                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-1">Faith & Inspiration</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Add spiritual content to your dashboard</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Religion</Label>
+                        <select
+                          value={(prefs as any)?.religion || "none"}
+                          onChange={(e) => upsertPrefs.mutate({ religion: e.target.value } as any)}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="none">None</option>
+                          <option value="christianity">Christianity</option>
+                          <option value="islam">Islam</option>
+                          <option value="judaism">Judaism</option>
+                          <option value="hinduism">Hinduism</option>
+                          <option value="buddhism">Buddhism</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Show Daily Scripture</p>
+                          <p className="text-xs text-muted-foreground">Display a scripture card on your dashboard</p>
+                        </div>
+                        <Switch
+                          checked={(prefs as any)?.show_scripture_card === true}
+                          onCheckedChange={(v) => upsertPrefs.mutate({ show_scripture_card: v } as any)}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
 
