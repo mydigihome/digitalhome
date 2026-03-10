@@ -152,16 +152,55 @@ export default function WealthTrackerPage() {
   const btcPrice = btcQuote?.quote?.price ? parseFloat(btcQuote.quote.price) : 64284.5;
   const btcChange = btcQuote?.quote?.percent_change ? parseFloat(btcQuote.quote.percent_change) : 2.4;
 
+  const moneyHeaderType = (prefs as any)?.money_header_type || "color";
+  const moneyHeaderValue = (prefs as any)?.money_header_value || (prefs as any)?.banner_color || "#6366F1";
+  const headerStyle = moneyHeaderType === "photo"
+    ? { backgroundImage: `url(${moneyHeaderValue})`, backgroundSize: "cover" as const, backgroundPosition: "center" as const, borderRadius: "0 0 40px 40px" }
+    : { background: `linear-gradient(135deg, ${moneyHeaderValue}20, ${moneyHeaderValue}10)`, borderRadius: "0 0 40px 40px" };
+
+  const handleCardEdit = async (card: string, value: string) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) { toast.error("Enter a valid number"); return; }
+    const fieldMap: Record<string, string> = {
+      income: "monthly_income",
+      credit: "credit_score",
+      debt: "total_debt",
+      savings: "current_savings",
+    };
+    if (fieldMap[card]) {
+      const { error } = await (supabase as any).from("user_finances").update({ [fieldMap[card]]: num }).eq("user_id", user!.id);
+      if (error) toast.error("Update failed");
+      else { toast.success("Updated!"); setEditingCard(null); }
+    }
+  };
+
   return (
     <AppShell>
       <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
 
+        {/* Customizable Header */}
+        <div
+          className="relative group cursor-pointer"
+          style={{ ...headerStyle, paddingTop: 48, paddingBottom: 24 }}
+          onClick={() => setIsEditingHeader(true)}
+        >
+          <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Pencil className="w-3.5 h-3.5 text-foreground" />
+          </button>
+          <div className="max-w-6xl mx-auto px-6">
+            <h1 className="text-4xl font-semibold text-foreground">Money</h1>
+            <p className="text-sm text-muted-foreground mt-1">Your financial overview</p>
+            {/* Faith Quote */}
+            <div className="mt-4 text-center">
+              <p className="text-sm font-medium italic" style={{ color: moneyHeaderValue }}>
+                "{FAITH_MESSAGES[new Date().getDate() % FAITH_MESSAGES.length]}"
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* ═══ DESKTOP LAYOUT (12-col grid) ═══ */}
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
-          {/* Faith Message */}
-          <FaithMessage />
-
-          <div className="grid grid-cols-12 gap-6 mt-5">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
             <div className="col-span-8 space-y-6">
 
