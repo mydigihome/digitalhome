@@ -8,7 +8,11 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useLoans } from "@/hooks/useLoans";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketQuote } from "@/hooks/useMarketData";
+import { useTradingPairs, TradingPair } from "@/hooks/useTradingPairs";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
+import AddPairModal from "@/components/wealth/AddPairModal";
+import CreatePlanModal from "@/components/wealth/CreatePlanModal";
+import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /* ─── helpers ─── */
