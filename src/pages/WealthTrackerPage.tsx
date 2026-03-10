@@ -53,9 +53,16 @@ export default function WealthTrackerPage() {
   const { data: loans } = useLoans();
   const [justCompleted, setJustCompleted] = useState(false);
   const [addBillOpen, setAddBillOpen] = useState(false);
+  const [showAddPair, setShowAddPair] = useState(false);
+  const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
 
   // Market data
   const { data: btcQuote } = useMarketQuote("BTC/USD");
+
+  // Custom trading pairs
+  const { data: tradingPairs } = useTradingPairs();
+  const userPairs = tradingPairs || [];
 
   if (isLoading) {
     return (
