@@ -195,7 +195,7 @@ export default function Dashboard() {
       return { ...p, percentage: total > 0 ? Math.round((done / total) * 100) : 0, total, done };
     })
     .sort((a, b) => b.total - a.total)
-    .slice(0, 2);
+    .slice(0, 3);
 
   const agendaItems = [
     ...(todayEvents || []).map(e => ({
