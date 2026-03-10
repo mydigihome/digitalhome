@@ -222,9 +222,18 @@ export default function WealthTrackerPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-bold text-slate-900">Market Intelligence</h3>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs text-emerald-600 font-semibold">Live</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowAddPair(true)}
+                      className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
+                      style={{ background: "#6366F1", color: "#fff" }}
+                    >
+                      + Add Pair
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-xs text-emerald-600 font-semibold">Live</span>
+                    </div>
                   </div>
                 </div>
 
@@ -244,18 +253,39 @@ export default function WealthTrackerPage() {
                   </div>
                 </div>
 
-                {/* Watchlist table */}
+                {/* Asset Table - Custom pairs + defaults */}
                 <div className="overflow-hidden rounded-xl border border-slate-100">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-slate-50 text-left">
-                        <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase">Symbol</th>
+                        <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase">Asset</th>
                         <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase">Price</th>
                         <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {watchlist.map((w) => (
+                      {userPairs.length > 0 ? userPairs.map((pair) => (
+                        <tr key={pair.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-100 text-indigo-700">{pair.category}</span>
+                              <span className="font-medium text-slate-900">{pair.symbol}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">—</td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex gap-2 justify-end">
+                              <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
+                              <button
+                                onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                                className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                              >
+                                Plan
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )) : watchlist.map((w) => (
                         <tr key={w.symbol} className="border-t border-slate-100 hover:bg-slate-50 transition">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
@@ -276,6 +306,9 @@ export default function WealthTrackerPage() {
                   </table>
                 </div>
               </motion.div>
+
+              {/* Active Trading Plans */}
+              <ActiveTradingPlans />
 
               {/* Savings Goal */}
               <motion.div
