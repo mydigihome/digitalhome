@@ -201,6 +201,7 @@ export default function WealthTrackerPage() {
 
         {/* ═══ DESKTOP LAYOUT (12-col grid) ═══ */}
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
+          <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
             <div className="col-span-8 space-y-6">
 
