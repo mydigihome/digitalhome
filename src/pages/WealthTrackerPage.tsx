@@ -690,13 +690,18 @@ export default function WealthTrackerPage() {
                     <span className="text-sm font-medium text-slate-900">{pair.symbol}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                    <button
-                      onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
-                      className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
-                    >
-                      Plan
-                    </button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                     >
+                       Trade
+                     </button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                     >
+                       Plan
+                     </button>
                   </div>
                 </div>
               )) : watchlist.map((w) => (
