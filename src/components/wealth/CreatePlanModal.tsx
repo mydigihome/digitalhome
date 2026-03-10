@@ -55,6 +55,8 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
         strategy_notes: notes || null,
         time_frame: timeframe,
         status: "active",
+        trading_pair_id: pair.id,
+        completed_at: null,
       });
       toast.success("Trading plan created!");
       onClose();
