@@ -121,7 +121,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     style={activeStyle(item.active)}
                   >
                     <span className={iconCircleCn(item.active)}>
-                      <Icon className={iconCn(item.active)} strokeWidth={1.5} />
+                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
                     </span>
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
