@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Cloud, Lock, Unlock, Paperclip, Pencil, Puzzle, Palette, Heart, Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
+import { X, Cloud, Lock, Unlock, Paperclip, Pencil, Puzzle, Palette, Heart, Bold, Italic, Underline, List, ListOrdered, ChevronLeft, MoreHorizontal, Church } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,11 +15,18 @@ import ColoringBook from "./ColoringBook";
 import PuzzleGames from "./PuzzleGames";
 import PinModal from "./PinModal";
 import TherapistFinderModal from "./TherapistFinderModal";
+import ChurchFinderModal from "./ChurchFinderModal";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 
-const MOODS = ["😢", "😟", "😐", "🙂", "😊"];
+const STITCH_MOODS = [
+  { emoji: "😊", label: "Happy" },
+  { emoji: "🌿", label: "Calm" },
+  { emoji: "✨", label: "Inspired" },
+  { emoji: "🎯", label: "Focused" },
+  { emoji: "😢", label: "Sad" },
+];
 
 interface JournalEntryModalProps {
   open: boolean;
@@ -44,6 +51,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
   const [showColoring, setShowColoring] = useState(false);
   const [showPuzzle, setShowPuzzle] = useState(false);
   const [showTherapist, setShowTherapist] = useState(false);
+  const [showChurch, setShowChurch] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinMode, setPinMode] = useState<"set" | "unlock">("set");
   const [saving, setSaving] = useState(false);
@@ -55,12 +63,12 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
     extensions: [
       StarterKit,
       UnderlineExt,
-      Placeholder.configure({ placeholder: "Start writing..." }),
+      Placeholder.configure({ placeholder: "Start writing your thoughts..." }),
     ],
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none min-h-[300px] px-1",
+        class: "prose prose-sm max-w-none focus:outline-none min-h-[300px] px-1 text-base leading-relaxed",
       },
     },
   });
@@ -192,13 +200,11 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
 
   const handlePuzzleComplete = async (gameName: string, timeSeconds: number) => {
     const currentEntryId = await ensureEntryId();
-    // Add activity record
     await supabase.from("journal_activities").insert({
       entry_id: currentEntryId,
       activity_type: "puzzle",
       activity_data: { game: gameName, time_seconds: timeSeconds },
     });
-    // Append completion note to editor
     if (editor) {
       const timeStr = `${Math.floor(timeSeconds / 60)}:${(timeSeconds % 60).toString().padStart(2, "0")}`;
       editor.commands.insertContent(`<p>🧩 I completed <strong>${gameName}</strong> in <strong>${timeStr}</strong>!</p>`);
@@ -207,16 +213,13 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
 
   const handleLockToggle = async () => {
     if (!entryId) {
-      // Must save first
       toast.error("Save the entry first before locking");
       return;
     }
     if (isLocked) {
-      // Unlock
       setPinMode("unlock");
       setShowPinModal(true);
     } else {
-      // Set PIN
       setPinMode("set");
       setShowPinModal(true);
     }
@@ -233,6 +236,13 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
   };
 
   const firstName = profile?.full_name?.split(" ")[0] || "Friend";
+  const formattedDate = (() => {
+    try {
+      return format(new Date(entryDate), "EEEE, MMMM d");
+    } catch {
+      return entryDate;
+    }
+  })();
 
   return (
     <>
@@ -243,24 +253,30 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex flex-col bg-background"
+            className="fixed inset-0 z-50 flex flex-col"
+            style={{ backgroundColor: "#F9FAFB" }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6">
-              <div className="flex items-center gap-2">
-                <Cloud className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">Journal</span>
+            {/* ─── Stitch Header ─── */}
+            <div className="flex items-center justify-between px-4 py-3 sm:px-6" style={{ borderBottom: "1px solid #E5E7EB" }}>
+              <button onClick={onClose} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+              <div className="flex items-center gap-1.5">
+                <Cloud className="w-3.5 h-3.5" style={{ color: "#6366F1" }} />
+                <span className="text-xs font-medium" style={{ color: "#6366F1" }}>SYNCING</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleLockToggle}
-                  className={`rounded-md p-1.5 transition-colors ${isLocked ? "text-primary bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
+                  className="rounded-lg p-1.5 transition-colors"
+                  style={isLocked ? { backgroundColor: "#EEF2FF", color: "#6366F1" } : { color: "#9CA3AF" }}
                   title={isLocked ? "Unlock entry" : "Lock entry"}
                 >
                   {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
                 </button>
-                <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
-                  <X className="h-5 w-5" />
+                <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-slate-100">
+                  <MoreHorizontal className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -273,9 +289,10 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="absolute inset-0 z-10 flex items-center justify-center bg-background/80"
+                  className="absolute inset-0 z-10 flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(249,250,251,0.9)" }}
                 >
-                  <p className="text-lg text-muted-foreground/60 text-center px-8">
+                  <p className="text-lg text-center px-8" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", color: "#6B7280" }}>
                     Hi {firstName}, let your thoughts go here...
                   </p>
                 </motion.div>
@@ -285,45 +302,53 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
               <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-                {/* Title */}
-                <Input
+                {/* Date */}
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="date"
+                    value={entryDate}
+                    onChange={(e) => setEntryDate(e.target.value)}
+                    className="text-sm font-medium bg-transparent border-none outline-none cursor-pointer"
+                    style={{ color: "#6366F1" }}
+                    readOnly={readOnly}
+                  />
+                </div>
+
+                {/* Title - Stitch style */}
+                <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Untitled Entry"
-                  className="border-none text-xl font-semibold shadow-none focus-visible:ring-0 px-0 h-auto py-1"
+                  className="w-full border-none text-4xl sm:text-5xl bg-transparent outline-none placeholder:text-slate-300"
+                  style={{ fontFamily: "'Instrument Serif', serif", color: "#0F172A", lineHeight: 1.1 }}
                   readOnly={readOnly}
                 />
 
-                {/* Date */}
-                <input
-                  type="date"
-                  value={entryDate}
-                  onChange={(e) => setEntryDate(e.target.value)}
-                  className="mt-1 text-xs text-muted-foreground bg-transparent border-none outline-none"
-                  readOnly={readOnly}
-                />
-
-                {/* Mood */}
-                <div className="mt-4">
-                  <div className="flex items-center gap-2">
-                    {MOODS.map((emoji) => (
+                {/* Mood pills - Stitch style */}
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {STITCH_MOODS.map(({ emoji, label }) => {
+                    const isActive = moodEmoji === emoji;
+                    return (
                       <button
                         key={emoji}
                         onClick={() => !readOnly && setMoodEmoji(moodEmoji === emoji ? null : emoji)}
-                        className={`text-2xl transition-transform hover:scale-110 ${
-                          moodEmoji === emoji ? "scale-125 drop-shadow-md" : "opacity-50 hover:opacity-80"
-                        }`}
                         disabled={readOnly}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                        style={isActive
+                          ? { backgroundColor: "rgba(99,102,241,0.1)", border: "2px solid #6366F1", color: "#6366F1" }
+                          : { backgroundColor: "white", border: "1px solid #E5E7EB", color: "#6B7280" }
+                        }
                       >
-                        {emoji}
+                        <span className="text-sm">{emoji}</span>
+                        {label}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
 
                 {/* Rich text toolbar */}
                 {!readOnly && editor && (
-                  <div className="mt-4 flex items-center gap-1 border-b border-border pb-2">
+                  <div className="mt-5 flex items-center gap-1 pb-3" style={{ borderBottom: "1px solid #E5E7EB" }}>
                     {[
                       { icon: Bold, action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive("bold") },
                       { icon: Italic, action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive("italic") },
@@ -334,7 +359,11 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                       <button
                         key={i}
                         onMouseDown={(e) => { e.preventDefault(); action(); }}
-                        className={`rounded-md p-1.5 transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"}`}
+                        className="rounded-lg p-2 transition-colors"
+                        style={active
+                          ? { backgroundColor: "rgba(99,102,241,0.1)", color: "#6366F1" }
+                          : { color: "#9CA3AF" }
+                        }
                       >
                         <Icon className="h-4 w-4" />
                       </button>
@@ -351,52 +380,66 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                 {mediaUrls.length > 0 && (
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     {mediaUrls.map((url, i) => (
-                      <div key={i} className="aspect-square overflow-hidden rounded-lg border border-border">
+                      <div key={i} className="aspect-square overflow-hidden rounded-xl" style={{ border: "1px solid #E5E7EB" }}>
                         <img src={url} alt="" className="h-full w-full object-cover" />
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Creative tools */}
+                {/* Creative tools - bottom icons */}
                 {!readOnly && (
-                  <div className="mt-6 flex flex-wrap items-center gap-2">
+                  <div className="mt-6 flex items-center gap-3">
                     <label className="cursor-pointer">
                       <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary">
-                        <Paperclip className="h-4 w-4" />
-                        Add Media
+                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl transition-colors hover:bg-slate-100" style={{ border: "1px solid #E5E7EB" }}>
+                        <Paperclip className="h-4 w-4" style={{ color: "#6B7280" }} />
                       </span>
                     </label>
-                    <Button variant="outline" size="sm" onClick={() => setShowDrawing(true)}>
-                      <Pencil className="mr-1.5 h-4 w-4" />
-                      Draw
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowColoring(true)}>
-                      <Palette className="mr-1.5 h-4 w-4" />
-                      Coloring Book
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => setShowPuzzle(true)}>
-                      <Puzzle className="mr-1.5 h-4 w-4" />
-                      Puzzle
-                    </Button>
+                    <button onClick={() => setShowDrawing(true)} className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100" style={{ border: "1px solid #E5E7EB" }}>
+                      <Pencil className="h-4 w-4" style={{ color: "#6B7280" }} />
+                    </button>
+                    <button onClick={() => setShowColoring(true)} className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100" style={{ border: "1px solid #E5E7EB" }}>
+                      <Palette className="h-4 w-4" style={{ color: "#6B7280" }} />
+                    </button>
+                    <button onClick={() => setShowPuzzle(true)} className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100" style={{ border: "1px solid #E5E7EB" }}>
+                      <Puzzle className="h-4 w-4" style={{ color: "#6B7280" }} />
+                    </button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Bottom bar */}
-            <div className="flex items-center justify-between border-t border-border px-4 py-3 sm:px-6">
-              <Button variant="outline" size="sm" onClick={() => setShowTherapist(true)} className="text-primary border-primary/30">
-                <Heart className="mr-1.5 h-4 w-4" />
-                Find Therapist
-              </Button>
+            {/* ─── Bottom bar - Stitch ─── */}
+            <div className="flex items-center justify-between px-4 py-3 sm:px-6" style={{ borderTop: "1px solid #E5E7EB", backgroundColor: "white" }}>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowTherapist(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-indigo-50"
+                  style={{ border: "2px solid #6366F1", color: "#6366F1" }}
+                >
+                  Find Therapist
+                </button>
+                <button
+                  onClick={() => setShowChurch(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold transition-colors hover:bg-indigo-50"
+                  style={{ border: "2px solid #6366F1", color: "#6366F1" }}
+                >
+                  Find a Church
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <button onClick={onClose} className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
                   Discard
                 </button>
                 {!readOnly && (
-                  <Button size="sm" onClick={() => handleSave(false)} disabled={saving}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSave(false)}
+                    disabled={saving}
+                    className="rounded-xl"
+                    style={{ backgroundColor: "#6366F1" }}
+                  >
                     {saving ? "Saving..." : "Save Entry"}
                   </Button>
                 )}
@@ -410,6 +453,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       <ColoringBook open={showColoring} onClose={() => setShowColoring(false)} onSave={handleImageSave} />
       <PuzzleGames open={showPuzzle} onClose={() => setShowPuzzle(false)} onComplete={handlePuzzleComplete} />
       <TherapistFinderModal open={showTherapist} onClose={() => setShowTherapist(false)} />
+      <ChurchFinderModal open={showChurch} onClose={() => setShowChurch(false)} />
       {entryId && (
         <PinModal
           open={showPinModal}
