@@ -138,7 +138,7 @@ export default function ContentPlanner() {
   const [dragTab, setDragTab] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const hasAccess = (prefs as any)?.content_planner_access === true;
+  const hasAccess = (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   // Handle payment success
   useEffect(() => {
