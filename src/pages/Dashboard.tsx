@@ -798,7 +798,7 @@ export default function Dashboard() {
                           <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#6366F1" }}>{dateLabel}</p>
                           <span className="text-lg opacity-40">{entry.mood_emoji || "❤️"}</span>
                         </div>
-                        <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontStyle: "italic", color: "#1F2937" }}>
+                        <p className="text-[15px] font-semibold mb-1" style={{ color: "#1F2937" }}>
                           {entry.title || "Untitled Entry"}
                         </p>
                         <p className="text-xs leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>

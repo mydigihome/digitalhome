@@ -181,7 +181,7 @@ export default function ApplicationsTrackerPage() {
               </div>
             </div>
 
-            <h1 className="text-5xl font-medium tracking-tight text-foreground" style={{ fontFamily: "'Instrument Serif', serif" }}>
+            <h1 className="text-5xl font-semibold tracking-tight text-foreground">
               Resource Studio
             </h1>
             <p className="text-sm font-medium text-muted-foreground mt-2">
