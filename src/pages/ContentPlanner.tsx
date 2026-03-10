@@ -52,8 +52,10 @@ function ContentPaywall() {
       });
       if (error) throw error;
       const stripe = await stripePromise;
-      if (stripe && data?.sessionId) {
-        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      if (stripe && data?.url) {
+        window.location.href = data.url;
+      } else if (stripe && data?.sessionId) {
+        window.location.href = `https://checkout.stripe.com/pay/${data.sessionId}`;
       }
     } catch {
       toast.error("Unable to start checkout. Please try again.");
