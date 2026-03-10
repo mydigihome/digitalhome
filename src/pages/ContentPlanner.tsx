@@ -171,7 +171,7 @@ export default function ContentPlanner() {
 
   return (
     <AppShell>
-      <div className="flex flex-col w-full bg-white" style={{ fontFamily: "Inter, system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
+      <div className="flex flex-col w-full bg-white" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif", height: "100%", margin: 0, padding: 0 }}>
         {!hasAccess ? (
           <ContentPaywall />
         ) : (

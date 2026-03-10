@@ -154,7 +154,7 @@ export default function ApplicationsTrackerPage() {
           className="relative w-full overflow-hidden group"
           style={{
             background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? "linear-gradient(135deg, hsl(262 80% 50% / 0.08) 0%, hsl(330 80% 70% / 0.1) 100%)" : undefined,
+              : !bannerUrl ? `linear-gradient(135deg, ${(prefs as any)?.banner_color || '#6366F1'}15, ${(prefs as any)?.banner_color || '#6366F1'}05)` : undefined,
             backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
             backgroundSize: "cover", backgroundPosition: "center",
             borderRadius: "0 0 40px 40px",
