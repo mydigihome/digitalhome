@@ -182,21 +182,16 @@ export default function WealthTrackerPage() {
         {/* Customizable Header */}
         <div
           className="relative group cursor-pointer"
-          style={{ ...headerStyle, paddingTop: 48, paddingBottom: 24 }}
+          style={{ ...headerStyle, paddingTop: 16, paddingBottom: 12 }}
           onClick={() => setIsEditingHeader(true)}
         >
-          <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-            <Pencil className="w-3.5 h-3.5 text-foreground" />
+          <button className="absolute top-3 right-4 w-7 h-7 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <Pencil className="w-3 h-3 text-foreground" />
           </button>
-          <div className="max-w-6xl mx-auto px-6">
-            <h1 className="text-4xl font-semibold text-foreground">Money</h1>
-            <p className="text-sm text-muted-foreground mt-1">Your financial overview</p>
-            {/* Faith Quote */}
-            <div className="mt-4 text-center">
-              <p className="text-sm font-medium italic" style={{ color: moneyHeaderValue }}>
-                "{FAITH_MESSAGES[new Date().getDate() % FAITH_MESSAGES.length]}"
-              </p>
-            </div>
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <p className="text-xs font-medium italic" style={{ color: moneyHeaderValue }}>
+              "{FAITH_MESSAGES[new Date().getDate() % FAITH_MESSAGES.length]}"
+            </p>
           </div>
         </div>
 
@@ -334,9 +329,14 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-slate-600">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                              <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
                               <button
-                                onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                                className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                              >
+                                Trade
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
                                 className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
                               >
                                 Plan
@@ -355,8 +355,8 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-slate-600">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                              <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                              <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
                             </div>
                           </td>
                         </tr>
@@ -690,13 +690,18 @@ export default function WealthTrackerPage() {
                     <span className="text-sm font-medium text-slate-900">{pair.symbol}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                    <button
-                      onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
-                      className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
-                    >
-                      Plan
-                    </button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                     >
+                       Trade
+                     </button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                     >
+                       Plan
+                     </button>
                   </div>
                 </div>
               )) : watchlist.map((w) => (
@@ -705,10 +710,11 @@ export default function WealthTrackerPage() {
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
                     <span className="text-sm font-medium text-slate-900">{w.symbol}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                    <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
-                  </div>
+                   <div className="flex gap-2">
+                     <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
+                   </div>
+
                 </div>
               ))}
             </div>
