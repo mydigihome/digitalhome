@@ -674,6 +674,20 @@ export default function WealthTrackerPage() {
             <Plus className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Modals */}
+        {showAddPair && (
+          <AddPairModal
+            onClose={() => setShowAddPair(false)}
+            existingSymbols={userPairs.map((p) => p.symbol)}
+          />
+        )}
+        {showCreatePlan && selectedPairForPlan && (
+          <CreatePlanModal
+            pair={selectedPairForPlan}
+            onClose={() => { setShowCreatePlan(false); setSelectedPairForPlan(null); }}
+          />
+        )}
       </div>
     </AppShell>
   );
