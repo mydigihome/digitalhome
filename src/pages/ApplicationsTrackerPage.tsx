@@ -284,11 +284,11 @@ export default function ApplicationsTrackerPage() {
                   <div className="rounded-[32px] border-2 border-dashed border-primary/20 p-10 text-center bg-card/70 backdrop-blur-xl">
                     <div className="relative mx-auto w-24 h-24 flex items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-accent/10 mb-4">
                       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-accent/10 animate-pulse" />
-                      <Building className="h-10 w-10 text-primary relative z-10" />
+                      <Rocket className="h-10 w-10 text-primary relative z-10" />
                     </div>
                     <p className="text-lg font-bold text-foreground">Your next big break starts here.</p>
                     <p className="text-sm text-muted-foreground mt-1 max-w-[220px] mx-auto">
-                      Click the + button to begin tracking your professional journey.
+                      Click "Add Application" to begin tracking your professional journey.
                     </p>
                   </div>
                 ) : (
@@ -331,8 +331,76 @@ export default function ApplicationsTrackerPage() {
                   </div>
                 )}
 
-                {/* Resumes Section */}
-                <ResumeManager resumeInputRef={resumeInputRef} handleResumeUpload={handleResumeUpload} />
+                {/* Resumes & Files Section — Stitch Style */}
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Folder className="h-4 w-4 text-primary" />
+                      </div>
+                      <h2 className="text-xl font-bold text-foreground">Resumes & Files</h2>
+                    </div>
+                    <button
+                      onClick={() => resumeInputRef.current?.click()}
+                      className="flex items-center gap-2 text-primary font-bold text-xs bg-primary/10 px-4 py-2 rounded-full hover:bg-primary/20 transition"
+                    >
+                      <CloudUpload className="h-3.5 w-3.5" />
+                      Upload
+                    </button>
+                  </div>
+                  <input ref={resumeInputRef} type="file" accept=".pdf,.docx,.doc,.txt" className="hidden" onChange={handleResumeUpload} />
+
+                  <div className="space-y-3">
+                    {resumes.length === 0 ? (
+                      <div
+                        className="rounded-[32px] border-2 border-dashed border-primary/20 p-10 text-center bg-card/70 backdrop-blur-xl cursor-pointer hover:border-primary/40 transition"
+                        onClick={() => resumeInputRef.current?.click()}
+                      >
+                        <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 mb-3">
+                          <FolderOpen className="h-7 w-7 text-primary" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          No files uploaded yet. Click "Upload" to add your first file.
+                        </p>
+                      </div>
+                    ) : (
+                      resumes.map(r => {
+                        const ext = r.file_type?.toLowerCase();
+                        const isPdf = ext === "pdf";
+                        const isDoc = ["doc", "docx"].includes(ext || "");
+                        return (
+                          <div key={r.id} className="flex items-center gap-4 p-4 rounded-3xl border border-border bg-card hover:shadow-sm transition">
+                            <div className={cn(
+                              "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
+                              isPdf ? "bg-red-50 dark:bg-red-900/30" : isDoc ? "bg-blue-50 dark:bg-blue-900/30" : "bg-secondary"
+                            )}>
+                              <FileText className={cn(
+                                "h-5 w-5",
+                                isPdf ? "text-red-500" : isDoc ? "text-blue-500" : "text-muted-foreground"
+                              )} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-sm text-foreground truncate">{r.title}.{r.file_type}</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold mt-0.5">
+                                {r.file_size ? `${(r.file_size / (1024 * 1024)).toFixed(1)} MB` : "Unknown"} • {format(new Date(r.created_at), "MMM d, yyyy").toUpperCase()}
+                              </p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Toggle active resume for actions
+                                setEditingApp(editingApp === r.id ? null : r.id);
+                              }}
+                              className="text-muted-foreground/40 hover:text-muted-foreground transition shrink-0"
+                            >
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </>
             )}
           </div>
