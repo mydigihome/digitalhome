@@ -120,7 +120,7 @@ export default function SavingsSection() {
             const monthlyNeeded = remaining / monthsLeft;
 
             return (
-              <motion.div key={g.id} layout className={`rounded-xl border p-5 space-y-3 ${g.color}`}>
+              <motion.div key={g.id} layout className={`group/goal rounded-xl border p-5 space-y-3 ${g.color}`}>
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">{g.name}</h3>
@@ -128,7 +128,7 @@ export default function SavingsSection() {
                       {new Date(g.targetDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })} · {monthsLeft}mo left
                     </p>
                   </div>
-                  <div className="flex gap-0.5">
+                  <div className="flex gap-0.5 opacity-0 group-hover/goal:opacity-100 transition-opacity">
                     <button onClick={() => handleEdit(g)} className="p-1 rounded hover:bg-background/50 text-muted-foreground"><Pencil className="h-3 w-3" /></button>
                     <button onClick={() => handleDelete(g.id)} className="p-1 rounded hover:bg-background/50 text-muted-foreground hover:text-destructive"><Trash2 className="h-3 w-3" /></button>
                   </div>

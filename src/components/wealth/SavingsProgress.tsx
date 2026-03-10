@@ -42,7 +42,7 @@ export default function SavingsProgress() {
 
   return (
     <section>
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="group rounded-2xl border border-border bg-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-primary/10">
@@ -51,7 +51,7 @@ export default function SavingsProgress() {
             <h2 className="text-lg font-semibold text-foreground">Savings Goal</h2>
           </div>
           {!editing && (
-            <button onClick={startEdit} className="p-2 rounded-lg hover:bg-muted text-muted-foreground">
+            <button onClick={startEdit} className="p-2 rounded-lg hover:bg-muted text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
               <Pencil className="h-4 w-4" />
             </button>
           )}

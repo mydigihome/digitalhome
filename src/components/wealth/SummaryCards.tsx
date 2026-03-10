@@ -102,7 +102,7 @@ export default function SummaryCards() {
             <div key={card.id} className="space-y-0">
               <button
                 onClick={() => card.id === "expenses" ? toggleExpand(card.id) : undefined}
-                className={`w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${card.id === "expenses" ? "cursor-pointer" : "cursor-default"}`}
+                className={`group w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${card.id === "expenses" ? "cursor-pointer" : "cursor-default"}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`p-2 rounded-xl ${card.iconBg}`}>
@@ -111,7 +111,7 @@ export default function SummaryCards() {
                   {card.editable && !isEditing && (
                     <button
                       onClick={(e) => { e.stopPropagation(); startEdit(card.id, card.value); }}
-                      className="p-1.5 rounded-lg hover:bg-background/50 text-muted-foreground"
+                      className="p-1.5 rounded-lg hover:bg-background/50 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
