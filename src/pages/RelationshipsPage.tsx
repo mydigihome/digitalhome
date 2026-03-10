@@ -229,14 +229,51 @@ export default function RelationshipsPage() {
     return acc;
   }, {});
 
+  const importPhone = async () => {
+    try {
+      if (!('contacts' in navigator && 'ContactsManager' in window)) {
+        toast.error("Contact Picker not supported on this device/browser");
+        return;
+      }
+      const results = await (navigator as any).contacts.select(['name', 'email', 'tel'], { multiple: true });
+      if (!results || results.length === 0) return;
+      let imported = 0;
+      for (const c of results) {
+        const name = c.name?.[0];
+        if (!name) continue;
+        await createContact.mutateAsync({
+          name,
+          email: c.email?.[0] || null,
+          phone: c.tel?.[0] || null,
+          relationship_type: "friend",
+        });
+        imported++;
+      }
+      toast.success(`Imported ${imported} contacts`);
+    } catch (e: any) {
+      if (e.name !== 'TypeError') toast.error("Import cancelled or not supported");
+    }
+  };
+
   return (
     <AppShell>
       <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
         {/* Header */}
         <div className="rounded-b-[40px] px-6 pt-10 pb-8" style={{ background: "linear-gradient(135deg, #EEF2FF, #FDF2F8)" }}>
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-5xl font-semibold" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" }}>Relationships</h1>
-            <p className="text-sm text-muted-foreground">Stay connected with the people who matter</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-5xl font-semibold">Relationships</h1>
+                <p className="text-sm text-muted-foreground mt-1">Stay connected</p>
+              </div>
+              <button
+                onClick={() => setShowAdd(true)}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform flex-shrink-0"
+                style={{ backgroundColor: "#6366F1" }}
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+            </div>
             <div className="relative mt-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Search contacts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200" />
@@ -285,7 +322,7 @@ export default function RelationshipsPage() {
             <button onClick={() => toast("LinkedIn import coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-muted-foreground hover:border-indigo-300 transition-colors">
               <Import className="w-3 h-3" /> Import LinkedIn
             </button>
-            <button onClick={() => toast("Phone import coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-muted-foreground hover:border-indigo-300 transition-colors">
+            <button onClick={importPhone} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-slate-300 text-xs text-muted-foreground hover:border-indigo-300 transition-colors">
               <Phone className="w-3 h-3" /> Import Phone
             </button>
           </div>
@@ -318,15 +355,6 @@ export default function RelationshipsPage() {
             </div>
           )}
         </div>
-
-        {/* FAB */}
-        <button
-          onClick={() => setShowAdd(true)}
-          className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-105 transition-transform"
-          style={{ backgroundColor: "#6366F1" }}
-        >
-          <Plus className="w-6 h-6" />
-        </button>
       </div>
 
       <AddContactModal open={showAdd} onClose={() => setShowAdd(false)} />
