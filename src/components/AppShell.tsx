@@ -49,14 +49,14 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   };
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
-    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard"), color: "#3B82F6" },
+    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive, color: "#F97316" },
   ];
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
-    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
+    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
@@ -121,7 +121,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     style={activeStyle(item.active)}
                   >
                     <span className={iconCircleCn(item.active)}>
-                      <Icon className={iconCn(item.active)} strokeWidth={1.5} />
+                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
                     </span>
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
@@ -154,7 +154,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 style={activeStyle(isFinanceActive)}
               >
                 <span className={iconCircleCn(isFinanceActive)}>
-                  <Wallet className={iconCn(isFinanceActive)} strokeWidth={1.5} />
+                  <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? '#4338CA' : '#10B981' }} strokeWidth={1.5} />
                 </span>
                 {!collapsed && (
                   <>
@@ -226,7 +226,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     style={activeStyle(item.active)}
                   >
                     <span className={iconCircleCn(item.active)}>
-                      <Icon className={iconCn(item.active)} strokeWidth={1.5} />
+                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
                     </span>
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>

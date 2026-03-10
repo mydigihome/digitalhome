@@ -235,7 +235,7 @@ export default function RelationshipsPage() {
         {/* Header */}
         <div className="rounded-b-[40px] px-6 pt-10 pb-8" style={{ background: "linear-gradient(135deg, #EEF2FF, #FDF2F8)" }}>
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-5xl font-normal mb-1" style={{ fontFamily: "'Instrument Serif', serif" }}>Relationships</h1>
+            <h1 className="text-5xl font-semibold" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" }}>Relationships</h1>
             <p className="text-sm text-muted-foreground">Stay connected with the people who matter</p>
             <div className="relative mt-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

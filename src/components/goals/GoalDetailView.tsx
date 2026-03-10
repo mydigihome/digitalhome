@@ -306,7 +306,7 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
             <p
               className="italic mt-2"
               style={{
-                fontFamily: "'Instrument Serif', 'Playfair Display', serif",
+                fontStyle: "italic",
                 fontSize: 16,
                 fontWeight: 400,
                 color: "rgba(31,41,55,0.8)",

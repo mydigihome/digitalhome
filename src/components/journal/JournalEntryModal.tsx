@@ -96,7 +96,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       setMediaUrls([]);
       editor?.commands.clearContent();
       setShowWelcome(true);
-      setTimeout(() => setShowWelcome(false), 3000);
+      setTimeout(() => setShowWelcome(false), 1500);
     }
   }, [open, entry, editor]);
 
@@ -252,7 +252,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            transition={{ type: "spring", damping: 35, stiffness: 400 }}
             className="fixed inset-0 z-50 flex flex-col"
             style={{ backgroundColor: "#F9FAFB" }}
           >
@@ -292,7 +292,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                   className="absolute inset-0 z-10 flex items-center justify-center"
                   style={{ backgroundColor: "rgba(249,250,251,0.9)" }}
                 >
-                  <p className="text-lg text-center px-8" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", color: "#6B7280" }}>
+                  <p className="text-lg text-center px-8 italic" style={{ color: "#6B7280" }}>
                     Hi {firstName}, let your thoughts go here...
                   </p>
                 </motion.div>
@@ -319,8 +319,8 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Untitled Entry"
-                  className="w-full border-none text-4xl sm:text-5xl bg-transparent outline-none placeholder:text-slate-300"
-                  style={{ fontFamily: "'Instrument Serif', serif", color: "#0F172A", lineHeight: 1.1 }}
+                  className="w-full border-none text-4xl sm:text-5xl font-semibold bg-transparent outline-none placeholder:text-slate-300"
+                  style={{ color: "#0F172A", lineHeight: 1.1 }}
                   readOnly={readOnly}
                 />
 

@@ -336,7 +336,7 @@ export default function PuzzleGames({ open, onClose, onComplete }: PuzzleGamesPr
 
               {!game ? (
                 <div className="space-y-3">
-                  <p className="text-center mb-4" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", color: "#6B7280", fontSize: 18 }}>
+                  <p className="text-center mb-4 italic" style={{ color: "#6B7280", fontSize: 18 }}>
                     Take a creative pause...
                   </p>
                   {GAME_CARDS.map((g) => (

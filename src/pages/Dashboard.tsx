@@ -24,7 +24,7 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
-import "@fontsource/playfair-display/400-italic.css";
+/* removed @fontsource import - using system font */
 
 /* ── Helpers ── */
 function getGreeting() {
@@ -349,9 +349,7 @@ export default function Dashboard() {
             <h1
               className="text-[32px] sm:text-[40px] leading-[1.15] mt-0.5"
               style={{
-                fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif",
-                fontStyle: "italic",
-                fontWeight: 400,
+                fontWeight: 600,
                 color: "white",
                 textShadow: "0 2px 12px rgba(0,0,0,0.3)",
               }}
@@ -800,7 +798,7 @@ export default function Dashboard() {
                           <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#6366F1" }}>{dateLabel}</p>
                           <span className="text-lg opacity-40">{entry.mood_emoji || "❤️"}</span>
                         </div>
-                        <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif", fontStyle: "italic", color: "#1F2937" }}>
+                        <p className="text-[15px] font-semibold mb-1" style={{ color: "#1F2937" }}>
                           {entry.title || "Untitled Entry"}
                         </p>
                         <p className="text-xs leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
