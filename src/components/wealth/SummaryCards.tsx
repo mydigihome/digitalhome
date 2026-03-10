@@ -61,6 +61,7 @@ export default function SummaryCards() {
       bgColor: "bg-destructive/5 border-destructive/20",
       iconBg: "bg-destructive/10",
       editable: false,
+      expandable: true,
     },
     {
       id: "net",
@@ -80,7 +81,7 @@ export default function SummaryCards() {
       color: "text-warning",
       bgColor: "bg-warning/5 border-warning/20",
       iconBg: "bg-warning/10",
-      editable: false,
+      editable: true,
     },
   ];
 
