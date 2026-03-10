@@ -74,7 +74,7 @@ export default function BudgetEnvelopes() {
           const barColor = pct > 90 ? "bg-red-500" : pct > 70 ? "bg-amber-500" : "bg-emerald-500";
 
           return (
-            <div key={b.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
+            <div key={b.id} className="group/card rounded-xl border border-border bg-card p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-foreground">{b.name}</span>
                 {editingId === b.id ? (
@@ -82,7 +82,7 @@ export default function BudgetEnvelopes() {
                     <Check className="h-3 w-3" />
                   </button>
                 ) : (
-                  <button onClick={() => startEdit(b)} className="p-1 rounded hover:bg-muted text-muted-foreground">
+                  <button onClick={() => startEdit(b)} className="p-1 rounded hover:bg-muted text-muted-foreground opacity-0 group-hover/card:opacity-100 transition-opacity">
                     <Pencil className="h-3 w-3" />
                   </button>
                 )}

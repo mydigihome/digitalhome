@@ -57,10 +57,10 @@ export default function NetWorthHero() {
 
   return (
     <section id="net-worth">
-      <div className="rounded-2xl border border-border bg-card p-8 md:p-10 text-center relative">
+      <div className="group rounded-2xl border border-border bg-card p-8 md:p-10 text-center relative">
         <button
           onClick={() => setEditing(!editing)}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
         >
           {editing ? <X className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
         </button>

@@ -179,7 +179,7 @@ export default function SubscriptionsSection() {
               </thead>
               <tbody>
                 {subs.map((s, i) => (
-                  <tr key={s.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${s.status !== "active" ? "opacity-50" : ""}`}>
+                  <tr key={s.id} className={`group/row border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${s.status !== "active" ? "opacity-50" : ""}`}>
                     <td className="px-3 py-2.5 text-muted-foreground">{i + 1}</td>
                     <td className="px-3 py-2.5 font-medium text-foreground">{s.name}</td>
                     <td className="px-3 py-2.5 text-muted-foreground">{s.category}</td>

@@ -120,7 +120,7 @@ export default function SavingsSection() {
             const monthlyNeeded = remaining / monthsLeft;
 
             return (
-              <motion.div key={g.id} layout className={`rounded-xl border p-5 space-y-3 ${g.color}`}>
+              <motion.div key={g.id} layout className={`group/goal rounded-xl border p-5 space-y-3 ${g.color}`}>
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">{g.name}</h3>

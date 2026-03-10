@@ -44,8 +44,8 @@ export default function CreditScoreWheel() {
 
   return (
     <section>
-      <div className="rounded-2xl border border-border bg-card p-8 text-center relative">
-        <div className="absolute top-4 right-4 flex gap-1">
+      <div className="group rounded-2xl border border-border bg-card p-8 text-center relative">
+        <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={() => setShowInfo(!showInfo)} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
             <Info className="h-4 w-4" />
           </button>
