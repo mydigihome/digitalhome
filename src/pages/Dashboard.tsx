@@ -98,6 +98,46 @@ interface EverydayLink {
   id: string; name: string; icon: string; url: string;
 }
 
+/* ── Scripture Data ── */
+const SCRIPTURES: Record<string, { text: string; ref: string }[]> = {
+  christianity: [
+    { text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", ref: "Jeremiah 29:11" },
+    { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+    { text: "Trust in the Lord with all your heart and lean not on your own understanding.", ref: "Proverbs 3:5" },
+    { text: "Be strong and courageous. Do not be afraid; do not be discouraged.", ref: "Joshua 1:9" },
+    { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
+  ],
+  islam: [
+    { text: "Verily, with hardship comes ease.", ref: "Quran 94:6" },
+    { text: "And He found you lost and guided you.", ref: "Quran 93:7" },
+    { text: "So remember Me; I will remember you.", ref: "Quran 2:152" },
+  ],
+  judaism: [
+    { text: "The Lord bless you and keep you; the Lord make His face shine on you.", ref: "Numbers 6:24-25" },
+    { text: "Be strong and of good courage; do not be afraid.", ref: "Deuteronomy 31:6" },
+  ],
+  hinduism: [
+    { text: "You have the right to work, but never to the fruit of work.", ref: "Bhagavad Gita 2:47" },
+    { text: "The soul is neither born, and nor does it die.", ref: "Bhagavad Gita 2:20" },
+  ],
+  buddhism: [
+    { text: "Peace comes from within. Do not seek it without.", ref: "Buddha" },
+    { text: "What we think, we become.", ref: "Buddha" },
+  ],
+};
+
+function ScriptureContent({ religion }: { religion?: string }) {
+  const verses = SCRIPTURES[religion || ""] || SCRIPTURES.christianity;
+  const today = new Date().getDate();
+  const verse = verses[today % verses.length];
+  return (
+    <>
+      <p className="text-sm italic leading-relaxed" style={{ color: "#374151" }}>{verse.text}</p>
+      <p className="text-xs mt-2" style={{ color: "#9CA3AF" }}>— {verse.ref}</p>
+    </>
+  );
+}
+
 export default function Dashboard() {
   const { profile, user } = useAuth();
   const { data: projects = [] } = useProjects();
@@ -291,9 +331,10 @@ export default function Dashboard() {
         >
           {hasCover ? (
             <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
-          )}
+          ) : (() => {
+            const bc = (prefs as any)?.banner_color || '#6366F1';
+            return <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${bc}15, ${bc}05)` }} />;
+          })()}
 
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -562,6 +603,17 @@ export default function Dashboard() {
               })}
             </div>
           </motion.div>
+
+          {/* DAILY SCRIPTURE (mobile) */}
+          {(prefs as any)?.show_scripture_card && (
+            <motion.div {...stagger(8)} className="p-6 mb-4" style={glass}>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">📖</span>
+                <h3 className="font-bold text-sm" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+              </div>
+              <ScriptureContent religion={(prefs as any)?.religion} />
+            </motion.div>
+          )}
 
         </div>
 
@@ -867,6 +919,17 @@ export default function Dashboard() {
                     style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }} />
                 </div>
               </motion.div>
+
+              {/* DAILY SCRIPTURE (desktop) */}
+              {(prefs as any)?.show_scripture_card && (
+                <motion.div {...stagger(5)} className="p-5 mb-4" style={glass}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">📖</span>
+                    <h3 className="font-bold text-sm" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+                  </div>
+                  <ScriptureContent religion={(prefs as any)?.religion} />
+                </motion.div>
+              )}
 
             </div>
           </div>

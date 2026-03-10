@@ -1954,7 +1954,9 @@ export type Database = {
           accent_colors: Json | null
           app_banner_text: string | null
           app_banner_url: string | null
+          banner_color: string | null
           bio: string | null
+          content_planner_access: boolean | null
           created_at: string
           custom_folder_colors: boolean | null
           dashboard_cover: string | null
@@ -1971,6 +1973,8 @@ export type Database = {
           onboarding_completed: boolean | null
           onboarding_focus: string | null
           profile_photo: string | null
+          religion: string | null
+          show_scripture_card: boolean | null
           sidebar_theme: string | null
           student_email: string | null
           student_verified: boolean | null
@@ -1992,7 +1996,9 @@ export type Database = {
           accent_colors?: Json | null
           app_banner_text?: string | null
           app_banner_url?: string | null
+          banner_color?: string | null
           bio?: string | null
+          content_planner_access?: boolean | null
           created_at?: string
           custom_folder_colors?: boolean | null
           dashboard_cover?: string | null
@@ -2009,6 +2015,8 @@ export type Database = {
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
+          religion?: string | null
+          show_scripture_card?: boolean | null
           sidebar_theme?: string | null
           student_email?: string | null
           student_verified?: boolean | null
@@ -2030,7 +2038,9 @@ export type Database = {
           accent_colors?: Json | null
           app_banner_text?: string | null
           app_banner_url?: string | null
+          banner_color?: string | null
           bio?: string | null
+          content_planner_access?: boolean | null
           created_at?: string
           custom_folder_colors?: boolean | null
           dashboard_cover?: string | null
@@ -2047,6 +2057,8 @@ export type Database = {
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
+          religion?: string | null
+          show_scripture_card?: boolean | null
           sidebar_theme?: string | null
           student_email?: string | null
           student_verified?: boolean | null
