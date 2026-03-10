@@ -331,9 +331,10 @@ export default function Dashboard() {
         >
           {hasCover ? (
             <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-400/80 via-orange-300/70 to-amber-200/60" />
-          )}
+          ) : (() => {
+            const bc = (prefs as any)?.banner_color || '#6366F1';
+            return <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${bc}15, ${bc}05)` }} />;
+          })()}
 
           <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
             <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
