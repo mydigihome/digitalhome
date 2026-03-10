@@ -67,7 +67,7 @@ export default function WealthTrackerPage() {
   // User preferences for header
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
-  const updateFinances = useUpdateFinances();
+  const upsertPrefs = useUpsertPreferences();
 
   // Market data
   const { data: btcQuote } = useMarketQuote("BTC/USD");
