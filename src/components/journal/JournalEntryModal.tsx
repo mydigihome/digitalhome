@@ -252,7 +252,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            transition={{ type: "spring", damping: 35, stiffness: 400 }}
             className="fixed inset-0 z-50 flex flex-col"
             style={{ backgroundColor: "#F9FAFB" }}
           >
