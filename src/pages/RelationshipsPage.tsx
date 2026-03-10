@@ -213,6 +213,7 @@ export default function RelationshipsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const { data: contacts, isLoading } = useContacts({ type: filter, search });
+  const createContact = useCreateContact();
 
   // Priority contacts: overdue 30+ days
   const overdueContacts = (contacts || []).filter((c) => {
