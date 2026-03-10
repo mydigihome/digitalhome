@@ -28,6 +28,7 @@ import PublicEventPage from "./pages/PublicEventPage";
 import TemplateShop from "./pages/TemplateShop";
 import TemplateSuccess from "./pages/TemplateSuccess";
 import AdminTemplates from "./pages/AdminTemplates";
+import RelationshipsPage from "./pages/RelationshipsPage";
 
 const queryClient = new QueryClient();
 
