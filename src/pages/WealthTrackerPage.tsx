@@ -1,19 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import { useUserFinances } from "@/hooks/useUserFinances";
+import { useUserFinances, useUpdateFinances } from "@/hooks/useUserFinances";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useLoans } from "@/hooks/useLoans";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketQuote } from "@/hooks/useMarketData";
 import { useTradingPairs, TradingPair } from "@/hooks/useTradingPairs";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
+import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 /* ─── helpers ─── */
 const glass: React.CSSProperties = {
