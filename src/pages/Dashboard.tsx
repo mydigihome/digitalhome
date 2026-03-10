@@ -924,16 +924,6 @@ export default function Dashboard() {
                 </div>
               </motion.div>
 
-              {/* DAILY SCRIPTURE (desktop) */}
-              {(prefs as any)?.show_scripture_card && (
-                <motion.div {...stagger(5)} className="p-5 mb-4" style={glass}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">📖</span>
-                    <h3 className="font-bold text-sm" style={{ color: "#1F2937" }}>Daily Scripture</h3>
-                  </div>
-                  <ScriptureContent religion={(prefs as any)?.religion} />
-                </motion.div>
-              )}
 
             </div>
           </div>
