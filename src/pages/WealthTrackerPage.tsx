@@ -406,15 +406,38 @@ export default function WealthTrackerPage() {
                 className="grid grid-cols-2 gap-3"
               >
                 {[
-                  { label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600" },
-                  { label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600" },
-                  { label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600" },
-                  { label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600" },
+                  { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600", editColor: "#10B981" },
+                  { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600", editColor: "#EF4444" },
+                  { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600", editColor: "#3B82F6" },
+                  { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600", editColor: "#F59E0B" },
                 ].map((c) => (
-                  <div key={c.label} style={glass} className="p-4 flex flex-col gap-2">
+                  <div key={c.label} style={glass} className="p-4 flex flex-col gap-2 relative group">
+                    {c.key !== "net" && c.key !== "expenses" && (
+                      <button
+                        onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
+                        style={{ backgroundColor: c.editColor }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    )}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
                     <span className="text-xs text-slate-500 font-medium">{c.label}</span>
-                    <span className="text-lg font-bold text-slate-900">{fmt(c.value)}</span>
+                    {editingCard === c.key ? (
+                      <div className="flex gap-1">
+                        <Input
+                          type="number"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="h-7 text-sm w-24"
+                          autoFocus
+                          onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }}
+                        />
+                        <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-white">✓</button>
+                      </div>
+                    ) : (
+                      <span className="text-lg font-bold text-slate-900">{fmt(c.value)}</span>
+                    )}
                   </div>
                 ))}
               </motion.div>
