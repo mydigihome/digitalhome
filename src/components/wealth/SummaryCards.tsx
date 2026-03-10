@@ -33,6 +33,9 @@ export default function SummaryCards() {
     if (editingCard === "income") {
       await upsertFinances.mutateAsync({ monthly_income: parseFloat(editValue) || 0, onboarding_completed: true });
       toast.success("Income updated");
+    } else if (editingCard === "debt") {
+      await upsertFinances.mutateAsync({ total_debt: parseFloat(editValue) || 0, onboarding_completed: true });
+      toast.success("Debt updated");
     }
     setEditingCard(null);
   };
@@ -61,6 +64,7 @@ export default function SummaryCards() {
       bgColor: "bg-destructive/5 border-destructive/20",
       iconBg: "bg-destructive/10",
       editable: false,
+      expandable: true,
     },
     {
       id: "net",
@@ -80,7 +84,7 @@ export default function SummaryCards() {
       color: "text-warning",
       bgColor: "bg-warning/5 border-warning/20",
       iconBg: "bg-warning/10",
-      editable: false,
+      editable: true,
     },
   ];
 
@@ -100,9 +104,9 @@ export default function SummaryCards() {
 
           return (
             <div key={card.id} className="space-y-0">
-              <button
-                onClick={() => card.id === "expenses" ? toggleExpand(card.id) : undefined}
-                className={`group w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${card.id === "expenses" ? "cursor-pointer" : "cursor-default"}`}
+              <div
+                onClick={() => (card as any).expandable ? toggleExpand(card.id) : undefined}
+                className={`group w-full rounded-2xl border p-5 transition-all hover:shadow-md ${card.bgColor} ${(card as any).expandable ? "cursor-pointer" : "cursor-default"}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className={`p-2 rounded-xl ${card.iconBg}`}>
@@ -141,7 +145,7 @@ export default function SummaryCards() {
                     {card.id !== "debt" && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
                   </p>
                 )}
-              </button>
+              </div>
             </div>
           );
         })}
