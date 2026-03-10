@@ -17,6 +17,7 @@ import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /* ─── helpers ─── */
