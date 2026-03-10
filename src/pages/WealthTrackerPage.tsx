@@ -60,6 +60,14 @@ export default function WealthTrackerPage() {
   const [showAddPair, setShowAddPair] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
+  const [isEditingHeader, setIsEditingHeader] = useState(false);
+  const [editingCard, setEditingCard] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  // User preferences for header
+  const { data: prefs } = useUserPreferences();
+  const upsertPrefs = useUpsertPreferences();
+  const updateFinances = useUpdateFinances();
 
   // Market data
   const { data: btcQuote } = useMarketQuote("BTC/USD");
