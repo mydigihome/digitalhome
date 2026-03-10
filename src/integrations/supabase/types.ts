@@ -2004,6 +2004,8 @@ export type Database = {
           accent_colors: Json | null
           app_banner_text: string | null
           app_banner_url: string | null
+          applications_header_type: string | null
+          applications_header_value: string | null
           banner_color: string | null
           bio: string | null
           content_planner_access: boolean | null
@@ -2021,6 +2023,8 @@ export type Database = {
           id: string
           is_subscribed: boolean | null
           location: string | null
+          money_header_type: string | null
+          money_header_value: string | null
           onboarding_completed: boolean | null
           onboarding_focus: string | null
           profile_photo: string | null
@@ -2049,6 +2053,8 @@ export type Database = {
           accent_colors?: Json | null
           app_banner_text?: string | null
           app_banner_url?: string | null
+          applications_header_type?: string | null
+          applications_header_value?: string | null
           banner_color?: string | null
           bio?: string | null
           content_planner_access?: boolean | null
@@ -2066,6 +2072,8 @@ export type Database = {
           id?: string
           is_subscribed?: boolean | null
           location?: string | null
+          money_header_type?: string | null
+          money_header_value?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
@@ -2094,6 +2102,8 @@ export type Database = {
           accent_colors?: Json | null
           app_banner_text?: string | null
           app_banner_url?: string | null
+          applications_header_type?: string | null
+          applications_header_value?: string | null
           banner_color?: string | null
           bio?: string | null
           content_planner_access?: boolean | null
@@ -2111,6 +2121,8 @@ export type Database = {
           id?: string
           is_subscribed?: boolean | null
           location?: string | null
+          money_header_type?: string | null
+          money_header_value?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           profile_photo?: string | null
