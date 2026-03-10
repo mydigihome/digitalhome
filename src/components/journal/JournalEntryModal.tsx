@@ -96,7 +96,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
       setMediaUrls([]);
       editor?.commands.clearContent();
       setShowWelcome(true);
-      setTimeout(() => setShowWelcome(false), 3000);
+      setTimeout(() => setShowWelcome(false), 1500);
     }
   }, [open, entry, editor]);
 

@@ -72,7 +72,7 @@
     --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.15);
 
     --sidebar: 0 0% 100%;
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }

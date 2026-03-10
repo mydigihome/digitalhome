@@ -24,7 +24,7 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
-import "@fontsource/playfair-display/400-italic.css";
+/* removed @fontsource import - using system font */
 
 /* ── Helpers ── */
 function getGreeting() {
