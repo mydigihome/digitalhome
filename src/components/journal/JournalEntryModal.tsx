@@ -292,7 +292,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
                   className="absolute inset-0 z-10 flex items-center justify-center"
                   style={{ backgroundColor: "rgba(249,250,251,0.9)" }}
                 >
-                  <p className="text-lg text-center px-8" style={{ fontFamily: "'Instrument Serif', serif", fontStyle: "italic", color: "#6B7280" }}>
+                  <p className="text-lg text-center px-8 italic" style={{ color: "#6B7280" }}>
                     Hi {firstName}, let your thoughts go here...
                   </p>
                 </motion.div>
