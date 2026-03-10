@@ -195,7 +195,7 @@ export default function Dashboard() {
       return { ...p, percentage: total > 0 ? Math.round((done / total) * 100) : 0, total, done };
     })
     .sort((a, b) => b.total - a.total)
-    .slice(0, 2);
+    .slice(0, 3);
 
   const agendaItems = [
     ...(todayEvents || []).map(e => ({
@@ -320,312 +320,393 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* ═══ MAIN CONTENT — single column ═══ */}
-        <div className="max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
+        {/* ═══ MAIN CONTENT ═══ */}
+        {/* Mobile: single column max-w-xl | Desktop: 2-column max-w-6xl */}
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-4 pb-28 -mt-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:gap-6">
 
-          {/* MOMENTUM & HABITS — two cards */}
-          <motion.div {...stagger(1)} className="grid grid-cols-2 gap-3 mb-5">
-            {/* Momentum */}
-            <div className="p-4 text-center" style={glass}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#6366F1" }}>Momentum</p>
-              <div className="flex justify-center">
-                <ProgressRing progress={momentum} size={80} strokeWidth={7} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
-                  <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                </ProgressRing>
-              </div>
-              <p className="text-[10px] font-medium mt-2" style={{ color: "#6B7280" }}>Daily Goal</p>
-            </div>
+            {/* ═══ LEFT COLUMN (Desktop ~65%) ═══ */}
+            <div className="flex-1 lg:flex-[2] min-w-0">
 
-            {/* Habits */}
-            <button
-              onClick={() => habits.length > 0 && setSelectedHabit(habits[0])}
-              className="p-4 text-center cursor-pointer hover:opacity-90 transition"
-              style={glass}
-            >
-              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#10B981" }}>Habits</p>
-              <div className="flex justify-center">
-                <ProgressRing progress={habitsProgress} size={80} strokeWidth={7} gradientId="h-grad" color1="#10B981" color2="#34D399">
-                  <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
-                </ProgressRing>
-              </div>
-              <p className="text-[10px] font-medium mt-2" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
-            </button>
-          </motion.div>
-
-          {/* TODAY'S AGENDA */}
-          <motion.div {...stagger(2)} className="p-5 mb-4" style={glass}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
-              <button onClick={() => navigate("/calendar")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>
-                View All
-              </button>
-            </div>
-            {agendaItems.length > 0 ? (
-              <div className="space-y-0">
-                {agendaItems.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 py-3" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                    <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
+              {/* MARKET WATCH */}
+              <motion.div {...stagger(1)} className="mb-4 overflow-hidden" style={glass}>
+                <div className="px-5 pt-5 pb-3">
+                  <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="text-xs font-semibold" style={{ color: "#6B7280" }}>{item.time}</p>
-                      <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
-                      {item.subtitle && <p className="text-xs" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Market Watch</h2>
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide" style={{ color: "#10B981" }}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                          Live Index
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium" style={{ color: "#9CA3AF" }}>{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: "#1F2937" }}>
+                        ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <div className={`text-sm font-semibold flex items-center justify-end gap-1 mt-0.5 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {priceChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                        {priceChangePercent >= 0 ? "+" : ""}{priceChangePercent.toFixed(2)}% Today
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No events today</p>
-            )}
-          </motion.div>
 
-          {/* QUICK TO-DOS */}
-          <motion.div {...stagger(3)} className="p-5 mb-4" style={glass}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
-              <span className="text-sm font-semibold" style={{ color: "#6366F1" }}>Edit List</span>
-            </div>
-            <div className="space-y-0">
-              {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                  <button
-                    onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                    className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition hover:border-indigo-400"
-                    style={{ borderColor: "#D1D5DB" }}
-                  />
-                  <span className="text-[15px]" style={{ color: "#1F2937" }}>{todo.text}</span>
-                </div>
-              ))}
-              {todos.filter(t => t.completed).slice(0, 2).map(todo => (
-                <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                  <div
-                    className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </div>
-                  <span className="text-[15px] line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
-                </div>
-              ))}
-              <input
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
-                placeholder="Add a quick note..."
-                className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
-                style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
-              />
-            </div>
-          </motion.div>
-
-          {/* STOCK / TRADING WIDGET */}
-          <motion.div {...stagger(4)} className="mb-4 overflow-hidden" style={glass}>
-            <div className="px-5 pt-5 pb-3">
-              {/* Header with stock info */}
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{selectedStock}</span>
-                    <span className="text-xs" style={{ color: "#9CA3AF" }}>{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
-                  </div>
-                  <div className="text-2xl font-bold" style={{ color: "#1F2937" }}>
-                    ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                  <div className={`text-sm font-semibold flex items-center gap-1 mt-0.5 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {priceChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                    {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)} ({priceChangePercent >= 0 ? "+" : ""}{priceChangePercent.toFixed(2)}%)
-                  </div>
-                </div>
-                {/* Stock selector */}
-                <div className="relative" data-stock-dropdown>
-                  <button
-                    onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition"
-                    style={{ background: "#F3F4F6" }}
-                  >
-                    <ChevronDown className="w-4 h-4" style={{ color: "#6B7280" }} />
-                  </button>
-                  {stockDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                      {stockOptions.map((stock) => (
+                  {/* Stock selector + Timeframes */}
+                  <div className="flex items-center justify-between">
+                    <div className="relative" data-stock-dropdown>
+                      <button
+                        onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-sm font-semibold"
+                        style={{ background: "#F3F4F6", color: "#374151" }}
+                      >
+                        {selectedStock}
+                        <ChevronDown className="w-3.5 h-3.5" style={{ color: "#6B7280" }} />
+                      </button>
+                      {stockDropdownOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                          {stockOptions.map((stock) => (
+                            <button
+                              key={stock.symbol}
+                              onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
+                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition text-left ${selectedStock === stock.symbol ? 'bg-indigo-50' : ''}`}
+                            >
+                              <div>
+                                <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{stock.symbol}</span>
+                                <span className="text-xs ml-2" style={{ color: "#9CA3AF" }}>{stock.name}</span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                      {TIMEFRAMES.map((tf) => (
                         <button
-                          key={stock.symbol}
-                          onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                          className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition text-left ${selectedStock === stock.symbol ? 'bg-indigo-50' : ''}`}
+                          key={tf.label}
+                          onClick={() => setSelectedTimeframe(tf)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${
+                            selectedTimeframe.label === tf.label
+                              ? 'bg-indigo-600 text-white'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                          style={selectedTimeframe.label !== tf.label ? { background: "#F1F5F9" } : undefined}
                         >
-                          <div>
-                            <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{stock.symbol}</span>
-                            <span className="text-xs ml-2" style={{ color: "#9CA3AF" }}>{stock.name}</span>
-                          </div>
+                          {tf.label}
                         </button>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Chart */}
+                <div className="px-3 pb-3">
+                  {chartData.length > 0 ? (
+                    <LiveChart data={chartData} symbol={selectedStock} />
+                  ) : (
+                    <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
+                      Loading chart...
+                    </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Timeframe buttons */}
-              <div className="flex gap-1 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
-                {TIMEFRAMES.map((tf) => (
-                  <button
-                    key={tf.label}
-                    onClick={() => setSelectedTimeframe(tf)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${
-                      selectedTimeframe.label === tf.label
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                    style={selectedTimeframe.label !== tf.label ? { background: "#F1F5F9" } : undefined}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="px-3 pb-3">
-              {chartData.length > 0 ? (
-                <LiveChart data={chartData} symbol={selectedStock} />
-              ) : (
-                <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
-                  Loading chart...
-                </div>
-              )}
-            </div>
-
-            {/* Open in TradingView */}
-            <div className="px-5 pb-4">
-              <a
-                href={`https://www.tradingview.com/symbols/${selectedStock}/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition hover:bg-gray-100"
-                style={{ color: "#6366F1", background: "#EEF2FF" }}
-              >
-                Open in TradingView
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </motion.div>
-
-          {/* ACTIVE PROJECTS */}
-          <motion.div {...stagger(5)} className="p-5 mb-4" style={glass}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
-              <button onClick={() => navigate("/projects")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>
-                View All
-              </button>
-            </div>
-            {activeProjects.length === 0 ? (
-              <div className="flex flex-col items-center py-6 text-center">
-                <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {activeProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => navigate(`/project/${project.id}`)}
-                    className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left"
-                  >
-                    <div className="h-9 w-9 rounded-lg bg-indigo-100 flex items-center justify-center text-lg flex-shrink-0">
-                      {project.icon || "📁"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: "#1F2937" }}>{project.name}</p>
-                      <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{project.done}/{project.total} tasks</p>
-                    </div>
-                    <span className="text-sm font-bold" style={{ color: "#6366F1" }}>{project.percentage}%</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.div>
-
-          {/* MONEY REMINDERS */}
-          <motion.div {...stagger(6)} className="p-5 mb-4" style={{ ...glass, background: "rgba(254,242,242,0.5)", border: "1px solid rgba(254,202,202,0.4)" }}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Money Reminders</h2>
-              <button onClick={() => navigate("/finance/wealth")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>Manage</button>
-            </div>
-            {moneyReminders.length > 0 ? (
-              <div className="space-y-0">
-                {moneyReminders.map((bill, idx) => (
-                  <div key={idx} className="flex items-center gap-3 py-3" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.1)" : "none" }}>
-                    <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">{bill.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: "#1F2937" }}>{bill.name}</p>
-                    </div>
-                    <span className="text-base font-bold" style={{ color: "#EF4444" }}>-${bill.amount.toFixed(2)}</span>
+              {/* MOMENTUM & HABITS — horizontal cards side by side */}
+              <motion.div {...stagger(2)} className="grid grid-cols-2 gap-3 mb-5">
+                {/* Momentum */}
+                <div className="p-4 flex items-center gap-4" style={glass}>
+                  <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
+                    <span className="text-[18px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  </ProgressRing>
+                  <div className="text-left">
+                    <p className="text-sm font-bold" style={{ color: "#1F2937" }}>Momentum Score</p>
+                    <p className="text-xs" style={{ color: "#9CA3AF" }}>Based on active tasks</p>
+                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#10B981" }}>+5% increase</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No recurring expenses</p>
-            )}
-          </motion.div>
+                </div>
 
-          {/* EVERYDAY LINKS */}
-          <motion.div {...stagger(7)} className="p-5 mb-4" style={glass}>
-            <h2 className="text-[17px] font-bold mb-4" style={{ color: "#1F2937" }}>Everyday Links</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {everydayLinks.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-2 group"
+                {/* Habits */}
+                <button
+                  onClick={() => habits.length > 0 && setSelectedHabit(habits[0])}
+                  className="p-4 flex items-center gap-4 cursor-pointer hover:opacity-90 transition"
+                  style={glass}
                 >
-                  <div className={`w-14 h-14 rounded-full ${linkBgs[link.icon] || "bg-gray-100"} flex items-center justify-center transition group-hover:shadow-md group-hover:scale-105`}>
-                    {linkIcons[link.icon] || <LinkIcon className="w-6 h-6 text-gray-500" />}
+                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="h-grad" color1="#10B981" color2="#34D399">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px]">🔥</span>
+                      <span className="text-[14px] font-bold" style={{ color: "#1F2937" }}>{streakDays}</span>
+                    </div>
+                  </ProgressRing>
+                  <div className="text-left">
+                    <p className="text-sm font-bold" style={{ color: "#1F2937" }}>Habit Tracker</p>
+                    <p className="text-xs" style={{ color: "#9CA3AF" }}>{habits[0]?.name || "Morning Meditation"}</p>
+                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#10B981" }}>{habitsProgress}% Consistency</p>
                   </div>
-                  <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>{link.name}</span>
-                </a>
-              ))}
-              <button className="flex flex-col items-center gap-2 group">
-                <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition group-hover:border-indigo-400">
-                  <Plus className="w-5 h-5 text-gray-400 group-hover:text-indigo-500" />
-                </div>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
-              </button>
-            </div>
-          </motion.div>
+                </button>
+              </motion.div>
 
-          {/* RECENT JOURNAL */}
-          <motion.div {...stagger(8)} className="p-5 mb-4" style={glass}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
-              <button onClick={() => navigate("/journal?new=true")} className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
-                + New Entry
-              </button>
-            </div>
-            <div className="space-y-3">
-              {(journalEntries.length > 0 ? journalEntries : [
-                { id: "sample", title: "Untitled Entry", created_at: new Date().toISOString(), content_preview: "Today I finally finished the vision pro design sync and the team loved the new glassmorphic direction..." },
-              ]).slice(0, 3).map((entry: any) => {
-                const entryDate = new Date(entry.created_at);
-                const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d").toUpperCase();
-                return (
-                  <button
-                    key={entry.id}
-                    onClick={() => navigate("/journal")}
-                    className="w-full p-4 bg-white rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left"
+              {/* LINKS — horizontal pills */}
+              <motion.div {...stagger(3)} className="flex items-center gap-3 mb-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                <span className="text-[10px] font-bold uppercase tracking-widest flex-shrink-0" style={{ color: "#6366F1" }}>Links</span>
+                {everydayLinks.map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition flex-shrink-0"
                   >
-                    <p className="text-[15px] font-semibold mb-0.5" style={{ color: "#1F2937" }}>{entry.title || "Untitled Entry"}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: "#6366F1" }}>{dateLabel}</p>
-                    <p className="text-sm leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {entry.content_preview || "No content yet..."}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
+                    <div className={`w-6 h-6 rounded-full ${linkBgs[link.icon] || "bg-gray-100"} flex items-center justify-center`}>
+                      {linkIcons[link.icon] ? <span className="scale-[0.55]">{linkIcons[link.icon]}</span> : <LinkIcon className="w-3 h-3 text-gray-500" />}
+                    </div>
+                    <span className="text-xs font-semibold" style={{ color: "#374151" }}>{link.name}</span>
+                  </a>
+                ))}
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-gray-200 hover:border-indigo-300 transition flex-shrink-0">
+                  <Plus className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-semibold" style={{ color: "#9CA3AF" }}>New</span>
+                </button>
+              </motion.div>
 
+              {/* ACTIVE PROJECTS — 3 columns on desktop */}
+              <motion.div {...stagger(4)} className="mb-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
+                  <button onClick={() => navigate("/projects")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>
+                    View All
+                  </button>
+                </div>
+                {activeProjects.length === 0 ? (
+                  <div className="flex flex-col items-center py-6 text-center" style={glass}>
+                    <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
+                    <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}>
+                      <Plus className="mr-1.5 h-3.5 w-3.5" /> Create one
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    {projects.filter(p => !p.archived).slice(0, 3).map((project) => {
+                      const pt = tasks.filter(t => t.project_id === project.id);
+                      const done = pt.filter(t => t.status === "done").length;
+                      const total = pt.length;
+                      return (
+                        <button
+                          key={project.id}
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          className="p-5 bg-white rounded-[20px] border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left"
+                        >
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg mb-3"
+                            style={{ background: project.color ? `${project.color}20` : "#EEF2FF" }}
+                          >
+                            {project.icon || "📁"}
+                          </div>
+                          <p className="text-sm font-bold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
+                          <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>{project.goal || `${done}/${total} tasks`}</p>
+                          <div className="flex items-center -space-x-2">
+                            <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white" />
+                            <div className="w-7 h-7 rounded-full bg-gray-300 border-2 border-white" />
+                            {total > 2 && (
+                              <div className="w-7 h-7 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-white">+{total - 2}</span>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* RECENT REFLECTIONS — 3 columns on desktop */}
+              <motion.div {...stagger(5)} className="mb-4" style={glass}>
+                <div className="p-5 pb-0 flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Recent Reflections</h2>
+                    <p className="text-xs" style={{ color: "#10B981" }}>Capture your thoughts daily</p>
+                  </div>
+                  <button onClick={() => navigate("/journal?new=true")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>
+                    New Journal Entry
+                  </button>
+                </div>
+                <div className="px-5 pb-5 grid grid-cols-1 lg:grid-cols-3 gap-3">
+                  {(journalEntries.length > 0 ? journalEntries : [
+                    { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), content_preview: "Woke up feeling incredibly refreshed today. The meditation session really helped clear the fog before starting the major project review...", mood_emoji: "❤️" },
+                    { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), content_preview: "Today was challenging. Sometimes the market doesn't go the way you expect, but it's important to stay disciplined with the long-term plan...", mood_emoji: "🌧" },
+                    { id: "sample3", title: "Small Wins Matter", created_at: new Date(Date.now() - 172800000).toISOString(), content_preview: "The new design system component was finally approved. It feels good to see the months of effort co...", mood_emoji: "⚙️" },
+                  ]).slice(0, 3).map((entry: any) => {
+                    const entryDate = new Date(entry.created_at);
+                    const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d, yyyy").toUpperCase();
+                    return (
+                      <button
+                        key={entry.id}
+                        onClick={() => navigate("/journal")}
+                        className="p-4 bg-white rounded-[16px] border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left relative"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#6366F1" }}>{dateLabel}</p>
+                          <span className="text-lg opacity-40">{entry.mood_emoji || "❤️"}</span>
+                        </div>
+                        <p className="text-[15px] font-semibold mb-1" style={{
+                          fontFamily: "'Instrument Serif', 'Playfair Display', Georgia, serif",
+                          fontStyle: "italic",
+                          color: "#1F2937"
+                        }}>{entry.title || "Untitled Entry"}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                          {entry.content_preview || "No content yet..."}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+
+            </div>
+
+            {/* ═══ RIGHT COLUMN (Desktop ~35%) ═══ */}
+            <div className="lg:flex-1 lg:min-w-[320px] lg:max-w-[380px]">
+
+              {/* MONEY REMINDERS — solid dark card */}
+              <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px]" style={{
+                background: "linear-gradient(135deg, #1E293B 0%, #334155 100%)",
+                border: "none",
+              }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <span className="text-base">💳</span>
+                  </div>
+                  <h2 className="text-[17px] font-bold text-white">Money Reminders</h2>
+                </div>
+                {moneyReminders.length > 0 ? (
+                  <div className="space-y-0">
+                    {moneyReminders.map((bill, idx) => (
+                      <div key={idx} className="flex items-center justify-between py-3" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+                        <div>
+                          <p className="text-sm font-medium text-white">{bill.name}</p>
+                          <p className="text-xs text-white/50">Due soon</p>
+                        </div>
+                        <span className="text-base font-bold" style={{ color: "#EF4444" }}>${bill.amount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-0">
+                    <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                      <div>
+                        <p className="text-sm font-medium text-white">Credit Card Due</p>
+                        <p className="text-xs text-white/50">March 5th</p>
+                      </div>
+                      <span className="text-base font-bold" style={{ color: "#EF4444" }}>$1,240.00</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <div>
+                        <p className="text-sm font-medium text-white">Rent Payment</p>
+                        <p className="text-xs text-white/50">March 1st</p>
+                      </div>
+                      <span className="text-base font-bold" style={{ color: "#EF4444" }}>$2,800.00</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* TODAY'S AGENDA */}
+              <motion.div {...stagger(2)} className="p-5 mb-4" style={glass}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
+                  <button onClick={() => navigate("/calendar")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>
+                    View All
+                  </button>
+                </div>
+                {agendaItems.length > 0 ? (
+                  <div className="space-y-0">
+                    {agendaItems.map((item, idx) => {
+                      const colors = ["#6366F1", "#10B981", "#EF4444"];
+                      return (
+                        <div key={idx} className="flex gap-4 py-3" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
+                          <div className="w-1 rounded-sm flex-shrink-0" style={{ background: colors[idx % 3] }} />
+                          <div>
+                            <p className="text-xs font-semibold" style={{ color: colors[idx % 3] }}>{item.time}</p>
+                            <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
+                            {item.subtitle && <p className="text-xs" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-0">
+                    <div className="flex gap-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#6366F1" }} />
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: "#6366F1" }}>09:00 - 10:30</p>
+                        <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Design Systems Sync</p>
+                        <p className="text-xs" style={{ color: "#9CA3AF" }}>Zoom Call with Team</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#10B981" }} />
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: "#10B981" }}>12:00 - 13:00</p>
+                        <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Lunch with Sarah</p>
+                        <p className="text-xs" style={{ color: "#9CA3AF" }}>The Green Cafe</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 py-3">
+                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#EF4444" }} />
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: "#EF4444" }}>15:00 - 16:30</p>
+                        <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Project Review</p>
+                        <p className="text-xs" style={{ color: "#9CA3AF" }}>Strategy Planning</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+
+              {/* QUICK TO-DOS */}
+              <motion.div {...stagger(3)} className="p-5 mb-4" style={glass}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
+                  <span className="text-sm font-semibold" style={{ color: "#6366F1" }}>Edit List</span>
+                </div>
+                <div className="space-y-0">
+                  {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
+                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
+                      <button
+                        onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
+                        className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition hover:border-indigo-400"
+                        style={{ borderColor: "#D1D5DB" }}
+                      />
+                      <span className="text-[15px]" style={{ color: "#1F2937" }}>{todo.text}</span>
+                    </div>
+                  ))}
+                  {todos.filter(t => t.completed).slice(0, 2).map(todo => (
+                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
+                      <div
+                        className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      </div>
+                      <span className="text-[15px] line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                    </div>
+                  ))}
+                  <input
+                    value={newTodoText}
+                    onChange={(e) => setNewTodoText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
+                    placeholder="Add a quick note..."
+                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
+                    style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
+                  />
+                </div>
+              </motion.div>
+
+            </div>
+          </div>
         </div>
       </div>
 
