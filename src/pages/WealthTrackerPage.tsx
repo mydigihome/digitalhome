@@ -555,8 +555,7 @@ export default function WealthTrackerPage() {
 
         {/* ═══ MOBILE LAYOUT ═══ */}
         <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
-          {/* Faith Message */}
-          <FaithMessage />
+          {/* Credit Score */}
           {/* Credit Score */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
