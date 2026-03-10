@@ -1957,6 +1957,7 @@ export type Database = {
           banner_color: string | null
           bio: string | null
           content_planner_access: boolean | null
+          content_planner_is_admin: boolean | null
           created_at: string
           custom_folder_colors: boolean | null
           dashboard_cover: string | null
@@ -1976,9 +1977,11 @@ export type Database = {
           religion: string | null
           show_scripture_card: boolean | null
           sidebar_theme: string | null
+          signup_number: number | null
           student_email: string | null
           student_verified: boolean | null
           subscription_type: string | null
+          template_notifications: boolean | null
           theme_color: string | null
           trial_end_date: string | null
           trial_start_date: string | null
@@ -1999,6 +2002,7 @@ export type Database = {
           banner_color?: string | null
           bio?: string | null
           content_planner_access?: boolean | null
+          content_planner_is_admin?: boolean | null
           created_at?: string
           custom_folder_colors?: boolean | null
           dashboard_cover?: string | null
@@ -2018,9 +2022,11 @@ export type Database = {
           religion?: string | null
           show_scripture_card?: boolean | null
           sidebar_theme?: string | null
+          signup_number?: number | null
           student_email?: string | null
           student_verified?: boolean | null
           subscription_type?: string | null
+          template_notifications?: boolean | null
           theme_color?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -2041,6 +2047,7 @@ export type Database = {
           banner_color?: string | null
           bio?: string | null
           content_planner_access?: boolean | null
+          content_planner_is_admin?: boolean | null
           created_at?: string
           custom_folder_colors?: boolean | null
           dashboard_cover?: string | null
@@ -2060,9 +2067,11 @@ export type Database = {
           religion?: string | null
           show_scripture_card?: boolean | null
           sidebar_theme?: string | null
+          signup_number?: number | null
           student_email?: string | null
           student_verified?: boolean | null
           subscription_type?: string | null
+          template_notifications?: boolean | null
           theme_color?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
