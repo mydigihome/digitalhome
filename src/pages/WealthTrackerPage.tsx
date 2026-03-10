@@ -710,10 +710,11 @@ export default function WealthTrackerPage() {
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
                     <span className="text-sm font-medium text-slate-900">{w.symbol}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                    <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
-                  </div>
+                   <div className="flex gap-2">
+                     <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
+                   </div>
+
                 </div>
               ))}
             </div>
