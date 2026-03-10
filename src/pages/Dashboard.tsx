@@ -98,6 +98,46 @@ interface EverydayLink {
   id: string; name: string; icon: string; url: string;
 }
 
+/* ── Scripture Data ── */
+const SCRIPTURES: Record<string, { text: string; ref: string }[]> = {
+  christianity: [
+    { text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you.", ref: "Jeremiah 29:11" },
+    { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+    { text: "Trust in the Lord with all your heart and lean not on your own understanding.", ref: "Proverbs 3:5" },
+    { text: "Be strong and courageous. Do not be afraid; do not be discouraged.", ref: "Joshua 1:9" },
+    { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
+  ],
+  islam: [
+    { text: "Verily, with hardship comes ease.", ref: "Quran 94:6" },
+    { text: "And He found you lost and guided you.", ref: "Quran 93:7" },
+    { text: "So remember Me; I will remember you.", ref: "Quran 2:152" },
+  ],
+  judaism: [
+    { text: "The Lord bless you and keep you; the Lord make His face shine on you.", ref: "Numbers 6:24-25" },
+    { text: "Be strong and of good courage; do not be afraid.", ref: "Deuteronomy 31:6" },
+  ],
+  hinduism: [
+    { text: "You have the right to work, but never to the fruit of work.", ref: "Bhagavad Gita 2:47" },
+    { text: "The soul is neither born, and nor does it die.", ref: "Bhagavad Gita 2:20" },
+  ],
+  buddhism: [
+    { text: "Peace comes from within. Do not seek it without.", ref: "Buddha" },
+    { text: "What we think, we become.", ref: "Buddha" },
+  ],
+};
+
+function ScriptureContent({ religion }: { religion?: string }) {
+  const verses = SCRIPTURES[religion || ""] || SCRIPTURES.christianity;
+  const today = new Date().getDate();
+  const verse = verses[today % verses.length];
+  return (
+    <>
+      <p className="text-sm italic leading-relaxed" style={{ color: "#374151" }}>{verse.text}</p>
+      <p className="text-xs mt-2" style={{ color: "#9CA3AF" }}>— {verse.ref}</p>
+    </>
+  );
+}
+
 export default function Dashboard() {
   const { profile, user } = useAuth();
   const { data: projects = [] } = useProjects();
