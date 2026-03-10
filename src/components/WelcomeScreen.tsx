@@ -11,8 +11,8 @@ const WelcomeScreen = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShow(false);
-      setTimeout(() => navigate('/dashboard'), 300);
-    }, 300);
+      setTimeout(() => navigate('/dashboard'), 500);
+    }, 500);
     return () => clearTimeout(timer);
   }, [navigate]);
 
