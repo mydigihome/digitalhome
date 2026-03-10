@@ -813,6 +813,14 @@ export default function Dashboard() {
             {/* RIGHT COLUMN (~35%) */}
             <div className="flex-1 min-w-[320px] max-w-[380px]">
 
+              {/* DAILY SCRIPTURE (desktop) */}
+              {(prefs as any)?.show_scripture_card && (
+                <motion.div {...stagger(0)} className="p-5 mb-4" style={glass}>
+                  <h3 className="font-bold text-sm mb-3" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+                  <ScriptureContent religion={(prefs as any)?.religion} />
+                </motion.div>
+              )}
+
               {/* MONEY REMINDERS — solid dark card */}
               <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px]" style={{ background: "linear-gradient(135deg, #1E293B 0%, #334155 100%)" }}>
                 <div className="flex items-center gap-2 mb-4">
