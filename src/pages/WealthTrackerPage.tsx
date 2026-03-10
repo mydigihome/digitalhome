@@ -571,9 +571,18 @@ export default function WealthTrackerPage() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={glass} className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-slate-900">Market Intelligence</h3>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs text-emerald-600 font-semibold">Live</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowAddPair(true)}
+                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
+                  style={{ background: "#6366F1", color: "#fff" }}
+                >
+                  + Add Pair
+                </button>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs text-emerald-600 font-semibold">Live</span>
+                </div>
               </div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
@@ -588,9 +597,27 @@ export default function WealthTrackerPage() {
                 </svg>
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Watchlist</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+              {userPairs.length > 0 ? "Your Pairs" : "Watchlist"}
+            </p>
             <div className="space-y-2">
-              {watchlist.map((w) => (
+              {userPairs.length > 0 ? userPairs.map((pair) => (
+                <div key={pair.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-100 text-indigo-700">{pair.category}</span>
+                    <span className="text-sm font-medium text-slate-900">{pair.symbol}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
+                    <button
+                      onClick={() => { setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                      className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                    >
+                      Plan
+                    </button>
+                  </div>
+                </div>
+              )) : watchlist.map((w) => (
                 <div key={w.symbol} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
@@ -604,6 +631,9 @@ export default function WealthTrackerPage() {
               ))}
             </div>
           </motion.div>
+
+          {/* Active Trading Plans (Mobile) */}
+          <ActiveTradingPlans />
 
           {/* Subscriptions */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={glass} className="p-5">
