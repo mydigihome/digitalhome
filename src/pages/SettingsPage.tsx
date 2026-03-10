@@ -433,6 +433,34 @@ export default function SettingsPage() {
                           <option value="other">Other</option>
                         </select>
                       </div>
+
+                      {/* Religion & Scripture */}
+                      <div className="space-y-2">
+                        <Label>Faith / Religion</Label>
+                        <select
+                          value={(prefs as any)?.religion || ""}
+                          onChange={(e) => upsertPrefs.mutate({ religion: e.target.value || null } as any)}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="">None / Prefer not to say</option>
+                          <option value="christianity">Christianity</option>
+                          <option value="islam">Islam</option>
+                          <option value="judaism">Judaism</option>
+                          <option value="hinduism">Hinduism</option>
+                          <option value="buddhism">Buddhism</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Show Daily Scripture</Label>
+                          <p className="text-xs text-muted-foreground">Display a daily scripture card on your dashboard</p>
+                        </div>
+                        <Switch
+                          checked={(prefs as any)?.show_scripture_card || false}
+                          onCheckedChange={(checked) => upsertPrefs.mutate({ show_scripture_card: checked } as any)}
+                        />
+                      </div>
+
                       <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
                         {saving ? "Saving..." : "Save Profile"}
                       </Button>
