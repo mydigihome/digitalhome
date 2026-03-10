@@ -145,7 +145,7 @@ export default function SummaryCards() {
                     {card.id !== "debt" && <span className="text-sm font-normal text-muted-foreground">/mo</span>}
                   </p>
                 )}
-              </button>
+              </div>
             </div>
           );
         })}
