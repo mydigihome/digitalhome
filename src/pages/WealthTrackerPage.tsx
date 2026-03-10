@@ -13,6 +13,7 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
+import TradeModal from "@/components/wealth/TradeModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,7 +61,9 @@ export default function WealthTrackerPage() {
   const [addBillOpen, setAddBillOpen] = useState(false);
   const [showAddPair, setShowAddPair] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
+  const [showTradeModal, setShowTradeModal] = useState(false);
   const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
+  const [selectedPairForTrade, setSelectedPairForTrade] = useState<TradingPair | null>(null);
   const [isEditingHeader, setIsEditingHeader] = useState(false);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -690,7 +693,7 @@ export default function WealthTrackerPage() {
                   </div>
                   <div className="flex gap-2">
                      <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowTradeModal(true); }}
                        className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
                      >
                        Trade
@@ -773,6 +776,12 @@ export default function WealthTrackerPage() {
           <CreatePlanModal
             pair={selectedPairForPlan}
             onClose={() => { setShowCreatePlan(false); setSelectedPairForPlan(null); }}
+          />
+        )}
+        {showTradeModal && selectedPairForTrade && (
+          <TradeModal
+            pair={selectedPairForTrade}
+            onClose={() => { setShowTradeModal(false); setSelectedPairForTrade(null); }}
           />
         )}
         {isEditingHeader && (
