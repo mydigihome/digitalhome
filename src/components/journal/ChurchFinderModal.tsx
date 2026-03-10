@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 const DENOMINATIONS = [
-  "All", "Catholic", "Baptist", "Methodist", "Presbyterian",
+  "All", "Christian", "Catholic", "Baptist", "Methodist", "Presbyterian",
   "Lutheran", "Pentecostal", "Non-Denominational", "Episcopal", "Orthodox",
 ];
 
