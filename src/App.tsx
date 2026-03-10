@@ -28,6 +28,7 @@ import PublicEventPage from "./pages/PublicEventPage";
 import TemplateShop from "./pages/TemplateShop";
 import TemplateSuccess from "./pages/TemplateSuccess";
 import AdminTemplates from "./pages/AdminTemplates";
+import RelationshipsPage from "./pages/RelationshipsPage";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/templates" element={<TemplateShop />} />
             <Route path="/templates/success" element={<TemplateSuccess />} />
             <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplates /></ProtectedRoute>} />
+            <Route path="/relationships" element={<ProtectedRoute><RelationshipsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           

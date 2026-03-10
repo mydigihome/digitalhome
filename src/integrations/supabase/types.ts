@@ -362,6 +362,92 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_interactions: {
+        Row: {
+          contact_id: string
+          description: string | null
+          id: string
+          interaction_date: string | null
+          interaction_type: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          description?: string | null
+          id?: string
+          interaction_date?: string | null
+          interaction_type?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          description?: string | null
+          id?: string
+          interaction_date?: string | null
+          interaction_type?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_interactions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          company: string | null
+          contact_frequency_days: number | null
+          created_at: string | null
+          email: string | null
+          id: string
+          last_contacted_date: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          photo_url: string | null
+          relationship_type: string | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          contact_frequency_days?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contacted_date?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          relationship_type?: string | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          contact_frequency_days?: number | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          last_contacted_date?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          relationship_type?: string | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_caption_ideas: {
         Row: {
           caption_text: string

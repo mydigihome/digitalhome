@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   const bottomNavItems = [
     { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox") },
+    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
   ];
 
