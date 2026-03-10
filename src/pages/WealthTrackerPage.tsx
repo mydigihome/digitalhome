@@ -20,6 +20,22 @@ const glass: React.CSSProperties = {
   borderRadius: 24,
 };
 
+const FAITH_MESSAGES = [
+  "Wealth is options", "Provision for purpose", "Build with intention",
+  "Steward well, grow bold", "Your work has value", "Abundance follows discipline",
+  "Invest in what matters", "Generosity multiplies",
+];
+
+function FaithMessage() {
+  const today = new Date().getDate();
+  const msg = FAITH_MESSAGES[today % FAITH_MESSAGES.length];
+  return (
+    <div className="px-6 py-3 rounded-2xl text-center" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(20px)" }}>
+      <p className="text-xs italic" style={{ color: "#6B7280" }}>"{msg}"</p>
+    </div>
+  );
+}
+
 const fmt = (n: number) =>
   n >= 1000
     ? `$${n.toLocaleString("en-US", { minimumFractionDigits: 0 })}`
