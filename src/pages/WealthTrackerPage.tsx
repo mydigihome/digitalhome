@@ -14,6 +14,7 @@ import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import TradeModal from "@/components/wealth/TradeModal";
+import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
