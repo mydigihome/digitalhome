@@ -650,11 +650,11 @@ export default function Dashboard() {
                         <h2 className="text-[17px] font-bold text-foreground">Market Watch</h2>
                         <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-success">
                           <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                          Live Index
+                          Live
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                        <span className="text-xs font-medium text-muted-foreground">{selectedStockName}</span>
                       </div>
                     </div>
                     <div className="text-right">
@@ -671,30 +671,66 @@ export default function Dashboard() {
                     <div className="relative" data-stock-dropdown>
                       <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-sm font-semibold bg-muted text-foreground">
+                        <Search className="w-3.5 h-3.5 text-muted-foreground" />
                         {selectedStock}
                         <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                       {stockDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
-                          {stockOptions.map((stock) => (
-                            <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
-                              <div>
-                                <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
-                                <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
-                              </div>
-                            </button>
-                          ))}
+                        <div className="absolute top-full left-0 mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
+                          <div className="px-3 pb-2">
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted">
+                              <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <input
+                                value={stockSearchQuery}
+                                onChange={(e) => setStockSearchQuery(e.target.value)}
+                                placeholder="Search stocks, crypto, forex, indices..."
+                                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto">
+                            {stockSearchQuery.length > 0 && searchResults?.length > 0 ? (
+                              searchResults.slice(0, 10).map((r: any) => (
+                                <button key={`${r.symbol}-${r.exchange}`} onClick={() => { setSelectedStock(r.symbol); setSelectedStockName(r.instrument_name || r.symbol); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                                  className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left">
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-bold text-foreground">{r.symbol}</span>
+                                    <p className="text-xs text-muted-foreground truncate">{r.instrument_name}</p>
+                                  </div>
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex-shrink-0 ml-2">{r.instrument_type || r.exchange}</span>
+                                </button>
+                              ))
+                            ) : (
+                              stockOptions.map((stock) => (
+                                <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setSelectedStockName(stock.name); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                                  className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
+                                  <div>
+                                    <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                                    <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                      {TIMEFRAMES.map((tf) => (
-                        <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
-                          {tf.label}
-                        </button>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                        {TIMEFRAMES.map((tf) => (
+                          <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
+                            {tf.label}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setShowBrokerModal(true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
+                      >
+                        Trade
+                      </button>
                     </div>
                   </div>
                 </div>
