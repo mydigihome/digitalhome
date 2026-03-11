@@ -6,9 +6,9 @@ import myWhy2 from "@/assets/my-why-2.jpg";
 import myWhy3 from "@/assets/my-why-3.jpg";
 
 const PLACEHOLDER_IMAGES = [
-  { src: myWhy1, label: "Freedom to travel" },
-  { src: myWhy2, label: "Dream home" },
-  { src: myWhy3, label: "Financial freedom" },
+  { src: myWhy1, label: "Cover story era" },
+  { src: myWhy2, label: "Private aviation lifestyle" },
+  { src: myWhy3, label: "Luxury taste, legacy mindset" },
 ];
 
 export default function MyWhyCard() {
