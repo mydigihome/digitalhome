@@ -129,7 +129,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     className={cn(
                       "group flex w-full items-center rounded-xl transition-all duration-200",
                       collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                     item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
                     )}
                     style={activeStyle(item.active)}
                   >
