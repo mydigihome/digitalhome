@@ -166,9 +166,9 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 )}
                 style={activeStyle(isFinanceActive)}
               >
-                <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
-                  <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? '#4338CA' : '#10B981' }} strokeWidth={1.5} />
-                </span>
+                 <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
+                   <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? 'hsl(var(--accent-foreground))' : '#10B981' }} strokeWidth={1.5} />
+                 </span>
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left text-[14px]">Money</span>
