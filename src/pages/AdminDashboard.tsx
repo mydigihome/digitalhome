@@ -1567,6 +1567,7 @@ const TABS = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "resources", label: "AI Resources", icon: ExternalLink },
   { id: "content", label: "Content", icon: FileText },
+  { id: "waitlist", label: "Waitlist", icon: Mail },
   { id: "system", label: "System", icon: Settings },
 ] as const;
 
