@@ -234,14 +234,14 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     className={cn(
                       "group flex w-full items-center rounded-xl transition-all duration-200",
                       collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                    )}
-                    style={activeStyle(item.active)}
-                  >
-                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
-                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
-                    </span>
-                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
+                   item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
+                 )}
+                 style={activeStyle(item.active)}
+               >
+                 <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
+                   <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? 'hsl(var(--accent-foreground))' : item.color }} strokeWidth={1.5} />
+                 </span>
+                 {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
                 </NavTooltip>
               </li>
