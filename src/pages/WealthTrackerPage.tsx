@@ -340,6 +340,20 @@ export default function WealthTrackerPage() {
                               >
                                 Plan
                               </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm("Remove this trading pair?")) {
+                                    removePair.mutate(pair.id, {
+                                      onSuccess: () => toast.success("Pair removed"),
+                                      onError: () => toast.error("Failed to remove pair"),
+                                    });
+                                  }
+                                }}
+                                className="text-xs px-2 py-1 rounded-lg bg-destructive/10 text-destructive font-semibold opacity-0 group-hover:opacity-100 transition hover:bg-destructive/20"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
