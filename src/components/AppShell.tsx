@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -577,11 +577,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setCollapsed(!collapsed)}
                className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:shadow-md transition-all"
              >
-               {collapsed ? (
-                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-               ) : (
-                 <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
-              )}
+                {collapsed ? (
+                 <PanelLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                 <PanelLeftClose className="w-3.5 h-3.5 text-muted-foreground" />
+               )}
             </button>
           </div>
         </div>
