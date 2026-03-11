@@ -554,6 +554,12 @@ export default function WealthTrackerPage() {
                 )}
               </motion.div>
 
+              {/* Investment Schedule - Desktop */}
+              <InvestmentScheduleCard />
+
+              {/* Student Loans - Desktop */}
+              <StudentLoanCard />
+
             </div>
           </div>
         </div>
