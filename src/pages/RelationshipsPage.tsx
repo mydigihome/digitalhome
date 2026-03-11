@@ -764,13 +764,6 @@ export default function RelationshipsPage() {
           )}
         </div>
 
-        {/* FAB */}
-        <button
-          onClick={() => setShowAdd(true)}
-          className="fixed bottom-24 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-primary-foreground bg-primary hover:scale-105 transition-transform"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
       </div>
 
       <AddContactModal open={showAdd} onClose={() => setShowAdd(false)} />
