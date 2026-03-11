@@ -215,28 +215,35 @@ export default function ContentPlanner() {
               {activeTab === "strategy" && <StrategyTab strategy={state.strategy} setStrategy={state.setStrategy} />}
             </div>
 
-            {/* Bottom tab bar */}
-            <div className="flex items-center bg-white shrink-0" style={{ borderTop: "1px solid #F0F0F0" }}>
-              {state.tabOrder.map(tabId => (
-                <button
-                  key={tabId}
-                  draggable
-                  onDragStart={() => handleDragStart(tabId)}
-                  onDragOver={e => handleDragOver(e, tabId)}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => setActiveTab(tabId)}
-                  className={`flex-1 px-3 py-3 text-[14px] transition-all duration-150 relative cursor-grab active:cursor-grabbing ${
-                    activeTab === tabId
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  {activeTab === tabId && (
-                    <span className="absolute top-0 left-0 right-0 h-[2px] bg-gray-900" />
-                  )}
-                  {TAB_LABELS[tabId] || tabId}
-                </button>
-              ))}
+            {/* Bottom tab bar – Stitch style with icons */}
+            <div className="flex items-center justify-around bg-white shrink-0 py-1" style={{ borderTop: "1px solid #F0F0F0" }}>
+              {state.tabOrder.map(tabId => {
+                const config = TAB_CONFIG[tabId];
+                if (!config) return null;
+                const Icon = config.icon;
+                const isActive = activeTab === tabId;
+                return (
+                  <button
+                    key={tabId}
+                    draggable
+                    onDragStart={() => handleDragStart(tabId)}
+                    onDragOver={e => handleDragOver(e, tabId)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => setActiveTab(tabId)}
+                    className={`flex flex-col items-center gap-0.5 px-3 py-2 transition-all duration-150 relative cursor-grab active:cursor-grabbing ${
+                      isActive ? "text-gray-900" : "text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute top-0 left-2 right-2 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg, #6366F1, #8B5CF6)" }} />
+                    )}
+                    <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                    <span className={`text-[10px] tracking-wider ${isActive ? "font-bold" : "font-semibold"}`}>
+                      {config.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
