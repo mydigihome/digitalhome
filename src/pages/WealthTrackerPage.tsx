@@ -264,7 +264,7 @@ export default function WealthTrackerPage() {
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-6 relative group"
+                className="bg-gradient-to-br from-card via-card to-muted/40 dark:from-card dark:via-card/80 dark:to-slate-900/60 backdrop-blur-xl border border-border rounded-3xl p-6 relative group shadow-sm"
               >
                 <button
                   onClick={() => { setEditingCard("credit"); setEditValue(String(creditScore)); }}
