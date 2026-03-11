@@ -1,9 +1,10 @@
 import { SetupData, IdeaEntry, IdeasTable } from "./types";
-import { Plus, X, Search, Bell } from "lucide-react";
+import { Plus, X, Search, Bell, ArrowRight, Sparkles } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import { useState, useRef } from "react";
 
 const PILLAR_COLORS = ["#FFF5F0", "#F0F7FF", "#FFF0F8", "#F0FFF4", "#FFF8E0", "#F0FFFF", "#FFF0FF"];
+const TABLE_LABEL_COLORS = ["#EF4444", "#6366F1", "#F59E0B", "#10B981", "#EC4899", "#3B82F6"];
 
 interface Props {
   setup: SetupData;
@@ -18,7 +19,8 @@ function EditableTitle({ value, onChange }: { value: string; onChange: (v: strin
     return (
       <input
         autoFocus
-        className="bg-transparent text-sm font-semibold text-gray-800 outline-none border-b border-gray-300 px-1 py-0.5"
+        className="bg-transparent outline-none uppercase text-xs font-bold tracking-widest"
+        style={{ color: "inherit" }}
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onBlur={() => { onChange(draft); setEditing(false); }}
@@ -28,7 +30,7 @@ function EditableTitle({ value, onChange }: { value: string; onChange: (v: strin
   }
   return (
     <span
-      className="text-sm font-semibold text-gray-800 cursor-pointer hover:text-gray-600 transition-colors"
+      className="uppercase text-xs font-bold tracking-widest cursor-pointer hover:opacity-70 transition-opacity"
       onClick={() => { setDraft(value); setEditing(true); }}
     >
       {value || "Untitled"}
@@ -36,14 +38,15 @@ function EditableTitle({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
-function EditableHeader({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function EditableHeader({ value, onChange, count }: { value: string; onChange: (v: string) => void; count: number }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   if (editing) {
     return (
       <input
         autoFocus
-        className="bg-transparent text-xs font-semibold uppercase tracking-wider text-gray-700 outline-none w-full"
+        className="bg-transparent text-[13px] font-bold uppercase tracking-wider outline-none w-full"
+        style={{ color: "#374151" }}
         value={draft}
         onChange={e => setDraft(e.target.value)}
         onBlur={() => { onChange(draft); setEditing(false); }}
@@ -52,9 +55,16 @@ function EditableHeader({ value, onChange }: { value: string; onChange: (v: stri
     );
   }
   return (
-    <span className="text-xs font-semibold uppercase tracking-wider text-gray-700 cursor-pointer" onClick={() => { setDraft(value); setEditing(true); }}>
-      {value}
-    </span>
+    <div className="flex items-center gap-2">
+      <span className="text-[13px] font-bold uppercase tracking-wider cursor-pointer" style={{ color: "#374151" }} onClick={() => { setDraft(value); setEditing(true); }}>
+        {value}
+      </span>
+      {count > 0 && (
+        <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: "#F3F4F6", color: "#6B7280" }}>
+          {count}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -63,7 +73,7 @@ function ColorDot({ color, onChange }: { color: string; onChange: (c: string) =>
   return (
     <>
       <button
-        className="w-4 h-4 rounded-full border border-gray-200 shrink-0 cursor-pointer hover:scale-110 transition-transform"
+        className="w-3 h-3 rounded-full shrink-0 cursor-pointer hover:scale-110 transition-transform"
         style={{ background: color }}
         onClick={() => inputRef.current?.click()}
         title="Change column color"
@@ -81,6 +91,7 @@ function ColorDot({ color, onChange }: { color: string; onChange: (c: string) =>
 
 function SingleTable({
   table,
+  tableIndex,
   onUpdateTitle,
   onUpdateColumnColor,
   onUpdateColumnName,
@@ -91,6 +102,7 @@ function SingleTable({
   canDelete,
 }: {
   table: IdeasTable;
+  tableIndex: number;
   onUpdateTitle: (title: string) => void;
   onUpdateColumnColor: (pillar: string, color: string) => void;
   onUpdateColumnName: (oldName: string, newName: string) => void;
@@ -101,60 +113,84 @@ function SingleTable({
   canDelete: boolean;
 }) {
   const pillars = table.pillars || [];
+  const labelColor = TABLE_LABEL_COLORS[tableIndex % TABLE_LABEL_COLORS.length];
+
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
-      {/* Table title */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-50/50 border-b border-gray-100">
-        <EditableTitle value={table.title} onChange={onUpdateTitle} />
-        {canDelete && (
-          <button
-            onClick={onDelete}
-            className="text-gray-300 hover:text-red-400 transition-colors p-1"
-            title="Remove table"
-          >
-            <X size={14} />
-          </button>
-        )}
+    <div className="mb-8">
+      {/* Platform section header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <EditableTitle value={table.title} onChange={onUpdateTitle} />
+          <div className="h-px flex-1 min-w-[40px]" style={{ background: `${labelColor}40` }} />
+          {canDelete && (
+            <button
+              onClick={onDelete}
+              className="text-gray-300 hover:text-red-400 transition-colors p-1"
+              title="Remove table"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        <button className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider hover:opacity-70 transition-opacity" style={{ color: "#6B7280" }}>
+          Archive <ArrowRight size={12} />
+        </button>
       </div>
-      {/* Columns */}
-      <div className="grid" style={{ gridTemplateColumns: `repeat(${pillars.length}, minmax(0, 1fr))` }}>
+
+      {/* Columns as horizontal cards */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(pillars.length, 4)}, minmax(0, 1fr))` }}>
         {pillars.map((pillar) => {
+          const ideas = table.ideas[pillar] || [];
           const colColor = table.columnColors[pillar] || PILLAR_COLORS[pillars.indexOf(pillar) % PILLAR_COLORS.length];
           return (
-            <div key={pillar} className="border-r border-gray-100 last:border-r-0 flex flex-col">
-              <div
-                className="px-3 py-2 border-b border-gray-100 flex items-center gap-2"
-                style={{ background: colColor }}
-              >
-                <ColorDot color={colColor} onChange={(c) => onUpdateColumnColor(pillar, c)} />
+            <div key={pillar} className="flex flex-col">
+              {/* Column header */}
+              <div className="flex items-center gap-1.5 mb-3">
+                <ColorDot color={labelColor} onChange={(c) => onUpdateColumnColor(pillar, c)} />
                 <EditableHeader
                   value={pillar}
                   onChange={(newName) => onUpdateColumnName(pillar, newName)}
+                  count={ideas.length}
                 />
               </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-                {(table.ideas[pillar] || []).map((idea, idx) => (
-                  <div key={idea.id} className="flex group">
+
+              {/* Idea cards */}
+              <div className="space-y-2 flex-1">
+                {ideas.map((idea, idx) => (
+                  <div
+                    key={idea.id}
+                    className="bg-white rounded-xl p-3 group hover:shadow-md transition-all duration-150 relative"
+                    style={{ border: "1px solid #F0F0F0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+                  >
                     <AutoTextarea
-                      className="flex-1 px-3 py-2 text-sm bg-transparent outline-none text-gray-700"
+                      className="w-full text-[13px] bg-transparent outline-none leading-snug resize-none"
+                      style={{ color: "#374151" }}
                       value={idea.text}
                       onChange={e => onUpdateIdea(pillar, idx, e.target.value)}
                       placeholder="Type idea..."
                     />
-                    <button
-                      onClick={() => onRemoveIdea(pillar, idx)}
-                      className="px-2 opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-opacity"
-                    >
-                      <X size={10} />
-                    </button>
+                    {idea.text && (
+                      <div className="flex items-center justify-between mt-2">
+                        <ColorDot color={colColor} onChange={() => {}} />
+                        <button
+                          onClick={() => onRemoveIdea(pillar, idx)}
+                          className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-opacity"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
+              {/* Add idea card */}
               <button
                 onClick={() => onAddIdea(pillar)}
-                className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-1 border-t border-gray-100 transition-colors"
+                className="w-full mt-2 py-3 flex items-center justify-center gap-1.5 text-[12px] font-medium hover:bg-white/80 transition-all duration-150 cursor-pointer"
+                style={{ border: "1.5px dashed #D1D5DB", borderRadius: 12, color: "#9CA3AF" }}
               >
-                <Plus size={10} /> Add Idea
+                <Plus size={12} /> New Idea
               </button>
             </div>
           );
@@ -166,6 +202,7 @@ function SingleTable({
 
 export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Props) {
   const pillars = setup.contentPillars.filter(p => p.trim());
+  const [searchQuery, setSearchQuery] = useState("");
 
   const updateTable = (tableId: string, patch: Partial<IdeasTable>) => {
     setIdeasTables(prev => prev.map(t => t.id === tableId ? { ...t, ...patch } : t));
@@ -237,40 +274,43 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
   };
 
   return (
-    <div className="flex flex-col gap-6 overflow-y-auto h-full" style={{ background: "linear-gradient(180deg, #F0EDFF 0%, #FAFBFF 10%, #FFFFFF 30%)" }}>
+    <div className="flex flex-col h-full overflow-y-auto" style={{ background: "linear-gradient(180deg, #F0EDFF 0%, #FAFBFF 8%, #FFFFFF 25%)" }}>
       {/* Stitch Header */}
-      <div className="px-6 pt-6 pb-2 flex items-start justify-between">
+      <div className="px-6 pt-6 pb-4 flex items-start justify-between">
         <h1 style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: 32, fontStyle: "italic", fontWeight: 700, color: "#1A1A2E" }}>
           Ideas Bank
         </h1>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
             <input
-              className="pl-9 pr-4 py-2 rounded-full text-sm bg-white outline-none"
-              style={{ border: "1px solid #E5E7EB", width: 180 }}
+              className="pl-8 pr-4 py-2 rounded-full text-sm bg-white outline-none"
+              style={{ border: "1px solid #E5E7EB", width: 160 }}
               placeholder="Search ideas"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="w-9 h-9 rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB" }}>
+          <button className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" style={{ border: "1px solid #E5E7EB" }}>
             <Bell size={16} style={{ color: "#6B7280" }} />
           </button>
           <button
             onClick={addTable}
-            className="px-4 py-2 rounded-full text-white text-sm font-semibold transition-all hover:opacity-90"
+            className="px-5 py-2.5 rounded-full text-white text-sm font-semibold transition-all hover:opacity-90"
             style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
           >
-            + New Campaign
+            New Campaign
           </button>
         </div>
       </div>
 
-      {/* Tables */}
-      <div className="px-6 pb-6 space-y-6">
-        {ideasTables.map((table) => (
+      {/* Platform Tables */}
+      <div className="px-6 pb-6">
+        {ideasTables.map((table, idx) => (
           <SingleTable
             key={table.id}
             table={table}
+            tableIndex={idx}
             onUpdateTitle={(title) => updateTable(table.id, { title })}
             onUpdateColumnColor={(pillar, color) => updateColumnColor(table.id, pillar, color)}
             onUpdateColumnName={(oldName, newName) => updateColumnName(table.id, oldName, newName)}
@@ -281,6 +321,20 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
             canDelete={ideasTables.length > 1}
           />
         ))}
+
+        {/* Add new column / platform card */}
+        <button
+          onClick={addTable}
+          className="w-full py-8 flex flex-col items-center justify-center gap-2 hover:bg-white/60 transition-all duration-150 cursor-pointer"
+          style={{ border: "1.5px dashed #D1D5DB", borderRadius: 16 }}
+        >
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#F3F4F6" }}>
+            <Plus size={16} style={{ color: "#9CA3AF" }} />
+          </div>
+          <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "#9CA3AF" }}>
+            New Column
+          </span>
+        </button>
       </div>
     </div>
   );

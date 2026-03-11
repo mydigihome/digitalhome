@@ -292,57 +292,25 @@ export default function WeeklyCalendarTab({
         <div className="px-6 pt-5 pb-3" style={{ borderBottom: "1px solid #F0F0F0" }}>
           <div className="flex items-center justify-between mb-1">
             <div>
-              <h1 style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: 28, fontWeight: 700, color: "#1A1A2E", marginBottom: 2 }}>
+              <h1 className="text-[28px] font-bold leading-tight" style={{ color: "#1A1A2E", letterSpacing: "-0.02em" }}>
                 Weekly Planner
               </h1>
-              <div className="flex items-center gap-2">
-                <button onClick={() => navigateWeek(-1)} className="p-1 rounded-lg hover:bg-gray-100 transition-all duration-150">
-                  <ChevronLeft size={14} className="text-gray-500" />
-                </button>
-                <span className="text-sm" style={{ color: "#6B7280" }}>
-                  {format(start, "MMMM d")} – {format(end, "d, yyyy")}
-                </span>
-                <button onClick={() => navigateWeek(1)} className="p-1 rounded-lg hover:bg-gray-100 transition-all duration-150">
-                  <ChevronRight size={14} className="text-gray-500" />
-                </button>
-              </div>
+              <p className="text-sm mt-0.5" style={{ color: "#9CA3AF" }}>
+                {format(start, "MMMM d")} – {format(end, "d, yyyy")}
+              </p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
-                <input
-                  className="pl-8 pr-4 py-1.5 rounded-full text-xs bg-white outline-none"
-                  style={{ border: "1px solid #E5E7EB", width: 140 }}
-                  placeholder="Search..."
-                />
-              </div>
+              <button className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" style={{ border: "1px solid #E5E7EB" }}>
+                <Search size={16} style={{ color: "#6B7280" }} />
+              </button>
               <button
                 onClick={() => addPost(0)}
-                className="px-4 py-2 rounded-full text-white text-sm font-semibold transition-all hover:opacity-90"
+                className="px-5 py-2.5 rounded-full text-white text-sm font-semibold transition-all hover:opacity-90 flex items-center gap-1.5"
                 style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
               >
-                + New Idea
+                <Plus size={14} /> New Idea
               </button>
             </div>
-          </div>
-          <div className="flex items-center gap-3 mt-2 text-[12px]" style={{ color: "#9CA3AF" }}>
-            <span className="text-[11px] uppercase tracking-wider font-semibold">Goal:</span>
-            <input
-              className="bg-transparent outline-none border-b border-transparent focus:border-gray-300 flex-1 text-[13px]"
-              style={{ color: "#374151" }}
-              value={week.weeklyGoal}
-              onChange={e => setWeek(p => ({ ...p, weeklyGoal: e.target.value }))}
-              placeholder="Set a weekly goal..."
-            />
-            <span style={{ color: "#D1D5DB" }}>|</span>
-            <span className="text-[13px] font-medium" style={{ color: "#374151" }}>{week.days.reduce((n, d) => n + d.posts.length, 0)} posts</span>
-            <button
-              onClick={() => setIdeasOpen(v => !v)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150 ml-1"
-              title={ideasOpen ? "Close Ideas Bank" : "Open Ideas Bank"}
-            >
-              {ideasOpen ? <PanelRightClose size={16} className="text-gray-500" /> : <PanelRightOpen size={16} className="text-gray-500" />}
-            </button>
           </div>
         </div>
 
@@ -361,12 +329,13 @@ export default function WeeklyCalendarTab({
               onDrop={e => handleDrop(e, dayIdx)}
             >
               {/* Day header */}
-              <div
-                className="text-center"
-                style={{ background: DAY_COLUMN_TINTS[dayIdx], borderBottom: "1px solid #F0F0F0", padding: "6px 12px" }}
-              >
-                <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{DOW[dayIdx]}</div>
-                <div className="text-[18px] font-bold text-gray-800 leading-tight">{format(parseISO(day.date), "d")}</div>
+              <div className="text-center py-3 px-2" style={{ borderBottom: "1px solid #F0F0F0" }}>
+                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#9CA3AF" }}>
+                  {DOW[dayIdx]}
+                </div>
+                <div className="text-[22px] font-bold leading-tight mt-0.5" style={{ color: "#1A1A2E" }}>
+                  {format(parseISO(day.date), "d")}
+                </div>
               </div>
 
               {/* Posts */}
@@ -381,6 +350,17 @@ export default function WeeklyCalendarTab({
                     onClick={() => setModalPost({ dayIdx, postId: post.id })}
                   />
                 ))}
+
+                {/* Empty state – dashed add area */}
+                {day.posts.length === 0 && (
+                  <div
+                    className="w-full flex items-center justify-center cursor-pointer hover:bg-gray-50/50 transition-colors"
+                    style={{ aspectRatio: "1/1.1", border: "1.5px dashed #D1D5DB", borderRadius: 12 }}
+                    onClick={() => addPost(dayIdx)}
+                  >
+                    <Plus size={20} style={{ color: "#D1D5DB" }} />
+                  </div>
+                )}
               </div>
 
               {/* Add post dropdown */}
@@ -389,35 +369,66 @@ export default function WeeklyCalendarTab({
           ))}
         </div>
 
-        {/* Weekly review sections */}
+        {/* Weekly To-Do & Review – Stitch style with colored accent bars */}
         <div className="grid grid-cols-2 gap-0" style={{ borderTop: "1px solid #F0F0F0" }}>
-          <div className="p-5" style={{ background: "#FAFAFA", borderRight: "1px solid #F0F0F0", borderLeft: "3px solid #CCE5FF", borderRadius: "0 0 0 12px" }}>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Weekly To-Do</div>
-            <div className="space-y-1">
+          <div className="p-5" style={{ borderRight: "1px solid #F0F0F0" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 rounded-full" style={{ background: "#EF4444" }} />
+              <span className="text-[15px] font-bold" style={{ color: "#1A1A2E" }}>Weekly To-Do</span>
+            </div>
+            <div className="space-y-2">
               {week.weeklyTodos.map((t, i) => (
-                <input
-                  key={i}
-                  className="block w-full bg-transparent py-1.5 text-[13px] outline-none text-gray-700 transition-all duration-150 hover:bg-white/50 px-2 rounded-lg"
-                  value={t}
-                  onChange={e => setWeek(p => {
-                    const todos = [...p.weeklyTodos];
-                    todos[i] = e.target.value;
-                    return { ...p, weeklyTodos: todos };
-                  })}
-                  placeholder={`To-do ${i + 1}`}
-                />
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full shrink-0" style={{ border: "2px solid #D1D5DB" }} />
+                  <input
+                    className="block w-full bg-transparent py-1 text-[14px] outline-none transition-all duration-150"
+                    style={{ color: "#374151" }}
+                    value={t}
+                    onChange={e => setWeek(p => {
+                      const todos = [...p.weeklyTodos];
+                      todos[i] = e.target.value;
+                      return { ...p, weeklyTodos: todos };
+                    })}
+                    placeholder={`To-do ${i + 1}`}
+                  />
+                </div>
               ))}
             </div>
           </div>
-          <div className="p-5" style={{ background: "#FAFAFA", borderLeft: "3px solid #E8D5FF", borderRadius: "0 0 12px 0" }}>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-3">Weekly Review</div>
+          <div className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 rounded-full" style={{ background: "#EC4899" }} />
+              <span className="text-[15px] font-bold" style={{ color: "#1A1A2E" }}>Weekly Review</span>
+            </div>
             <AutoTextarea
-              className="w-full bg-transparent text-[13px] outline-none text-gray-700 transition-all duration-150 hover:bg-white/50 px-2 py-1 rounded-lg"
+              className="w-full bg-transparent text-[14px] outline-none transition-all duration-150 leading-relaxed"
+              style={{ color: "#374151" }}
               value={week.weeklyReview}
               onChange={e => setWeek(p => ({ ...p, weeklyReview: e.target.value }))}
-              placeholder="Notes on the week..."
+              placeholder="Start typing your creative reflection..."
             />
           </div>
+        </div>
+
+        {/* Goal & Ideas Bank toggle row */}
+        <div className="flex items-center gap-3 px-6 py-2.5 text-[12px]" style={{ borderTop: "1px solid #F0F0F0", color: "#9CA3AF" }}>
+          <span className="text-[11px] uppercase tracking-wider font-semibold">Goal:</span>
+          <input
+            className="bg-transparent outline-none border-b border-transparent focus:border-gray-300 flex-1 text-[13px]"
+            style={{ color: "#374151" }}
+            value={week.weeklyGoal}
+            onChange={e => setWeek(p => ({ ...p, weeklyGoal: e.target.value }))}
+            placeholder="Set a weekly goal..."
+          />
+          <span style={{ color: "#D1D5DB" }}>|</span>
+          <span className="text-[13px] font-medium" style={{ color: "#374151" }}>{week.days.reduce((n, d) => n + d.posts.length, 0)} posts</span>
+          <button
+            onClick={() => setIdeasOpen(v => !v)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-all duration-150 ml-1"
+            title={ideasOpen ? "Close Ideas Bank" : "Open Ideas Bank"}
+          >
+            {ideasOpen ? <PanelRightClose size={16} className="text-gray-500" /> : <PanelRightOpen size={16} className="text-gray-500" />}
+          </button>
         </div>
       </div>
 
