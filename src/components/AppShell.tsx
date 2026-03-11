@@ -390,7 +390,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                   Feedback
                 </button>
 
-                <div className="my-1 border-t" style={{ borderColor: '#F3F4F6' }} />
+                <div className="my-1 border-t border-border" />
 
                 <button
                   onClick={async (e) => {
