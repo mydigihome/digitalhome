@@ -14,6 +14,7 @@ import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
 import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import TradeModal from "@/components/wealth/TradeModal";
+import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
@@ -64,6 +65,7 @@ export default function WealthTrackerPage() {
   const [showAddPair, setShowAddPair] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
+  const [showBrokerSelection, setShowBrokerSelection] = useState(false);
   const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
   const [selectedPairForTrade, setSelectedPairForTrade] = useState<TradingPair | null>(null);
   const [isEditingHeader, setIsEditingHeader] = useState(false);
@@ -335,7 +337,7 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowTradeModal(true); }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
                                 className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
                               >
                                 Trade
@@ -724,7 +726,7 @@ export default function WealthTrackerPage() {
                   </div>
                   <div className="flex gap-2">
                      <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowTradeModal(true); }}
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
                        className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
                      >
                        Trade
@@ -818,6 +820,12 @@ export default function WealthTrackerPage() {
           <TradeModal
             pair={selectedPairForTrade}
             onClose={() => { setShowTradeModal(false); setSelectedPairForTrade(null); }}
+          />
+        )}
+        {showBrokerSelection && (
+          <BrokerSelectionModal
+            pair={selectedPairForTrade}
+            onClose={() => { setShowBrokerSelection(false); setSelectedPairForTrade(null); }}
           />
         )}
         {isEditingHeader && (
