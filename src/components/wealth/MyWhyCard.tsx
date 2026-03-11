@@ -34,7 +34,7 @@ export default function MyWhyCard() {
       className="relative overflow-hidden rounded-3xl border border-border bg-card/70 dark:bg-card/50 backdrop-blur-xl"
     >
       {/* Image */}
-      <div className="relative h-40 w-full overflow-hidden">
+      <div className="relative h-48 w-full overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
@@ -45,6 +45,7 @@ export default function MyWhyCard() {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.6 }}
             className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: current.objectPosition || "center center" }}
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
