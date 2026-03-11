@@ -257,6 +257,10 @@ export default function WealthTrackerPage() {
         </div>
 
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
+          {/* My Why Card - full width above grid */}
+          <div className="mb-6">
+            <MyWhyCard />
+          </div>
           <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
             <div className="col-span-8 space-y-6">
