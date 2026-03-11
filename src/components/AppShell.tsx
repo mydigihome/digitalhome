@@ -111,8 +111,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       {/* Logo */}
       <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
-          <div className="h-3 w-3 rounded-full bg-indigo-500 flex-shrink-0" />
-          {!collapsed && <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>}
+          <div className="h-3 w-3 rounded-full bg-primary flex-shrink-0" />
+          {!collapsed && <span className="text-[15px] font-semibold tracking-tight text-foreground">Digital Home</span>}
         </div>
       </div>
 
