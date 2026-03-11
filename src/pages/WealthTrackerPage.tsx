@@ -318,7 +318,7 @@ export default function WealthTrackerPage() {
                     </thead>
                     <tbody>
                       {userPairs.length > 0 ? userPairs.map((pair) => (
-                        <tr key={pair.id} className="border-t border-border hover:bg-muted/30 transition">
+                        <tr key={pair.id} className="border-t border-border hover:bg-muted/30 transition group">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
