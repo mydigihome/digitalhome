@@ -236,7 +236,15 @@ export default function WealthTrackerPage() {
           </div>
         </div>
 
-        {/* ═══ DESKTOP LAYOUT (12-col grid) ═══ */}
+        {/* Edit Layout FAB */}
+        <button
+          onClick={() => setIsEditMode(!isEditMode)}
+          className="fixed top-20 right-6 z-50 px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 bg-primary text-primary-foreground"
+        >
+          {isEditMode ? <Check className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+          <span className="text-sm">{isEditMode ? "Done" : "Edit Layout"}</span>
+        </button>
+
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
           <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
