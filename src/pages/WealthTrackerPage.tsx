@@ -592,6 +592,12 @@ export default function WealthTrackerPage() {
             <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
               {cardOrder.map((cardId) => {
                 switch (cardId) {
+                  case "my-why":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <MyWhyCard />
+                      </SortableCard>
+                    );
                   case "credit-score":
                     return (
                       <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
