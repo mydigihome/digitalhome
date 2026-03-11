@@ -342,7 +342,9 @@ export default function WealthTrackerPage() {
                             </div>
                           </td>
                         </tr>
-                      )) : watchlist.map((w) => (
+                      )) : watchlist.map((w) => {
+                        const fakePair: TradingPair = { id: w.symbol, user_id: "", symbol: w.symbol, display_name: w.symbol, category: w.badge, is_active: true, sort_order: 0, created_at: "" };
+                        return (
                         <tr key={w.symbol} className="border-t border-border hover:bg-muted/30 transition">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
@@ -353,12 +355,19 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-muted-foreground">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                              <button className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
-                              <button className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(fakePair); setShowBrokerSelection(true); }}
+                                className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
+                              >Trade</button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(fakePair); setShowCreatePlan(true); }}
+                                className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
+                              >Plan</button>
                             </div>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
