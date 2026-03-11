@@ -106,8 +106,10 @@ export function useThemeApplicator() {
     // Apply dark mode
     if (prefs.sidebar_theme === "dark") {
       root.classList.add("dark");
+      document.body.classList.add("dark");
     } else if (prefs.sidebar_theme === "light") {
       root.classList.remove("dark");
+      document.body.classList.remove("dark");
     }
   }, [prefs]);
 }
