@@ -566,10 +566,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Desktop Sidebar */}
         <div
-          className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30"
-          style={{ backgroundColor: '#F5F5F7', width: sidebarWidth }}
-        >
-          <div className="flex grow flex-col relative" style={{ borderRight: '1px solid #E5E7EB' }}>
+          className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 bg-sidebar border-r border-sidebar-border"
+           style={{ width: sidebarWidth }}
+         >
+           <div className="flex grow flex-col relative">
             <SidebarNav collapsed={collapsed} />
 
             {/* Collapse toggle button */}
