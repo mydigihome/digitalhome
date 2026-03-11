@@ -11,7 +11,7 @@ import SocialQuickLinks from "@/components/content-planner/SocialQuickLinks";
 import CollaboratorPanel from "@/components/content-planner/CollaboratorPanel";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useAuth } from "@/hooks/useAuth";
-import { Lock, Check, Shield } from "lucide-react";
+import { Lock, Check, Shield, Settings2, ColumnsIcon, CalendarDays, Lightbulb, Hash, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner";
@@ -21,13 +21,13 @@ import { useUpsertPreferences } from "@/hooks/useUserPreferences";
 
 const stripePromise = loadStripe("pk_test_51T0ZZyDs3UlCCXBa9qLPUy9c2w3osnYHXs1JKuALZkoOWZ688sRtnGzOJ0AaXXlD0CGI0cUSH9gOjzmlRRmcASeU00YOjg9k0v");
 
-const TAB_LABELS: Record<string, string> = {
-  setup: "Setup",
-  weekly: "Weekly",
-  monthly: "Monthly",
-  ideas: "Ideas Bank",
-  hashtags: "Hashtags",
-  strategy: "Strategy",
+const TAB_CONFIG: Record<string, { label: string; icon: React.ElementType }> = {
+  setup: { label: "SETUP", icon: Settings2 },
+  weekly: { label: "WEEKLY", icon: ColumnsIcon },
+  monthly: { label: "MONTHLY", icon: CalendarDays },
+  ideas: { label: "IDEAS BANK", icon: Lightbulb },
+  hashtags: { label: "HASHTAGS", icon: Hash },
+  strategy: { label: "STRATEGY", icon: Sparkles },
 };
 
 const PAYWALL_FEATURES = [
