@@ -199,21 +199,21 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                       <button
                         onClick={() => go("/finance/applications")}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
-                          location.pathname === "/finance/applications"
-                            ? "font-medium bg-indigo-50/50"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        )}
-                        style={{
-                          color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
-                        }}
-                      >
-                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          location.pathname === "/finance/applications"
-                            ? 'bg-indigo-50 border border-indigo-200'
-                            : 'bg-gray-50 border border-gray-200'
-                        }`}>
-                          <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                         "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
+                         location.pathname === "/finance/applications"
+                           ? "font-medium bg-accent/50"
+                           : "hover:text-foreground hover:bg-secondary"
+                       )}
+                       style={{
+                         color: location.pathname === "/finance/applications" ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
+                       }}
+                     >
+                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                         location.pathname === "/finance/applications"
+                           ? 'bg-accent border border-accent-foreground/20'
+                           : 'bg-secondary border border-border'
+                       }`}>
+                         <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-accent-foreground' : 'text-muted-foreground'}`} strokeWidth={1.5} />
                         </div>
                         Applications
                       </button>
