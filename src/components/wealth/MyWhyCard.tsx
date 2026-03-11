@@ -4,11 +4,15 @@ import { Pencil, Heart } from "lucide-react";
 import myWhy1 from "@/assets/my-why-1.jpg";
 import myWhy2 from "@/assets/my-why-2.jpg";
 import myWhy3 from "@/assets/my-why-3.jpg";
+import myWhy4 from "@/assets/my-why-4.jpg";
+import myWhy5 from "@/assets/my-why-5.jpg";
 
 const PLACEHOLDER_IMAGES = [
-  { src: myWhy1, label: "Cover story era" },
-  { src: myWhy2, label: "Private aviation lifestyle" },
-  { src: myWhy3, label: "Luxury taste, legacy mindset" },
+  { src: myWhy1, label: "Cover story era", objectPosition: "center 20%" },
+  { src: myWhy2, label: "Private aviation lifestyle", objectPosition: "center center" },
+  { src: myWhy3, label: "Luxury taste, legacy mindset", objectPosition: "center center" },
+  { src: myWhy4, label: "Dream garage", objectPosition: "center 60%" },
+  { src: myWhy5, label: "No risk, no Porsche", objectPosition: "center 30%" },
 ];
 
 export default function MyWhyCard() {
