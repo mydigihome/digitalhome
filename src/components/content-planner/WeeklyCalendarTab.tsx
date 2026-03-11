@@ -295,9 +295,17 @@ export default function WeeklyCalendarTab({
               <h1 className="text-[28px] font-bold leading-tight" style={{ color: "#1A1A2E", letterSpacing: "-0.02em" }}>
                 Weekly Planner
               </h1>
-              <p className="text-sm mt-0.5" style={{ color: "#9CA3AF" }}>
-                {format(start, "MMMM d")} – {format(end, "d, yyyy")}
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <button onClick={() => navigateWeek(-1)} className="p-0.5 rounded hover:bg-gray-100 transition-all">
+                  <ChevronLeft size={14} style={{ color: "#9CA3AF" }} />
+                </button>
+                <span className="text-sm" style={{ color: "#9CA3AF" }}>
+                  {format(start, "MMMM d")} – {format(end, "d, yyyy")}
+                </span>
+                <button onClick={() => navigateWeek(1)} className="p-0.5 rounded hover:bg-gray-100 transition-all">
+                  <ChevronRight size={14} style={{ color: "#9CA3AF" }} />
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-gray-50 transition-colors" style={{ border: "1px solid #E5E7EB" }}>
