@@ -65,6 +65,7 @@ export default function WealthTrackerPage() {
   const [showAddPair, setShowAddPair] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
+  const [showBrokerSelection, setShowBrokerSelection] = useState(false);
   const [selectedPairForPlan, setSelectedPairForPlan] = useState<TradingPair | null>(null);
   const [selectedPairForTrade, setSelectedPairForTrade] = useState<TradingPair | null>(null);
   const [isEditingHeader, setIsEditingHeader] = useState(false);
