@@ -368,11 +368,10 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     go("/settings");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                    <Settings className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
+                 >
+                   <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
+                     <Settings className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
                   </div>
                   Settings
                 </button>
