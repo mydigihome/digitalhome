@@ -1,5 +1,5 @@
 import { SetupData, IdeaEntry, IdeasTable } from "./types";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Search, Bell } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import { useState, useRef } from "react";
 
@@ -237,27 +237,51 @@ export default function IdeasBankTab({ setup, ideasTables, setIdeasTables }: Pro
   };
 
   return (
-    <div className="flex flex-col gap-6 p-4 overflow-y-auto h-full">
-      {ideasTables.map((table) => (
-        <SingleTable
-          key={table.id}
-          table={table}
-          onUpdateTitle={(title) => updateTable(table.id, { title })}
-          onUpdateColumnColor={(pillar, color) => updateColumnColor(table.id, pillar, color)}
-          onUpdateColumnName={(oldName, newName) => updateColumnName(table.id, oldName, newName)}
-          onUpdateIdea={(pillar, idx, text) => updateIdea(table.id, pillar, idx, text)}
-          onAddIdea={(pillar) => addIdea(table.id, pillar)}
-          onRemoveIdea={(pillar, idx) => removeIdea(table.id, pillar, idx)}
-          onDelete={() => deleteTable(table.id)}
-          canDelete={ideasTables.length > 1}
-        />
-      ))}
-      <button
-        onClick={addTable}
-        className="w-full py-3 text-sm text-gray-400 hover:text-gray-600 hover:bg-gray-50 border border-dashed border-gray-200 rounded-lg flex items-center justify-center gap-2 transition-colors"
-      >
-        <Plus size={14} /> Add Platform
-      </button>
+    <div className="flex flex-col gap-6 overflow-y-auto h-full" style={{ background: "linear-gradient(180deg, #F0EDFF 0%, #FAFBFF 10%, #FFFFFF 30%)" }}>
+      {/* Stitch Header */}
+      <div className="px-6 pt-6 pb-2 flex items-start justify-between">
+        <h1 style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: 32, fontStyle: "italic", fontWeight: 700, color: "#1A1A2E" }}>
+          Ideas Bank
+        </h1>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
+            <input
+              className="pl-9 pr-4 py-2 rounded-full text-sm bg-white outline-none"
+              style={{ border: "1px solid #E5E7EB", width: 180 }}
+              placeholder="Search ideas"
+            />
+          </div>
+          <button className="w-9 h-9 rounded-full bg-white flex items-center justify-center" style={{ border: "1px solid #E5E7EB" }}>
+            <Bell size={16} style={{ color: "#6B7280" }} />
+          </button>
+          <button
+            onClick={addTable}
+            className="px-4 py-2 rounded-full text-white text-sm font-semibold transition-all hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
+          >
+            + New Campaign
+          </button>
+        </div>
+      </div>
+
+      {/* Tables */}
+      <div className="px-6 pb-6 space-y-6">
+        {ideasTables.map((table) => (
+          <SingleTable
+            key={table.id}
+            table={table}
+            onUpdateTitle={(title) => updateTable(table.id, { title })}
+            onUpdateColumnColor={(pillar, color) => updateColumnColor(table.id, pillar, color)}
+            onUpdateColumnName={(oldName, newName) => updateColumnName(table.id, oldName, newName)}
+            onUpdateIdea={(pillar, idx, text) => updateIdea(table.id, pillar, idx, text)}
+            onAddIdea={(pillar) => addIdea(table.id, pillar)}
+            onRemoveIdea={(pillar, idx) => removeIdea(table.id, pillar, idx)}
+            onDelete={() => deleteTable(table.id)}
+            canDelete={ideasTables.length > 1}
+          />
+        ))}
+      </div>
     </div>
   );
 }
