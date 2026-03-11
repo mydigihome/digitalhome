@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -28,17 +28,42 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
   const [targetPrice, setTargetPrice] = useState("");
   const [stopLoss, setStopLoss] = useState("");
   const [notes, setNotes] = useState("");
+  const [totalInvestment, setTotalInvestment] = useState("");
+  const [riskPercent, setRiskPercent] = useState("2");
   const createPlan = useCreateTradingPlan();
 
-  const entry = parseFloat(entryPrice) || 0;
-  const target = parseFloat(targetPrice) || 0;
-  const potentialGain = entry > 0 && target > 0 ? (((target - entry) / entry) * 100).toFixed(2) : null;
+  const risk = useMemo(() => {
+    const investment = parseFloat(totalInvestment);
+    const entry = parseFloat(entryPrice);
+    const stop = parseFloat(stopLoss);
+    const target = parseFloat(targetPrice);
+    const riskPct = parseFloat(riskPercent);
+
+    if (!investment || !entry || !stop || !target || !riskPct) return null;
+
+    const riskAmount = investment * (riskPct / 100);
+    const potentialLoss = Math.abs((entry - stop) / entry) * 100;
+    const potentialGain = Math.abs((target - entry) / entry) * 100;
+    const riskRewardRatio = potentialLoss > 0 ? potentialGain / potentialLoss : 0;
+    const maxShares = Math.abs(entry - stop) > 0 ? Math.floor(riskAmount / Math.abs(entry - stop)) : 0;
+    const isOverLeveraged = potentialLoss > riskPct * 5;
+
+    return { riskAmount, potentialLoss, potentialGain, riskRewardRatio, maxShares, isOverLeveraged };
+  }, [totalInvestment, riskPercent, entryPrice, stopLoss, targetPrice]);
 
   const handleCreate = async () => {
     if (!entryPrice || !targetPrice) {
       toast.error("Please fill in entry and target prices");
       return;
     }
+    if (risk?.isOverLeveraged) {
+      toast.error("⚠️ Over-leveraged! Reduce position size or widen stop loss.");
+      return;
+    }
+
+    const entry = parseFloat(entryPrice);
+    const target = parseFloat(targetPrice);
+
     try {
       await createPlan.mutateAsync({
         symbol: pair.symbol,
@@ -47,11 +72,11 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
         entry_price: entry,
         target_price: target,
         stop_loss: stopLoss ? parseFloat(stopLoss) : null,
-        position_size: null,
-        total_investment: null,
+        position_size: risk?.maxShares || null,
+        total_investment: totalInvestment ? parseFloat(totalInvestment) : null,
         take_profit_1: target,
         take_profit_2: null,
-        risk_reward_ratio: null,
+        risk_reward_ratio: risk?.riskRewardRatio || null,
         strategy_notes: notes || null,
         time_frame: timeframe,
         status: "active",
@@ -105,50 +130,89 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
             </div>
           </div>
 
-          {/* Entry Price */}
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Entry Price</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={entryPrice}
-              onChange={(e) => setEntryPrice(e.target.value)}
-              placeholder="0.00"
-            />
+          {/* Investment & Risk */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Total Investment</Label>
+              <Input
+                type="number"
+                value={totalInvestment}
+                onChange={(e) => setTotalInvestment(e.target.value)}
+                placeholder="$10,000"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Risk % per Trade</Label>
+              <Input
+                type="number"
+                value={riskPercent}
+                onChange={(e) => setRiskPercent(e.target.value)}
+                placeholder="2"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Recommended: 1-2%</p>
+            </div>
           </div>
 
-          {/* Target Price */}
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Target Price</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={targetPrice}
-              onChange={(e) => setTargetPrice(e.target.value)}
-              placeholder="0.00"
-            />
-            {potentialGain && (
-              <p className="text-xs mt-2 font-semibold" style={{ color: parseFloat(potentialGain) >= 0 ? "#10B981" : "#EF4444" }}>
-                Potential {parseFloat(potentialGain) >= 0 ? "gain" : "loss"}: {potentialGain}%
-              </p>
-            )}
+          {/* Prices */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Entry Price</Label>
+              <Input type="number" step="0.01" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)} placeholder="0.00" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Target Price</Label>
+              <Input type="number" step="0.01" value={targetPrice} onChange={(e) => setTargetPrice(e.target.value)} placeholder="0.00" />
+            </div>
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">Stop Loss</Label>
+              <Input type="number" step="0.01" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} placeholder="0.00" />
+            </div>
           </div>
 
-          {/* Stop Loss */}
-          <div>
-            <Label className="text-sm font-semibold mb-2 block">Stop Loss (Optional)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={stopLoss}
-              onChange={(e) => setStopLoss(e.target.value)}
-              placeholder="0.00"
-            />
-          </div>
+          {/* Risk Analysis Panel */}
+          {risk && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-4 rounded-xl border-2 ${
+                risk.isOverLeveraged
+                  ? "bg-destructive/5 border-destructive"
+                  : "bg-emerald-50 border-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-600"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <p className={`font-bold text-sm ${risk.isOverLeveraged ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {risk.isOverLeveraged ? "⚠️ OVER-LEVERAGED" : "✅ Risk Acceptable"}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs">Risk Amount</p>
+                  <p className="font-bold text-foreground">${risk.riskAmount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Max Shares/Units</p>
+                  <p className="font-bold text-foreground">{risk.maxShares}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Potential Loss</p>
+                  <p className="font-bold text-destructive">{risk.potentialLoss.toFixed(2)}%</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Potential Gain</p>
+                  <p className="font-bold text-emerald-600 dark:text-emerald-400">{risk.potentialGain.toFixed(2)}%</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-muted-foreground text-xs">Risk/Reward Ratio</p>
+                  <p className="font-bold text-foreground">1:{risk.riskRewardRatio.toFixed(2)}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Notes */}
           <div>
-            <Label className="text-sm font-semibold mb-2 block">Notes</Label>
+            <Label className="text-sm font-semibold mb-2 block">Strategy Notes</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -159,10 +223,8 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
         </div>
 
         <div className="p-6 border-t border-border flex gap-3">
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Cancel
-          </Button>
-          <Button onClick={handleCreate} disabled={createPlan.isPending} className="flex-1">
+          <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+          <Button onClick={handleCreate} disabled={createPlan.isPending || risk?.isOverLeveraged} className="flex-1">
             {createPlan.isPending ? "Creating..." : "Create Plan"}
           </Button>
         </div>
