@@ -39,8 +39,10 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     const newDark = !darkMode;
     if (newDark) {
       document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
     }
     setDarkMode(newDark);
     upsertPrefs.mutate({ sidebar_theme: newDark ? "dark" : "light" } as any);
@@ -73,8 +75,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const avatarUrl = prefs?.profile_photo;
 
   const activeStyle = (isActive: boolean) => ({
-    backgroundColor: isActive ? '#EEF2FF' : undefined,
-    color: isActive ? '#4338CA' : '#4B5563',
+    backgroundColor: isActive ? 'hsl(var(--accent))' : undefined,
+    color: isActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
     boxShadow: isActive
       ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
       : undefined,
@@ -83,24 +85,24 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const iconCircleCn = (isActive: boolean, color?: string) =>
     `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
       isActive
-        ? 'bg-indigo-50 border border-indigo-200'
-        : 'border border-gray-200 group-hover:border-indigo-100'
+        ? 'bg-accent border border-accent-foreground/20'
+        : 'border border-border group-hover:border-primary/20'
     }`;
 
   const iconBgStyle = (isActive: boolean, color?: string) => ({
-    backgroundColor: isActive ? undefined : color ? `${color}15` : '#F9FAFB',
+    backgroundColor: isActive ? undefined : color ? `${color}15` : 'hsl(var(--secondary))',
   });
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
     if (!collapsed) return <>{children}</>;
     return (
-      <div className="relative group/tip">
-        {children}
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-gray-900 text-white text-xs font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50">
-          {label}
+        <div className="relative group/tip">
+          {children}
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-foreground text-background text-xs font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50">
+            {label}
+          </div>
         </div>
-      </div>
     );
   };
 
@@ -109,8 +111,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       {/* Logo */}
       <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
-          <div className="h-3 w-3 rounded-full bg-indigo-500 flex-shrink-0" />
-          {!collapsed && <span className="text-[15px] font-semibold tracking-tight" style={{ color: '#1F2937' }}>Digital Home</span>}
+          <div className="h-3 w-3 rounded-full bg-primary flex-shrink-0" />
+          {!collapsed && <span className="text-[15px] font-semibold tracking-tight text-foreground">Digital Home</span>}
         </div>
       </div>
 
@@ -127,7 +129,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     className={cn(
                       "group flex w-full items-center rounded-xl transition-all duration-200",
                       collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                     item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
                     )}
                     style={activeStyle(item.active)}
                   >
@@ -160,21 +162,21 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 className={cn(
                   "group flex w-full items-center rounded-xl transition-all duration-200",
                   collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                  isFinanceActive ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
+                  isFinanceActive ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
                 )}
                 style={activeStyle(isFinanceActive)}
               >
-                <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
-                  <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? '#4338CA' : '#10B981' }} strokeWidth={1.5} />
-                </span>
+                 <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
+                   <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? 'hsl(var(--accent-foreground))' : '#10B981' }} strokeWidth={1.5} />
+                 </span>
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left text-[14px]">Money</span>
-                    <ChevronDown
-                      className="shrink-0 transition-transform duration-200"
-                      style={{
-                        width: 14, height: 14,
-                        color: isFinanceActive ? '#4338CA' : '#9CA3AF',
+                     <ChevronDown
+                       className="shrink-0 transition-transform duration-200"
+                       style={{
+                         width: 14, height: 14,
+                         color: isFinanceActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
                         transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       }}
                     />
@@ -197,21 +199,21 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                       <button
                         onClick={() => go("/finance/applications")}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
-                          location.pathname === "/finance/applications"
-                            ? "font-medium bg-indigo-50/50"
-                            : "hover:text-gray-700 hover:bg-gray-50"
-                        )}
-                        style={{
-                          color: location.pathname === "/finance/applications" ? '#4338CA' : '#6B7280',
-                        }}
-                      >
-                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          location.pathname === "/finance/applications"
-                            ? 'bg-indigo-50 border border-indigo-200'
-                            : 'bg-gray-50 border border-gray-200'
-                        }`}>
-                          <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-indigo-600' : 'text-gray-500'}`} strokeWidth={1.5} />
+                         "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
+                         location.pathname === "/finance/applications"
+                           ? "font-medium bg-accent/50"
+                           : "hover:text-foreground hover:bg-secondary"
+                       )}
+                       style={{
+                         color: location.pathname === "/finance/applications" ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
+                       }}
+                     >
+                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                         location.pathname === "/finance/applications"
+                           ? 'bg-accent border border-accent-foreground/20'
+                           : 'bg-secondary border border-border'
+                       }`}>
+                         <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-accent-foreground' : 'text-muted-foreground'}`} strokeWidth={1.5} />
                         </div>
                         Applications
                       </button>
@@ -232,14 +234,14 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     className={cn(
                       "group flex w-full items-center rounded-xl transition-all duration-200",
                       collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                      item.active ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                    )}
-                    style={activeStyle(item.active)}
-                  >
-                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
-                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
-                    </span>
-                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
+                   item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
+                 )}
+                 style={activeStyle(item.active)}
+               >
+                 <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
+                   <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? 'hsl(var(--accent-foreground))' : item.color }} strokeWidth={1.5} />
+                 </span>
+                 {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
                 </NavTooltip>
               </li>
@@ -254,12 +256,12 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                   className={cn(
                     "group flex w-full items-center rounded-xl transition-all duration-200",
                     collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                    location.pathname === "/admin" ? "font-medium" : "hover:bg-gray-100 hover:shadow-sm"
-                  )}
-                  style={activeStyle(location.pathname === "/admin")}
-                >
-                  <span className={iconCircleCn(location.pathname === "/admin")} style={iconBgStyle(location.pathname === "/admin", '#6366F1')}>
-                    <Shield className="w-[18px] h-[18px]" style={{ color: location.pathname === "/admin" ? '#4338CA' : '#6366F1' }} strokeWidth={1.5} />
+                   location.pathname === "/admin" ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
+                 )}
+                 style={activeStyle(location.pathname === "/admin")}
+               >
+                 <span className={iconCircleCn(location.pathname === "/admin")} style={iconBgStyle(location.pathname === "/admin", '#6366F1')}>
+                   <Shield className="w-[18px] h-[18px]" style={{ color: location.pathname === "/admin" ? 'hsl(var(--accent-foreground))' : '#6366F1' }} strokeWidth={1.5} />
                   </span>
                   {!collapsed && <span className="flex-1 text-left text-[14px]">Admin</span>}
                 </button>
@@ -279,19 +281,19 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
               className="w-full flex justify-center py-2"
             >
               <div className="relative">
-                <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div
-                  className="absolute bottom-0 right-0 rounded-full"
-                  style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #F5F5F7' }}
-                />
+               <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
+                   {avatarUrl ? (
+                     <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                   ) : (
+                     <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
+                       {displayName.charAt(0).toUpperCase()}
+                     </div>
+                   )}
+                 </div>
+                 <div
+                   className="absolute bottom-0 right-0 rounded-full border-2 border-sidebar"
+                   style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
+                 />
               </div>
             </button>
           </NavTooltip>
@@ -299,30 +301,29 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
           /* Expanded: full profile card */
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md bg-card border border-border shadow-sm"
           >
             <div className="relative shrink-0">
-              <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+              <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div
-                className="absolute bottom-0 right-0 rounded-full"
-                style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
+                className="absolute bottom-0 right-0 rounded-full border-2 border-card"
+                style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
               />
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[14px] font-normal" style={{ color: '#1F2937' }}>
+              <div className="truncate text-[14px] font-normal text-foreground">
                 {displayName}
               </div>
-              <div className="truncate text-[11px]" style={{ color: '#9CA3AF' }}>
+              <div className="truncate text-[11px] text-muted-foreground">
                 {user?.email || ''}
               </div>
             </div>
@@ -333,13 +334,12 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 e.stopPropagation();
                 toggleDarkMode();
               }}
-              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-              style={{ width: 32, height: 32, backgroundColor: '#F9FAFB' }}
+              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-secondary w-8 h-8 bg-secondary"
             >
               {darkMode ? (
-                <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
+                <Sun className="w-3.5 h-3.5 text-warning" />
               ) : (
-                <Moon style={{ width: 14, height: 14, color: '#6B7280' }} />
+                <Moon className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </div>
           </button>
@@ -351,16 +351,16 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             <>
               <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
 
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className={cn(
-                  "absolute bottom-full mb-2 z-50 rounded-xl border bg-white p-1.5 shadow-lg",
-                  collapsed ? "left-0 right-0" : "left-3 right-3"
-                )}
-                style={{ borderColor: '#E5E7EB', minWidth: collapsed ? 200 : undefined, ...(collapsed ? { left: 0, right: 'auto' } : {}) }}
+               <motion.div
+                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                 animate={{ opacity: 1, y: 0, scale: 1 }}
+                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                 transition={{ duration: 0.15 }}
+                 className={cn(
+                   "absolute bottom-full mb-2 z-50 rounded-xl border border-border bg-card p-1.5 shadow-lg",
+                   collapsed ? "left-0 right-0" : "left-3 right-3"
+                 )}
+                 style={{ minWidth: collapsed ? 200 : undefined, ...(collapsed ? { left: 0, right: 'auto' } : {}) }}
               >
                 <button
                   onClick={(e) => {
@@ -368,11 +368,10 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     go("/settings");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                    <Settings className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
+                 >
+                   <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
+                     <Settings className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
                   </div>
                   Settings
                 </button>
@@ -383,16 +382,15 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     go("/settings?tab=support");
                     setProfileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition text-left text-[13px]"
-                  style={{ color: '#4B5563' }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center">
-                    <MessageSquare className="w-[18px] h-[18px] text-gray-600" strokeWidth={1.5} />
+                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
+                 >
+                   <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
+                     <MessageSquare className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
                   </div>
                   Feedback
                 </button>
 
-                <div className="my-1 border-t" style={{ borderColor: '#F3F4F6' }} />
+                <div className="my-1 border-t border-border" />
 
                 <button
                   onClick={async (e) => {
@@ -568,21 +566,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Desktop Sidebar */}
         <div
-          className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30"
-          style={{ backgroundColor: '#F5F5F7', width: sidebarWidth }}
-        >
-          <div className="flex grow flex-col relative" style={{ borderRight: '1px solid #E5E7EB' }}>
+          className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-30 bg-sidebar border-r border-sidebar-border"
+           style={{ width: sidebarWidth }}
+         >
+           <div className="flex grow flex-col relative">
             <SidebarNav collapsed={collapsed} />
 
             {/* Collapse toggle button */}
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center hover:bg-gray-50 hover:shadow-md transition-all"
-            >
-              {collapsed ? (
-                <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
-              ) : (
-                <ChevronLeft className="w-3.5 h-3.5 text-gray-500" />
+               className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:shadow-md transition-all"
+             >
+               {collapsed ? (
+                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+               ) : (
+                 <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </button>
           </div>
@@ -620,8 +618,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden"
-                style={{ backgroundColor: '#F5F5F7' }}
+                 className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden bg-sidebar"
               >
                 <SidebarNav onNavigate={() => setMobileOpen(false)} />
               </motion.div>
