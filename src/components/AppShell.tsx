@@ -301,30 +301,29 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
           /* Expanded: full profile card */
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md"
-            style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md bg-card border border-border shadow-sm"
           >
             <div className="relative shrink-0">
-              <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
+              <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
+                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div
-                className="absolute bottom-0 right-0 rounded-full"
-                style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #FFFFFF' }}
+                className="absolute bottom-0 right-0 rounded-full border-2 border-card"
+                style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
               />
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[14px] font-normal" style={{ color: '#1F2937' }}>
+              <div className="truncate text-[14px] font-normal text-foreground">
                 {displayName}
               </div>
-              <div className="truncate text-[11px]" style={{ color: '#9CA3AF' }}>
+              <div className="truncate text-[11px] text-muted-foreground">
                 {user?.email || ''}
               </div>
             </div>
@@ -335,8 +334,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 e.stopPropagation();
                 toggleDarkMode();
               }}
-              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-              style={{ width: 32, height: 32, backgroundColor: '#F9FAFB' }}
+              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-secondary w-8 h-8 bg-secondary"
             >
               {darkMode ? (
                 <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
