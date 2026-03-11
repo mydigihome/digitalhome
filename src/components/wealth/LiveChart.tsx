@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { createChart, ColorType, CandlestickSeries, LineSeries, HistogramSeries } from "lightweight-charts";
 import type { TimeseriesPoint } from "@/hooks/useMarketData";
 import { Button } from "@/components/ui/button";
-import { CandlestickChart, LineChart, Minus, TrendingUp, RectangleHorizontal, MousePointer, Trash2 } from "lucide-react";
+import { CandlestickChart, LineChart, Minus, TrendingUp, RectangleHorizontal, MousePointer, Trash2, Pencil } from "lucide-react";
 
 interface LiveChartProps {
   data: TimeseriesPoint[];
@@ -25,7 +25,6 @@ type DrawingTool = "none" | "hline" | "trendline" | "rect";
 interface Drawing {
   id: string;
   type: DrawingTool;
-  // For hline: y1 only; trendline: x1,y1,x2,y2; rect: x1,y1,x2,y2
   x1: number; y1: number;
   x2?: number; y2?: number;
   color: string;
@@ -39,24 +38,23 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
   const [chartType, setChartType] = useState<"candlestick" | "line">("line");
   const [activeTool, setActiveTool] = useState<DrawingTool>("none");
   const [drawings, setDrawings] = useState<Drawing[]>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const isDrawingRef = useRef(false);
   const drawStartRef = useRef<{ x: number; y: number } | null>(null);
   const [showTools, setShowTools] = useState(false);
+  const drawingsRef = useRef<Drawing[]>([]);
+  const chartHeightRef = useRef(350);
 
-  // Convert pixel to price/time coordinates
-  const pixelToCoord = useCallback((px: number, py: number) => {
-    return { x: px, y: py };
-  }, []);
+  // Keep ref in sync
+  useEffect(() => { drawingsRef.current = drawings; }, [drawings]);
 
-  // Draw all annotations on canvas overlay
   const renderDrawings = useCallback((allDrawings: Drawing[], tempDrawing?: { x1: number; y1: number; x2: number; y2: number; type: DrawingTool }) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const dpr = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const drawAll = [...allDrawings];
     if (tempDrawing) {
@@ -64,41 +62,63 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
     }
 
     for (const d of drawAll) {
+      ctx.save();
       ctx.strokeStyle = d.color;
-      ctx.lineWidth = 1.5 * dpr;
-      ctx.setLineDash(d.id === "temp" ? [4 * dpr, 4 * dpr] : []);
+      ctx.lineWidth = 2 * dpr;
+      ctx.setLineDash(d.id === "temp" ? [6 * dpr, 4 * dpr] : []);
 
       if (d.type === "hline") {
         ctx.beginPath();
         ctx.moveTo(0, d.y1 * dpr);
         ctx.lineTo(canvas.width, d.y1 * dpr);
         ctx.stroke();
+        // Label
+        ctx.setLineDash([]);
+        ctx.fillStyle = d.color;
+        ctx.fillRect(0, d.y1 * dpr - 8 * dpr, 4 * dpr, 16 * dpr);
       } else if (d.type === "trendline" && d.x2 !== undefined && d.y2 !== undefined) {
         ctx.beginPath();
         ctx.moveTo(d.x1 * dpr, d.y1 * dpr);
         ctx.lineTo(d.x2 * dpr, d.y2 * dpr);
         ctx.stroke();
+        // Endpoints
+        ctx.setLineDash([]);
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.arc(d.x1 * dpr, d.y1 * dpr, 3 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(d.x2 * dpr, d.y2 * dpr, 3 * dpr, 0, Math.PI * 2);
+        ctx.fill();
       } else if (d.type === "rect" && d.x2 !== undefined && d.y2 !== undefined) {
-        ctx.fillStyle = d.color.replace(")", ", 0.08)").replace("hsl(", "hsla(").replace("rgb(", "rgba(");
+        // Semi-transparent fill
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = d.color;
         ctx.fillRect(d.x1 * dpr, d.y1 * dpr, (d.x2 - d.x1) * dpr, (d.y2 - d.y1) * dpr);
+        ctx.globalAlpha = 1;
         ctx.strokeRect(d.x1 * dpr, d.y1 * dpr, (d.x2 - d.x1) * dpr, (d.y2 - d.y1) * dpr);
       }
+      ctx.restore();
     }
-    ctx.setLineDash([]);
   }, []);
 
-  // Sync canvas size
+  // Sync canvas size to match chart container
   const syncCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
+
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = container.clientWidth * dpr;
-    canvas.height = 350 * dpr;
-    canvas.style.width = `${container.clientWidth}px`;
-    canvas.style.height = "350px";
-    renderDrawings(drawings);
-  }, [drawings, renderDrawings]);
+    const rect = container.getBoundingClientRect();
+    const h = chartHeightRef.current;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${h}px`;
+
+    renderDrawings(drawingsRef.current);
+  }, [renderDrawings]);
 
   useEffect(() => {
     if (!containerRef.current || !data?.length) return;
@@ -124,7 +144,7 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
       rightPriceScale: { borderColor: isDark ? "hsl(220, 13%, 25%)" : "hsl(40, 5%, 90%)" },
       timeScale: { borderColor: isDark ? "hsl(220, 13%, 25%)" : "hsl(40, 5%, 90%)", timeVisible: true },
       width: containerRef.current.clientWidth,
-      height: 350,
+      height: chartHeightRef.current,
     });
 
     chartRef.current = chart;
@@ -171,7 +191,11 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
       }
     };
     window.addEventListener("resize", handleResize);
-    setTimeout(syncCanvasSize, 50);
+
+    // Give lightweight-charts time to render, then sync canvas
+    requestAnimationFrame(() => {
+      setTimeout(syncCanvasSize, 100);
+    });
 
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -180,53 +204,92 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
     };
   }, [data, chartType, syncCanvasSize]);
 
-  // Canvas mouse handlers for drawing
-  const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (activeTool === "none") return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    drawStartRef.current = { x, y };
-    setIsDrawing(true);
-  }, [activeTool]);
+  // Canvas mouse handlers using native events for reliability
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  const handleCanvasMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !drawStartRef.current || activeTool === "none") return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const start = drawStartRef.current;
-    renderDrawings(drawings, { x1: start.x, y1: activeTool === "hline" ? start.y : start.y, x2: x, y2: activeTool === "hline" ? start.y : y, type: activeTool });
-  }, [isDrawing, activeTool, drawings, renderDrawings]);
-
-  const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !drawStartRef.current || activeTool === "none") return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const start = drawStartRef.current;
-
-    const colors = ["hsl(258, 89%, 66%)", "#22c55e", "#ef4444", "#f59e0b", "#3b82f6"];
-    const color = colors[drawings.length % colors.length];
-
-    const newDrawing: Drawing = {
-      id: crypto.randomUUID(),
-      type: activeTool,
-      x1: start.x,
-      y1: activeTool === "hline" ? start.y : start.y,
-      x2: x,
-      y2: activeTool === "hline" ? start.y : y,
-      color,
+    const getPos = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
 
-    setDrawings((prev) => [...prev, newDrawing]);
-    setIsDrawing(false);
-    drawStartRef.current = null;
-    renderDrawings([...drawings, newDrawing]);
-  }, [isDrawing, activeTool, drawings, renderDrawings]);
+    const onMouseDown = (e: MouseEvent) => {
+      if (activeTool === "none") return;
+      e.preventDefault();
+      e.stopPropagation();
+      const pos = getPos(e);
+      drawStartRef.current = pos;
+      isDrawingRef.current = true;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDrawingRef.current || !drawStartRef.current || activeTool === "none") return;
+      e.preventDefault();
+      const pos = getPos(e);
+      const start = drawStartRef.current;
+      renderDrawings(drawingsRef.current, {
+        x1: start.x,
+        y1: activeTool === "hline" ? start.y : start.y,
+        x2: pos.x,
+        y2: activeTool === "hline" ? start.y : pos.y,
+        type: activeTool,
+      });
+    };
+
+    const onMouseUp = (e: MouseEvent) => {
+      if (!isDrawingRef.current || !drawStartRef.current || activeTool === "none") return;
+      e.preventDefault();
+      const pos = getPos(e);
+      const start = drawStartRef.current;
+
+      // Minimum drag distance to count as a drawing
+      const dist = Math.sqrt(Math.pow(pos.x - start.x, 2) + Math.pow(pos.y - start.y, 2));
+      if (dist < 3 && activeTool !== "hline") {
+        isDrawingRef.current = false;
+        drawStartRef.current = null;
+        renderDrawings(drawingsRef.current);
+        return;
+      }
+
+      const colors = ["hsl(258, 89%, 66%)", "#22c55e", "#ef4444", "#f59e0b", "#3b82f6"];
+      const color = colors[drawingsRef.current.length % colors.length];
+
+      const newDrawing: Drawing = {
+        id: crypto.randomUUID(),
+        type: activeTool,
+        x1: start.x,
+        y1: start.y,
+        x2: pos.x,
+        y2: activeTool === "hline" ? start.y : pos.y,
+        color,
+      };
+
+      setDrawings((prev) => [...prev, newDrawing]);
+      isDrawingRef.current = false;
+      drawStartRef.current = null;
+    };
+
+    const onMouseLeave = () => {
+      if (isDrawingRef.current) {
+        isDrawingRef.current = false;
+        drawStartRef.current = null;
+        renderDrawings(drawingsRef.current);
+      }
+    };
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+
+    return () => {
+      canvas.removeEventListener("mousedown", onMouseDown);
+      canvas.removeEventListener("mousemove", onMouseMove);
+      canvas.removeEventListener("mouseup", onMouseUp);
+      canvas.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [activeTool, renderDrawings]);
 
   // Re-render drawings when they change
   useEffect(() => {
@@ -239,6 +302,8 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
     { tool: "trendline", icon: <TrendingUp className="w-3.5 h-3.5" />, label: "Trend" },
     { tool: "rect", icon: <RectangleHorizontal className="w-3.5 h-3.5" />, label: "Rect" },
   ];
+
+  const isToolActive = activeTool !== "none";
 
   return (
     <div>
@@ -254,12 +319,21 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Toggle tools */}
-          <Button variant={showTools ? "default" : "ghost"} size="sm" onClick={() => { setShowTools(!showTools); if (showTools) setActiveTool("none"); }} className="h-7 px-2 text-xs">
-            ✏️ Draw
+          <Button
+            variant={showTools ? "default" : "ghost"}
+            size="sm"
+            onClick={() => {
+              const next = !showTools;
+              setShowTools(next);
+              if (!next) setActiveTool("none");
+              else setActiveTool("hline"); // Auto-select first tool
+            }}
+            className="h-7 px-2 text-xs gap-1"
+          >
+            <Pencil className="w-3 h-3" /> Draw
           </Button>
           {drawings.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => { setDrawings([]); renderDrawings([]); }} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
+            <Button variant="ghost" size="sm" onClick={() => setDrawings([])} className="h-7 px-2 text-xs text-destructive hover:text-destructive">
               <Trash2 className="w-3 h-3" />
             </Button>
           )}
@@ -268,33 +342,44 @@ export default function LiveChart({ data, symbol }: LiveChartProps) {
 
       {/* Drawing toolbar */}
       {showTools && (
-        <div className="flex items-center gap-1 mb-2 p-1.5 rounded-lg bg-muted/50 border border-border w-fit">
+        <div className="flex items-center gap-1 mb-2 p-1 rounded-lg bg-muted/60 border border-border w-fit">
           {tools.map((t) => (
             <button
               key={t.tool}
               onClick={() => setActiveTool(t.tool)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition ${
-                activeTool === t.tool ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                activeTool === t.tool
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               {t.icon}
-              {t.label}
+              <span className="hidden sm:inline">{t.label}</span>
             </button>
           ))}
         </div>
       )}
 
       {/* Chart container with canvas overlay */}
-      <div className="relative w-full rounded-xl overflow-hidden">
-        <div ref={containerRef} className="w-full" />
+      <div className="relative w-full rounded-xl overflow-hidden" style={{ height: chartHeightRef.current }}>
+        <div ref={containerRef} className="w-full h-full" />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full"
-          style={{ height: 350, pointerEvents: activeTool !== "none" ? "auto" : "none", cursor: activeTool !== "none" ? "crosshair" : "default" }}
-          onMouseDown={handleCanvasMouseDown}
-          onMouseMove={handleCanvasMouseMove}
-          onMouseUp={handleCanvasMouseUp}
+          className="absolute top-0 left-0"
+          style={{
+            width: "100%",
+            height: chartHeightRef.current,
+            zIndex: isToolActive ? 10 : 1,
+            pointerEvents: isToolActive ? "auto" : "none",
+            cursor: isToolActive ? "crosshair" : "default",
+          }}
         />
+        {/* Active tool indicator */}
+        {isToolActive && (
+          <div className="absolute top-2 left-2 z-20 px-2 py-1 rounded-md bg-primary/90 text-primary-foreground text-[10px] font-semibold uppercase tracking-wide pointer-events-none">
+            {activeTool === "hline" ? "H-Line" : activeTool === "trendline" ? "Trendline" : "Rectangle"} — click & drag
+          </div>
+        )}
       </div>
     </div>
   );
