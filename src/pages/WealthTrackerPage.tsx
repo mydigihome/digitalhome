@@ -822,6 +822,12 @@ export default function WealthTrackerPage() {
             onClose={() => { setShowTradeModal(false); setSelectedPairForTrade(null); }}
           />
         )}
+        {showBrokerSelection && (
+          <BrokerSelectionModal
+            pair={selectedPairForTrade}
+            onClose={() => { setShowBrokerSelection(false); setSelectedPairForTrade(null); }}
+          />
+        )}
         {isEditingHeader && (
           <HeaderCustomizationModal
             pageKey="money"
