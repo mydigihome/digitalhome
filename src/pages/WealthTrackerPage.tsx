@@ -25,29 +25,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /* ─── helpers ─── */
-const glass: React.CSSProperties = {
-  background: "rgba(255,255,255,0.7)",
-  border: "1px solid rgba(255,255,255,0.3)",
-  backdropFilter: "blur(20px)",
-  WebkitBackdropFilter: "blur(20px)",
-  borderRadius: 24,
-};
-
 const FAITH_MESSAGES = [
   "Wealth is options", "Provision for purpose", "Build with intention",
   "Steward well, grow bold", "Your work has value", "Abundance follows discipline",
   "Invest in what matters", "Generosity multiplies",
 ];
-
-function FaithMessage() {
-  const today = new Date().getDate();
-  const msg = FAITH_MESSAGES[today % FAITH_MESSAGES.length];
-  return (
-    <div className="px-6 py-3 rounded-2xl text-center" style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(20px)" }}>
-      <p className="text-xs italic" style={{ color: "#6B7280" }}>"{msg}"</p>
-    </div>
-  );
-}
 
 const fmt = (n: number) =>
   n >= 1000
@@ -152,9 +134,9 @@ export default function WealthTrackerPage() {
   );
 
   const watchlist = [
-    { symbol: "EUR/USD", badge: "FX", color: "bg-blue-100 text-blue-700" },
-    { symbol: "ETH/USD", badge: "ETH", color: "bg-amber-100 text-amber-700" },
-    { symbol: "AAPL", badge: "AAPL", color: "bg-purple-100 text-purple-700" },
+    { symbol: "EUR/USD", badge: "FX", color: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" },
+    { symbol: "ETH/USD", badge: "ETH", color: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" },
+    { symbol: "AAPL", badge: "AAPL", color: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" },
   ];
 
   const btcPrice = btcQuote?.quote?.price ? parseFloat(btcQuote.quote.price) : 64284.5;
@@ -182,9 +164,23 @@ export default function WealthTrackerPage() {
     }
   };
 
+  /* ─── Reusable card item row ─── */
+  const CardItemRow = ({ icon, title, subtitle, amount, amountColor = "text-foreground" }: { icon: React.ReactNode; title: string; subtitle: string; amount: string; amountColor?: string }) => (
+    <div className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-sm">{icon}</div>
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+      <p className={`text-sm font-bold ${amountColor}`}>{amount}</p>
+    </div>
+  );
+
   return (
     <AppShell>
-      <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
+      <div className="min-h-screen bg-background">
 
         {/* Customizable Header */}
         <div
@@ -192,7 +188,7 @@ export default function WealthTrackerPage() {
           style={{ ...headerStyle, paddingTop: 16, paddingBottom: 12 }}
           onClick={() => setIsEditingHeader(true)}
         >
-          <button className="absolute top-3 right-4 w-7 h-7 rounded-full bg-white/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <button className="absolute top-3 right-4 w-7 h-7 rounded-full bg-card/50 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <Pencil className="w-3 h-3 text-foreground" />
           </button>
           <div className="max-w-6xl mx-auto px-6 text-center">
@@ -212,24 +208,21 @@ export default function WealthTrackerPage() {
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                style={glass}
-                className="p-6 relative group"
+                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-6 relative group"
               >
                 <button
                   onClick={() => { setEditingCard("credit"); setEditValue(String(creditScore)); }}
-                  className="absolute top-4 right-14 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 text-white"
-                  style={{ backgroundColor: "#6366F1" }}
+                  className="absolute top-4 right-14 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-primary text-primary-foreground"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Credit Score
                   </span>
                   <button
                     onClick={() => navigate("/finance/wealth")}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition"
-                    style={{ color: "#6366F1", background: "#EEF2FF" }}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg transition bg-primary/10 text-primary"
                   >
                     Full Report
                   </button>
@@ -246,11 +239,11 @@ export default function WealthTrackerPage() {
                           <stop offset="100%" stopColor="#10B981" />
                         </linearGradient>
                       </defs>
-                      <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="#E2E8F0" strokeWidth="10" strokeLinecap="round" />
+                      <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
                       <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="url(#csGradD)" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${arcDash} ${arcGap}`} />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-end pb-0">
-                      <span className="text-3xl font-bold text-slate-900">{creditScore || "—"}</span>
+                      <span className="text-3xl font-bold text-foreground">{creditScore || "—"}</span>
                     </div>
                   </div>
 
@@ -263,11 +256,11 @@ export default function WealthTrackerPage() {
                     </span>
                     {/* Rainbow bar */}
                     <div className="mt-3 h-2 rounded-full overflow-hidden" style={{ background: "linear-gradient(90deg, #EF4444, #F59E0B, #3B82F6, #10B981)" }}>
-                      <div className="h-full" style={{ width: `${arcPct * 100}%`, background: "transparent", borderRight: "3px solid white" }} />
+                      <div className="h-full" style={{ width: `${arcPct * 100}%`, background: "transparent", borderRight: "3px solid hsl(var(--background))" }} />
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-slate-400">300</span>
-                      <span className="text-[10px] text-slate-400">850</span>
+                      <span className="text-[10px] text-muted-foreground">300</span>
+                      <span className="text-[10px] text-muted-foreground">850</span>
                     </div>
                   </div>
                 </div>
@@ -278,35 +271,33 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                style={glass}
-                className="p-5"
+                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-slate-900">Market Intelligence</h3>
+                  <h3 className="text-base font-bold text-foreground">Market Intelligence</h3>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowAddPair(true)}
-                      className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
-                      style={{ background: "#6366F1", color: "#fff" }}
+                      className="text-xs px-3 py-1.5 rounded-lg font-semibold transition bg-primary text-primary-foreground"
                     >
                       + Add Pair
                     </button>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      <span className="text-xs text-emerald-600 font-semibold">Live</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Live</span>
                     </div>
                   </div>
                 </div>
 
                 {/* BTC highlight */}
-                <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
+                <div className="bg-card rounded-2xl border border-border p-4 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-xs font-semibold text-slate-500">BTC/USD</span>
+                      <span className="text-xs font-semibold text-muted-foreground">BTC/USD</span>
                       <p className={`text-xs font-semibold ${btcChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                         {btcChange >= 0 ? "+" : ""}{btcChange.toFixed(1)}%
                       </p>
-                      <p className="text-xl font-bold text-slate-900 mt-1">${btcPrice.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-foreground mt-1">${btcPrice.toLocaleString()}</p>
                     </div>
                     <svg width="100" height="40" viewBox="0 0 100 40" className="text-emerald-400">
                       <polyline points="0,35 15,28 30,32 45,20 55,24 70,15 85,18 100,8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -315,36 +306,36 @@ export default function WealthTrackerPage() {
                 </div>
 
                 {/* Asset Table - Custom pairs + defaults */}
-                <div className="overflow-hidden rounded-xl border border-slate-100">
+                <div className="overflow-hidden rounded-xl border border-border">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-slate-50 text-left">
-                        <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase">Asset</th>
-                        <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase">Price</th>
-                        <th className="px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase text-right">Actions</th>
+                      <tr className="bg-muted/50 text-left">
+                        <th className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase">Asset</th>
+                        <th className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase">Price</th>
+                        <th className="px-4 py-2 text-[11px] font-semibold text-muted-foreground uppercase text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {userPairs.length > 0 ? userPairs.map((pair) => (
-                        <tr key={pair.id} className="border-t border-slate-100 hover:bg-slate-50 transition">
+                        <tr key={pair.id} className="border-t border-border hover:bg-muted/30 transition">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-100 text-indigo-700">{pair.category}</span>
-                              <span className="font-medium text-slate-900">{pair.symbol}</span>
+                              <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
+                              <span className="font-medium text-foreground">{pair.symbol}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600">—</td>
+                          <td className="px-4 py-3 text-muted-foreground">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
-                                className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                                className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
                               >
                                 Trade
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
-                                className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                                className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
                               >
                                 Plan
                               </button>
@@ -352,18 +343,18 @@ export default function WealthTrackerPage() {
                           </td>
                         </tr>
                       )) : watchlist.map((w) => (
-                        <tr key={w.symbol} className="border-t border-slate-100 hover:bg-slate-50 transition">
+                        <tr key={w.symbol} className="border-t border-border hover:bg-muted/30 transition">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
-                              <span className="font-medium text-slate-900">{w.symbol}</span>
+                              <span className="font-medium text-foreground">{w.symbol}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-600">—</td>
+                          <td className="px-4 py-3 text-muted-foreground">—</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
-                     <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                     <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
+                              <button className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
+                              <button className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
                             </div>
                           </td>
                         </tr>
@@ -381,24 +372,23 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                style={glass}
-                className="p-5"
+                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-base font-bold text-slate-900">Savings Goal</h3>
-                  <span className="text-xs text-slate-500 font-medium">{savingsPct}% of Goal reached</span>
+                  <h3 className="text-base font-bold text-foreground">Savings Goal</h3>
+                  <span className="text-xs text-muted-foreground font-medium">{savingsPct}% of Goal reached</span>
                 </div>
                 <div className="flex items-end justify-between mb-3">
                   <div>
-                    <span className="text-2xl font-bold text-slate-900">{fmt(currentSavings)}</span>
-                    <span className="text-xs text-slate-400 ml-2">/ {fmt(savingsGoal)}</span>
+                    <span className="text-2xl font-bold text-foreground">{fmt(currentSavings)}</span>
+                    <span className="text-xs text-muted-foreground ml-2">/ {fmt(savingsGoal)}</span>
                   </div>
-                  <div className="text-right text-xs text-slate-500">
-                    <p>Monthly: <span className="font-semibold text-slate-700">${Math.round(monthlyIncome * 0.2).toLocaleString()}</span></p>
+                  <div className="text-right text-xs text-muted-foreground">
+                    <p>Monthly: <span className="font-semibold text-foreground">${Math.round(monthlyIncome * 0.2).toLocaleString()}</span></p>
                     <p>{savingsGoal > currentSavings ? `${Math.ceil((savingsGoal - currentSavings) / Math.max(1, monthlyIncome * 0.2))} Months left` : "Goal reached!"}</p>
                   </div>
                 </div>
-                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${savingsPct}%` }}
@@ -420,12 +410,12 @@ export default function WealthTrackerPage() {
                 className="grid grid-cols-2 gap-3"
               >
                 {[
-                  { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600", editColor: "#10B981" },
-                  { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600", editColor: "#EF4444" },
-                  { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600", editColor: "#3B82F6" },
-                  { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600", editColor: "#F59E0B" },
+                  { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400", editColor: "#10B981" },
+                  { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400", editColor: "#EF4444" },
+                  { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400", editColor: "#3B82F6" },
+                  { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400", editColor: "#F59E0B" },
                 ].map((c) => (
-                  <div key={c.label} style={glass} className="p-4 flex flex-col gap-2 relative group">
+                  <div key={c.label} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-4 flex flex-col gap-2 relative group">
                     {c.key !== "net" && c.key !== "expenses" && (
                       <button
                         onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }}
@@ -436,7 +426,7 @@ export default function WealthTrackerPage() {
                       </button>
                     )}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
-                    <span className="text-xs text-slate-500 font-medium">{c.label}</span>
+                    <span className="text-xs text-muted-foreground font-medium">{c.label}</span>
                     {editingCard === c.key ? (
                       <div className="flex gap-1">
                         <Input
@@ -447,10 +437,10 @@ export default function WealthTrackerPage() {
                           autoFocus
                           onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }}
                         />
-                        <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-white">✓</button>
+                        <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground">✓</button>
                       </div>
                     ) : (
-                      <span className="text-lg font-bold text-slate-900">{fmt(c.value)}</span>
+                      <span className="text-lg font-bold text-foreground">{fmt(c.value)}</span>
                     )}
                   </div>
                 ))}
@@ -461,41 +451,19 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                style={glass}
-                className="p-5"
+                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
               >
-                <h3 className="text-base font-bold text-slate-900 mb-4">Upcoming Bills</h3>
+                <h3 className="text-base font-bold text-foreground mb-4">Upcoming Bills</h3>
                 {recurringBills.length > 0 ? (
                   <div className="space-y-3">
                     {recurringBills.slice(0, 4).map((bill) => (
-                      <div key={bill.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-sm">💳</div>
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">{bill.description}</p>
-                            <p className="text-xs text-slate-500">{bill.frequency}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm font-bold text-red-600">-${Number(bill.amount).toFixed(2)}</p>
-                      </div>
+                      <CardItemRow key={bill.id} icon="💳" title={bill.description} subtitle={bill.frequency} amount={`-$${Number(bill.amount).toFixed(2)}`} amountColor="text-red-600 dark:text-red-400" />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center text-sm">⚡</div>
-                        <div><p className="text-sm font-semibold text-slate-900">Electricity</p><p className="text-xs text-slate-500">Due in 2 days</p></div>
-                      </div>
-                      <p className="text-sm font-bold text-red-600">$142.00</p>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center text-sm">📡</div>
-                        <div><p className="text-sm font-semibold text-slate-900">Starlink</p><p className="text-xs text-slate-500">Due in 5 days</p></div>
-                      </div>
-                      <p className="text-sm font-bold text-red-600">$120.00</p>
-                    </div>
+                    <CardItemRow icon="⚡" title="Electricity" subtitle="Due in 2 days" amount="$142.00" amountColor="text-red-600 dark:text-red-400" />
+                    <CardItemRow icon="📡" title="Starlink" subtitle="Due in 5 days" amount="$120.00" amountColor="text-red-600 dark:text-red-400" />
                   </div>
                 )}
               </motion.div>
@@ -505,53 +473,25 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
-                style={glass}
-                className="p-5"
+                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
               >
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-slate-900">Subscriptions</h3>
-                  <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold uppercase tracking-wide">
+                  <h3 className="text-base font-bold text-foreground">Subscriptions</h3>
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wide">
                     {subscriptions.length || 3} Active
                   </span>
                 </div>
                 {subscriptions.length > 0 ? (
                   <div className="space-y-2">
                     {subscriptions.map((sub) => (
-                      <div key={sub.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-sm">🎬</div>
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">{sub.description}</p>
-                            <p className="text-[11px] text-slate-400">{sub.frequency}</p>
-                          </div>
-                        </div>
-                        <p className="text-sm font-bold text-slate-900">${Number(sub.amount).toFixed(2)}</p>
-                      </div>
+                      <CardItemRow key={sub.id} icon="🎬" title={sub.description} subtitle={sub.frequency} amount={`$${Number(sub.amount).toFixed(2)}`} />
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">🎨</div>
-                        <div><p className="text-sm font-semibold text-slate-900">Creative Cloud</p><p className="text-[11px] text-slate-400">Monthly</p></div>
-                      </div>
-                      <p className="text-sm font-bold text-slate-900">$54.99</p>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-sm">🎬</div>
-                        <div><p className="text-sm font-semibold text-slate-900">Netflix</p><p className="text-[11px] text-slate-400">Monthly</p></div>
-                      </div>
-                      <p className="text-sm font-bold text-slate-900">$19.99</p>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-sm">☁️</div>
-                        <div><p className="text-sm font-semibold text-slate-900">Google One</p><p className="text-[11px] text-slate-400">Yearly</p></div>
-                      </div>
-                      <p className="text-sm font-bold text-slate-900">$99.99</p>
-                    </div>
+                    <CardItemRow icon="🎨" title="Creative Cloud" subtitle="Monthly" amount="$54.99" />
+                    <CardItemRow icon="🎬" title="Netflix" subtitle="Monthly" amount="$19.99" />
+                    <CardItemRow icon="☁️" title="Google One" subtitle="Yearly" amount="$99.99" />
                   </div>
                 )}
               </motion.div>
@@ -569,14 +509,12 @@ export default function WealthTrackerPage() {
         {/* ═══ MOBILE LAYOUT ═══ */}
         <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
           {/* Credit Score */}
-          {/* Credit Score */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            style={glass}
-            className="p-6 flex flex-col items-center"
+            className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-6 flex flex-col items-center"
           >
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Credit Score</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Credit Score</span>
             <div className="relative w-44 h-24">
               <svg viewBox="0 0 160 90" className="w-full h-full">
                 <defs>
@@ -587,26 +525,26 @@ export default function WealthTrackerPage() {
                     <stop offset="100%" stopColor="#10B981" />
                   </linearGradient>
                 </defs>
-                <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="#E2E8F0" strokeWidth="10" strokeLinecap="round" />
+                <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
                 <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="url(#csGrad)" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${arcDash} ${arcGap}`} />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-end pb-0">
-                <span className="text-3xl font-bold text-slate-900">{creditScore || "—"}</span>
+                <span className="text-3xl font-bold text-foreground">{creditScore || "—"}</span>
               </div>
             </div>
             <span className="mt-2 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${creditColor}20`, color: creditColor }}>{creditLabel}</span>
           </motion.div>
 
           {/* Financial Overview 2×2 */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={glass} className="p-5">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 text-emerald-600", editColor: "#10B981" },
-                { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 text-red-600", editColor: "#EF4444" },
-                { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 text-blue-600", editColor: "#3B82F6" },
-                { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 text-amber-600", editColor: "#F59E0B" },
+                { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400", editColor: "#10B981" },
+                { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400", editColor: "#EF4444" },
+                { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400", editColor: "#3B82F6" },
+                { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400", editColor: "#F59E0B" },
               ].map((c) => (
-                <div key={c.label} className="bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-border p-4 flex flex-col gap-2 relative group">
+                <div key={c.label} className="bg-card rounded-2xl border border-border p-4 flex flex-col gap-2 relative group">
                   {c.key !== "net" && c.key !== "expenses" && (
                     <button
                       onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }}
@@ -617,7 +555,7 @@ export default function WealthTrackerPage() {
                     </button>
                   )}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
-                  <span className="text-xs text-slate-500 font-medium">{c.label}</span>
+                  <span className="text-xs text-muted-foreground font-medium">{c.label}</span>
                   {editingCard === c.key ? (
                     <div className="flex gap-1">
                       <Input
@@ -628,10 +566,10 @@ export default function WealthTrackerPage() {
                         autoFocus
                         onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }}
                       />
-                      <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-white">✓</button>
+                      <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground">✓</button>
                     </div>
                   ) : (
-                    <span className="text-lg font-bold text-slate-900 dark:text-foreground">{fmt(c.value)}</span>
+                    <span className="text-lg font-bold text-foreground">{fmt(c.value)}</span>
                   )}
                 </div>
               ))}
@@ -639,117 +577,115 @@ export default function WealthTrackerPage() {
           </motion.div>
 
           {/* Bills & Due Dates */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={glass} className="p-5">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900">Bills & Due Dates</h3>
-              <button onClick={() => navigate("/finance/wealth")} className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-100 transition">
+              <h3 className="text-base font-bold text-foreground">Bills & Due Dates</h3>
+              <button onClick={() => navigate("/finance/wealth")} className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary/20 transition">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
             {recurringBills.length > 0 ? (
               <div className="space-y-3">
                 {recurringBills.slice(0, 4).map((bill) => (
-                  <div key={bill.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                  <div key={bill.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-sm">💳</div>
+                      <div className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-sm">💳</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{bill.description}</p>
-                        <p className="text-xs text-slate-500">{bill.frequency}</p>
+                        <p className="text-sm font-semibold text-foreground">{bill.description}</p>
+                        <p className="text-xs text-muted-foreground">{bill.frequency}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-red-600">-${Number(bill.amount).toFixed(2)}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Pending</span>
+                      <p className="text-sm font-bold text-red-600 dark:text-red-400">-${Number(bill.amount).toFixed(2)}</p>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">Pending</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6"><p className="text-sm text-slate-400">No upcoming bills</p></div>
+              <div className="text-center py-6"><p className="text-sm text-muted-foreground">No upcoming bills</p></div>
             )}
           </motion.div>
 
           {/* Savings Goal */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={glass} className="p-5">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-slate-900">Savings Goal</h3>
-              <span className="text-xs text-slate-500 font-medium">{savingsPct}% of Goal reached</span>
+              <h3 className="text-base font-bold text-foreground">Savings Goal</h3>
+              <span className="text-xs text-muted-foreground font-medium">{savingsPct}% of Goal reached</span>
             </div>
             <div className="mb-3">
-              <span className="text-2xl font-bold text-slate-900">{fmt(currentSavings)}</span>
-              <span className="text-xs text-slate-400 ml-2">Target: {fmt(savingsGoal)}</span>
+              <span className="text-2xl font-bold text-foreground">{fmt(currentSavings)}</span>
+              <span className="text-xs text-muted-foreground ml-2">Target: {fmt(savingsGoal)}</span>
             </div>
-            <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-3 bg-muted rounded-full overflow-hidden">
               <motion.div initial={{ width: 0 }} animate={{ width: `${savingsPct}%` }} transition={{ duration: 1, ease: "easeOut" }} className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
             </div>
           </motion.div>
 
           {/* Market Intelligence */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={glass} className="p-5">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900">Market Intelligence</h3>
+              <h3 className="text-base font-bold text-foreground">Market Intelligence</h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAddPair(true)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition"
-                  style={{ background: "#6366F1", color: "#fff" }}
+                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition bg-primary text-primary-foreground"
                 >
                   + Add Pair
                 </button>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs text-emerald-600 font-semibold">Live</span>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Live</span>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-4">
+            <div className="bg-card rounded-2xl border border-border p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-slate-500">BTC/USD</span>
+                  <span className="text-xs font-semibold text-muted-foreground">BTC/USD</span>
                   <p className={`text-xs font-semibold ${btcChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>{btcChange >= 0 ? "+" : ""}{btcChange.toFixed(1)}%</p>
-                  <p className="text-xl font-bold text-slate-900 mt-1">${btcPrice.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-foreground mt-1">${btcPrice.toLocaleString()}</p>
                 </div>
                 <svg width="100" height="40" viewBox="0 0 100 40" className="text-emerald-400">
                   <polyline points="0,35 15,28 30,32 45,20 55,24 70,15 85,18 100,8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
             </div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               {userPairs.length > 0 ? "Your Pairs" : "Watchlist"}
             </p>
             <div className="space-y-2">
               {userPairs.length > 0 ? userPairs.map((pair) => (
-                <div key={pair.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                <div key={pair.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
                   <div className="flex items-center gap-3">
-                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-100 text-indigo-700">{pair.category}</span>
-                    <span className="text-sm font-medium text-slate-900">{pair.symbol}</span>
+                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
+                    <span className="text-sm font-medium text-foreground">{pair.symbol}</span>
                   </div>
                   <div className="flex gap-2">
                      <button
                        onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
+                       className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
                      >
                        Trade
                      </button>
                      <button
                        onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+                       className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
                      >
                        Plan
                      </button>
                   </div>
                 </div>
               )) : watchlist.map((w) => (
-                <div key={w.symbol} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                <div key={w.symbol} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
-                    <span className="text-sm font-medium text-slate-900">{w.symbol}</span>
+                    <span className="text-sm font-medium text-foreground">{w.symbol}</span>
                   </div>
                    <div className="flex gap-2">
-                     <button className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition">Trade</button>
-                     <button className="text-xs px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition">Plan</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
+                     <button className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
                    </div>
-
                 </div>
               ))}
             </div>
@@ -759,31 +695,31 @@ export default function WealthTrackerPage() {
           <ActiveTradingPlans />
 
           {/* Subscriptions */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={glass} className="p-5">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-slate-900">Subscriptions</h3>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold uppercase tracking-wide">{subscriptions.length} Active</span>
+              <h3 className="text-base font-bold text-foreground">Subscriptions</h3>
+              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wide">{subscriptions.length} Active</span>
             </div>
             {subscriptions.length > 0 ? (
               <div className="space-y-2">
                 {subscriptions.map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100">
+                  <div key={sub.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-sm">🎬</div>
+                      <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-sm">🎬</div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">{sub.description}</p>
-                        <p className="text-[11px] text-slate-400">{sub.frequency}</p>
+                        <p className="text-sm font-semibold text-foreground">{sub.description}</p>
+                        <p className="text-[11px] text-muted-foreground">{sub.frequency}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-slate-900">${Number(sub.amount).toFixed(2)}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">active</span>
+                      <p className="text-sm font-bold text-foreground">${Number(sub.amount).toFixed(2)}</p>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium">active</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6"><p className="text-sm text-slate-400">No subscriptions tracked yet</p></div>
+              <div className="text-center py-6"><p className="text-sm text-muted-foreground">No subscriptions tracked yet</p></div>
             )}
           </motion.div>
           {/* Investment Schedule - Mobile */}
@@ -797,7 +733,7 @@ export default function WealthTrackerPage() {
         <div className="fixed bottom-24 right-6 z-30 md:hidden">
           <button
             onClick={() => navigate("/finance/wealth")}
-            className="w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg shadow-indigo-600/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            className="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
           >
             <Plus className="w-6 h-6" />
           </button>
