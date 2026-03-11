@@ -1793,6 +1793,7 @@ export default function AdminDashboard() {
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "resources" && <ResourcesTab />}
         {activeTab === "content" && <ContentTab />}
+        {activeTab === "waitlist" && <WaitlistTab />}
         {activeTab === "system" && <SystemTab />}
       </div>
     </div>
