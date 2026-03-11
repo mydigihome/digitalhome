@@ -530,7 +530,7 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
+                className="bg-gradient-to-br from-card to-red-50/20 dark:from-card dark:to-red-950/10 backdrop-blur-xl border border-border rounded-3xl p-5 shadow-sm"
               >
                 <h3 className="text-base font-bold text-foreground mb-4">Upcoming Bills</h3>
                 {recurringBills.length > 0 ? (
