@@ -337,7 +337,7 @@ export default function WealthTrackerPage() {
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-2 justify-end">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowTradeModal(true); }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
                                 className="text-xs px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100 transition"
                               >
                                 Trade
