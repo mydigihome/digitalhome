@@ -158,9 +158,41 @@ const COMPREHENSIVE_ASSETS = [
   { symbol: "NG", name: "Natural Gas Futures", category: "Futures" },
   { symbol: "ZB", name: "30-Year Treasury Bond Futures", category: "Futures" },
   { symbol: "6E", name: "Euro FX Futures", category: "Futures" },
+
+  // Commodities
+  { symbol: "XAU/USD", name: "Gold Spot", category: "Commodities" },
+  { symbol: "XAG/USD", name: "Silver Spot", category: "Commodities" },
+  { symbol: "XPT/USD", name: "Platinum Spot", category: "Commodities" },
+  { symbol: "XPD/USD", name: "Palladium Spot", category: "Commodities" },
+  { symbol: "USOIL", name: "Crude Oil WTI", category: "Commodities" },
+  { symbol: "UKOIL", name: "Brent Crude Oil", category: "Commodities" },
+  { symbol: "NGAS", name: "Natural Gas", category: "Commodities" },
+  { symbol: "COPPER", name: "Copper", category: "Commodities" },
+  { symbol: "WHEAT", name: "Wheat", category: "Commodities" },
+  { symbol: "CORN", name: "Corn", category: "Commodities" },
+  { symbol: "SOYBEAN", name: "Soybeans", category: "Commodities" },
+  { symbol: "COFFEE", name: "Coffee", category: "Commodities" },
+  { symbol: "SUGAR", name: "Sugar", category: "Commodities" },
+  { symbol: "COTTON", name: "Cotton", category: "Commodities" },
+
+  // Indices
+  { symbol: "NDX", name: "NASDAQ 100", category: "Indices" },
+  { symbol: "SPX", name: "S&P 500", category: "Indices" },
+  { symbol: "DJI", name: "Dow Jones Industrial Average", category: "Indices" },
+  { symbol: "RUT", name: "Russell 2000", category: "Indices" },
+  { symbol: "VIX", name: "CBOE Volatility Index", category: "Indices" },
+  { symbol: "FTSE", name: "FTSE 100 (London)", category: "Indices" },
+  { symbol: "DAX", name: "DAX 40 (Germany)", category: "Indices" },
+  { symbol: "CAC", name: "CAC 40 (France)", category: "Indices" },
+  { symbol: "N225", name: "Nikkei 225 (Japan)", category: "Indices" },
+  { symbol: "HSI", name: "Hang Seng Index (Hong Kong)", category: "Indices" },
+  { symbol: "STOXX50E", name: "Euro Stoxx 50", category: "Indices" },
+  { symbol: "SENSEX", name: "BSE Sensex (India)", category: "Indices" },
+  { symbol: "ASX200", name: "S&P/ASX 200 (Australia)", category: "Indices" },
+  { symbol: "KOSPI", name: "KOSPI (South Korea)", category: "Indices" },
 ];
 
-const CATEGORIES = ["All", "Crypto", "Stocks", "Forex", "ETFs", "Mutual Funds", "Futures"];
+const CATEGORIES = ["All", "Crypto", "Stocks", "Forex", "ETFs", "Mutual Funds", "Futures", "Commodities", "Indices"];
 
 interface AddPairModalProps {
   onClose: () => void;
