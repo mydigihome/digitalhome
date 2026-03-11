@@ -992,6 +992,12 @@ export default function Dashboard() {
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
       )}
+      {showBrokerModal && (
+        <BrokerSelectionModal
+          pair={{ id: selectedStock, user_id: "", symbol: selectedStock, display_name: selectedStockName, category: "Stocks", is_active: true, sort_order: 0, created_at: "" } as TradingPair}
+          onClose={() => setShowBrokerModal(false)}
+        />
+      )}
 
       {/* Tutorial */}
       <AnimatePresence>
