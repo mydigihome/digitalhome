@@ -477,7 +477,7 @@ export default function SettingsPage() {
                     <h3 className="text-lg font-semibold text-foreground mb-4">Theme</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <button
-                        onClick={() => { document.documentElement.classList.remove("dark"); setDarkMode(false); upsertPrefs.mutate({ sidebar_theme: "light" } as any); }}
+                        onClick={() => { document.documentElement.classList.remove("dark"); document.body.classList.remove("dark"); setDarkMode(false); upsertPrefs.mutate({ sidebar_theme: "light" } as any); }}
                         className={cn(
                           "rounded-xl border-2 p-4 text-left transition-all",
                           !darkMode ? "border-primary" : "border-border hover:border-muted-foreground/30"
