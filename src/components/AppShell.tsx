@@ -15,6 +15,7 @@ const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boole
 export const useSidebar = () => useContext(SidebarContext);
 
 function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
+  const { setCollapsed } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
@@ -108,11 +109,31 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   return (
     <div className="flex flex-1 flex-col h-full">
-      {/* Logo */}
+      {/* Logo + Collapse Toggle */}
       <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
           <div className="h-3 w-3 rounded-full bg-primary flex-shrink-0" />
-          {!collapsed && <span className="text-[15px] font-semibold tracking-tight text-foreground">Digital Home</span>}
+          {!collapsed && (
+            <>
+              <span className="text-[15px] font-semibold tracking-tight text-foreground flex-1">Digital Home</span>
+              <button
+                onClick={() => setCollapsed(true)}
+                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                aria-label="Collapse sidebar"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </>
+          )}
+          {collapsed && (
+            <button
+              onClick={() => setCollapsed(false)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -571,19 +592,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
          >
            <div className="flex grow flex-col relative">
             <SidebarNav collapsed={collapsed} />
-
-            {/* Collapse toggle button */}
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-               className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:shadow-md transition-all"
-             >
-                {collapsed ? (
-                 <PanelLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                ) : (
-                 <PanelLeftClose className="w-3.5 h-3.5 text-muted-foreground" />
-               )}
-            </button>
-          </div>
+           </div>
         </div>
 
         {/* Mobile Header */}
