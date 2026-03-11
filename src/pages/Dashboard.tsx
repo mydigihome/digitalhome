@@ -24,7 +24,6 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
-/* removed @fontsource import - using system font */
 
 /* ── Helpers ── */
 function getGreeting() {
@@ -77,15 +76,6 @@ function ProgressRing({ progress, size = 80, strokeWidth = 7, gradientId, color1
   );
 }
 
-const glass: React.CSSProperties = {
-  background: "rgba(255,255,255,0.7)",
-  border: "1px solid rgba(255,255,255,0.3)",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
-  backdropFilter: "blur(24px)",
-  WebkitBackdropFilter: "blur(24px)",
-  borderRadius: 24,
-};
-
 const stockOptions = [
   { symbol: "AAPL", name: "Apple Inc." },
   { symbol: "BTC/USD", name: "Bitcoin" },
@@ -132,8 +122,8 @@ function ScriptureContent({ religion }: { religion?: string }) {
   const verse = verses[today % verses.length];
   return (
     <>
-      <p className="text-sm italic leading-relaxed" style={{ color: "#374151" }}>{verse.text}</p>
-      <p className="text-xs mt-2" style={{ color: "#9CA3AF" }}>— {verse.ref}</p>
+      <p className="text-sm italic leading-relaxed text-foreground/80">{verse.text}</p>
+      <p className="text-xs mt-2 text-muted-foreground">— {verse.ref}</p>
     </>
   );
 }
@@ -294,19 +284,19 @@ export default function Dashboard() {
   };
 
   const linkIcons: Record<string, React.ReactNode> = {
-    mail: <MailIcon className="w-6 h-6 text-blue-600" strokeWidth={1.5} />,
-    store: <ShoppingBag className="w-6 h-6 text-emerald-600" strokeWidth={1.5} />,
-    status: <FileText className="w-6 h-6 text-amber-600" strokeWidth={1.5} />,
+    mail: <MailIcon className="w-6 h-6 text-info" strokeWidth={1.5} />,
+    store: <ShoppingBag className="w-6 h-6 text-success" strokeWidth={1.5} />,
+    status: <FileText className="w-6 h-6 text-warning" strokeWidth={1.5} />,
   };
   const linkBgs: Record<string, string> = {
-    mail: "bg-blue-100",
-    store: "bg-emerald-100",
-    status: "bg-amber-100",
+    mail: "bg-info/10",
+    store: "bg-success/10",
+    status: "bg-warning/10",
   };
 
   return (
     <AppShell>
-      <div className="min-h-screen" style={{ background: "#F8F9FC" }}>
+      <div className="min-h-screen bg-background">
 
         {/* ═══ HERO HEADER ═══ */}
         <motion.div
@@ -342,17 +332,13 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-[#F8F9FC] pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-background pointer-events-none" />
 
           <div className="absolute bottom-10 left-6 sm:left-8 z-10">
-            <p className="text-xs font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>{currentDate}</p>
+            <p className="text-xs font-medium text-white/85">{currentDate}</p>
             <h1
-              className="text-[32px] sm:text-[40px] leading-[1.15] mt-0.5"
-              style={{
-                fontWeight: 600,
-                color: "white",
-                textShadow: "0 2px 12px rgba(0,0,0,0.3)",
-              }}
+              className="text-[32px] sm:text-[40px] leading-[1.15] mt-0.5 font-semibold text-white"
+              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.3)" }}
             >
               {greeting}
             </h1>
@@ -364,85 +350,83 @@ export default function Dashboard() {
 
           {/* MOMENTUM & HABITS — vertical centered cards */}
           <motion.div {...stagger(1)} className="grid grid-cols-2 gap-3 mb-5">
-            <div className="p-4 text-center" style={glass}>
-              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#6366F1" }}>Momentum</p>
+            <div className="p-4 text-center bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2 text-primary">Momentum</p>
               <div className="flex justify-center">
                 <ProgressRing progress={momentum} size={80} strokeWidth={7} gradientId="m-grad-m" color1="#6366F1" color2="#8B5CF6">
-                  <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
+                  <span className="text-[22px] font-bold text-foreground">{momentum}%</span>
                 </ProgressRing>
               </div>
-              <p className="text-[10px] font-medium mt-2" style={{ color: "#6B7280" }}>Daily Goal</p>
+              <p className="text-[10px] font-medium mt-2 text-muted-foreground">Daily Goal</p>
             </div>
             <button
               onClick={() => habits.length > 0 && setSelectedHabit(habits[0])}
-              className="p-4 text-center cursor-pointer hover:opacity-90 transition"
-              style={glass}
+              className="p-4 text-center cursor-pointer hover:opacity-90 transition bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm"
             >
-              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2" style={{ color: "#10B981" }}>Habits</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.8px] mb-2 text-success">Habits</p>
               <div className="flex justify-center">
                 <ProgressRing progress={habitsProgress} size={80} strokeWidth={7} gradientId="h-grad-m" color1="#10B981" color2="#34D399">
-                  <span className="text-[22px] font-bold" style={{ color: "#1F2937" }}>{totalHours}h</span>
+                  <span className="text-[22px] font-bold text-foreground">{totalHours}h</span>
                 </ProgressRing>
               </div>
-              <p className="text-[10px] font-medium mt-2" style={{ color: "#6B7280" }}>🔥 {streakDays} days</p>
+              <p className="text-[10px] font-medium mt-2 text-muted-foreground">🔥 {streakDays} days</p>
             </button>
           </motion.div>
 
           {/* DAILY SCRIPTURE (mobile) */}
           {(prefs as any)?.show_scripture_card && (
-            <motion.div {...stagger(2)} className="p-6 mb-4" style={glass}>
-              <h3 className="font-bold text-sm mb-4" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+            <motion.div {...stagger(2)} className="p-6 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+              <h3 className="font-bold text-sm mb-4 text-foreground">Daily Scripture</h3>
               <ScriptureContent religion={(prefs as any)?.religion} />
             </motion.div>
           )}
 
           {/* TODAY'S AGENDA */}
-          <motion.div {...stagger(2)} className="p-5 mb-4" style={glass}>
+          <motion.div {...stagger(2)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
-              <button onClick={() => navigate("/calendar")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>View All</button>
+              <h2 className="text-[17px] font-bold text-foreground">Today's Agenda</h2>
+              <button onClick={() => navigate("/calendar")} className="text-sm font-semibold text-primary">View All</button>
             </div>
             {agendaItems.length > 0 ? (
               <div className="space-y-0">
                 {agendaItems.map((item, idx) => (
-                  <div key={idx} className="flex gap-4 py-3" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                    <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "#6366F1" : "#10B981" }} />
+                  <div key={idx} className="flex gap-4 py-3 border-b border-border last:border-b-0">
+                    <div className="w-1 rounded-sm flex-shrink-0" style={{ background: item.type === "event" ? "hsl(var(--primary))" : "hsl(var(--success))" }} />
                     <div>
-                      <p className="text-xs font-semibold" style={{ color: "#6B7280" }}>{item.time}</p>
-                      <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
-                      {item.subtitle && <p className="text-xs" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
+                      <p className="text-xs font-semibold text-muted-foreground">{item.time}</p>
+                      <p className="text-[15px] font-semibold text-foreground">{item.title}</p>
+                      {item.subtitle && <p className="text-xs text-muted-foreground">{item.subtitle}</p>}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No events today</p>
+              <p className="text-sm text-center py-6 text-muted-foreground">No events today</p>
             )}
           </motion.div>
 
           {/* QUICK TO-DOS */}
-          <motion.div {...stagger(3)} className="p-5 mb-4" style={glass}>
+          <motion.div {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
-              <span className="text-sm font-semibold" style={{ color: "#6366F1" }}>Edit List</span>
+              <h2 className="text-[17px] font-bold text-foreground">Quick To-Dos</h2>
+              <span className="text-sm font-semibold text-primary">Edit List</span>
             </div>
             <div className="space-y-0">
               {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
                 <div key={todo.id} className="flex items-center gap-3 py-2.5">
                   <button
                     onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                    className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition hover:border-indigo-400"
-                    style={{ borderColor: "#D1D5DB" }}
+                    className="w-5 h-5 rounded-full border-2 border-border flex-shrink-0 flex items-center justify-center transition hover:border-primary"
                   />
-                  <span className="text-[15px]" style={{ color: "#1F2937" }}>{todo.text}</span>
+                  <span className="text-[15px] text-foreground">{todo.text}</span>
                 </div>
               ))}
               {todos.filter(t => t.completed).slice(0, 2).map(todo => (
                 <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                  <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
+                  <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-primary">
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </div>
-                  <span className="text-[15px] line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                  <span className="text-[15px] line-through text-muted-foreground">{todo.text}</span>
                 </div>
               ))}
               <input
@@ -450,41 +434,40 @@ export default function Dashboard() {
                 onChange={(e) => setNewTodoText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
                 placeholder="Add a quick note..."
-                className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
-                style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }}
+                className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg border border-dashed border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </motion.div>
 
           {/* STOCK / TRADING WIDGET */}
-          <motion.div {...stagger(4)} className="mb-4 overflow-hidden" style={glass}>
+          <motion.div {...stagger(4)} className="mb-4 overflow-hidden bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
             <div className="px-5 pt-5 pb-3">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{selectedStock}</span>
-                    <span className="text-xs" style={{ color: "#9CA3AF" }}>{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                    <span className="text-sm font-bold text-foreground">{selectedStock}</span>
+                    <span className="text-xs text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
                   </div>
-                  <div className="text-2xl font-bold" style={{ color: "#1F2937" }}>
+                  <div className="text-2xl font-bold text-foreground">
                     ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <div className={`text-sm font-semibold flex items-center gap-1 mt-0.5 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className={`text-sm font-semibold flex items-center gap-1 mt-0.5 ${priceChange >= 0 ? 'text-success' : 'text-destructive'}`}>
                     {priceChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                     {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)} ({priceChangePercent >= 0 ? "+" : ""}{priceChangePercent.toFixed(2)}%)
                   </div>
                 </div>
                 <div className="relative" data-stock-dropdown>
-                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition" style={{ background: "#F3F4F6" }}>
-                    <ChevronDown className="w-4 h-4" style={{ color: "#6B7280" }} />
+                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition bg-muted">
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </button>
                   {stockDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                    <div className="absolute top-full right-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
                       {stockOptions.map((stock) => (
                         <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                          className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition text-left ${selectedStock === stock.symbol ? 'bg-indigo-50' : ''}`}>
+                          className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
                           <div>
-                            <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{stock.symbol}</span>
-                            <span className="text-xs ml-2" style={{ color: "#9CA3AF" }}>{stock.name}</span>
+                            <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                            <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
                           </div>
                         </button>
                       ))}
@@ -495,47 +478,45 @@ export default function Dashboard() {
               <div className="flex gap-1 overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
                 {TIMEFRAMES.map((tf) => (
                   <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                    style={selectedTimeframe.label !== tf.label ? { background: "#F1F5F9" } : undefined}>
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
                     {tf.label}
                   </button>
                 ))}
               </div>
             </div>
             <div className="px-3 pb-3">
-              {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>}
+              {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>}
             </div>
             <div className="px-5 pb-4">
               <a href={`https://www.tradingview.com/symbols/${selectedStock}/`} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition hover:bg-gray-100"
-                style={{ color: "#6366F1", background: "#EEF2FF" }}>
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition hover:bg-primary/10 text-primary bg-primary/5">
                 Open in TradingView <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </motion.div>
 
           {/* ACTIVE PROJECTS */}
-          <motion.div {...stagger(5)} className="p-5 mb-4" style={glass}>
+          <motion.div {...stagger(5)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
-              <button onClick={() => navigate("/projects")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>View All</button>
+              <h2 className="text-[17px] font-bold text-foreground">Active Projects</h2>
+              <button onClick={() => navigate("/projects")} className="text-sm font-semibold text-primary">View All</button>
             </div>
             {activeProjects.length === 0 ? (
               <div className="flex flex-col items-center py-6 text-center">
-                <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
+                <p className="text-sm text-muted-foreground">No active projects</p>
                 <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}><Plus className="mr-1.5 h-3.5 w-3.5" /> Create one</Button>
               </div>
             ) : (
               <div className="space-y-2.5">
                 {activeProjects.map((project) => (
                   <button key={project.id} onClick={() => navigate(`/project/${project.id}`)}
-                    className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left">
-                    <div className="h-9 w-9 rounded-lg bg-indigo-100 flex items-center justify-center text-lg flex-shrink-0">{project.icon || "📁"}</div>
+                    className="w-full flex items-center gap-3 p-3 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition text-left">
+                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-lg flex-shrink-0">{project.icon || "📁"}</div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: "#1F2937" }}>{project.name}</p>
-                      <p className="text-[11px]" style={{ color: "#9CA3AF" }}>{project.done}/{project.total} tasks</p>
+                      <p className="text-sm font-semibold truncate text-foreground">{project.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{project.done}/{project.total} tasks</p>
                     </div>
-                    <span className="text-sm font-bold" style={{ color: "#6366F1" }}>{project.percentage}%</span>
+                    <span className="text-sm font-bold text-primary">{project.percentage}%</span>
                   </button>
                 ))}
               </div>
@@ -543,52 +524,52 @@ export default function Dashboard() {
           </motion.div>
 
           {/* MONEY REMINDERS */}
-          <motion.div {...stagger(6)} className="p-5 mb-4" style={{ ...glass, background: "rgba(254,242,242,0.5)", border: "1px solid rgba(254,202,202,0.4)" }}>
+          <motion.div {...stagger(6)} className="p-5 mb-4 bg-destructive/5 border border-destructive/20 rounded-3xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Money Reminders</h2>
-              <button onClick={() => navigate("/finance/wealth")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>Manage</button>
+              <h2 className="text-[17px] font-bold text-foreground">Money Reminders</h2>
+              <button onClick={() => navigate("/finance/wealth")} className="text-sm font-semibold text-primary">Manage</button>
             </div>
             {moneyReminders.length > 0 ? (
               <div className="space-y-0">
                 {moneyReminders.map((bill, idx) => (
-                  <div key={idx} className="flex items-center gap-3 py-3" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(239,68,68,0.1)" : "none" }}>
-                    <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center text-lg flex-shrink-0">{bill.icon}</div>
-                    <div className="flex-1 min-w-0"><p className="text-sm font-medium" style={{ color: "#1F2937" }}>{bill.name}</p></div>
-                    <span className="text-base font-bold" style={{ color: "#EF4444" }}>-${bill.amount.toFixed(2)}</span>
+                  <div key={idx} className="flex items-center gap-3 py-3 border-b border-destructive/10 last:border-b-0">
+                    <div className="w-9 h-9 rounded-xl bg-destructive/10 flex items-center justify-center text-lg flex-shrink-0">{bill.icon}</div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground">{bill.name}</p></div>
+                    <span className="text-base font-bold text-destructive">-${bill.amount.toFixed(2)}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-center py-6" style={{ color: "#9CA3AF" }}>No recurring expenses</p>
+              <p className="text-sm text-center py-6 text-muted-foreground">No recurring expenses</p>
             )}
           </motion.div>
 
           {/* EVERYDAY LINKS */}
-          <motion.div {...stagger(7)} className="p-5 mb-4" style={glass}>
-            <h2 className="text-[17px] font-bold mb-4" style={{ color: "#1F2937" }}>Everyday Links</h2>
+          <motion.div {...stagger(7)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+            <h2 className="text-[17px] font-bold mb-4 text-foreground">Everyday Links</h2>
             <div className="grid grid-cols-4 gap-3">
               {everydayLinks.map((link) => (
                 <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-                  <div className={`w-14 h-14 rounded-full ${linkBgs[link.icon] || "bg-gray-100"} flex items-center justify-center transition group-hover:shadow-md group-hover:scale-105`}>
-                    {linkIcons[link.icon] || <LinkIcon className="w-6 h-6 text-gray-500" />}
+                  <div className={`w-14 h-14 rounded-full ${linkBgs[link.icon] || "bg-muted"} flex items-center justify-center transition group-hover:shadow-md group-hover:scale-105`}>
+                    {linkIcons[link.icon] || <LinkIcon className="w-6 h-6 text-muted-foreground" />}
                   </div>
-                  <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>{link.name}</span>
+                  <span className="text-[10px] font-semibold uppercase text-muted-foreground">{link.name}</span>
                 </a>
               ))}
               <button className="flex flex-col items-center gap-2 group">
-                <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition group-hover:border-indigo-400">
-                  <Plus className="w-5 h-5 text-gray-400 group-hover:text-indigo-500" />
+                <div className="w-14 h-14 rounded-full border-2 border-dashed border-border flex items-center justify-center transition group-hover:border-primary">
+                  <Plus className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
                 </div>
-                <span className="text-[10px] font-semibold uppercase" style={{ color: "#6B7280" }}>New</span>
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground">New</span>
               </button>
             </div>
           </motion.div>
 
           {/* RECENT JOURNAL */}
-          <motion.div {...stagger(8)} className="p-5 mb-4" style={glass}>
+          <motion.div {...stagger(8)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Recent Journal</h2>
-              <button onClick={() => navigate("/journal?new=true")} className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">+ New Entry</button>
+              <h2 className="text-[17px] font-bold text-foreground">Recent Journal</h2>
+              <button onClick={() => navigate("/journal?new=true")} className="px-3 py-1.5 bg-primary text-primary-foreground text-sm font-semibold rounded-lg hover:bg-primary/90 transition">+ New Entry</button>
             </div>
             <div className="space-y-3">
               {(journalEntries.length > 0 ? journalEntries : [
@@ -598,10 +579,10 @@ export default function Dashboard() {
                 const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d").toUpperCase();
                 return (
                   <button key={entry.id} onClick={() => navigate("/journal")}
-                    className="w-full p-4 bg-white rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left">
-                    <p className="text-[15px] font-semibold mb-0.5" style={{ color: "#1F2937" }}>{entry.title || "Untitled Entry"}</p>
-                    <p className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: "#6366F1" }}>{dateLabel}</p>
-                    <p className="text-sm leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    className="w-full p-4 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition text-left">
+                    <p className="text-[15px] font-semibold mb-0.5 text-foreground">{entry.title || "Untitled Entry"}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide mb-2 text-primary">{dateLabel}</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
                       {entry.content_preview || "No content yet..."}
                     </p>
                   </button>
@@ -621,26 +602,26 @@ export default function Dashboard() {
             <div className="flex-[2] min-w-0">
 
               {/* MARKET WATCH */}
-              <motion.div {...stagger(1)} className="mb-4 overflow-hidden" style={glass}>
+              <motion.div {...stagger(1)} className="mb-4 overflow-hidden bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                 <div className="px-5 pt-5 pb-3">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Market Watch</h2>
-                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide" style={{ color: "#10B981" }}>
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                        <h2 className="text-[17px] font-bold text-foreground">Market Watch</h2>
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-success">
+                          <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
                           Live Index
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium" style={{ color: "#9CA3AF" }}>{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                        <span className="text-xs font-medium text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold" style={{ color: "#1F2937" }}>
+                      <div className="text-2xl font-bold text-foreground">
                         ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </div>
-                      <div className={`text-sm font-semibold flex items-center justify-end gap-1 mt-0.5 ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`text-sm font-semibold flex items-center justify-end gap-1 mt-0.5 ${priceChange >= 0 ? 'text-success' : 'text-destructive'}`}>
                         {priceChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
                         {priceChangePercent >= 0 ? "+" : ""}{priceChangePercent.toFixed(2)}% Today
                       </div>
@@ -649,19 +630,18 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div className="relative" data-stock-dropdown>
                       <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-sm font-semibold"
-                        style={{ background: "#F3F4F6", color: "#374151" }}>
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-sm font-semibold bg-muted text-foreground">
                         {selectedStock}
-                        <ChevronDown className="w-3.5 h-3.5" style={{ color: "#6B7280" }} />
+                        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                       {stockDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                        <div className="absolute top-full left-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
                           {stockOptions.map((stock) => (
                             <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-gray-50 transition text-left ${selectedStock === stock.symbol ? 'bg-indigo-50' : ''}`}>
+                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
                               <div>
-                                <span className="text-sm font-bold" style={{ color: "#1F2937" }}>{stock.symbol}</span>
-                                <span className="text-xs ml-2" style={{ color: "#9CA3AF" }}>{stock.name}</span>
+                                <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                                <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
                               </div>
                             </button>
                           ))}
@@ -671,8 +651,7 @@ export default function Dashboard() {
                     <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
                       {TIMEFRAMES.map((tf) => (
                         <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                          style={selectedTimeframe.label !== tf.label ? { background: "#F1F5F9" } : undefined}>
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
                           {tf.label}
                         </button>
                       ))}
@@ -680,65 +659,68 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="px-3 pb-3">
-                  {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Loading chart...</div>}
+                  {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>}
                 </div>
               </motion.div>
 
-              {/* MOMENTUM & HABITS — horizontal */}
-              <motion.div {...stagger(2)} className="grid grid-cols-2 gap-3 mb-5">
-                <div className="p-4 flex items-center gap-4" style={glass}>
-                  <ProgressRing progress={momentum} size={68} strokeWidth={6} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
-                    <span className="text-[18px] font-bold" style={{ color: "#1F2937" }}>{momentum}%</span>
-                  </ProgressRing>
-                  <div className="text-left">
-                    <p className="text-sm font-bold" style={{ color: "#1F2937" }}>Momentum Score</p>
-                    <p className="text-xs" style={{ color: "#9CA3AF" }}>Based on active tasks</p>
-                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#10B981" }}>+5% increase</p>
-                  </div>
-                </div>
-                <button onClick={() => habits.length > 0 && setSelectedHabit(habits[0])}
-                  className="p-4 flex items-center gap-4 cursor-pointer hover:opacity-90 transition" style={glass}>
-                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="h-grad" color1="#10B981" color2="#34D399">
+              {/* MOMENTUM + HABITS ROW */}
+              <motion.div {...stagger(2)} className="flex gap-4 mb-5">
+                <div className="flex-1 p-5 flex items-center gap-5 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+                  <ProgressRing progress={momentum} size={72} strokeWidth={6} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
                     <div className="flex flex-col items-center">
-                      <span className="text-[10px]">🔥</span>
-                      <span className="text-[14px] font-bold" style={{ color: "#1F2937" }}>{streakDays}</span>
+                      <span className="text-[16px] font-bold text-foreground">{momentum}%</span>
                     </div>
                   </ProgressRing>
                   <div className="text-left">
-                    <p className="text-sm font-bold" style={{ color: "#1F2937" }}>Habit Tracker</p>
-                    <p className="text-xs" style={{ color: "#9CA3AF" }}>{habits[0]?.name || "Morning Meditation"}</p>
-                    <p className="text-xs font-semibold mt-0.5" style={{ color: "#10B981" }}>{habitsProgress}% Consistency</p>
+                    <p className="text-sm font-bold text-foreground">Momentum</p>
+                    <p className="text-xs text-muted-foreground">{doneTasks}/{totalTasks} tasks done</p>
+                    <p className="text-xs font-semibold mt-0.5 text-primary">{momentum}% Complete</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => habits.length > 0 && setSelectedHabit(habits[0])}
+                  className="flex-1 p-4 flex items-center gap-4 cursor-pointer hover:opacity-90 transition bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+                  <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="h-grad" color1="#10B981" color2="#34D399">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px]">🔥</span>
+                      <span className="text-[14px] font-bold text-foreground">{streakDays}</span>
+                    </div>
+                  </ProgressRing>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-foreground">Habit Tracker</p>
+                    <p className="text-xs text-muted-foreground">{habits[0]?.name || "Morning Meditation"}</p>
+                    <p className="text-xs font-semibold mt-0.5 text-success">{habitsProgress}% Consistency</p>
                   </div>
                 </button>
               </motion.div>
 
               {/* LINKS — horizontal pills */}
               <motion.div {...stagger(3)} className="flex items-center gap-3 mb-5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                <span className="text-[10px] font-bold uppercase tracking-widest flex-shrink-0" style={{ color: "#6366F1" }}>Links</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest flex-shrink-0 text-primary">Links</span>
                 {everydayLinks.map((link) => (
                   <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-sm transition flex-shrink-0">
-                    <div className={`w-6 h-6 rounded-full ${linkBgs[link.icon] || "bg-gray-100"} flex items-center justify-center`}>
-                      {linkIcons[link.icon] ? <span className="scale-[0.55]">{linkIcons[link.icon]}</span> : <LinkIcon className="w-3 h-3 text-gray-500" />}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border hover:border-primary/30 hover:shadow-sm transition flex-shrink-0">
+                    <div className={`w-6 h-6 rounded-full ${linkBgs[link.icon] || "bg-muted"} flex items-center justify-center`}>
+                      {linkIcons[link.icon] ? <span className="scale-[0.55]">{linkIcons[link.icon]}</span> : <LinkIcon className="w-3 h-3 text-muted-foreground" />}
                     </div>
-                    <span className="text-xs font-semibold" style={{ color: "#374151" }}>{link.name}</span>
+                    <span className="text-xs font-semibold text-foreground">{link.name}</span>
                   </a>
                 ))}
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-gray-200 hover:border-indigo-300 transition flex-shrink-0">
-                  <Plus className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-xs font-semibold" style={{ color: "#9CA3AF" }}>New</span>
+                <button className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-dashed border-border hover:border-primary transition flex-shrink-0">
+                  <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs font-semibold text-muted-foreground">New</span>
                 </button>
               </motion.div>
 
               {/* ACTIVE PROJECTS — 3 columns */}
               <motion.div {...stagger(4)} className="mb-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Active Projects</h2>
-                  <button onClick={() => navigate("/projects")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>View All</button>
+                  <h2 className="text-[17px] font-bold text-foreground">Active Projects</h2>
+                  <button onClick={() => navigate("/projects")} className="text-sm font-semibold text-primary">View All</button>
                 </div>
                 {activeProjects.length === 0 ? (
-                  <div className="flex flex-col items-center py-6 text-center" style={glass}>
-                    <p className="text-sm" style={{ color: "#9CA3AF" }}>No active projects</p>
+                  <div className="flex flex-col items-center py-6 text-center bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+                    <p className="text-sm text-muted-foreground">No active projects</p>
                     <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}><Plus className="mr-1.5 h-3.5 w-3.5" /> Create one</Button>
                   </div>
                 ) : (
@@ -749,19 +731,19 @@ export default function Dashboard() {
                       const total = pt.length;
                       return (
                         <button key={project.id} onClick={() => navigate(`/project/${project.id}`)}
-                          className="p-5 bg-white rounded-[20px] border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left">
+                          className="p-5 bg-card rounded-[20px] border border-border hover:border-primary/30 hover:shadow-md transition text-left">
                           <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg mb-3"
-                            style={{ background: project.color ? `${project.color}20` : "#EEF2FF" }}>
+                            style={{ background: project.color ? `${project.color}20` : "hsl(var(--primary) / 0.1)" }}>
                             {project.icon || "📁"}
                           </div>
-                          <p className="text-sm font-bold truncate mb-1" style={{ color: "#1F2937" }}>{project.name}</p>
-                          <p className="text-xs mb-3" style={{ color: "#9CA3AF" }}>{project.goal || `${done}/${total} tasks`}</p>
+                          <p className="text-sm font-bold truncate mb-1 text-foreground">{project.name}</p>
+                          <p className="text-xs mb-3 text-muted-foreground">{project.goal || `${done}/${total} tasks`}</p>
                           <div className="flex items-center -space-x-2">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 border-2 border-white" />
-                            <div className="w-7 h-7 rounded-full bg-gray-300 border-2 border-white" />
+                            <div className="w-7 h-7 rounded-full bg-muted border-2 border-card" />
+                            <div className="w-7 h-7 rounded-full bg-muted-foreground/20 border-2 border-card" />
                             {total > 2 && (
-                              <div className="w-7 h-7 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center">
-                                <span className="text-[9px] font-bold text-white">+{total - 2}</span>
+                              <div className="w-7 h-7 rounded-full bg-primary border-2 border-card flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-primary-foreground">+{total - 2}</span>
                               </div>
                             )}
                           </div>
@@ -773,13 +755,13 @@ export default function Dashboard() {
               </motion.div>
 
               {/* RECENT REFLECTIONS — 3 columns */}
-              <motion.div {...stagger(5)} className="mb-4" style={glass}>
+              <motion.div {...stagger(5)} className="mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                 <div className="p-5 pb-0 flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Recent Reflections</h2>
-                    <p className="text-xs" style={{ color: "#10B981" }}>Capture your thoughts daily</p>
+                    <h2 className="text-[17px] font-bold text-foreground">Recent Reflections</h2>
+                    <p className="text-xs text-success">Capture your thoughts daily</p>
                   </div>
-                  <button onClick={() => navigate("/journal?new=true")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>New Journal Entry</button>
+                  <button onClick={() => navigate("/journal?new=true")} className="text-sm font-semibold text-primary">New Journal Entry</button>
                 </div>
                 <div className="px-5 pb-5 grid grid-cols-3 gap-3">
                   {(journalEntries.length > 0 ? journalEntries : [
@@ -791,15 +773,15 @@ export default function Dashboard() {
                     const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d, yyyy").toUpperCase();
                     return (
                       <button key={entry.id} onClick={() => navigate("/journal")}
-                        className="p-4 bg-white rounded-[16px] border border-slate-100 hover:border-indigo-200 hover:shadow-md transition text-left relative">
+                        className="p-4 bg-card rounded-[16px] border border-border hover:border-primary/30 hover:shadow-md transition text-left relative">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "#6366F1" }}>{dateLabel}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-primary">{dateLabel}</p>
                           <span className="text-lg opacity-40">{entry.mood_emoji || "❤️"}</span>
                         </div>
-                        <p className="text-[15px] font-semibold mb-1" style={{ color: "#1F2937" }}>
+                        <p className="text-[15px] font-semibold mb-1 text-foreground">
                           {entry.title || "Untitled Entry"}
                         </p>
-                        <p className="text-xs leading-relaxed" style={{ color: "#6B7280", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">
                           {entry.content_preview || "No content yet..."}
                         </p>
                       </button>
@@ -815,14 +797,14 @@ export default function Dashboard() {
 
               {/* DAILY SCRIPTURE (desktop) */}
               {(prefs as any)?.show_scripture_card && (
-                <motion.div {...stagger(0)} className="p-5 mb-4" style={glass}>
-                  <h3 className="font-bold text-sm mb-3" style={{ color: "#1F2937" }}>Daily Scripture</h3>
+                <motion.div {...stagger(0)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+                  <h3 className="font-bold text-sm mb-3 text-foreground">Daily Scripture</h3>
                   <ScriptureContent religion={(prefs as any)?.religion} />
                 </motion.div>
               )}
 
               {/* MONEY REMINDERS — solid dark card */}
-              <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px]" style={{ background: "linear-gradient(135deg, #1E293B 0%, #334155 100%)" }}>
+              <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px] bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><span className="text-base">💳</span></div>
                   <h2 className="text-[17px] font-bold text-white">Money Reminders</h2>
@@ -830,46 +812,46 @@ export default function Dashboard() {
                 {moneyReminders.length > 0 ? (
                   <div className="space-y-0">
                     {moneyReminders.map((bill, idx) => (
-                      <div key={idx} className="flex items-center justify-between py-3" style={{ borderBottom: idx < moneyReminders.length - 1 ? "1px solid rgba(255,255,255,0.1)" : "none" }}>
+                      <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
                         <div>
                           <p className="text-sm font-medium text-white">{bill.name}</p>
                           <p className="text-xs text-white/50">Due soon</p>
                         </div>
-                        <span className="text-base font-bold" style={{ color: "#EF4444" }}>${bill.amount.toFixed(2)}</span>
+                        <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="space-y-0">
-                    <div className="flex items-center justify-between py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="flex items-center justify-between py-3 border-b border-white/10">
                       <div><p className="text-sm font-medium text-white">Credit Card Due</p><p className="text-xs text-white/50">March 5th</p></div>
-                      <span className="text-base font-bold" style={{ color: "#EF4444" }}>$1,240.00</span>
+                      <span className="text-base font-bold text-red-400">$1,240.00</span>
                     </div>
                     <div className="flex items-center justify-between py-3">
                       <div><p className="text-sm font-medium text-white">Rent Payment</p><p className="text-xs text-white/50">March 1st</p></div>
-                      <span className="text-base font-bold" style={{ color: "#EF4444" }}>$2,800.00</span>
+                      <span className="text-base font-bold text-red-400">$2,800.00</span>
                     </div>
                   </div>
                 )}
               </motion.div>
 
               {/* TODAY'S AGENDA */}
-              <motion.div {...stagger(2)} className="p-5 mb-4" style={glass}>
+              <motion.div {...stagger(2)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Today's Agenda</h2>
-                  <button onClick={() => navigate("/calendar")} className="text-sm font-semibold" style={{ color: "#6366F1" }}>View All</button>
+                  <h2 className="text-[17px] font-bold text-foreground">Today's Agenda</h2>
+                  <button onClick={() => navigate("/calendar")} className="text-sm font-semibold text-primary">View All</button>
                 </div>
                 {agendaItems.length > 0 ? (
                   <div className="space-y-0">
                     {agendaItems.map((item, idx) => {
-                      const colors = ["#6366F1", "#10B981", "#EF4444"];
+                      const accentColors = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))"];
                       return (
-                        <div key={idx} className="flex gap-4 py-3" style={{ borderBottom: idx < agendaItems.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
-                          <div className="w-1 rounded-sm flex-shrink-0" style={{ background: colors[idx % 3] }} />
+                        <div key={idx} className="flex gap-4 py-3 border-b border-border last:border-b-0">
+                          <div className="w-1 rounded-sm flex-shrink-0" style={{ background: accentColors[idx % 3] }} />
                           <div>
-                            <p className="text-xs font-semibold" style={{ color: colors[idx % 3] }}>{item.time}</p>
-                            <p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>{item.title}</p>
-                            {item.subtitle && <p className="text-xs" style={{ color: "#9CA3AF" }}>{item.subtitle}</p>}
+                            <p className="text-xs font-semibold" style={{ color: accentColors[idx % 3] }}>{item.time}</p>
+                            <p className="text-[15px] font-semibold text-foreground">{item.title}</p>
+                            {item.subtitle && <p className="text-xs text-muted-foreground">{item.subtitle}</p>}
                           </div>
                         </div>
                       );
@@ -877,50 +859,48 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="space-y-0">
-                    <div className="flex gap-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#6366F1" }} />
-                      <div><p className="text-xs font-semibold" style={{ color: "#6366F1" }}>09:00 - 10:30</p><p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Design Systems Sync</p><p className="text-xs" style={{ color: "#9CA3AF" }}>Zoom Call with Team</p></div>
+                    <div className="flex gap-4 py-3 border-b border-border">
+                      <div className="w-1 rounded-sm flex-shrink-0 bg-primary" />
+                      <div><p className="text-xs font-semibold text-primary">09:00 - 10:30</p><p className="text-[15px] font-semibold text-foreground">Design Systems Sync</p><p className="text-xs text-muted-foreground">Zoom Call with Team</p></div>
                     </div>
-                    <div className="flex gap-4 py-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#10B981" }} />
-                      <div><p className="text-xs font-semibold" style={{ color: "#10B981" }}>12:00 - 13:00</p><p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Lunch with Sarah</p><p className="text-xs" style={{ color: "#9CA3AF" }}>The Green Cafe</p></div>
+                    <div className="flex gap-4 py-3 border-b border-border">
+                      <div className="w-1 rounded-sm flex-shrink-0 bg-success" />
+                      <div><p className="text-xs font-semibold text-success">12:00 - 13:00</p><p className="text-[15px] font-semibold text-foreground">Lunch with Sarah</p><p className="text-xs text-muted-foreground">The Green Cafe</p></div>
                     </div>
                     <div className="flex gap-4 py-3">
-                      <div className="w-1 rounded-sm flex-shrink-0" style={{ background: "#EF4444" }} />
-                      <div><p className="text-xs font-semibold" style={{ color: "#EF4444" }}>15:00 - 16:30</p><p className="text-[15px] font-semibold" style={{ color: "#1F2937" }}>Project Review</p><p className="text-xs" style={{ color: "#9CA3AF" }}>Strategy Planning</p></div>
+                      <div className="w-1 rounded-sm flex-shrink-0 bg-destructive" />
+                      <div><p className="text-xs font-semibold text-destructive">15:00 - 16:30</p><p className="text-[15px] font-semibold text-foreground">Project Review</p><p className="text-xs text-muted-foreground">Strategy Planning</p></div>
                     </div>
                   </div>
                 )}
               </motion.div>
 
               {/* QUICK TO-DOS */}
-              <motion.div {...stagger(3)} className="p-5 mb-4" style={glass}>
+              <motion.div {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[17px] font-bold" style={{ color: "#1F2937" }}>Quick To-Dos</h2>
-                  <span className="text-sm font-semibold" style={{ color: "#6366F1" }}>Edit List</span>
+                  <h2 className="text-[17px] font-bold text-foreground">Quick To-Dos</h2>
+                  <span className="text-sm font-semibold text-primary">Edit List</span>
                 </div>
                 <div className="space-y-0">
                   {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
                     <div key={todo.id} className="flex items-center gap-3 py-2.5">
                       <button onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                        className="w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition hover:border-indigo-400"
-                        style={{ borderColor: "#D1D5DB" }} />
-                      <span className="text-[15px]" style={{ color: "#1F2937" }}>{todo.text}</span>
+                        className="w-5 h-5 rounded-full border-2 border-border flex-shrink-0 flex items-center justify-center transition hover:border-primary" />
+                      <span className="text-[15px] text-foreground">{todo.text}</span>
                     </div>
                   ))}
                   {todos.filter(t => t.completed).slice(0, 2).map(todo => (
                     <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                      <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
+                      <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-primary">
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       </div>
-                      <span className="text-[15px] line-through" style={{ color: "#9CA3AF" }}>{todo.text}</span>
+                      <span className="text-[15px] line-through text-muted-foreground">{todo.text}</span>
                     </div>
                   ))}
                   <input value={newTodoText} onChange={(e) => setNewTodoText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
                     placeholder="Add a quick note..."
-                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg"
-                    style={{ border: "1px dashed #D1D5DB", color: "#1F2937" }} />
+                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg border border-dashed border-border text-foreground placeholder:text-muted-foreground" />
                 </div>
               </motion.div>
 
@@ -943,8 +923,7 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowTutorial(false)}
-            className="fixed inset-0 flex items-center justify-center z-[10001]"
-            style={{ backgroundColor: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}
+            className="fixed inset-0 flex items-center justify-center z-[10001] bg-black/30 backdrop-blur-sm"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
@@ -969,8 +948,7 @@ export default function Dashboard() {
         {showVideoPlayer && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 flex items-center justify-center z-[10002]"
-            style={{ backgroundColor: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
+            className="fixed inset-0 flex items-center justify-center z-[10002] bg-black/40 backdrop-blur-sm"
           >
             <div className="w-[640px] max-w-[95vw] bg-card rounded-2xl p-6 shadow-2xl">
               <div className="flex justify-end mb-4">
@@ -981,7 +959,7 @@ export default function Dashboard() {
                   <X size={18} className="text-muted-foreground" />
                 </button>
               </div>
-              <div className="w-full rounded-xl overflow-hidden" style={{ aspectRatio: "16/9", backgroundColor: "hsl(var(--muted))" }}>
+              <div className="w-full rounded-xl overflow-hidden bg-muted" style={{ aspectRatio: "16/9" }}>
                 <iframe
                   src={(prefs as any)?.welcome_video_url || "https://www.loom.com/embed/your-video-id"}
                   frameBorder="0" allow="autoplay; fullscreen" allowFullScreen
@@ -1001,42 +979,41 @@ export default function Dashboard() {
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
+            className="bg-card rounded-3xl p-6 max-w-md w-full shadow-2xl border border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold" style={{ color: "#1F2937" }}>Log Habit Hours</h3>
-              <button onClick={() => setSelectedHabit(null)} className="p-1 hover:bg-gray-100 rounded-full transition">
-                <X className="w-5 h-5" style={{ color: "#9CA3AF" }} />
+              <h3 className="text-lg font-bold text-foreground">Log Habit Hours</h3>
+              <button onClick={() => setSelectedHabit(null)} className="p-1 hover:bg-muted rounded-full transition">
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
             <div className="space-y-1 mb-6">
               {habits.map(h => (
-                <label key={h.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer">
-                  <input type="radio" name="habit" checked={selectedHabit.id === h.id} onChange={() => setSelectedHabit(h)} className="w-4 h-4 accent-indigo-600" />
-                  <span className="text-sm font-medium" style={{ color: "#1F2937" }}>{h.name}</span>
+                <label key={h.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted cursor-pointer">
+                  <input type="radio" name="habit" checked={selectedHabit.id === h.id} onChange={() => setSelectedHabit(h)} className="w-4 h-4 accent-primary" />
+                  <span className="text-sm font-medium text-foreground">{h.name}</span>
                 </label>
               ))}
               <button
                 onClick={() => { const name = prompt("Enter habit name:"); if (name) createHabit.mutate(name); }}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 w-full text-left"
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted w-full text-left"
               >
-                <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: "#D1D5DB" }} />
-                <span className="text-sm font-medium" style={{ color: "#9CA3AF" }}>+ Add Custom Habit</span>
+                <div className="w-4 h-4 rounded-full border-2 border-border" />
+                <span className="text-sm font-medium text-muted-foreground">+ Add Custom Habit</span>
               </button>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>Hours this week</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Hours this week</label>
               <input
                 type="number" min="0" step="0.5" value={logHours}
                 onChange={(e) => setLogHours(e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
-                style={{ borderColor: "#D1D5DB" }}
+                className="w-full px-4 py-3 border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="0"
               />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => { setSelectedHabit(null); setLogHours(""); }} className="flex-1 px-4 py-3 font-semibold rounded-xl hover:bg-gray-100 transition" style={{ color: "#374151" }}>Cancel</button>
+              <button onClick={() => { setSelectedHabit(null); setLogHours(""); }} className="flex-1 px-4 py-3 font-semibold rounded-xl hover:bg-muted transition text-foreground">Cancel</button>
               <button
                 onClick={() => {
                   if (logHours && parseFloat(logHours) > 0) {
@@ -1046,8 +1023,7 @@ export default function Dashboard() {
                     toast.success("Hours logged!");
                   }
                 }}
-                className="flex-1 px-4 py-3 text-white font-semibold rounded-xl transition"
-                style={{ background: "#6366F1" }}
+                className="flex-1 px-4 py-3 font-semibold rounded-xl transition bg-primary text-primary-foreground hover:bg-primary/90"
               >Save</button>
             </div>
           </motion.div>
