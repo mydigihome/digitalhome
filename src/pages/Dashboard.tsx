@@ -452,7 +452,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-bold text-foreground">{selectedStock}</span>
-                    <span className="text-xs text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                    <span className="text-xs text-muted-foreground">{selectedStockName}</span>
                   </div>
                   <div className="text-2xl font-bold text-foreground">
                     ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -463,20 +463,48 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="relative" data-stock-dropdown>
-                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition bg-muted">
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition bg-muted text-sm font-semibold text-foreground">
+                    <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                   {stockDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
-                      {stockOptions.map((stock) => (
-                        <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                          className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
-                          <div>
-                            <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
-                            <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
-                          </div>
-                        </button>
-                      ))}
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
+                      <div className="px-3 pb-2">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted">
+                          <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <input
+                            value={stockSearchQuery}
+                            onChange={(e) => setStockSearchQuery(e.target.value)}
+                            placeholder="Search any symbol..."
+                            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {stockSearchQuery.length > 0 && searchResults?.length > 0 ? (
+                          searchResults.slice(0, 8).map((r: any) => (
+                            <button key={r.symbol} onClick={() => { setSelectedStock(r.symbol); setSelectedStockName(r.instrument_name || r.symbol); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                              className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left">
+                              <div className="min-w-0">
+                                <span className="text-sm font-bold text-foreground">{r.symbol}</span>
+                                <p className="text-xs text-muted-foreground truncate">{r.instrument_name}</p>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex-shrink-0 ml-2">{r.instrument_type || r.exchange}</span>
+                            </button>
+                          ))
+                        ) : (
+                          stockOptions.map((stock) => (
+                            <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setSelectedStockName(stock.name); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
+                              <div>
+                                <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                                <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -493,10 +521,16 @@ export default function Dashboard() {
             <div className="px-3 pb-3">
               {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>}
             </div>
-            <div className="px-5 pb-4">
+            <div className="px-5 pb-4 flex gap-2">
+              <button
+                onClick={() => setShowBrokerModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Place Trade
+              </button>
               <a href={`https://www.tradingview.com/symbols/${selectedStock}/`} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition hover:bg-primary/10 text-primary bg-primary/5">
-                Open in TradingView <ExternalLink className="w-3.5 h-3.5" />
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition hover:bg-primary/10 text-primary bg-primary/5">
+                TradingView <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </motion.div>
