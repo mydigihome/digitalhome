@@ -490,7 +490,7 @@ export default function SettingsPage() {
                         <div className="h-8 rounded bg-gray-200" />
                       </button>
                       <button
-                        onClick={() => { document.documentElement.classList.add("dark"); setDarkMode(true); upsertPrefs.mutate({ sidebar_theme: "dark" } as any); }}
+                        onClick={() => { document.documentElement.classList.add("dark"); document.body.classList.add("dark"); setDarkMode(true); upsertPrefs.mutate({ sidebar_theme: "dark" } as any); }}
                         className={cn(
                           "rounded-xl border-2 p-4 text-left transition-all",
                           darkMode ? "border-primary" : "border-border hover:border-muted-foreground/30"

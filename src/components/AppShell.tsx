@@ -618,8 +618,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden"
-                style={{ backgroundColor: '#F5F5F7' }}
+                 className="fixed inset-y-0 left-0 z-50 w-[280px] flex flex-col lg:hidden bg-sidebar"
               >
                 <SidebarNav onNavigate={() => setMobileOpen(false)} />
               </motion.div>
