@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil, Trash2, LayoutGrid, Check } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+
+import SortableCard from "@/components/wealth/SortableCard";
 import AppShell from "@/components/AppShell";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -53,6 +57,39 @@ export default function WealthTrackerPage() {
   const [isEditingHeader, setIsEditingHeader] = useState(false);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Card ordering
+  const DEFAULT_CARD_ORDER = [
+    "credit-score", "stats-grid", "market-intelligence", "trading-plans",
+    "savings-goal", "bills", "subscriptions", "investment-schedule", "student-loans"
+  ];
+  const [cardOrder, setCardOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("wealth-card-order");
+      return saved ? JSON.parse(saved) : DEFAULT_CARD_ORDER;
+    } catch { return DEFAULT_CARD_ORDER; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("wealth-card-order", JSON.stringify(cardOrder));
+  }, [cardOrder]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCardOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
 
   // User preferences for header
   const { data: prefs } = useUserPreferences();
@@ -199,7 +236,15 @@ export default function WealthTrackerPage() {
           </div>
         </div>
 
-        {/* ═══ DESKTOP LAYOUT (12-col grid) ═══ */}
+        {/* Edit Layout FAB */}
+        <button
+          onClick={() => setIsEditMode(!isEditMode)}
+          className="fixed top-20 right-6 z-50 px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 bg-primary text-primary-foreground"
+        >
+          {isEditMode ? <Check className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+          <span className="text-sm">{isEditMode ? "Done" : "Edit Layout"}</span>
+        </button>
+
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
           <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
@@ -531,250 +576,209 @@ export default function WealthTrackerPage() {
         </div>
 
         {/* ═══ MOBILE LAYOUT ═══ */}
-        <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
-          {/* Credit Score */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-6 flex flex-col items-center"
-          >
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Credit Score</span>
-            <div className="relative w-44 h-24">
-              <svg viewBox="0 0 160 90" className="w-full h-full">
-                <defs>
-                  <linearGradient id="csGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#EF4444" />
-                    <stop offset="33%" stopColor="#F59E0B" />
-                    <stop offset="66%" stopColor="#3B82F6" />
-                    <stop offset="100%" stopColor="#10B981" />
-                  </linearGradient>
-                </defs>
-                <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
-                <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="url(#csGrad)" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${arcDash} ${arcGap}`} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-0">
-                <span className="text-3xl font-bold text-foreground">{creditScore || "—"}</span>
-              </div>
-            </div>
-            <span className="mt-2 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${creditColor}20`, color: creditColor }}>{creditLabel}</span>
-          </motion.div>
-
-          {/* Financial Overview 2×2 */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400", editColor: "#10B981" },
-                { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400", editColor: "#EF4444" },
-                { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400", editColor: "#3B82F6" },
-                { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400", editColor: "#F59E0B" },
-              ].map((c) => (
-                <div key={c.label} className="bg-card rounded-2xl border border-border p-4 flex flex-col gap-2 relative group">
-                  {c.key !== "net" && c.key !== "expenses" && (
-                    <button
-                      onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }}
-                      className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity z-10 text-white"
-                      style={{ backgroundColor: c.editColor }}
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-                  )}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
-                  <span className="text-xs text-muted-foreground font-medium">{c.label}</span>
-                  {editingCard === c.key ? (
-                    <div className="flex gap-1">
-                      <Input
-                        type="number"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="h-7 text-sm w-20"
-                        autoFocus
-                        onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }}
-                      />
-                      <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground">✓</button>
-                    </div>
-                  ) : (
-                    <span className="text-lg font-bold text-foreground">{fmt(c.value)}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Bills & Due Dates */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-foreground">Bills & Due Dates</h3>
-              <button onClick={() => navigate("/finance/wealth")} className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary/20 transition">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            {recurringBills.length > 0 ? (
-              <div className="space-y-3">
-                {recurringBills.slice(0, 4).map((bill) => (
-                  <div key={bill.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-sm">💳</div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{bill.description}</p>
-                        <p className="text-xs text-muted-foreground">{bill.frequency}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-red-600 dark:text-red-400">-${Number(bill.amount).toFixed(2)}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">Pending</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6"><p className="text-sm text-muted-foreground">No upcoming bills</p></div>
-            )}
-          </motion.div>
-
-          {/* Savings Goal */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-foreground">Savings Goal</h3>
-              <span className="text-xs text-muted-foreground font-medium">{savingsPct}% of Goal reached</span>
-            </div>
-            <div className="mb-3">
-              <span className="text-2xl font-bold text-foreground">{fmt(currentSavings)}</span>
-              <span className="text-xs text-muted-foreground ml-2">Target: {fmt(savingsGoal)}</span>
-            </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${savingsPct}%` }} transition={{ duration: 1, ease: "easeOut" }} className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
-            </div>
-          </motion.div>
-
-          {/* Market Intelligence */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-foreground">Market Intelligence</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowAddPair(true)}
-                  className="text-xs px-3 py-1.5 rounded-lg font-semibold transition bg-primary text-primary-foreground"
-                >
-                  + Add Pair
-                </button>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Live</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-card rounded-2xl border border-border p-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-muted-foreground">BTC/USD</span>
-                  <p className={`text-xs font-semibold ${btcChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>{btcChange >= 0 ? "+" : ""}{btcChange.toFixed(1)}%</p>
-                  <p className="text-xl font-bold text-foreground mt-1">${btcPrice.toLocaleString()}</p>
-                </div>
-                <svg width="100" height="40" viewBox="0 0 100 40" className="text-emerald-400">
-                  <polyline points="0,35 15,28 30,32 45,20 55,24 70,15 85,18 100,8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              {userPairs.length > 0 ? "Your Pairs" : "Watchlist"}
-            </p>
-            <div className="space-y-2">
-              {userPairs.length > 0 ? userPairs.map((pair) => (
-                <div key={pair.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
-                    <span className="text-sm font-medium text-foreground">{pair.symbol}</span>
-                  </div>
-                  <div className="flex gap-2">
-                     <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
-                     >
-                       Trade
-                     </button>
-                     <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
-                     >
-                       Plan
-                     </button>
-                     <button
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         if (confirm("Remove this trading pair?")) {
-                           removePair.mutate(pair.id, {
-                             onSuccess: () => toast.success("Pair removed"),
-                             onError: () => toast.error("Failed to remove pair"),
-                           });
-                         }
-                       }}
-                       className="text-xs px-2 py-1 rounded-lg bg-destructive/10 text-destructive font-semibold transition hover:bg-destructive/20"
-                     >
-                       <Trash2 className="w-3.5 h-3.5" />
-                     </button>
-                  </div>
-                </div>
-              )) : watchlist.map((w) => {
-                const fakePair: TradingPair = { id: w.symbol, user_id: "", symbol: w.symbol, display_name: w.symbol, category: w.badge, is_active: true, sort_order: 0, created_at: "" };
-                return (
-                <div key={w.symbol} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
-                    <span className="text-sm font-medium text-foreground">{w.symbol}</span>
-                  </div>
-                   <div className="flex gap-2">
-                     <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(fakePair); setShowBrokerSelection(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
-                     >Trade</button>
-                     <button
-                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(fakePair); setShowCreatePlan(true); }}
-                       className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
-                     >Plan</button>
-                   </div>
-                </div>
-                );
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
+            <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
+              {cardOrder.map((cardId) => {
+                switch (cardId) {
+                  case "credit-score":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-6 flex flex-col items-center">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Credit Score</span>
+                          <div className="relative w-44 h-24">
+                            <svg viewBox="0 0 160 90" className="w-full h-full">
+                              <defs><linearGradient id="csGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#EF4444" /><stop offset="33%" stopColor="#F59E0B" /><stop offset="66%" stopColor="#3B82F6" /><stop offset="100%" stopColor="#10B981" /></linearGradient></defs>
+                              <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="hsl(var(--border))" strokeWidth="10" strokeLinecap="round" />
+                              <path d="M 10 80 A 70 70 0 0 1 150 80" fill="none" stroke="url(#csGrad)" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${arcDash} ${arcGap}`} />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-end pb-0">
+                              <span className="text-3xl font-bold text-foreground">{creditScore || "—"}</span>
+                            </div>
+                          </div>
+                          <span className="mt-2 px-3 py-1 rounded-full text-xs font-semibold" style={{ background: `${creditColor}20`, color: creditColor }}>{creditLabel}</span>
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "stats-grid":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { key: "income", label: "Income", value: monthlyIncome, icon: <DollarSign className="w-4 h-4" />, iconBg: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400", editColor: "#10B981" },
+                              { key: "expenses", label: "Expenses", value: totalExpenses, icon: <CreditCard className="w-4 h-4" />, iconBg: "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400", editColor: "#EF4444" },
+                              { key: "net", label: "Net", value: netIncome, icon: <TrendingUp className="w-4 h-4" />, iconBg: "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400", editColor: "#3B82F6" },
+                              { key: "debt", label: "Debt", value: totalDebt, icon: <Wallet className="w-4 h-4" />, iconBg: "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400", editColor: "#F59E0B" },
+                            ].map((c) => (
+                              <div key={c.label} className="bg-card rounded-2xl border border-border p-4 flex flex-col gap-2 relative group">
+                                {c.key !== "net" && c.key !== "expenses" && (
+                                  <button onClick={() => { setEditingCard(c.key); setEditValue(String(c.value)); }} className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity z-10 text-white" style={{ backgroundColor: c.editColor }}>
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
+                                )}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${c.iconBg}`}>{c.icon}</div>
+                                <span className="text-xs text-muted-foreground font-medium">{c.label}</span>
+                                {editingCard === c.key ? (
+                                  <div className="flex gap-1">
+                                    <Input type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-7 text-sm w-20" autoFocus onKeyDown={(e) => { if (e.key === "Enter") handleCardEdit(c.key, editValue); if (e.key === "Escape") setEditingCard(null); }} />
+                                    <button onClick={() => handleCardEdit(c.key, editValue)} className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground">✓</button>
+                                  </div>
+                                ) : (
+                                  <span className="text-lg font-bold text-foreground">{fmt(c.value)}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "bills":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-bold text-foreground">Bills & Due Dates</h3>
+                            <button onClick={() => navigate("/finance/wealth")} className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center hover:bg-primary/20 transition"><Plus className="w-4 h-4" /></button>
+                          </div>
+                          {recurringBills.length > 0 ? (
+                            <div className="space-y-3">
+                              {recurringBills.slice(0, 4).map((bill) => (
+                                <div key={bill.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-sm">💳</div>
+                                    <div><p className="text-sm font-semibold text-foreground">{bill.description}</p><p className="text-xs text-muted-foreground">{bill.frequency}</p></div>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm font-bold text-red-600 dark:text-red-400">-${Number(bill.amount).toFixed(2)}</p>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-medium">Pending</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6"><p className="text-sm text-muted-foreground">No upcoming bills</p></div>
+                          )}
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "savings-goal":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-base font-bold text-foreground">Savings Goal</h3>
+                            <span className="text-xs text-muted-foreground font-medium">{savingsPct}% of Goal reached</span>
+                          </div>
+                          <div className="mb-3">
+                            <span className="text-2xl font-bold text-foreground">{fmt(currentSavings)}</span>
+                            <span className="text-xs text-muted-foreground ml-2">Target: {fmt(savingsGoal)}</span>
+                          </div>
+                          <div className="h-3 bg-muted rounded-full overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${savingsPct}%` }} transition={{ duration: 1, ease: "easeOut" }} className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500" />
+                          </div>
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "market-intelligence":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-bold text-foreground">Market Intelligence</h3>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setShowAddPair(true)} className="text-xs px-3 py-1.5 rounded-lg font-semibold transition bg-primary text-primary-foreground">+ Add Pair</button>
+                              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /><span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Live</span></div>
+                            </div>
+                          </div>
+                          <div className="bg-card rounded-2xl border border-border p-4 mb-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground">BTC/USD</span>
+                                <p className={`text-xs font-semibold ${btcChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>{btcChange >= 0 ? "+" : ""}{btcChange.toFixed(1)}%</p>
+                                <p className="text-xl font-bold text-foreground mt-1">${btcPrice.toLocaleString()}</p>
+                              </div>
+                              <svg width="100" height="40" viewBox="0 0 100 40" className="text-emerald-400"><polyline points="0,35 15,28 30,32 45,20 55,24 70,15 85,18 100,8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                            </div>
+                          </div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{userPairs.length > 0 ? "Your Pairs" : "Watchlist"}</p>
+                          <div className="space-y-2">
+                            {userPairs.length > 0 ? userPairs.map((pair) => (
+                              <div key={pair.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
+                                <div className="flex items-center gap-3">
+                                  <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
+                                  <span className="text-sm font-medium text-foreground">{pair.symbol}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(pair); setShowBrokerSelection(true); }} className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
+                                  <button onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(pair); setShowCreatePlan(true); }} className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
+                                  <button onClick={(e) => { e.stopPropagation(); if (confirm("Remove this trading pair?")) { removePair.mutate(pair.id, { onSuccess: () => toast.success("Pair removed"), onError: () => toast.error("Failed to remove pair") }); } }} className="text-xs px-2 py-1 rounded-lg bg-destructive/10 text-destructive font-semibold transition hover:bg-destructive/20"><Trash2 className="w-3.5 h-3.5" /></button>
+                                </div>
+                              </div>
+                            )) : watchlist.map((w) => {
+                              const fakePair: TradingPair = { id: w.symbol, user_id: "", symbol: w.symbol, display_name: w.symbol, category: w.badge, is_active: true, sort_order: 0, created_at: "" };
+                              return (
+                                <div key={w.symbol} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
+                                  <div className="flex items-center gap-3"><span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span><span className="text-sm font-medium text-foreground">{w.symbol}</span></div>
+                                  <div className="flex gap-2">
+                                    <button onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(fakePair); setShowBrokerSelection(true); }} className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(fakePair); setShowCreatePlan(true); }} className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "trading-plans":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <ActiveTradingPlans />
+                      </SortableCard>
+                    );
+                  case "subscriptions":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-bold text-foreground">Subscriptions</h3>
+                            <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wide">{subscriptions.length} Active</span>
+                          </div>
+                          {subscriptions.length > 0 ? (
+                            <div className="space-y-2">
+                              {subscriptions.map((sub) => (
+                                <div key={sub.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
+                                  <div className="flex items-center gap-3"><div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-sm">🎬</div><div><p className="text-sm font-semibold text-foreground">{sub.description}</p><p className="text-[11px] text-muted-foreground">{sub.frequency}</p></div></div>
+                                  <div className="text-right"><p className="text-sm font-bold text-foreground">${Number(sub.amount).toFixed(2)}</p><span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium">active</span></div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6"><p className="text-sm text-muted-foreground">No subscriptions tracked yet</p></div>
+                          )}
+                        </motion.div>
+                      </SortableCard>
+                    );
+                  case "investment-schedule":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <InvestmentScheduleCard />
+                      </SortableCard>
+                    );
+                  case "student-loans":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <StudentLoanCard />
+                      </SortableCard>
+                    );
+                  default:
+                    return null;
+                }
               })}
             </div>
-          </motion.div>
-
-          {/* Active Trading Plans (Mobile) */}
-          <ActiveTradingPlans />
-
-          {/* Subscriptions */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-foreground">Subscriptions</h3>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wide">{subscriptions.length} Active</span>
-            </div>
-            {subscriptions.length > 0 ? (
-              <div className="space-y-2">
-                {subscriptions.map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-sm">🎬</div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{sub.description}</p>
-                        <p className="text-[11px] text-muted-foreground">{sub.frequency}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-foreground">${Number(sub.amount).toFixed(2)}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-medium">active</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6"><p className="text-sm text-muted-foreground">No subscriptions tracked yet</p></div>
-            )}
-          </motion.div>
-          {/* Investment Schedule - Mobile */}
-          <InvestmentScheduleCard />
-
-          {/* Student Loans - Mobile */}
-          <StudentLoanCard />
-        </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Floating Add (mobile only) */}
         <div className="fixed bottom-24 right-6 z-30 md:hidden">
