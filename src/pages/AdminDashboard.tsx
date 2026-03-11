@@ -1559,6 +1559,133 @@ function TemplatesTab() {
   );
 }
 
+// ── Waitlist Tab ──
+function WaitlistTab() {
+  const [waitlist, setWaitlist] = useState<any[]>([]);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [editVideoUrl, setEditVideoUrl] = useState("");
+  const [isEditingVideo, setIsEditingVideo] = useState(false);
+  const [loadingWaitlist, setLoadingWaitlist] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoadingWaitlist(true);
+    const [waitlistRes, settingsRes] = await Promise.all([
+      supabase.from("content_planner_waitlist" as any).select("*").order("requested_at", { ascending: false }),
+      supabase.from("app_settings" as any).select("*").eq("key", "content_planner_preview_video").maybeSingle(),
+    ]);
+    setWaitlist((waitlistRes.data as any[]) || []);
+    setVideoUrl((settingsRes.data as any)?.value || "");
+    setLoadingWaitlist(false);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const updateVideoUrl = async () => {
+    await supabase
+      .from("app_settings" as any)
+      .update({ value: editVideoUrl, updated_at: new Date().toISOString() } as any)
+      .eq("key", "content_planner_preview_video");
+    setVideoUrl(editVideoUrl);
+    toast.success("Preview video updated!");
+    setIsEditingVideo(false);
+  };
+
+  const exportCSV = () => {
+    const csv = [
+      ["Email", "Name", "Requested At", "Notified"].join(","),
+      ...waitlist.map((item: any) =>
+        [item.email, item.name || "", new Date(item.requested_at).toLocaleString(), item.notified ? "Yes" : "No"].join(",")
+      ),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `content-planner-waitlist-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Video Preview URL */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Eye className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-base font-semibold text-foreground">Preview Video</h3>
+        </div>
+        {isEditingVideo ? (
+          <div className="space-y-3">
+            <Input
+              value={editVideoUrl}
+              onChange={(e) => setEditVideoUrl(e.target.value)}
+              placeholder="https://your-video-url.mp4"
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={updateVideoUrl}>Save</Button>
+              <Button size="sm" variant="secondary" onClick={() => setIsEditingVideo(false)}>Cancel</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground truncate flex-1">
+              {videoUrl || "No video set (placeholder will show)"}
+            </p>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => { setEditVideoUrl(videoUrl); setIsEditingVideo(true); }}
+            >
+              Update URL
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Waitlist */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Content Planner Waitlist</h3>
+            <p className="text-sm text-muted-foreground">{waitlist.length} people waiting</p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={exportCSV} disabled={waitlist.length === 0}>
+            <Download className="w-4 h-4 mr-1" /> Export CSV
+          </Button>
+        </div>
+
+        {loadingWaitlist ? (
+          <p className="text-sm text-muted-foreground text-center py-8">Loading...</p>
+        ) : waitlist.length === 0 ? (
+          <div className="text-center py-10">
+            <Mail className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No one on the waitlist yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {waitlist.map((item: any) => (
+              <div key={item.id} className="flex items-center justify-between bg-secondary/50 rounded-lg px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{item.email}</p>
+                  {item.name && <p className="text-xs text-muted-foreground">{item.name}</p>}
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {new Date(item.requested_at).toLocaleDateString("en-US", {
+                      month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                {item.notified && (
+                  <Badge variant="secondary" className="text-xs">Notified ✓</Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Tab Config ──
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
