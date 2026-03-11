@@ -15,6 +15,7 @@ const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boole
 export const useSidebar = () => useContext(SidebarContext);
 
 function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
+  const { setCollapsed } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
