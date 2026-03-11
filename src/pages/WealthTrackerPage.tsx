@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useLoans } from "@/hooks/useLoans";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketQuote } from "@/hooks/useMarketData";
-import { useTradingPairs, TradingPair } from "@/hooks/useTradingPairs";
+import { useTradingPairs, useRemoveTradingPair, TradingPair } from "@/hooks/useTradingPairs";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
@@ -63,6 +63,7 @@ export default function WealthTrackerPage() {
 
   // Custom trading pairs
   const { data: tradingPairs } = useTradingPairs();
+  const removePair = useRemoveTradingPair();
   const userPairs = tradingPairs || [];
 
   if (isLoading) {
@@ -317,7 +318,7 @@ export default function WealthTrackerPage() {
                     </thead>
                     <tbody>
                       {userPairs.length > 0 ? userPairs.map((pair) => (
-                        <tr key={pair.id} className="border-t border-border hover:bg-muted/30 transition">
+                        <tr key={pair.id} className="border-t border-border hover:bg-muted/30 transition group">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
                               <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-primary/10 text-primary">{pair.category}</span>
@@ -338,6 +339,20 @@ export default function WealthTrackerPage() {
                                 className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
                               >
                                 Plan
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm("Remove this trading pair?")) {
+                                    removePair.mutate(pair.id, {
+                                      onSuccess: () => toast.success("Pair removed"),
+                                      onError: () => toast.error("Failed to remove pair"),
+                                    });
+                                  }
+                                }}
+                                className="text-xs px-2 py-1 rounded-lg bg-destructive/10 text-destructive font-semibold opacity-0 group-hover:opacity-100 transition hover:bg-destructive/20"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
@@ -682,6 +697,20 @@ export default function WealthTrackerPage() {
                        className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
                      >
                        Plan
+                     </button>
+                     <button
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         if (confirm("Remove this trading pair?")) {
+                           removePair.mutate(pair.id, {
+                             onSuccess: () => toast.success("Pair removed"),
+                             onError: () => toast.error("Failed to remove pair"),
+                           });
+                         }
+                       }}
+                       className="text-xs px-2 py-1 rounded-lg bg-destructive/10 text-destructive font-semibold transition hover:bg-destructive/20"
+                     >
+                       <Trash2 className="w-3.5 h-3.5" />
                      </button>
                   </div>
                 </div>
