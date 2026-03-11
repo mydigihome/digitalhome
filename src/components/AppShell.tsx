@@ -172,11 +172,11 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left text-[14px]">Money</span>
-                    <ChevronDown
-                      className="shrink-0 transition-transform duration-200"
-                      style={{
-                        width: 14, height: 14,
-                        color: isFinanceActive ? '#4338CA' : '#9CA3AF',
+                     <ChevronDown
+                       className="shrink-0 transition-transform duration-200"
+                       style={{
+                         width: 14, height: 14,
+                         color: isFinanceActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
                         transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       }}
                     />
