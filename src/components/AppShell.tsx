@@ -75,8 +75,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const avatarUrl = prefs?.profile_photo;
 
   const activeStyle = (isActive: boolean) => ({
-    backgroundColor: isActive ? '#EEF2FF' : undefined,
-    color: isActive ? '#4338CA' : '#4B5563',
+    backgroundColor: isActive ? 'hsl(var(--accent))' : undefined,
+    color: isActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
     boxShadow: isActive
       ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
       : undefined,
