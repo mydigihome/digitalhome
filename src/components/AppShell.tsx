@@ -351,16 +351,16 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             <>
               <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
 
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className={cn(
-                  "absolute bottom-full mb-2 z-50 rounded-xl border bg-white p-1.5 shadow-lg",
-                  collapsed ? "left-0 right-0" : "left-3 right-3"
-                )}
-                style={{ borderColor: '#E5E7EB', minWidth: collapsed ? 200 : undefined, ...(collapsed ? { left: 0, right: 'auto' } : {}) }}
+               <motion.div
+                 initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                 animate={{ opacity: 1, y: 0, scale: 1 }}
+                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                 transition={{ duration: 0.15 }}
+                 className={cn(
+                   "absolute bottom-full mb-2 z-50 rounded-xl border border-border bg-card p-1.5 shadow-lg",
+                   collapsed ? "left-0 right-0" : "left-3 right-3"
+                 )}
+                 style={{ minWidth: collapsed ? 200 : undefined, ...(collapsed ? { left: 0, right: 'auto' } : {}) }}
               >
                 <button
                   onClick={(e) => {
