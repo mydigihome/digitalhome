@@ -337,9 +337,9 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
               className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-secondary w-8 h-8 bg-secondary"
             >
               {darkMode ? (
-                <Sun style={{ width: 14, height: 14, color: '#F59E0B' }} />
+                <Sun className="w-3.5 h-3.5 text-warning" />
               ) : (
-                <Moon style={{ width: 14, height: 14, color: '#6B7280' }} />
+                <Moon className="w-3.5 h-3.5 text-muted-foreground" />
               )}
             </div>
           </button>
