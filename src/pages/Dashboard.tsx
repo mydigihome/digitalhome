@@ -16,8 +16,10 @@ import { toast } from "sonner";
 import { format, isToday } from "date-fns";
 import {
   Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown, ExternalLink,
-  Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon,
+  Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon, Search,
 } from "lucide-react";
+import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
+import { TradingPair } from "@/hooks/useTradingPairs";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
