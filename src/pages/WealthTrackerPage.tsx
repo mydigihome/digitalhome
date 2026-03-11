@@ -685,18 +685,27 @@ export default function WealthTrackerPage() {
                      </button>
                   </div>
                 </div>
-              )) : watchlist.map((w) => (
+              )) : watchlist.map((w) => {
+                const fakePair: TradingPair = { id: w.symbol, user_id: "", symbol: w.symbol, display_name: w.symbol, category: w.badge, is_active: true, sort_order: 0, created_at: "" };
+                return (
                 <div key={w.symbol} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${w.color}`}>{w.badge}</span>
                     <span className="text-sm font-medium text-foreground">{w.symbol}</span>
                   </div>
                    <div className="flex gap-2">
-                     <button className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition">Trade</button>
-                     <button className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition">Plan</button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForTrade(fakePair); setShowBrokerSelection(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-primary/10 text-primary font-semibold hover:bg-primary/20 transition"
+                     >Trade</button>
+                     <button
+                       onClick={(e) => { e.stopPropagation(); setSelectedPairForPlan(fakePair); setShowCreatePlan(true); }}
+                       className="text-xs px-3 py-1 rounded-lg bg-muted text-muted-foreground font-semibold hover:bg-muted/80 transition"
+                     >Plan</button>
                    </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
 
