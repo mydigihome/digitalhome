@@ -63,6 +63,7 @@ export default function WealthTrackerPage() {
 
   // Custom trading pairs
   const { data: tradingPairs } = useTradingPairs();
+  const removePair = useRemoveTradingPair();
   const userPairs = tradingPairs || [];
 
   if (isLoading) {
