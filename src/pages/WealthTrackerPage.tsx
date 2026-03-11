@@ -236,14 +236,24 @@ export default function WealthTrackerPage() {
           </div>
         </div>
 
-        {/* Edit Layout FAB */}
-        <button
-          onClick={() => setIsEditMode(!isEditMode)}
-          className="fixed top-20 right-6 z-50 px-4 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2 bg-primary text-primary-foreground"
-        >
-          {isEditMode ? <Check className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-          <span className="text-sm">{isEditMode ? "Done" : "Edit Layout"}</span>
-        </button>
+        {/* Edit Layout — subtle hover trigger in top-right corner */}
+        <div className="fixed top-20 right-6 z-50 group/edit">
+          {/* Small dot trigger — always visible */}
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-md border ${
+              isEditMode
+                ? "bg-primary text-primary-foreground border-primary shadow-primary/30"
+                : "bg-card/80 text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
+            }`}
+          >
+            {isEditMode ? <Check className="w-4 h-4" /> : <LayoutGrid className="w-3.5 h-3.5" />}
+          </button>
+          {/* Tooltip label on hover */}
+          <div className="absolute right-12 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-popover border border-border shadow-lg text-xs font-semibold text-foreground whitespace-nowrap opacity-0 pointer-events-none group-hover/edit:opacity-100 transition-opacity">
+            {isEditMode ? "Save Layout" : "Rearrange Cards"}
+          </div>
+        </div>
 
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
           <div className="grid grid-cols-12 gap-6">
