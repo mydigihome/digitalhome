@@ -1,5 +1,5 @@
 import { SetupData, IdeaEntry, IdeasTable } from "./types";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Search, Bell } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import { useState, useRef } from "react";
 
