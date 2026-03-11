@@ -327,7 +327,7 @@ export default function WealthTrackerPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl p-5"
+                className="bg-gradient-to-br from-card via-card/90 to-slate-100/50 dark:from-slate-900/80 dark:via-card/70 dark:to-slate-800/60 backdrop-blur-xl border border-border rounded-3xl p-5 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-bold text-foreground">Market Intelligence</h3>
