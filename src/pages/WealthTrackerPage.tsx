@@ -23,6 +23,7 @@ import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
 import { StudentLoanCard } from "@/components/wealth/StudentLoanCard";
+import MyWhyCard from "@/components/wealth/MyWhyCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
