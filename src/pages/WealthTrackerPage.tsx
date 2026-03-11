@@ -8,7 +8,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useLoans } from "@/hooks/useLoans";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketQuote } from "@/hooks/useMarketData";
-import { useTradingPairs, TradingPair } from "@/hooks/useTradingPairs";
+import { useTradingPairs, useRemoveTradingPair, TradingPair } from "@/hooks/useTradingPairs";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
 import AddPairModal from "@/components/wealth/AddPairModal";
