@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
+import { WaitlistModal } from "@/components/content-planner/WaitlistModal";
 
 // Context for sidebar collapsed state
 const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
@@ -23,6 +24,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const [isAdmin, setIsAdmin] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -69,7 +71,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const bottomNavItems = [
     { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
-    { icon: hasContentAccess ? Sparkles : Lock, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
@@ -247,22 +249,36 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
+            const isContentPlanner = item.path === "/vision";
+            const isLocked = isContentPlanner && !hasContentAccess;
             return (
               <li key={item.path}>
                 <NavTooltip label={item.label}>
                   <button
-                    onClick={() => go(item.path)}
+                    onClick={() => {
+                      if (isLocked) {
+                        setShowWaitlistModal(true);
+                      } else {
+                        go(item.path);
+                      }
+                    }}
                     className={cn(
                       "group flex w-full items-center rounded-xl transition-all duration-200",
                       collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                   item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
-                 )}
-                 style={activeStyle(item.active)}
-               >
-                 <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
-                   <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? 'hsl(var(--accent-foreground))' : item.color }} strokeWidth={1.5} />
-                 </span>
-                 {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
+                      item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm",
+                      isLocked && "opacity-60"
+                    )}
+                    style={activeStyle(item.active)}
+                  >
+                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
+                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? 'hsl(var(--accent-foreground))' : item.color }} strokeWidth={1.5} />
+                    </span>
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left text-[14px]">{item.label}</span>
+                        {isLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                      </>
+                    )}
                   </button>
                 </NavTooltip>
               </li>
@@ -434,6 +450,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
           )}
         </AnimatePresence>
       </div>
+
+      <WaitlistModal open={showWaitlistModal} onClose={() => setShowWaitlistModal(false)} />
     </div>
   );
 }

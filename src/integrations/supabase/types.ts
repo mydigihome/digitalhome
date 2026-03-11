@@ -47,6 +47,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           application_date: string
@@ -493,6 +514,33 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      content_planner_waitlist: {
+        Row: {
+          email: string
+          id: string
+          name: string | null
+          notified: boolean | null
+          requested_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          name?: string | null
+          notified?: boolean | null
+          requested_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          name?: string | null
+          notified?: boolean | null
+          requested_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
