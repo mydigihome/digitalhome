@@ -8,7 +8,7 @@ import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWe
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
-import { useMarketQuote, useTimeseries } from "@/hooks/useMarketData";
+import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
 import LiveChart, { TIMEFRAMES } from "@/components/wealth/LiveChart";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
