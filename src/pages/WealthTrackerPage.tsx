@@ -16,6 +16,8 @@ import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import TradeModal from "@/components/wealth/TradeModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
+import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
+import { StudentLoanCard } from "@/components/wealth/StudentLoanCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -552,6 +554,12 @@ export default function WealthTrackerPage() {
                 )}
               </motion.div>
 
+              {/* Investment Schedule - Desktop */}
+              <InvestmentScheduleCard />
+
+              {/* Student Loans - Desktop */}
+              <StudentLoanCard />
+
             </div>
           </div>
         </div>
@@ -776,6 +784,11 @@ export default function WealthTrackerPage() {
               <div className="text-center py-6"><p className="text-sm text-slate-400">No subscriptions tracked yet</p></div>
             )}
           </motion.div>
+          {/* Investment Schedule - Mobile */}
+          <InvestmentScheduleCard />
+
+          {/* Student Loans - Mobile */}
+          <StudentLoanCard />
         </div>
 
         {/* Floating Add (mobile only) */}

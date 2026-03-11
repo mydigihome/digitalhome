@@ -1020,6 +1020,63 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_allocations: {
+        Row: {
+          amount_per_investment: number
+          company_name: string
+          created_at: string | null
+          frequency: string
+          id: string
+          investment_count: number | null
+          investment_platform: string | null
+          investment_type: string
+          is_active: boolean | null
+          is_private_company: boolean | null
+          next_investment_date: string
+          notes: string | null
+          platform_url: string | null
+          total_invested: number | null
+          user_id: string
+          weekly_leftover: number
+        }
+        Insert: {
+          amount_per_investment: number
+          company_name: string
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          investment_count?: number | null
+          investment_platform?: string | null
+          investment_type?: string
+          is_active?: boolean | null
+          is_private_company?: boolean | null
+          next_investment_date: string
+          notes?: string | null
+          platform_url?: string | null
+          total_invested?: number | null
+          user_id: string
+          weekly_leftover: number
+        }
+        Update: {
+          amount_per_investment?: number
+          company_name?: string
+          created_at?: string | null
+          frequency?: string
+          id?: string
+          investment_count?: number | null
+          investment_platform?: string | null
+          investment_type?: string
+          is_active?: boolean | null
+          is_private_company?: boolean | null
+          next_investment_date?: string
+          notes?: string | null
+          platform_url?: string | null
+          total_invested?: number | null
+          user_id?: string
+          weekly_leftover?: number
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           asset_name: string
@@ -1619,6 +1676,63 @@ export type Database = {
           template_type?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      student_loans: {
+        Row: {
+          created_at: string | null
+          id: string
+          interest_rate: number | null
+          loan_name: string
+          loan_officer_email: string | null
+          loan_officer_name: string | null
+          loan_officer_phone: string | null
+          loan_servicer: string | null
+          loan_type: string
+          monthly_payment: number | null
+          payment_due_day: number | null
+          remaining_balance: number
+          servicer_website: string | null
+          status: string
+          total_owed: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          loan_name: string
+          loan_officer_email?: string | null
+          loan_officer_name?: string | null
+          loan_officer_phone?: string | null
+          loan_servicer?: string | null
+          loan_type?: string
+          monthly_payment?: number | null
+          payment_due_day?: number | null
+          remaining_balance: number
+          servicer_website?: string | null
+          status?: string
+          total_owed: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interest_rate?: number | null
+          loan_name?: string
+          loan_officer_email?: string | null
+          loan_officer_name?: string | null
+          loan_officer_phone?: string | null
+          loan_servicer?: string | null
+          loan_type?: string
+          monthly_payment?: number | null
+          payment_due_day?: number | null
+          remaining_balance?: number
+          servicer_website?: string | null
+          status?: string
+          total_owed?: number
+          user_id?: string
         }
         Relationships: []
       }
