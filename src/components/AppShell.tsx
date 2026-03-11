@@ -281,19 +281,19 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
               className="w-full flex justify-center py-2"
             >
               <div className="relative">
-                <div className="h-9 w-9 overflow-hidden rounded-full" style={{ backgroundColor: '#E5E7EB' }}>
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold" style={{ backgroundColor: '#4338CA', color: '#FFFFFF' }}>
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div
-                  className="absolute bottom-0 right-0 rounded-full"
-                  style={{ width: 10, height: 10, backgroundColor: '#22C55E', border: '2px solid #F5F5F7' }}
-                />
+               <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
+                   {avatarUrl ? (
+                     <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                   ) : (
+                     <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
+                       {displayName.charAt(0).toUpperCase()}
+                     </div>
+                   )}
+                 </div>
+                 <div
+                   className="absolute bottom-0 right-0 rounded-full border-2 border-sidebar"
+                   style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
+                 />
               </div>
             </button>
           </NavTooltip>
