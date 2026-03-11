@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, CreditCard, Wallet, PiggyBank, Pencil, Trash2 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useExpenses } from "@/hooks/useExpenses";
