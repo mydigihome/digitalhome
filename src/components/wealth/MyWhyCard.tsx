@@ -12,7 +12,7 @@ const PLACEHOLDER_IMAGES = [
   { src: myWhy2, label: "Private aviation lifestyle", objectPosition: "center center" },
   { src: myWhy3, label: "Luxury taste, legacy mindset", objectPosition: "center center" },
   { src: myWhy4, label: "Dream garage", objectPosition: "center 60%" },
-  { src: myWhy5, label: "No risk, no Porsche", objectPosition: "center 30%" },
+  { src: myWhy5, label: "No risk, no Porsche", objectPosition: "center 55%" },
 ];
 
 export default function MyWhyCard() {
