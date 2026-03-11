@@ -577,11 +577,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setCollapsed(!collapsed)}
                className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:shadow-md transition-all"
              >
-               {collapsed ? (
-                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-               ) : (
-                 <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground" />
-              )}
+                {collapsed ? (
+                 <PanelLeft className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                 <PanelLeftClose className="w-3.5 h-3.5 text-muted-foreground" />
+               )}
             </button>
           </div>
         </div>
