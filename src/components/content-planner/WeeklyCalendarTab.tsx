@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { format, parseISO, addDays, getWeek } from "date-fns";
 import { SetupData, WeekData, PostEntry, IdeasTable, getStatusColor, getPlatformColor, DAY_COLUMN_TINTS } from "./types";
-import { ChevronLeft, ChevronRight, Plus, PanelRightOpen, PanelRightClose, X, FileText, Newspaper } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, PanelRightOpen, PanelRightClose, X, FileText, Newspaper, Search } from "lucide-react";
 import AutoTextarea from "./AutoTextarea";
 import PostDetailModal from "./PostDetailModal";
 
