@@ -97,12 +97,12 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
     if (!collapsed) return <>{children}</>;
     return (
-      <div className="relative group/tip">
-        {children}
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-gray-900 text-white text-xs font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50">
-          {label}
+        <div className="relative group/tip">
+          {children}
+          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1 bg-foreground text-background text-xs font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50">
+            {label}
+          </div>
         </div>
-      </div>
     );
   };
 
