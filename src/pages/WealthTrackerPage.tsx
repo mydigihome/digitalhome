@@ -57,6 +57,39 @@ export default function WealthTrackerPage() {
   const [isEditingHeader, setIsEditingHeader] = useState(false);
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Card ordering
+  const DEFAULT_CARD_ORDER = [
+    "credit-score", "stats-grid", "market-intelligence", "trading-plans",
+    "savings-goal", "bills", "subscriptions", "investment-schedule", "student-loans"
+  ];
+  const [cardOrder, setCardOrder] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("wealth-card-order");
+      return saved ? JSON.parse(saved) : DEFAULT_CARD_ORDER;
+    } catch { return DEFAULT_CARD_ORDER; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("wealth-card-order", JSON.stringify(cardOrder));
+  }, [cardOrder]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCardOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
 
   // User preferences for header
   const { data: prefs } = useUserPreferences();
