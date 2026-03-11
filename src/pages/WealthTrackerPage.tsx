@@ -16,6 +16,8 @@ import CreatePlanModal from "@/components/wealth/CreatePlanModal";
 import TradeModal from "@/components/wealth/TradeModal";
 import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
+import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
+import { StudentLoanCard } from "@/components/wealth/StudentLoanCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
