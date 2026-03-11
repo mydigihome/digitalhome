@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
+import { WaitlistModal } from "@/components/content-planner/WaitlistModal";
 
 // Context for sidebar collapsed state
 const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
