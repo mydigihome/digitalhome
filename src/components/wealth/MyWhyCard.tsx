@@ -4,11 +4,15 @@ import { Pencil, Heart } from "lucide-react";
 import myWhy1 from "@/assets/my-why-1.jpg";
 import myWhy2 from "@/assets/my-why-2.jpg";
 import myWhy3 from "@/assets/my-why-3.jpg";
+import myWhy4 from "@/assets/my-why-4.jpg";
+import myWhy5 from "@/assets/my-why-5.jpg";
 
 const PLACEHOLDER_IMAGES = [
-  { src: myWhy1, label: "Cover story era" },
-  { src: myWhy2, label: "Private aviation lifestyle" },
-  { src: myWhy3, label: "Luxury taste, legacy mindset" },
+  { src: myWhy1, label: "Cover story era", objectPosition: "center 20%" },
+  { src: myWhy2, label: "Private aviation lifestyle", objectPosition: "center center" },
+  { src: myWhy3, label: "Luxury taste, legacy mindset", objectPosition: "center center" },
+  { src: myWhy4, label: "Dream garage", objectPosition: "center 60%" },
+  { src: myWhy5, label: "No risk, no Porsche", objectPosition: "center 30%" },
 ];
 
 export default function MyWhyCard() {
@@ -30,7 +34,7 @@ export default function MyWhyCard() {
       className="relative overflow-hidden rounded-3xl border border-border bg-card/70 dark:bg-card/50 backdrop-blur-xl"
     >
       {/* Image */}
-      <div className="relative h-40 w-full overflow-hidden">
+      <div className="relative h-48 w-full overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentIndex}
@@ -41,6 +45,7 @@ export default function MyWhyCard() {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.6 }}
             className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: current.objectPosition || "center center" }}
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
