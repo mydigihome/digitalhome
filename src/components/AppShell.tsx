@@ -108,11 +108,31 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   return (
     <div className="flex flex-1 flex-col h-full">
-      {/* Logo */}
+      {/* Logo + Collapse Toggle */}
       <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
           <div className="h-3 w-3 rounded-full bg-primary flex-shrink-0" />
-          {!collapsed && <span className="text-[15px] font-semibold tracking-tight text-foreground">Digital Home</span>}
+          {!collapsed && (
+            <>
+              <span className="text-[15px] font-semibold tracking-tight text-foreground flex-1">Digital Home</span>
+              <button
+                onClick={() => setCollapsed(true)}
+                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                aria-label="Collapse sidebar"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </>
+          )}
+          {collapsed && (
+            <button
+              onClick={() => setCollapsed(false)}
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
