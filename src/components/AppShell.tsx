@@ -592,19 +592,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
          >
            <div className="flex grow flex-col relative">
             <SidebarNav collapsed={collapsed} />
-
-            {/* Collapse toggle button */}
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-               className="absolute -right-3 top-7 z-40 w-6 h-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:shadow-md transition-all"
-             >
-                {collapsed ? (
-                 <PanelLeft className="w-3.5 h-3.5 text-muted-foreground" />
-                ) : (
-                 <PanelLeftClose className="w-3.5 h-3.5 text-muted-foreground" />
-               )}
-            </button>
-          </div>
+           </div>
         </div>
 
         {/* Mobile Header */}
