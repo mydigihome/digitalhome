@@ -24,6 +24,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const [isAdmin, setIsAdmin] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
 
   useEffect(() => {
     if (!user) return;
