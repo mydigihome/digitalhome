@@ -23,6 +23,7 @@ import ActiveTradingPlans from "@/components/wealth/ActiveTradingPlans";
 import HeaderCustomizationModal from "@/components/wealth/HeaderCustomizationModal";
 import { InvestmentScheduleCard } from "@/components/wealth/InvestmentScheduleCard";
 import { StudentLoanCard } from "@/components/wealth/StudentLoanCard";
+import MyWhyCard from "@/components/wealth/MyWhyCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +62,7 @@ export default function WealthTrackerPage() {
 
   // Card ordering
   const DEFAULT_CARD_ORDER = [
-    "credit-score", "stats-grid", "market-intelligence", "trading-plans",
+    "my-why", "credit-score", "stats-grid", "market-intelligence", "trading-plans",
     "savings-goal", "bills", "subscriptions", "investment-schedule", "student-loans"
   ];
   const [cardOrder, setCardOrder] = useState<string[]>(() => {
@@ -256,6 +257,10 @@ export default function WealthTrackerPage() {
         </div>
 
         <div className="hidden md:block px-6 pt-6 pb-32 max-w-6xl mx-auto">
+          {/* My Why Card - full width above grid */}
+          <div className="mb-6">
+            <MyWhyCard />
+          </div>
           <div className="grid grid-cols-12 gap-6">
             {/* LEFT 8 cols: Credit Score + Market + Savings */}
             <div className="col-span-8 space-y-6">
@@ -591,6 +596,12 @@ export default function WealthTrackerPage() {
             <div className="md:hidden max-w-xl mx-auto px-4 pt-6 pb-32 space-y-5">
               {cardOrder.map((cardId) => {
                 switch (cardId) {
+                  case "my-why":
+                    return (
+                      <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
+                        <MyWhyCard />
+                      </SortableCard>
+                    );
                   case "credit-score":
                     return (
                       <SortableCard key={cardId} id={cardId} isEditMode={isEditMode}>
