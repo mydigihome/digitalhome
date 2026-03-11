@@ -62,7 +62,7 @@ export default function WealthTrackerPage() {
 
   // Card ordering
   const DEFAULT_CARD_ORDER = [
-    "credit-score", "stats-grid", "market-intelligence", "trading-plans",
+    "my-why", "credit-score", "stats-grid", "market-intelligence", "trading-plans",
     "savings-goal", "bills", "subscriptions", "investment-schedule", "student-loans"
   ];
   const [cardOrder, setCardOrder] = useState<string[]>(() => {
