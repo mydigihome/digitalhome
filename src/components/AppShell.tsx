@@ -71,7 +71,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const bottomNavItems = [
     { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
-    { icon: hasContentAccess ? Sparkles : Lock, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
