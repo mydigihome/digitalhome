@@ -708,8 +708,14 @@ export default function RelationshipsPage() {
             })}
           </div>
 
-          {/* Import buttons */}
-          <div className="flex gap-2 mt-4">
+          {/* Actions row */}
+          <div className="flex items-center gap-2 mt-4 flex-wrap">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/10 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Contact
+            </button>
             <button
               onClick={importLinkedIn}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
