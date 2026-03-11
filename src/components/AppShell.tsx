@@ -90,7 +90,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     }`;
 
   const iconBgStyle = (isActive: boolean, color?: string) => ({
-    backgroundColor: isActive ? undefined : color ? `${color}15` : '#F9FAFB',
+    backgroundColor: isActive ? undefined : color ? `${color}15` : 'hsl(var(--secondary))',
   });
 
   // Tooltip wrapper for collapsed mode
