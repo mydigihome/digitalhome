@@ -8,7 +8,7 @@ import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWe
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
-import { useMarketQuote, useTimeseries } from "@/hooks/useMarketData";
+import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
 import LiveChart, { TIMEFRAMES } from "@/components/wealth/LiveChart";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,8 +16,10 @@ import { toast } from "sonner";
 import { format, isToday } from "date-fns";
 import {
   Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown, ExternalLink,
-  Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon,
+  Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon, Search,
 } from "lucide-react";
+import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
+import { TradingPair } from "@/hooks/useTradingPairs";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
@@ -153,10 +155,14 @@ export default function Dashboard() {
 
   // Stock
   const [selectedStock, setSelectedStock] = useState("AAPL");
+  const [selectedStockName, setSelectedStockName] = useState("Apple Inc.");
   const [stockDropdownOpen, setStockDropdownOpen] = useState(false);
+  const [stockSearchQuery, setStockSearchQuery] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAMES[2]);
+  const [showBrokerModal, setShowBrokerModal] = useState(false);
   const { data: quoteData } = useMarketQuote(selectedStock);
   const { data: tsData } = useTimeseries(selectedStock, selectedTimeframe.interval, selectedTimeframe.outputsize);
+  const { data: searchResults } = useSymbolSearch(stockSearchQuery);
 
   useEffect(() => {
     if (!stockDropdownOpen) return;
@@ -446,7 +452,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-bold text-foreground">{selectedStock}</span>
-                    <span className="text-xs text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                    <span className="text-xs text-muted-foreground">{selectedStockName}</span>
                   </div>
                   <div className="text-2xl font-bold text-foreground">
                     ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -457,20 +463,48 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="relative" data-stock-dropdown>
-                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg transition bg-muted">
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition bg-muted text-sm font-semibold text-foreground">
+                    <Search className="w-3.5 h-3.5 text-muted-foreground" />
+                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                   </button>
                   {stockDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
-                      {stockOptions.map((stock) => (
-                        <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                          className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
-                          <div>
-                            <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
-                            <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
-                          </div>
-                        </button>
-                      ))}
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
+                      <div className="px-3 pb-2">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted">
+                          <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                          <input
+                            value={stockSearchQuery}
+                            onChange={(e) => setStockSearchQuery(e.target.value)}
+                            placeholder="Search any symbol..."
+                            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {stockSearchQuery.length > 0 && searchResults?.length > 0 ? (
+                          searchResults.slice(0, 8).map((r: any) => (
+                            <button key={r.symbol} onClick={() => { setSelectedStock(r.symbol); setSelectedStockName(r.instrument_name || r.symbol); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                              className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left">
+                              <div className="min-w-0">
+                                <span className="text-sm font-bold text-foreground">{r.symbol}</span>
+                                <p className="text-xs text-muted-foreground truncate">{r.instrument_name}</p>
+                              </div>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex-shrink-0 ml-2">{r.instrument_type || r.exchange}</span>
+                            </button>
+                          ))
+                        ) : (
+                          stockOptions.map((stock) => (
+                            <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setSelectedStockName(stock.name); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
+                              <div>
+                                <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                                <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -487,10 +521,16 @@ export default function Dashboard() {
             <div className="px-3 pb-3">
               {chartData.length > 0 ? <LiveChart data={chartData} symbol={selectedStock} /> : <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Loading chart...</div>}
             </div>
-            <div className="px-5 pb-4">
+            <div className="px-5 pb-4 flex gap-2">
+              <button
+                onClick={() => setShowBrokerModal(true)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                Place Trade
+              </button>
               <a href={`https://www.tradingview.com/symbols/${selectedStock}/`} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition hover:bg-primary/10 text-primary bg-primary/5">
-                Open in TradingView <ExternalLink className="w-3.5 h-3.5" />
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition hover:bg-primary/10 text-primary bg-primary/5">
+                TradingView <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
           </motion.div>
@@ -610,11 +650,11 @@ export default function Dashboard() {
                         <h2 className="text-[17px] font-bold text-foreground">Market Watch</h2>
                         <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-success">
                           <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" />
-                          Live Index
+                          Live
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">{stockOptions.find(s => s.symbol === selectedStock)?.name}</span>
+                        <span className="text-xs font-medium text-muted-foreground">{selectedStockName}</span>
                       </div>
                     </div>
                     <div className="text-right">
@@ -631,30 +671,66 @@ export default function Dashboard() {
                     <div className="relative" data-stock-dropdown>
                       <button onClick={() => setStockDropdownOpen(!stockDropdownOpen)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition text-sm font-semibold bg-muted text-foreground">
+                        <Search className="w-3.5 h-3.5 text-muted-foreground" />
                         {selectedStock}
                         <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
                       </button>
                       {stockDropdownOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-60 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
-                          {stockOptions.map((stock) => (
-                            <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setStockDropdownOpen(false); }}
-                              className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
-                              <div>
-                                <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
-                                <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
-                              </div>
-                            </button>
-                          ))}
+                        <div className="absolute top-full left-0 mt-2 w-80 bg-popover rounded-xl shadow-xl border border-border py-2 z-50">
+                          <div className="px-3 pb-2">
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted">
+                              <Search className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                              <input
+                                value={stockSearchQuery}
+                                onChange={(e) => setStockSearchQuery(e.target.value)}
+                                placeholder="Search stocks, crypto, forex, indices..."
+                                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                                autoFocus
+                              />
+                            </div>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto">
+                            {stockSearchQuery.length > 0 && searchResults?.length > 0 ? (
+                              searchResults.slice(0, 10).map((r: any) => (
+                                <button key={`${r.symbol}-${r.exchange}`} onClick={() => { setSelectedStock(r.symbol); setSelectedStockName(r.instrument_name || r.symbol); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                                  className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left">
+                                  <div className="min-w-0">
+                                    <span className="text-sm font-bold text-foreground">{r.symbol}</span>
+                                    <p className="text-xs text-muted-foreground truncate">{r.instrument_name}</p>
+                                  </div>
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex-shrink-0 ml-2">{r.instrument_type || r.exchange}</span>
+                                </button>
+                              ))
+                            ) : (
+                              stockOptions.map((stock) => (
+                                <button key={stock.symbol} onClick={() => { setSelectedStock(stock.symbol); setSelectedStockName(stock.name); setStockDropdownOpen(false); setStockSearchQuery(""); }}
+                                  className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted transition text-left ${selectedStock === stock.symbol ? 'bg-primary/10' : ''}`}>
+                                  <div>
+                                    <span className="text-sm font-bold text-foreground">{stock.symbol}</span>
+                                    <span className="text-xs ml-2 text-muted-foreground">{stock.name}</span>
+                                  </div>
+                                </button>
+                              ))
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                      {TIMEFRAMES.map((tf) => (
-                        <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
-                          {tf.label}
-                        </button>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+                        {TIMEFRAMES.map((tf) => (
+                          <button key={tf.label} onClick={() => setSelectedTimeframe(tf)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex-shrink-0 ${selectedTimeframe.label === tf.label ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted bg-secondary'}`}>
+                            {tf.label}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setShowBrokerModal(true)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90 flex-shrink-0"
+                      >
+                        Trade
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -915,6 +991,12 @@ export default function Dashboard() {
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
+      )}
+      {showBrokerModal && (
+        <BrokerSelectionModal
+          pair={{ id: selectedStock, user_id: "", symbol: selectedStock, display_name: selectedStockName, category: "Stocks", is_active: true, sort_order: 0, created_at: "" } as TradingPair}
+          onClose={() => setShowBrokerModal(false)}
+        />
       )}
 
       {/* Tutorial */}
