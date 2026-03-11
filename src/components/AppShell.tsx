@@ -450,6 +450,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
           )}
         </AnimatePresence>
       </div>
+
+      <WaitlistModal open={showWaitlistModal} onClose={() => setShowWaitlistModal(false)} />
     </div>
   );
 }
