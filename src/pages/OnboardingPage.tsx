@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpsertPreferences } from '@/hooks/useUserPreferences';
+import { supabase } from '@/integrations/supabase/client';
 
-type Focus = 'organize' | 'money' | 'future' | 'build';
+import ProgressDots from '@/components/onboarding/ProgressDots';
+import WelcomeStep from '@/components/onboarding/WelcomeStep';
+import HomeNameStep from '@/components/onboarding/HomeNameStep';
+import CreditStep from '@/components/onboarding/CreditStep';
+import GoalStep from '@/components/onboarding/GoalStep';
+import FocusStep from '@/components/onboarding/FocusStep';
+import CompleteStep from '@/components/onboarding/CompleteStep';
 
-const focusOptions = [
-  { id: 'organize' as Focus, icon: '📋', label: 'Organize my life' },
-  { id: 'money' as Focus, icon: '💰', label: 'Track my money' },
-  { id: 'future' as Focus, icon: '🎯', label: 'Plan my future' },
-  { id: 'build' as Focus, icon: '✨', label: 'Build something meaningful' },
-];
+const TOTAL_STEPS = 6;
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -19,241 +21,116 @@ export default function OnboardingPage() {
   const upsertPrefs = useUpsertPreferences();
 
   const [step, setStep] = useState(1);
-  const [homeName, setHomeName] = useState(() => {
-    const first = profile?.full_name?.split(' ')[0] || '';
-    return first ? `${first}'s Home` : '';
-  });
+  const [homeName, setHomeName] = useState('');
   const [saving, setSaving] = useState(false);
-
-  const handleComplete = async (focus: Focus) => {
-    if (!user || saving) return;
-    setSaving(true);
-    try {
-      const now = new Date();
-      const trialEnd = new Date(now);
-      trialEnd.setDate(trialEnd.getDate() + 7);
-
-      await upsertPrefs.mutateAsync({
-        home_name: homeName,
-        home_style: 'minimal',
-        onboarding_focus: focus,
-        onboarding_completed: true,
-        trial_start_date: now.toISOString(),
-        trial_end_date: trialEnd.toISOString(),
-      } as any);
-      navigate('/welcome');
-    } catch (error) {
-      console.error('Error:', error);
-      setSaving(false);
-    }
-  };
 
   const firstName = profile?.full_name?.split(' ')[0] || 'Your';
 
+  const goTo = useCallback((s: number) => setStep(s), []);
+
+  // Step 2: Home name
+  const handleHomeName = useCallback((name: string) => {
+    setHomeName(name);
+    setStep(3);
+  }, []);
+
+  // Step 3: Credit & loans
+  const handleCredit = useCallback(
+    async (data: { creditScore?: number; hasStudentLoans: boolean }) => {
+      if (!user) return;
+      try {
+        // Save credit score to user_finances if provided
+        if (data.creditScore) {
+          await (supabase as any).from('user_finances').upsert(
+            {
+              user_id: user.id,
+              credit_score: data.creditScore,
+              has_student_loans: data.hasStudentLoans,
+              onboarding_completed: false,
+            },
+            { onConflict: 'user_id' }
+          );
+        }
+      } catch (e) {
+        console.error('Credit step error:', e);
+      }
+      setStep(4);
+    },
+    [user]
+  );
+
+  // Step 4: Goal
+  const handleGoal = useCallback(
+    async (goal: { text: string; targetDate?: string }) => {
+      if (!user) return;
+      try {
+        await (supabase as any).from('projects').insert({
+          user_id: user.id,
+          name: goal.text,
+          type: 'goal',
+          end_date: goal.targetDate || null,
+        });
+      } catch (e) {
+        console.error('Goal step error:', e);
+      }
+      setStep(5);
+    },
+    [user]
+  );
+
+  // Step 5: Focus selection → finalize
+  const handleFocus = useCallback(
+    async (focus: string) => {
+      if (!user || saving) return;
+      setSaving(true);
+      try {
+        const now = new Date();
+        const trialEnd = new Date(now);
+        trialEnd.setDate(trialEnd.getDate() + 7);
+
+        await upsertPrefs.mutateAsync({
+          home_name: homeName || `${firstName}'s Home`,
+          home_style: 'minimal',
+          onboarding_focus: focus,
+          onboarding_completed: true,
+          trial_start_date: now.toISOString(),
+          trial_end_date: trialEnd.toISOString(),
+        } as any);
+
+        setStep(6);
+      } catch (error) {
+        console.error('Finalize error:', error);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [user, saving, homeName, firstName, upsertPrefs]
+  );
+
+  // Step 6: Complete → dashboard
+  const handleFinish = useCallback(() => {
+    navigate('/dashboard');
+  }, [navigate]);
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#FFFFFF',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
-        padding: '24px',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: '420px' }}>
-        <AnimatePresence mode="wait">
-          {/* STEP 1: Name your home */}
-          {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-            >
-              <h1
-                style={{
-                  fontSize: '28px',
-                  fontWeight: 600,
-                  color: '#1F2937',
-                  textAlign: 'center',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                What should we call your home?
-              </h1>
+    <div className="relative min-h-screen bg-background">
+      {/* Progress dots top-right (hidden on step 1 & 6) */}
+      {step > 1 && step < 6 && <ProgressDots total={TOTAL_STEPS} current={step} />}
 
-              <p
-                style={{
-                  fontSize: '15px',
-                  color: '#9CA3AF',
-                  textAlign: 'center',
-                  margin: '0 0 24px 0',
-                }}
-              >
-                This is your personal space.
-              </p>
-
-              <input
-                type="text"
-                value={homeName}
-                onChange={(e) => setHomeName(e.target.value)}
-                placeholder={`${firstName}'s Home`}
-                autoFocus
-                maxLength={50}
-                style={{
-                  width: '100%',
-                  height: '52px',
-                  padding: '0 20px',
-                  fontSize: '17px',
-                  color: '#1F2937',
-                  backgroundColor: '#F9FAFB',
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '12px',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  textAlign: 'center',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#8B5CF6';
-                  e.target.style.backgroundColor = '#FFFFFF';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
-                  e.target.style.backgroundColor = '#F9FAFB';
-                }}
-              />
-
-              <button
-                onClick={() => setStep(2)}
-                disabled={!homeName.trim()}
-                style={{
-                  width: '100%',
-                  height: '52px',
-                  marginTop: '16px',
-                  backgroundColor: homeName.trim() ? '#8B5CF6' : '#F3F4F6',
-                  color: homeName.trim() ? '#FFFFFF' : '#9CA3AF',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontSize: '17px',
-                  fontWeight: 600,
-                  cursor: homeName.trim() ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  if (homeName.trim()) e.currentTarget.style.backgroundColor = '#7C3AED';
-                }}
-                onMouseLeave={(e) => {
-                  if (homeName.trim()) e.currentTarget.style.backgroundColor = '#8B5CF6';
-                }}
-              >
-                Continue
-              </button>
-            </motion.div>
-          )}
-
-          {/* STEP 2: Choose focus */}
-          {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-            >
-              <h1
-                style={{
-                  fontSize: '28px',
-                  fontWeight: 600,
-                  color: '#1F2937',
-                  textAlign: 'center',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                What do you want help with first?
-              </h1>
-
-              <p
-                style={{
-                  fontSize: '15px',
-                  color: '#9CA3AF',
-                  textAlign: 'center',
-                  margin: '0 0 24px 0',
-                }}
-              >
-                You can explore everything later.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {focusOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => handleComplete(option.id)}
-                    disabled={saving}
-                    style={{
-                      width: '100%',
-                      height: '64px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '12px',
-                      padding: '0 24px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      transition: 'all 0.2s',
-                      opacity: saving ? 0.6 : 1,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!saving) {
-                        e.currentTarget.style.borderColor = '#8B5CF6';
-                        e.currentTarget.style.backgroundColor = '#FAFBFC';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#E5E7EB';
-                      e.currentTarget.style.backgroundColor = '#FFFFFF';
-                    }}
-                  >
-                    <span style={{ fontSize: '24px' }}>{option.icon}</span>
-                    <span
-                      style={{
-                        fontSize: '16px',
-                        fontWeight: 500,
-                        color: '#1F2937',
-                      }}
-                    >
-                      {option.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setStep(1)}
-                style={{
-                  marginTop: '16px',
-                  background: 'none',
-                  border: 'none',
-                  color: '#9CA3AF',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  padding: '8px',
-                }}
-              >
-                Back
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <AnimatePresence mode="wait">
+        {step === 1 && <WelcomeStep onNext={() => goTo(2)} />}
+        {step === 2 && (
+          <HomeNameStep
+            firstName={firstName}
+            defaultName={homeName || `${firstName}'s Home`}
+            onNext={handleHomeName}
+          />
+        )}
+        {step === 3 && <CreditStep onNext={handleCredit} onSkip={() => goTo(4)} />}
+        {step === 4 && <GoalStep onNext={handleGoal} onSkip={() => goTo(5)} />}
+        {step === 5 && <FocusStep onNext={handleFocus} />}
+        {step === 6 && <CompleteStep onFinish={handleFinish} />}
+      </AnimatePresence>
     </div>
   );
 }
