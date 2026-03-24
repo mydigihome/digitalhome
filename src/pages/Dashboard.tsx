@@ -7,6 +7,7 @@ import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo 
 import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useContacts } from "@/hooks/useContacts";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
 import LiveChart, { TIMEFRAMES } from "@/components/wealth/LiveChart";
