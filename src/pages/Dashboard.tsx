@@ -7,6 +7,7 @@ import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo 
 import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useContacts } from "@/hooks/useContacts";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
 import LiveChart, { TIMEFRAMES } from "@/components/wealth/LiveChart";
@@ -26,6 +27,9 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
+import AIInsightsBanner from "@/components/dashboard/AIInsightsBanner";
+import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
+import NetWorthCard from "@/components/dashboard/NetWorthCard";
 
 /* ── Helpers ── */
 function getGreeting() {
@@ -139,6 +143,7 @@ export default function Dashboard() {
   const { data: habitLogs = [] } = useHabitLogs();
   const { data: todayEvents = [] } = useTodayEvents();
   const { data: expenses = [] } = useExpenses();
+  const { data: contacts = [] } = useContacts();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
@@ -353,6 +358,31 @@ export default function Dashboard() {
 
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
+
+          {/* AI INSIGHTS */}
+          <div className="mb-4">
+            <AIInsightsBanner
+              goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
+              expenses={expenses}
+              contacts={contacts}
+            />
+          </div>
+
+          {/* QUICK ACTIONS */}
+          <div className="mb-5">
+            <QuickActionsRow
+              onNewGoal={() => setProjectModalOpen(true)}
+              onNewContact={() => navigate("/relationships")}
+              onNewBill={() => navigate("/finance/wealth")}
+              onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
+              onJournal={() => navigate("/journal?new=true")}
+            />
+          </div>
+
+          {/* NET WORTH */}
+          <div className="mb-4">
+            <NetWorthCard />
+          </div>
 
           {/* MOMENTUM & HABITS — vertical centered cards */}
           <motion.div {...stagger(1)} className="grid grid-cols-2 gap-3 mb-5">
@@ -640,6 +670,31 @@ export default function Dashboard() {
 
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
+
+              {/* AI INSIGHTS */}
+              <div className="mb-4">
+                <AIInsightsBanner
+                  goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
+                  expenses={expenses}
+                  contacts={contacts}
+                />
+              </div>
+
+              {/* QUICK ACTIONS */}
+              <div className="mb-5">
+                <QuickActionsRow
+                  onNewGoal={() => setProjectModalOpen(true)}
+                  onNewContact={() => navigate("/relationships")}
+                  onNewBill={() => navigate("/finance/wealth")}
+                  onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
+                  onJournal={() => navigate("/journal?new=true")}
+                />
+              </div>
+
+              {/* NET WORTH */}
+              <div className="mb-4">
+                <NetWorthCard />
+              </div>
 
               {/* MARKET WATCH */}
               <motion.div {...stagger(1)} className="mb-4 overflow-hidden bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
