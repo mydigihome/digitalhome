@@ -143,6 +143,7 @@ export default function Dashboard() {
   const { data: habitLogs = [] } = useHabitLogs();
   const { data: todayEvents = [] } = useTodayEvents();
   const { data: expenses = [] } = useExpenses();
+  const { data: contacts = [] } = useContacts();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
