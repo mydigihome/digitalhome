@@ -359,6 +359,31 @@ export default function Dashboard() {
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
+          {/* AI INSIGHTS */}
+          <div className="mb-4">
+            <AIInsightsBanner
+              goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
+              expenses={expenses}
+              contacts={contacts}
+            />
+          </div>
+
+          {/* QUICK ACTIONS */}
+          <div className="mb-5">
+            <QuickActionsRow
+              onNewGoal={() => setProjectModalOpen(true)}
+              onNewContact={() => navigate("/relationships")}
+              onNewBill={() => navigate("/finance/wealth")}
+              onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
+              onJournal={() => navigate("/journal?new=true")}
+            />
+          </div>
+
+          {/* NET WORTH */}
+          <div className="mb-4">
+            <NetWorthCard />
+          </div>
+
           {/* MOMENTUM & HABITS — vertical centered cards */}
           <motion.div {...stagger(1)} className="grid grid-cols-2 gap-3 mb-5">
             <div className="p-4 text-center bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
