@@ -26,6 +26,9 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
+import AIInsightsBanner from "@/components/dashboard/AIInsightsBanner";
+import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
+import NetWorthCard from "@/components/dashboard/NetWorthCard";
 
 /* ── Helpers ── */
 function getGreeting() {
