@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 const defaultData = [
@@ -31,9 +31,9 @@ export function NetWorthFront() {
           <span className="inline-block text-xs font-bold rounded-full px-3 py-1 mt-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ $2,341 this month</span>
         </div>
       </div>
-      <div style={{ width: '100%', height: 180 }} className="mt-2">
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={defaultData}>
+      <div style={{ width: '100%', height: 140 }} className="mt-2">
+        <ResponsiveContainer width="100%" height={140}>
+          <AreaChart data={defaultData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="rgba(70,72,212,0.15)" />
@@ -42,6 +42,7 @@ export function NetWorthFront() {
             </defs>
             <CartesianGrid horizontal={true} vertical={false} stroke="#f3f3f8" />
             <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#767586" }} />
+            <YAxis domain={['dataMin - 2000', 'dataMax + 1000']} hide />
             <Tooltip content={<GlassTooltip />} />
             <Area type="monotone" dataKey="value" stroke="#4648d4" strokeWidth={2.5} fill="url(#nwGrad)" />
           </AreaChart>
