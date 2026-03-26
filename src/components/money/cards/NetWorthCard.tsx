@@ -31,7 +31,7 @@ export function NetWorthFront() {
           <span className="inline-block text-xs font-bold rounded-full px-3 py-1 mt-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ $2,341 this month</span>
         </div>
       </div>
-      <div className="h-[260px] mt-4">
+      <div className="h-[200px] mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={defaultData}>
             <defs>
