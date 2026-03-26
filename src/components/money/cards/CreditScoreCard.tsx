@@ -106,7 +106,7 @@ export function CreditScoreFront() {
         <p className="text-xs font-bold" style={{ color: "#4648d4" }}>⚡ Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
       </div>
 
-      <div className="rounded-xl p-3 mt-3" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-xl p-3 mt-2" style={{ background: "#f3f3f8" }}>
         <p className="text-xs" style={{ color: "#ba1a1a" }}>🔴 Recent Hard Inquiry — Car Loan · Feb 2024</p>
       </div>
 

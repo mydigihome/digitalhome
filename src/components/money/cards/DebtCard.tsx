@@ -24,7 +24,7 @@ export function DebtFront() {
       </div>
 
       {/* Credit Card */}
-      <div className="rounded-[20px] p-5 mb-4" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-[16px] p-3 mb-3" style={{ background: "#f3f3f8" }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="rounded-xl p-2" style={{ background: "rgba(186,26,26,0.1)" }}><span className="material-symbols-outlined text-lg" style={{ color: "#ba1a1a" }}>credit_card</span></div>
           <span className="font-bold text-sm flex-1" style={{ color: "#1a1c1f" }}>Sapphire Reserve</span>

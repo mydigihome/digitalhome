@@ -54,7 +54,7 @@ export function EmergencyFundFront() {
         <p className="text-[9px] font-bold uppercase mt-2" style={{ color: "#006c49" }}>Active Sprint</p>
       </div>
 
-      <div className="rounded-[20px] p-3 mt-4" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
+      <div className="rounded-[16px] p-3 mt-3" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
         <p className="text-xs leading-relaxed" style={{ color: "#464554" }}>
           <span className="font-bold" style={{ color: "#4648d4" }}>✦</span> Increase monthly transfer by $400 to hit tax goal 12 days early.
         </p>

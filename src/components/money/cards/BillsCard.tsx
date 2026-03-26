@@ -96,7 +96,7 @@ export function BillsFront() {
         })}
       </div>
 
-      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-4 rounded-[20px] py-3 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(70,72,212,0.3)", color: "#4648d4" }}>
+      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-3 rounded-[16px] py-2.5 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(70,72,212,0.3)", color: "#4648d4" }}>
         + Add Bill
       </button>
     </div>

@@ -58,7 +58,7 @@ export function SpendingFront() {
         })}
       </div>
       {/* Alert */}
-      <div className="mt-4 p-3 rounded-r-xl text-xs" style={{ background: "#FFFBEB", borderLeft: "4px solid #F59E0B", color: "#92400E" }}>
+      <div className="mt-3 p-3 rounded-r-xl text-xs" style={{ background: "#FFFBEB", borderLeft: "4px solid #F59E0B", color: "#92400E" }}>
         ⚠ Entertainment is at 93% of budget. Consider reducing to hit savings goal.
       </div>
     </div>

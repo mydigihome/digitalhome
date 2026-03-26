@@ -85,7 +85,7 @@ export function MoneyFlowFront() {
       </div>
 
       {/* SECTION C — AI Insight */}
-      <div className="rounded-[20px] p-4 mt-5 flex items-start gap-2" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
+      <div className="rounded-[16px] p-3 mt-3 flex items-start gap-2" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
         <span className="material-symbols-outlined text-sm" style={{ color: "#4648d4" }}>auto_awesome</span>
         <p className="text-xs leading-relaxed font-medium" style={{ color: "#464554" }}>
           At your current savings rate you'll hit $48,900 net worth by year end. Cutting subscriptions by $50/month accelerates this by 3 weeks.

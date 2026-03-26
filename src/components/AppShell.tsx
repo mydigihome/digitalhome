@@ -658,7 +658,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
 
         {/* Main Content */}
-        <main className="transition-all duration-300" style={{ paddingLeft: `${sidebarWidth}px` }}>
+        <main className="transition-all duration-300 min-h-screen" style={{ paddingLeft: `${sidebarWidth}px`, backgroundColor: '#f3f3f8' }}>
           <div className="lg:block hidden" /> {/* spacer for transition */}
           <ContentWrapper>{children}</ContentWrapper>
         </main>

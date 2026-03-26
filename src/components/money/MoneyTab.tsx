@@ -103,7 +103,7 @@ export default function MoneyTab() {
   }
 
   return (
-    <div className="min-h-screen -mx-4 -mt-4 px-4 md:px-6 py-4" style={{ background: "#f3f3f8" }}>
+    <div className="min-h-screen px-4 md:px-6 py-4" style={{ background: "#f3f3f8" }}>
       <div className="max-w-[1400px] mx-auto space-y-3">
       {/* Hidden cards restore drawer */}
       {hiddenCards.length > 0 && (

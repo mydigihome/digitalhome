@@ -147,7 +147,7 @@ function WatchlistPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 pb-2" style={{ maxHeight: 420 }}>
+      <div className="flex-1 overflow-y-auto px-1 pb-2">
         {/* Favorites */}
         {favorites.length > 0 && (
           <div className="mb-2">
