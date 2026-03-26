@@ -66,59 +66,37 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-1 top-4 z-30 w-7 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-40 hover:!opacity-100 transition-opacity hidden md:flex"
+        className="absolute -left-1 top-3 z-30 w-6 h-7 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-40 hover:!opacity-100 transition-opacity hidden md:flex"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
         <GripVertical className="w-3.5 h-3.5" style={{ color: "#767586" }} />
       </div>
 
       {/* Edit hint */}
-      <div className="absolute top-4 right-4 z-30 w-7 h-7 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex pointer-events-none"
+      <div className="absolute top-3 right-3 z-30 w-6 h-6 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex pointer-events-none"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
         <Pencil className="w-3 h-3" style={{ color: "#767586" }} />
       </div>
 
-      {/* Flip container */}
+      {/* Card — no flip, show front or back */}
       <div
-        className="w-full cursor-pointer"
-        style={{ perspective: "1200px" }}
+        className="w-full rounded-[24px] p-5 cursor-pointer"
+        style={{
+          background: "#ffffff",
+          boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : "0 8px 28px rgba(70,69,84,0.05)",
+        }}
         onClick={handleFlip}
       >
-        <div
-          className="relative w-full transition-transform duration-[400ms] ease-in-out"
-          style={{
-            transformStyle: "preserve-3d",
-            transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          }}
-        >
-          {/* FRONT */}
-          <div
-            className="w-full rounded-[24px] p-6"
-            style={{
-              backfaceVisibility: "hidden",
-              background: "#ffffff",
-              boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : "0 12px 40px rgba(70,69,84,0.06)",
-            }}
-          >
-            {front}
-          </div>
-
-          {/* BACK */}
-          <div
-            className="absolute inset-0 w-full rounded-[24px] p-6 overflow-y-auto"
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-              background: "#ffffff",
-              boxShadow: "0 12px 40px rgba(70,69,84,0.06)",
-            }}
-          >
+        {!isFlipped ? (
+          front
+        ) : (
+          <div>
             {back}
 
             {/* Hide toggle */}
             {onHide && (
-              <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1px solid #f3f3f8" }}>
+              <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: "1px solid #f3f3f8" }}>
                 <div className="flex items-center gap-2">
                   <EyeOff className="w-4 h-4" style={{ color: "#767586" }} />
                   <span className="text-sm font-bold" style={{ color: "#767586" }}>Hide this card</span>
@@ -131,25 +109,25 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
               </div>
             )}
 
-            {/* Override Cancel/Save with our handlers */}
+            {/* Cancel/Save */}
             <div className="flex gap-3 mt-4">
               <button
                 onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm"
+                className="flex-1 rounded-full px-5 py-2 font-bold text-sm"
                 style={{ background: "#f3f3f8", color: "#464554" }}
               >
                 Cancel
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); handleSave(); }}
-                className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm text-white"
+                className="flex-1 rounded-full px-5 py-2 font-bold text-sm text-white"
                 style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
               >
                 Save Changes
               </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -171,7 +149,7 @@ export function EditInput({ value, onChange, type = "text", placeholder }: { val
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl px-4 py-2.5 text-sm font-medium border-none focus:ring-2 focus:outline-none"
+      className="w-full rounded-xl px-3 py-2 text-sm font-medium border-none focus:ring-2 focus:outline-none"
       style={{ background: "#f3f3f8", color: "#1a1c1f" }}
       onClick={(e) => e.stopPropagation()}
     />
@@ -179,6 +157,5 @@ export function EditInput({ value, onChange, type = "text", placeholder }: { val
 }
 
 export function EditActions({ onCancel, onSave }: { onCancel: () => void; onSave: () => void }) {
-  // These are now handled by MoneyCard wrapper, so render nothing
   return null;
 }

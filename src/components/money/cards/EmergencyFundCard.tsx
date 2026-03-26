@@ -16,7 +16,7 @@ function SegmentBar({ filled, total, color }: { filled: number; total: number; c
 
 export function EmergencyFundFront() {
   return (
-    <div style={{ minHeight: 260 }}>
+    <div>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Liquidity Sprints</h3>
         <span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>bolt</span>
@@ -38,10 +38,10 @@ export function EmergencyFundFront() {
         <p className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: "#4648d4" }}>Completion: Nov 2024</p>
       </div>
 
-      <div className="mt-6 h-px" style={{ background: "#f3f3f8" }} />
+      <div className="mt-4 h-px" style={{ background: "#f3f3f8" }} />
 
       {/* Tax Vault */}
-      <div className="mt-6">
+      <div className="mt-4">
         <div className="flex items-center justify-between mb-1">
           <span className="font-bold text-sm" style={{ color: "#1a1c1f" }}>Q4 Tax Vault</span>
           <div className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export function EmergencyFundFront() {
         <p className="text-[9px] font-bold uppercase mt-2" style={{ color: "#006c49" }}>Active Sprint</p>
       </div>
 
-      <div className="rounded-[20px] p-4 mt-6" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
+      <div className="rounded-[20px] p-3 mt-4" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
         <p className="text-xs leading-relaxed" style={{ color: "#464554" }}>
           <span className="font-bold" style={{ color: "#4648d4" }}>✦</span> Increase monthly transfer by $400 to hit tax goal 12 days early.
         </p>

@@ -20,7 +20,7 @@ const GlassTooltip = ({ active, payload, label }: any) => {
 
 export function NetWorthFront() {
   return (
-    <div style={{ minHeight: 320 }}>
+    <div>
       <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Total Net Worth</h3>
@@ -31,7 +31,7 @@ export function NetWorthFront() {
           <span className="inline-block text-xs font-bold rounded-full px-3 py-1 mt-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ $2,341 this month</span>
         </div>
       </div>
-      <div className="h-[260px] mt-4">
+      <div className="h-[200px] mt-3">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={defaultData}>
             <defs>
@@ -47,12 +47,12 @@ export function NetWorthFront() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        <div className="rounded-xl p-4" style={{ background: "#f3f3f8" }}>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="rounded-xl p-3" style={{ background: "#f3f3f8" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>Assets</p>
           <p className="text-lg font-bold" style={{ color: "#006c49" }}>$48,434</p>
         </div>
-        <div className="rounded-xl p-4" style={{ background: "#f3f3f8" }}>
+        <div className="rounded-xl p-3" style={{ background: "#f3f3f8" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>Liabilities</p>
           <p className="text-lg font-bold" style={{ color: "#ba1a1a" }}>-$3,200</p>
         </div>

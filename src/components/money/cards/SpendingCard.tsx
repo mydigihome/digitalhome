@@ -18,7 +18,7 @@ const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", c
 
 export function SpendingFront() {
   return (
-    <div style={{ minHeight: 320 }}>
+    <div>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Spending Allocation</h3>
         <span className="material-symbols-outlined text-base" style={{ color: "#767586" }}>pie_chart</span>
