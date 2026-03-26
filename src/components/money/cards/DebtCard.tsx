@@ -7,7 +7,7 @@ export function DebtFront() {
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Debt Architecture</h3>
         <button onClick={(e) => e.stopPropagation()} className="rounded-full px-4 py-1.5 text-xs font-bold border" style={{ borderColor: "#4648d4", color: "#4648d4" }}>Manage Liabilities</button>
       </div>
-      <div className="flex items-baseline gap-3 mb-5">
+      <div className="flex items-baseline gap-3 mb-3">
         <span className="text-3xl font-extrabold tracking-tighter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>$69,300</span>
         <span className="text-sm" style={{ color: "#767586" }}>Payoff date: Aug 2029</span>
       </div>
