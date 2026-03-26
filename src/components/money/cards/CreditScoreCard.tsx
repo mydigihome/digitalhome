@@ -69,8 +69,8 @@ export function CreditScoreFront() {
         <span className="text-[10px] font-black uppercase tracking-widest rounded px-2 py-0.5" style={{ background: rating.bg, color: rating.color }}>{rating.label}</span>
       </div>
 
-      <div className="flex justify-center">
-        <svg width="200" height="120" viewBox="0 0 200 120">
+      <div className="flex justify-center" style={{ maxHeight: 110 }}>
+        <svg width="180" height="110" viewBox="0 0 200 120">
           <defs>
             <linearGradient id="creditGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#4648d4" />
