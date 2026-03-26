@@ -167,6 +167,7 @@ export default function MoneyTab() {
           ))}
         </SortableContext>
       </DndContext>
+      </div>
     </div>
   );
 }
