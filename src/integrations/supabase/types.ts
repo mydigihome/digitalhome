@@ -1315,6 +1315,33 @@ export type Database = {
         }
         Relationships: []
       }
+      money_tab_preferences: {
+        Row: {
+          card_data: Json | null
+          card_order: string[] | null
+          hidden_cards: string[] | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          card_data?: Json | null
+          card_order?: string[] | null
+          hidden_cards?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          card_data?: Json | null
+          card_order?: string[] | null
+          hidden_cards?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ninety_day_goals: {
         Row: {
           achieved: string | null
@@ -1407,6 +1434,122 @@ export type Database = {
           position?: number | null
           title?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plaid_accounts: {
+        Row: {
+          account_id: string | null
+          balance_available: number | null
+          balance_current: number | null
+          id: string
+          name: string | null
+          plaid_item_id: string | null
+          subtype: string | null
+          type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          balance_available?: number | null
+          balance_current?: number | null
+          id?: string
+          name?: string | null
+          plaid_item_id?: string | null
+          subtype?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          balance_available?: number | null
+          balance_current?: number | null
+          id?: string
+          name?: string | null
+          plaid_item_id?: string | null
+          subtype?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plaid_accounts_plaid_item_id_fkey"
+            columns: ["plaid_item_id"]
+            isOneToOne: false
+            referencedRelation: "plaid_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plaid_items: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          id: string
+          institution_name: string | null
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          id?: string
+          institution_name?: string | null
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          id?: string
+          institution_name?: string | null
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plaid_transactions: {
+        Row: {
+          account_id: string | null
+          amount: number | null
+          category: string[] | null
+          created_at: string | null
+          date: string | null
+          id: string
+          merchant_name: string | null
+          name: string | null
+          pending: boolean | null
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount?: number | null
+          category?: string[] | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          merchant_name?: string | null
+          name?: string | null
+          pending?: boolean | null
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number | null
+          category?: string[] | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          merchant_name?: string | null
+          name?: string | null
+          pending?: boolean | null
+          transaction_id?: string | null
           user_id?: string
         }
         Relationships: []
