@@ -28,7 +28,7 @@ export function MoneyFlowFront() {
   return (
     <div>
       {/* SECTION A — Savings Snapshot */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3">
         <div className="flex items-baseline gap-3">
           <span className="text-5xl font-extrabold tracking-tighter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#006c49" }}>29%</span>
           <span className="text-xs" style={{ color: "#767586" }}>saved this month</span>
@@ -53,7 +53,7 @@ export function MoneyFlowFront() {
 
       {/* SECTION B — Cashflow Waterfall */}
       <div className="flex flex-col lg:flex-row gap-5">
-        <div className="lg:w-[58%] h-[240px]">
+        <div className="lg:w-[58%]" style={{ height: 180 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={waterfall} layout="vertical" margin={{ left: 10, right: 40 }}>
               <CartesianGrid horizontal vertical={false} stroke="#f3f3f8" />
@@ -85,7 +85,7 @@ export function MoneyFlowFront() {
       </div>
 
       {/* SECTION C — AI Insight */}
-      <div className="rounded-[20px] p-4 mt-5 flex items-start gap-2" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
+      <div className="rounded-[16px] p-3 mt-3 flex items-start gap-2" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
         <span className="material-symbols-outlined text-sm" style={{ color: "#4648d4" }}>auto_awesome</span>
         <p className="text-xs leading-relaxed font-medium" style={{ color: "#464554" }}>
           At your current savings rate you'll hit $48,900 net worth by year end. Cutting subscriptions by $50/month accelerates this by 3 weeks.

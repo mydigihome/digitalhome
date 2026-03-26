@@ -69,8 +69,8 @@ export function CreditScoreFront() {
         <span className="text-[10px] font-black uppercase tracking-widest rounded px-2 py-0.5" style={{ background: rating.bg, color: rating.color }}>{rating.label}</span>
       </div>
 
-      <div className="flex justify-center">
-        <svg width="200" height="120" viewBox="0 0 200 120">
+      <div className="flex justify-center" style={{ maxHeight: 110 }}>
+        <svg width="180" height="110" viewBox="0 0 200 120">
           <defs>
             <linearGradient id="creditGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#4648d4" />
@@ -95,18 +95,18 @@ export function CreditScoreFront() {
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#767586" }}>FACTORS HELPING</p>
         <p className="text-xs" style={{ color: "#006c49" }}>✅ Payment history: 100% on-time payments</p>
         <p className="text-xs" style={{ color: "#006c49" }}>✅ Credit age: 5 year average</p>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#f59e0b" }}>QUICK WIN</p>
         <p className="text-xs font-bold" style={{ color: "#4648d4" }}>⚡ Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
       </div>
 
-      <div className="rounded-xl p-3 mt-3" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-xl p-3 mt-2" style={{ background: "#f3f3f8" }}>
         <p className="text-xs" style={{ color: "#ba1a1a" }}>🔴 Recent Hard Inquiry — Car Loan · Feb 2024</p>
       </div>
 

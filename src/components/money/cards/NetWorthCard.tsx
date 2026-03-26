@@ -31,8 +31,8 @@ export function NetWorthFront() {
           <span className="inline-block text-xs font-bold rounded-full px-3 py-1 mt-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ $2,341 this month</span>
         </div>
       </div>
-      <div className="h-[200px] mt-3">
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ width: '100%', height: 180 }} className="mt-2">
+        <ResponsiveContainer width="100%" height={180}>
           <AreaChart data={defaultData}>
             <defs>
               <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
@@ -47,7 +47,7 @@ export function NetWorthFront() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="grid grid-cols-2 gap-2 mt-3">
+      <div className="grid grid-cols-2 gap-2 mt-2">
         <div className="rounded-xl p-3" style={{ background: "#f3f3f8" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>Assets</p>
           <p className="text-lg font-bold" style={{ color: "#006c49" }}>$48,434</p>

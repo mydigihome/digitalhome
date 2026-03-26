@@ -147,7 +147,7 @@ function WatchlistPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 pb-2" style={{ maxHeight: 420 }}>
+      <div className="flex-1 overflow-y-auto px-1 pb-2">
         {/* Favorites */}
         {favorites.length > 0 && (
           <div className="mb-2">
@@ -340,7 +340,7 @@ export function TradingViewFront() {
       </div>
 
       {/* Chart + Watchlist */}
-      <div className="flex rounded-[16px] overflow-hidden" style={{ background: "#fafafa" }}>
+      <div className="flex rounded-[16px] overflow-hidden" style={{ background: "#fafafa", height: 520 }}>
         <WatchlistPanel
           items={watchlist}
           activeSymbol={activeSymbol}
@@ -352,10 +352,15 @@ export function TradingViewFront() {
           onToggleGroup={toggleGroup}
           onAddSymbol={addSymbol}
         />
-        <div className="flex-1">
-          <TradingViewWidget key={activeSymbol} symbol={activeSymbol} containerId="tv_chart_main" height="420px" />
+        <div className="flex-1" style={{ height: 520 }}>
+          <TradingViewWidget key={activeSymbol} symbol={activeSymbol} containerId="tv_chart_main" height="520px" />
         </div>
       </div>
+      <style>{`
+        @media (max-width: 767px) {
+          #tv_chart_main { height: 340px !important; }
+        }
+      `}</style>
 
       {/* Fullscreen overlay */}
       {fullscreen && (

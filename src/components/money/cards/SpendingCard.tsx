@@ -19,7 +19,7 @@ const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", c
 export function SpendingFront() {
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-3">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Spending Allocation</h3>
         <span className="material-symbols-outlined text-base" style={{ color: "#767586" }}>pie_chart</span>
       </div>
@@ -41,7 +41,7 @@ export function SpendingFront() {
           </div>
         </div>
       </div>
-      <div className="space-y-3 mt-4">
+      <div className="space-y-2 mt-3">
         {categories.map((c) => {
           const pct = Math.round((c.spent / c.budget) * 100);
           return (
@@ -58,7 +58,7 @@ export function SpendingFront() {
         })}
       </div>
       {/* Alert */}
-      <div className="mt-4 p-3 rounded-r-xl text-xs" style={{ background: "#FFFBEB", borderLeft: "4px solid #F59E0B", color: "#92400E" }}>
+      <div className="mt-3 p-3 rounded-r-xl text-xs" style={{ background: "#FFFBEB", borderLeft: "4px solid #F59E0B", color: "#92400E" }}>
         ⚠ Entertainment is at 93% of budget. Consider reducing to hit savings goal.
       </div>
     </div>

@@ -38,13 +38,13 @@ export function BillsFront() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Upcoming Bills</h3>
         <span className="text-sm font-bold" style={{ color: "#767586" }}>Next 30 days: $1,946</span>
       </div>
 
       {/* Calendar strip */}
-      <div className="flex gap-2 justify-between mb-4">
+      <div className="flex gap-2 justify-between mb-3 py-1">
         {weekDays.map((d, i) => {
           const isToday = d.toDateString() === today.toDateString();
           return (
@@ -60,7 +60,7 @@ export function BillsFront() {
       </div>
 
       {/* Bills list */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {bills.map((bill) => {
           const urgent = bill.dueDays <= 7;
           return (
@@ -96,7 +96,7 @@ export function BillsFront() {
         })}
       </div>
 
-      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-4 rounded-[20px] py-3 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(70,72,212,0.3)", color: "#4648d4" }}>
+      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-3 rounded-[16px] py-2.5 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(70,72,212,0.3)", color: "#4648d4" }}>
         + Add Bill
       </button>
     </div>

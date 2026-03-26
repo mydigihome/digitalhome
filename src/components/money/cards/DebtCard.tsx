@@ -3,17 +3,17 @@ import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 export function DebtFront() {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Debt Architecture</h3>
         <button onClick={(e) => e.stopPropagation()} className="rounded-full px-4 py-1.5 text-xs font-bold border" style={{ borderColor: "#4648d4", color: "#4648d4" }}>Manage Liabilities</button>
       </div>
-      <div className="flex items-baseline gap-3 mb-5">
+      <div className="flex items-baseline gap-3 mb-3">
         <span className="text-3xl font-extrabold tracking-tighter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>$69,300</span>
         <span className="text-sm" style={{ color: "#767586" }}>Payoff date: Aug 2029</span>
       </div>
 
       {/* Student Loans */}
-      <div className="rounded-[20px] p-5 mb-3" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-[16px] p-3 mb-2" style={{ background: "#f3f3f8" }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="rounded-xl p-2" style={{ background: "#e1e0ff" }}><span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>school</span></div>
           <span className="font-bold text-sm flex-1" style={{ color: "#1a1c1f" }}>Student Loans</span>
@@ -24,7 +24,7 @@ export function DebtFront() {
       </div>
 
       {/* Credit Card */}
-      <div className="rounded-[20px] p-5 mb-4" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-[16px] p-3 mb-3" style={{ background: "#f3f3f8" }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="rounded-xl p-2" style={{ background: "rgba(186,26,26,0.1)" }}><span className="material-symbols-outlined text-lg" style={{ color: "#ba1a1a" }}>credit_card</span></div>
           <span className="font-bold text-sm flex-1" style={{ color: "#1a1c1f" }}>Sapphire Reserve</span>
