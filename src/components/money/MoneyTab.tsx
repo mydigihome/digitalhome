@@ -103,7 +103,8 @@ export default function MoneyTab() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 space-y-3" style={{ background: "#f3f3f8", minHeight: "100vh" }}>
+    <div className="min-h-screen -mx-4 -mt-4 px-4 md:px-6 py-4" style={{ background: "#f3f3f8" }}>
+      <div className="max-w-[1400px] mx-auto space-y-3">
       {/* Hidden cards restore drawer */}
       {hiddenCards.length > 0 && (
         <div className="rounded-[20px] overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 16px rgba(70,69,84,0.05)" }}>
@@ -166,6 +167,7 @@ export default function MoneyTab() {
           ))}
         </SortableContext>
       </DndContext>
+      </div>
     </div>
   );
 }
