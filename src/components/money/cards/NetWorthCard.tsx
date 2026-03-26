@@ -20,7 +20,7 @@ const GlassTooltip = ({ active, payload, label }: any) => {
 
 export function NetWorthFront() {
   return (
-    <div style={{ minHeight: 400 }}>
+    <div style={{ minHeight: 320 }}>
       <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Total Net Worth</h3>

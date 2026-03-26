@@ -24,7 +24,7 @@ export function TradingViewFront() {
   const src = `https://s.tradingview.com/widgetembed/?frameElementId=tv_widget&symbol=${symbols[active].tv}&interval=D&hidesidetoolbar=0&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=f9f9fe&studies=[]&theme=light&style=1&timezone=exchange&locale=en&allow_symbol_change=1&calendar=0&hotlist=0&news=0`;
 
   return (
-    <div style={{ minHeight: 560 }}>
+    <div style={{ minHeight: 450 }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
