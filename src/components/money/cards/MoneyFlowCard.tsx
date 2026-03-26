@@ -28,7 +28,7 @@ export function MoneyFlowFront() {
   return (
     <div>
       {/* SECTION A — Savings Snapshot */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-3">
         <div className="flex items-baseline gap-3">
           <span className="text-5xl font-extrabold tracking-tighter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#006c49" }}>29%</span>
           <span className="text-xs" style={{ color: "#767586" }}>saved this month</span>
