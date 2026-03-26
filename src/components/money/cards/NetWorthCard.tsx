@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 const defaultData = [
