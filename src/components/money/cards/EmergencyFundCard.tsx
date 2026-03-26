@@ -2,7 +2,7 @@ import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 function SegmentBar({ filled, total, color }: { filled: number; total: number; color: string }) {
   return (
-    <div className="flex gap-1 h-3">
+    <div className="flex gap-1 h-2">
       {Array.from({ length: total }, (_, i) => (
         <div
           key={i}
