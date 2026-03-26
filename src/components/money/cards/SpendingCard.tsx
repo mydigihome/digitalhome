@@ -41,7 +41,7 @@ export function SpendingFront() {
           </div>
         </div>
       </div>
-      <div className="space-y-3 mt-4">
+      <div className="space-y-2 mt-3">
         {categories.map((c) => {
           const pct = Math.round((c.spent / c.budget) * 100);
           return (
