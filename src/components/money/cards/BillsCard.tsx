@@ -60,7 +60,7 @@ export function BillsFront() {
       </div>
 
       {/* Bills list */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {bills.map((bill) => {
           const urgent = bill.dueDays <= 7;
           return (
