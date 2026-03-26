@@ -44,7 +44,7 @@ export function BillsFront() {
       </div>
 
       {/* Calendar strip */}
-      <div className="flex gap-2 justify-between mb-4">
+      <div className="flex gap-2 justify-between mb-3 py-1">
         {weekDays.map((d, i) => {
           const isToday = d.toDateString() === today.toDateString();
           return (
