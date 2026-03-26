@@ -1,0 +1,96 @@
+/* ── Money Tab Layout ── */
+.money-tab-root {
+  background-color: #f3f3f8;
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.money-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.money-tab-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.money-tab-row.full-width {
+  grid-template-columns: 1fr;
+}
+
+.money-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* ── Recharts containers ── */
+.money-chart-area {
+  width: 100%;
+  height: 200px;
+  margin-top: 12px;
+}
+
+.money-chart-area.tall {
+  height: 240px;
+}
+
+.money-chart-area.tradingview {
+  height: 520px;
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.tv-watchlist-panel {
+  width: 220px;
+  flex-shrink: 0;
+  height: 520px;
+  overflow-y: auto;
+  border-right: 1px solid #f3f3f8;
+  padding: 12px;
+}
+
+.tv-chart-container {
+  flex: 1;
+  height: 520px;
+}
+
+/* ── Background fill ── */
+html, body, #root {
+  background-color: #f3f3f8 !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .money-tab-root {
+    padding: 12px;
+  }
+  .money-tab-row {
+    grid-template-columns: 1fr;
+  }
+  .money-chart-area.tradingview {
+    height: 340px;
+    flex-direction: column;
+  }
+  .tv-watchlist-panel {
+    display: none;
+  }
+  .tv-chart-container {
+    height: 340px;
+    width: 100%;
+  }
+}

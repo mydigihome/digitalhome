@@ -81,10 +81,9 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
 
       {/* Card — no flip, show front or back */}
       <div
-        className="w-full rounded-[24px] p-5 cursor-pointer"
+        className="money-card cursor-pointer"
         style={{
-          background: "#ffffff",
-          boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : "0 8px 28px rgba(70,69,84,0.05)",
+          boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : undefined,
         }}
         onClick={handleFlip}
       >
