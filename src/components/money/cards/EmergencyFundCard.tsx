@@ -38,10 +38,10 @@ export function EmergencyFundFront() {
         <p className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: "#4648d4" }}>Completion: Nov 2024</p>
       </div>
 
-      <div className="mt-6 h-px" style={{ background: "#f3f3f8" }} />
+      <div className="mt-4 h-px" style={{ background: "#f3f3f8" }} />
 
       {/* Tax Vault */}
-      <div className="mt-6">
+      <div className="mt-4">
         <div className="flex items-center justify-between mb-1">
           <span className="font-bold text-sm" style={{ color: "#1a1c1f" }}>Q4 Tax Vault</span>
           <div className="flex items-center gap-2">
