@@ -47,8 +47,8 @@ export function NetWorthFront() {
           </AreaChart>
         </ResponsiveContainer>
       </div>
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        <div className="rounded-xl p-4" style={{ background: "#f3f3f8" }}>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="rounded-xl p-3" style={{ background: "#f3f3f8" }}>
           <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>Assets</p>
           <p className="text-lg font-bold" style={{ color: "#006c49" }}>$48,434</p>
         </div>
