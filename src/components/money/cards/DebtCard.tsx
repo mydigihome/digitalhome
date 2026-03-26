@@ -13,7 +13,7 @@ export function DebtFront() {
       </div>
 
       {/* Student Loans */}
-      <div className="rounded-[20px] p-5 mb-3" style={{ background: "#f3f3f8" }}>
+      <div className="rounded-[16px] p-3 mb-2" style={{ background: "#f3f3f8" }}>
         <div className="flex items-center gap-3 mb-2">
           <div className="rounded-xl p-2" style={{ background: "#e1e0ff" }}><span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>school</span></div>
           <span className="font-bold text-sm flex-1" style={{ color: "#1a1c1f" }}>Student Loans</span>
