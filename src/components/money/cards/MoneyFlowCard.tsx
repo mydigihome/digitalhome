@@ -53,7 +53,7 @@ export function MoneyFlowFront() {
 
       {/* SECTION B — Cashflow Waterfall */}
       <div className="flex flex-col lg:flex-row gap-5">
-        <div className="lg:w-[58%] h-[240px]">
+        <div className="lg:w-[58%]" style={{ height: 180 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={waterfall} layout="vertical" margin={{ left: 10, right: 40 }}>
               <CartesianGrid horizontal vertical={false} stroke="#f3f3f8" />
