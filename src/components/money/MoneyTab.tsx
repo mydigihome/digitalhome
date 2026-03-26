@@ -82,7 +82,6 @@ export default function MoneyTab() {
 
   const visibleOrder = cardOrder.filter(id => !hiddenCards.includes(id));
 
-  // Build rows
   const rows: string[][] = [];
   const placed = new Set<string>();
   for (const id of visibleOrder) {
@@ -104,13 +103,13 @@ export default function MoneyTab() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-6 space-y-4" style={{ background: "#f3f3f8", minHeight: "100vh" }}>
+    <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 space-y-3" style={{ background: "#f3f3f8", minHeight: "100vh" }}>
       {/* Hidden cards restore drawer */}
       {hiddenCards.length > 0 && (
         <div className="rounded-[20px] overflow-hidden" style={{ background: "#ffffff", boxShadow: "0 4px 16px rgba(70,69,84,0.05)" }}>
           <button
             onClick={() => setDrawerOpen(!drawerOpen)}
-            className="w-full flex items-center justify-between px-5 py-3"
+            className="w-full flex items-center justify-between px-5 py-2.5"
           >
             <div className="flex items-center gap-2">
               <EyeOff className="w-4 h-4" style={{ color: "#767586" }} />
@@ -124,12 +123,12 @@ export default function MoneyTab() {
             className="overflow-hidden transition-all duration-300 ease-in-out"
             style={{ maxHeight: drawerOpen ? 200 : 0 }}
           >
-            <div className="flex flex-wrap gap-2 px-5 pb-4">
+            <div className="flex flex-wrap gap-2 px-5 pb-3">
               {hiddenCards.map(id => (
                 <button
                   key={id}
                   onClick={() => restoreCard(id)}
-                  className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold"
+                  className="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold"
                   style={{ background: "#f3f3f8", color: "#1a1c1f" }}
                 >
                   {CARD_LABELS[id] || id}
@@ -147,7 +146,7 @@ export default function MoneyTab() {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
           {rows.map((row, ri) => (
-            <div key={ri} className={`grid gap-4 ${row.length === 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
+            <div key={ri} className={`grid gap-3 ${row.length === 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
               {row.map((id) => {
                 const c = cardMap[id];
                 if (!c) return null;
