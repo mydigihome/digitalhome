@@ -3,7 +3,7 @@ import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 export function DebtFront() {
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Debt Architecture</h3>
         <button onClick={(e) => e.stopPropagation()} className="rounded-full px-4 py-1.5 text-xs font-bold border" style={{ borderColor: "#4648d4", color: "#4648d4" }}>Manage Liabilities</button>
       </div>
