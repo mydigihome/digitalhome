@@ -37,8 +37,8 @@ export function SalaryFront() {
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Salary Progression (YoY)</h3>
         <span className="text-xs font-bold rounded-full px-3 py-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ 15.3% vs last year</span>
       </div>
-      <div style={{ width: '100%', height: 180 }}>
-        <ResponsiveContainer width="100%" height={180}>
+      <div className="money-chart-area tall">
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 20, right: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="salaryGrad" x1="0" y1="0" x2="0" y2="1">
