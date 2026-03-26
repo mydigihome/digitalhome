@@ -579,8 +579,9 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isFullBleed = location.pathname === "/vision";
   const isDashboard = location.pathname.startsWith("/dashboard");
+  const isFinance = location.pathname.startsWith("/finance");
 
-  if (isFullBleed || isDashboard) {
+  if (isFullBleed || isDashboard || isFinance) {
     return <div className="h-full">{children}</div>;
   }
 
