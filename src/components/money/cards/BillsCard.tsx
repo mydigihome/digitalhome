@@ -37,7 +37,7 @@ export function BillsFront() {
   };
 
   return (
-    <div style={{ minHeight: 350 }}>
+    <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Upcoming Bills</h3>
         <span className="text-sm font-bold" style={{ color: "#767586" }}>Next 30 days: $1,946</span>

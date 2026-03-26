@@ -8,7 +8,7 @@ export function CreditScoreFront() {
   const dash = circ * pct;
 
   return (
-    <div style={{ minHeight: 350 }}>
+    <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Credit Matrix</h3>
         <span className="text-[10px] font-black uppercase tracking-widest rounded px-2 py-0.5" style={{ background: "rgba(108,248,187,0.4)", color: "#006c49" }}>EXCELLENT</span>
