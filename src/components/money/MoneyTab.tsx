@@ -147,7 +147,7 @@ export default function MoneyTab() {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
           {rows.map((row, ri) => (
-            <div key={ri} className={`grid gap-3 ${row.length === 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
+            <div key={ri} className={`grid gap-3 items-start ${row.length === 2 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
               {row.map((id) => {
                 const c = cardMap[id];
                 if (!c) return null;
