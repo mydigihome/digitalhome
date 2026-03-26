@@ -1,7 +1,8 @@
 import { useState, ReactNode } from "react";
-import { Pencil, GripVertical } from "lucide-react";
+import { Pencil, GripVertical, EyeOff } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Switch } from "@/components/ui/switch";
 
 interface MoneyCardProps {
   id: string;
@@ -9,10 +10,14 @@ interface MoneyCardProps {
   back: ReactNode;
   className?: string;
   fullWidth?: boolean;
+  onHide?: () => void;
+  cardLabel?: string;
 }
 
-export default function MoneyCard({ id, front, back, className = "", fullWidth }: MoneyCardProps) {
+export default function MoneyCard({ id, front, back, className = "", fullWidth, onHide, cardLabel }: MoneyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [hideToggle, setHideToggle] = useState(false);
+  const [hiding, setHiding] = useState(false);
 
   const {
     attributes,
@@ -25,35 +30,49 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth }
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: transition || "transform 350ms cubic-bezier(0.25, 1, 0.5, 1)",
+    opacity: hiding ? 0 : isDragging ? 0.95 : 1,
     zIndex: isDragging ? 50 : undefined,
+    scale: hiding ? 0.95 : isDragging ? 1.02 : 1,
   };
 
   const handleFlip = (e: React.MouseEvent) => {
-    // Don't flip if clicking buttons/inputs inside
     const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest("input") || target.closest("select") || target.closest("textarea") || target.closest("iframe") || target.closest("a")) return;
+    if (target.closest("button") || target.closest("input") || target.closest("select") || target.closest("textarea") || target.closest("iframe") || target.closest("a") || target.closest("[role='switch']")) return;
     setIsFlipped((f) => !f);
+  };
+
+  const handleSave = () => {
+    if (hideToggle && onHide) {
+      setHiding(true);
+      setTimeout(() => { onHide(); setHiding(false); setHideToggle(false); setIsFlipped(false); }, 300);
+    } else {
+      setIsFlipped(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setHideToggle(false);
+    setIsFlipped(false);
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group/card ${fullWidth ? "col-span-1 lg:col-span-2" : ""} ${className}`}
+      className={`relative group/card transition-all duration-300 ${fullWidth ? "col-span-1 lg:col-span-2" : ""} ${className}`}
     >
-      {/* Drag handle — desktop only */}
+      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-1 top-4 z-30 w-7 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex"
+        className="absolute -left-1 top-4 z-30 w-7 h-8 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-40 hover:!opacity-100 transition-opacity hidden md:flex"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
         <GripVertical className="w-3.5 h-3.5" style={{ color: "#767586" }} />
       </div>
 
-      {/* Edit hint — desktop only */}
+      {/* Edit hint */}
       <div className="absolute top-4 right-4 z-30 w-7 h-7 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex pointer-events-none"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
@@ -75,11 +94,11 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth }
         >
           {/* FRONT */}
           <div
-            className="w-full rounded-[24px] p-6 md:p-8"
+            className="w-full rounded-[24px] p-6"
             style={{
               backfaceVisibility: "hidden",
               background: "#ffffff",
-              boxShadow: "0 12px 40px rgba(70,69,84,0.06)",
+              boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : "0 12px 40px rgba(70,69,84,0.06)",
             }}
           >
             {front}
@@ -87,7 +106,7 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth }
 
           {/* BACK */}
           <div
-            className="absolute inset-0 w-full rounded-[24px] p-6 md:p-8 overflow-y-auto"
+            className="absolute inset-0 w-full rounded-[24px] p-6 overflow-y-auto"
             style={{
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
@@ -96,6 +115,39 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth }
             }}
           >
             {back}
+
+            {/* Hide toggle */}
+            {onHide && (
+              <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1px solid #f3f3f8" }}>
+                <div className="flex items-center gap-2">
+                  <EyeOff className="w-4 h-4" style={{ color: "#767586" }} />
+                  <span className="text-sm font-bold" style={{ color: "#767586" }}>Hide this card</span>
+                </div>
+                <Switch
+                  checked={hideToggle}
+                  onCheckedChange={setHideToggle}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            )}
+
+            {/* Override Cancel/Save with our handlers */}
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleCancel(); }}
+                className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm"
+                style={{ background: "#f3f3f8", color: "#464554" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleSave(); }}
+                className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm text-white"
+                style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -127,22 +179,6 @@ export function EditInput({ value, onChange, type = "text", placeholder }: { val
 }
 
 export function EditActions({ onCancel, onSave }: { onCancel: () => void; onSave: () => void }) {
-  return (
-    <div className="flex gap-3 mt-6">
-      <button
-        onClick={(e) => { e.stopPropagation(); onCancel(); }}
-        className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm"
-        style={{ background: "#f3f3f8", color: "#464554" }}
-      >
-        Cancel
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onSave(); }}
-        className="flex-1 rounded-full px-6 py-2.5 font-bold text-sm text-white"
-        style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
-      >
-        Save Changes
-      </button>
-    </div>
-  );
+  // These are now handled by MoneyCard wrapper, so render nothing
+  return null;
 }

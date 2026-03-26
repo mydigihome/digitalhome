@@ -16,7 +16,7 @@ function SegmentBar({ filled, total, color }: { filled: number; total: number; c
 
 export function EmergencyFundFront() {
   return (
-    <div style={{ minHeight: 320 }}>
+    <div style={{ minHeight: 260 }}>
       <div className="flex items-center gap-2 mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Liquidity Sprints</h3>
         <span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>bolt</span>

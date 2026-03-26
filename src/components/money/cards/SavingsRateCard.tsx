@@ -2,7 +2,7 @@ import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 export function SavingsRateFront() {
   return (
-    <div style={{ minHeight: 360 }}>
+    <div style={{ minHeight: 290 }}>
       <div className="flex items-center gap-2 mb-2">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Savings Rate</h3>
         <span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>bolt</span>

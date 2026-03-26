@@ -32,7 +32,7 @@ const YoYLabel = (props: any) => {
 
 export function SalaryFront() {
   return (
-    <div style={{ minHeight: 320 }}>
+    <div style={{ minHeight: 260 }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Salary Progression (YoY)</h3>
         <span className="text-xs font-bold rounded-full px-3 py-1" style={{ background: "rgba(108,248,187,0.3)", color: "#006c49" }}>↑ 15.3% vs last year</span>
