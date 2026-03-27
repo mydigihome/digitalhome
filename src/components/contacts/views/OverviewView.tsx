@@ -31,9 +31,10 @@ const MOCK_ALL_CONTACTS = [
   { id: "c3", name: "James Chen", type: "Professional", role: "Financial Advisor", company: "Meridian Capital", lastDays: "12d ago", isPriority: false },
   { id: "c4", name: "Maria Santos", type: "Friends", role: "College Friend", lastDays: "2d ago", isPriority: false },
   { id: "c5", name: "Robert Kim", type: "Professional", role: "Mortgage Broker", company: "First Capital", lastDays: "21d ago", isPriority: false },
+  { id: "c6", name: "Alex Rivera", type: "Digi Home", role: "Project Collaborator", company: "Interior Design 2024", lastDays: "1h ago", isPriority: false, isDigiHome: true },
 ];
 
-const FILTERS = ["All", "Family", "Friends", "Professional"];
+const FILTERS = ["All", "Family", "Friends", "Professional", "Digi Home"];
 
 const MOCK_DETAIL = {
   id: "p1", name: "Sarah Johnson", role: "Real Estate Agent", company: "Denver Realty", type: "Professional",
@@ -170,6 +171,13 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
               </button>
             ))}
           </div>
+          {filter === "Digi Home" && filteredContacts.filter(c => c.type === "Digi Home").length <= 1 && (
+            <div className="bg-[#f3f3f8] rounded-[20px] px-5 py-4 mt-2 mb-3">
+              <p className="text-xs text-[#767586]">
+                🏠 Digi Home contacts appear here automatically when you share a project or content planner with another user.
+              </p>
+            </div>
+          )}
           <div className="space-y-2">
             {filteredContacts.map((c) => (
               <ContactRow

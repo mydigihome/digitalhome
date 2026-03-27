@@ -465,6 +465,8 @@ export type Database = {
           company: string | null
           contact_frequency_days: number | null
           created_at: string | null
+          digihome_connection_type: string | null
+          digihome_user_id: string | null
           email: string | null
           email_count: number | null
           id: string
@@ -485,6 +487,8 @@ export type Database = {
           company?: string | null
           contact_frequency_days?: number | null
           created_at?: string | null
+          digihome_connection_type?: string | null
+          digihome_user_id?: string | null
           email?: string | null
           email_count?: number | null
           id?: string
@@ -505,6 +509,8 @@ export type Database = {
           company?: string | null
           contact_frequency_days?: number | null
           created_at?: string | null
+          digihome_connection_type?: string | null
+          digihome_user_id?: string | null
           email?: string | null
           email_count?: number | null
           id?: string

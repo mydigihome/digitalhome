@@ -8,6 +8,7 @@ interface ContactData {
   company?: string;
   lastDays: string;
   isPriority: boolean;
+  isDigiHome?: boolean;
 }
 
 interface Props {
@@ -24,7 +25,10 @@ function getStatusFromDays(lastDays: string) {
 }
 
 export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
-  const status = getStatusFromDays(contact.lastDays);
+  const isDigiHome = contact.isDigiHome || contact.type === "Digi Home";
+  const status = isDigiHome
+    ? { border: "#4648d4", dotColor: "#4648d4", avatarBg: "rgba(70,72,212,0.1)", avatarText: "#4648d4" }
+    : getStatusFromDays(contact.lastDays);
 
   return (
     <div
@@ -45,7 +49,14 @@ export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
         />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-sm text-[#1a1c1f]">{contact.name}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-sm text-[#1a1c1f]">{contact.name}</span>
+          {isDigiHome && (
+            <span className="bg-[#4648d4]/10 text-[#4648d4] text-[9px] font-bold rounded-full px-1.5 py-0.5">
+              Digi Home
+            </span>
+          )}
+        </div>
         <div className="text-xs text-[#767586]">
           {contact.type} • {contact.role}{contact.company ? ` • ${contact.company}` : ""}
         </div>

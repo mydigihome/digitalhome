@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import VerticalTabRail from "./VerticalTabRail";
+import ProfileHeader from "./ProfileHeader";
 import OverviewView from "./views/OverviewView";
 import EmailView from "./views/EmailView";
 import ComposeModal from "./modals/ComposeModal";
@@ -41,38 +42,31 @@ export default function ContactsPage() {
   return (
     <div className="contacts-root" style={{ flexDirection: 'column' }}>
       <div className="contacts-main">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-extrabold tracking-tight text-[#1a1c1f]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Your network is your{" "}
-            <span className="italic text-[#4648d4]">sanctuary.</span>
-          </h1>
-          <p className="text-sm text-[#767586] mt-2">
-            You have 3 priority updates since Tuesday.
-          </p>
+        {/* Profile Header */}
+        <ProfileHeader />
 
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handleLinkedInImport}
-              className="text-white rounded-full px-6 py-2.5 font-bold text-sm"
-              style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
-            >
-              ↗ Import from LinkedIn
+        {/* Import buttons */}
+        <div className="flex gap-3 mb-6">
+          <button
+            onClick={handleLinkedInImport}
+            className="text-white rounded-full px-6 py-2.5 font-bold text-sm"
+            style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
+          >
+            ↗ Import from LinkedIn
+          </button>
+          {gmailConnection ? (
+            <button className="bg-[#006c49] text-white rounded-full px-6 py-2.5 font-bold text-sm">
+              ✓ Gmail Connected
             </button>
-            {gmailConnection ? (
-              <button className="bg-[#006c49] text-white rounded-full px-6 py-2.5 font-bold text-sm">
-                ✓ Gmail Connected
-              </button>
-            ) : (
-              <button
-                onClick={handleGmailImport}
-                disabled={connecting}
-                className="bg-white text-[#1a1c1f] rounded-full px-6 py-2.5 font-bold text-sm shadow-sm"
-              >
-                {connecting ? "Connecting..." : "✉ Import from Gmail"}
-              </button>
-            )}
-          </div>
+          ) : (
+            <button
+              onClick={handleGmailImport}
+              disabled={connecting}
+              className="bg-white text-[#1a1c1f] rounded-full px-6 py-2.5 font-bold text-sm shadow-sm"
+            >
+              {connecting ? "Connecting..." : "✉ Import from Gmail"}
+            </button>
+          )}
         </div>
 
         <VerticalTabRail activeView={activeView} onViewChange={setActiveView} />
