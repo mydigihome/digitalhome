@@ -17,37 +17,54 @@ interface Props {
   onClick: (id: string) => void;
 }
 
-function getStatusFromDays(lastDays: string) {
-  const num = parseInt(lastDays);
-  if (isNaN(num) || num <= 7) return { border: "#22c55e", dotColor: "#22c55e", avatarBg: "rgba(34,197,94,0.1)", avatarText: "#22c55e" };
-  if (num <= 14) return { border: "#f59e0b", dotColor: "#f59e0b", avatarBg: "rgba(245,158,11,0.1)", avatarText: "#f59e0b" };
-  return { border: "#f43f5e", dotColor: "#f43f5e", avatarBg: "rgba(244,63,94,0.1)", avatarText: "#f43f5e" };
+function getAvatarStyle(type: string) {
+  switch (type) {
+    case "Professional": return { bg: "#e1e0ff", text: "#4648d4" };
+    case "Family": return { bg: "#ffe4e6", text: "#be123c" };
+    case "Friends": return { bg: "#dcfce7", text: "#16a34a" };
+    case "Digi Home": return { bg: "#e1e0ff", text: "#4648d4" };
+    default: return { bg: "#f3f3f8", text: "#464554" };
+  }
+}
+
+function getTypeDotColor(type: string) {
+  switch (type) {
+    case "Professional": return "#4648d4";
+    case "Family": return "#f43f5e";
+    case "Friends": return "#22c55e";
+    case "Digi Home": return "#4648d4";
+    default: return "#767586";
+  }
 }
 
 export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
   const isDigiHome = contact.isDigiHome || contact.type === "Digi Home";
-  const status = isDigiHome
-    ? { border: "#4648d4", dotColor: "#4648d4", avatarBg: "rgba(70,72,212,0.1)", avatarText: "#4648d4" }
-    : getStatusFromDays(contact.lastDays);
+  const avatar = getAvatarStyle(contact.type);
+  const dotColor = getTypeDotColor(contact.type);
 
   return (
     <div
-      className="bg-white rounded-[20px] px-5 py-4 flex items-center gap-4 cursor-pointer shadow-[0_4px_16px_rgba(70,69,84,0.04)]"
-      style={{ borderLeft: `4px solid ${status.border}` }}
+      className="rounded-[20px] px-5 py-4 flex items-center gap-4 cursor-pointer transition-all duration-200 hover:shadow-[0_4px_16px_rgba(70,69,84,0.08)] hover:border-[#e1e0ff]"
+      style={{
+        background: "#ffffff",
+        border: "1px solid #f0f0f5",
+        boxShadow: "0 2px 8px rgba(70,69,84,0.04)",
+      }}
       onClick={() => onClick(contact.id)}
     >
+      {/* Relationship dot */}
+      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: dotColor }} />
+
+      {/* Avatar */}
       <div className="relative flex-shrink-0">
         <div
-          className="w-10 h-10 rounded-full font-bold flex items-center justify-center text-sm"
-          style={{ background: status.avatarBg, color: status.avatarText }}
+          className="w-10 h-10 rounded-full font-bold flex items-center justify-center text-sm border border-[#e8e8ed]"
+          style={{ background: avatar.bg, color: avatar.text }}
         >
           {contact.name[0]}
         </div>
-        <div
-          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white"
-          style={{ background: status.dotColor }}
-        />
       </div>
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="font-bold text-sm text-[#1a1c1f]">{contact.name}</span>
@@ -58,7 +75,7 @@ export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
           )}
         </div>
         <div className="text-xs text-[#767586]">
-          {contact.type} • {contact.role}{contact.company ? ` • ${contact.company}` : ""}
+          {contact.role} · {contact.type}{contact.company ? ` · ${contact.company}` : ""}
         </div>
       </div>
       <div className="text-xs text-[#767586] flex-shrink-0">Last: {contact.lastDays}</div>
@@ -69,7 +86,7 @@ export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
         {contact.isPriority ? (
           <Star className="w-4 h-4 fill-[#f59e0b] text-[#f59e0b]" />
         ) : (
-          <Star className="w-4 h-4 text-[#e8e8ed]" />
+          <Star className="w-4 h-4 text-[#e8e8ed] hover:text-[#f59e0b] transition-colors" />
         )}
       </button>
     </div>
