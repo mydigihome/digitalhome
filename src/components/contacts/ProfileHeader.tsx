@@ -50,7 +50,7 @@ export default function ProfileHeader() {
         setTaglineIndex((i) => (i + 1) % TAGLINES.length);
         setFading(false);
       }, 300);
-    }, 6000);
+    }, 3600000);
     return () => clearInterval(interval);
   }, []);
 
@@ -87,7 +87,7 @@ export default function ProfileHeader() {
   };
 
   return (
-    <div className="bg-white rounded-[24px] px-8 py-6 shadow-[0_12px_40px_rgba(70,69,84,0.06)] mb-6">
+    <div className="rounded-[24px] px-8 py-6 shadow-[0_12px_40px_rgba(70,69,84,0.06)] mb-6" style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}>
       <div className="flex items-center gap-6">
         {/* Avatar */}
         <div className="relative cursor-pointer group flex-shrink-0" onClick={handleAvatarClick}>
@@ -95,12 +95,12 @@ export default function ProfileHeader() {
             <img
               src={avatarUrl}
               alt="Avatar"
-              className="w-20 h-20 rounded-full object-cover"
+              className="w-28 h-28 rounded-full object-cover"
               style={{ border: "3px solid #ffffff", boxShadow: "0 4px 20px rgba(70,69,84,0.12)" }}
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-full bg-[#e1e0ff] text-[#4648d4] font-extrabold text-2xl flex items-center justify-center"
+              className="w-28 h-28 rounded-full bg-[#e1e0ff] text-[#4648d4] font-extrabold text-3xl flex items-center justify-center"
               style={{ border: "3px solid #ffffff", boxShadow: "0 4px 20px rgba(70,69,84,0.12)" }}
             >
               {initials}
@@ -120,13 +120,13 @@ export default function ProfileHeader() {
         {/* Name + tagline */}
         <div className="flex-1 min-w-0">
           <h2
-            className="font-extrabold text-2xl tracking-tight text-[#1a1c1f]"
+            className="font-extrabold text-2xl tracking-tight text-white"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             {profile?.full_name || "Your Name"}
           </h2>
           <p
-            className="text-sm text-[#767586] italic transition-opacity duration-400"
+            className="text-sm text-white/70 italic transition-opacity duration-400"
             style={{ opacity: fading ? 0 : 1 }}
           >
             {TAGLINES[taglineIndex]}
@@ -135,10 +135,10 @@ export default function ProfileHeader() {
 
         {/* Single stat */}
         <div className="text-right flex-shrink-0">
-          <div className="font-extrabold text-3xl text-[#1a1c1f]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          <div className="font-extrabold text-3xl text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             {dmsSent}
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#767586] mt-0.5">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-white/70 mt-0.5">
             contacts emailed
           </div>
         </div>
