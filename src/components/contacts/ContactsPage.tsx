@@ -75,6 +75,8 @@ export default function ContactsPage() {
           </div>
         </div>
 
+        <VerticalTabRail activeView={activeView} onViewChange={setActiveView} />
+
         {/* Views */}
         <AnimatePresence mode="wait">
           <motion.div
