@@ -87,7 +87,7 @@ export default function ProfileHeader() {
   };
 
   return (
-    <div className="bg-white rounded-[24px] px-8 py-6 shadow-[0_12px_40px_rgba(70,69,84,0.06)] mb-6">
+    <div className="rounded-[24px] px-8 py-6 shadow-[0_12px_40px_rgba(70,69,84,0.06)] mb-6" style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}>
       <div className="flex items-center gap-6">
         {/* Avatar */}
         <div className="relative cursor-pointer group flex-shrink-0" onClick={handleAvatarClick}>
