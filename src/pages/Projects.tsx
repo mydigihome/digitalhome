@@ -94,6 +94,7 @@ export default function Projects() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="group relative cursor-pointer rounded-3xl bg-card overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+        style={{ position: "relative" }}
         onClick={() => navigate(`/project/${project.id}`)}
       >
         <div className={cn("h-1 w-full", colors.border)} />
@@ -138,6 +139,17 @@ export default function Projects() {
             View Details
           </button>
         </div>
+
+        {/* Contact avatars */}
+        <ProjectContactAvatars projectId={project.id} />
+
+        {/* Financial progress bar */}
+        <ProjectFinancialBar
+          projectId={project.id}
+          projectName={project.name}
+          financialGoal={(project as any).financial_goal}
+          financialGoalSetBy={(project as any).financial_goal_set_by}
+        />
       </motion.div>
     );
   };
