@@ -31,9 +31,10 @@ const MOCK_ALL_CONTACTS = [
   { id: "c3", name: "James Chen", type: "Professional", role: "Financial Advisor", company: "Meridian Capital", lastDays: "12d ago", isPriority: false },
   { id: "c4", name: "Maria Santos", type: "Friends", role: "College Friend", lastDays: "2d ago", isPriority: false },
   { id: "c5", name: "Robert Kim", type: "Professional", role: "Mortgage Broker", company: "First Capital", lastDays: "21d ago", isPriority: false },
+  { id: "c6", name: "Alex Rivera", type: "Digi Home", role: "Project Collaborator", company: "Interior Design 2024", lastDays: "1h ago", isPriority: false, isDigiHome: true },
 ];
 
-const FILTERS = ["All", "Family", "Friends", "Professional"];
+const FILTERS = ["All", "Family", "Friends", "Professional", "Digi Home"];
 
 const MOCK_DETAIL = {
   id: "p1", name: "Sarah Johnson", role: "Real Estate Agent", company: "Denver Realty", type: "Professional",
