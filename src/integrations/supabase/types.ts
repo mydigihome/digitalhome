@@ -421,14 +421,58 @@ export type Database = {
           },
         ]
       }
+      contact_project_links: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          project_id: string
+          relevance_reason: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          project_id: string
+          relevance_reason?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          relevance_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_project_links_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           company: string | null
           contact_frequency_days: number | null
           created_at: string | null
           email: string | null
+          email_count: number | null
           id: string
+          imported_from: string | null
+          job_title: string | null
           last_contacted_date: string | null
+          last_email_date: string | null
+          linkedin_url: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -442,8 +486,13 @@ export type Database = {
           contact_frequency_days?: number | null
           created_at?: string | null
           email?: string | null
+          email_count?: number | null
           id?: string
+          imported_from?: string | null
+          job_title?: string | null
           last_contacted_date?: string | null
+          last_email_date?: string | null
+          linkedin_url?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -457,8 +506,13 @@ export type Database = {
           contact_frequency_days?: number | null
           created_at?: string | null
           email?: string | null
+          email_count?: number | null
           id?: string
+          imported_from?: string | null
+          job_title?: string | null
           last_contacted_date?: string | null
+          last_email_date?: string | null
+          linkedin_url?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -1273,6 +1327,30 @@ export type Database = {
           },
         ]
       }
+      linkedin_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       loans: {
         Row: {
           amount: number
@@ -1553,6 +1631,97 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      priority_contacts: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          recommended_frequency: number | null
+          season: string | null
+          user_id: string
+          value_proposition: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          recommended_frequency?: number | null
+          season?: string | null
+          user_id: string
+          value_proposition?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          recommended_frequency?: number | null
+          season?: string | null
+          user_id?: string
+          value_proposition?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "priority_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      priority_emails: {
+        Row: {
+          body: string | null
+          contact_id: string | null
+          created_at: string | null
+          from_email: string | null
+          gmail_message_id: string | null
+          id: string
+          is_read: boolean | null
+          received_at: string | null
+          snippet: string | null
+          subject: string | null
+          thread_id: string | null
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          from_email?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          received_at?: string | null
+          snippet?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          from_email?: string | null
+          gmail_message_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          received_at?: string | null
+          snippet?: string | null
+          subject?: string | null
+          thread_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "priority_emails_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
