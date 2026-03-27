@@ -4,6 +4,8 @@ import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { useGoalTasks } from "@/hooks/useGoals";
 import { Calendar, Target, FolderOpen, ChevronRight, LayoutGrid, List, Search, Archive, Check } from "lucide-react";
+import ProjectFinancialBar from "@/components/projects/ProjectFinancialBar";
+import ProjectContactAvatars from "@/components/projects/ProjectContactAvatars";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import AppShell from "@/components/AppShell";
