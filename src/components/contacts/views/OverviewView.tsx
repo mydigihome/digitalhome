@@ -171,6 +171,13 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
               </button>
             ))}
           </div>
+          {filter === "Digi Home" && filteredContacts.filter(c => c.type === "Digi Home").length <= 1 && (
+            <div className="bg-[#f3f3f8] rounded-[20px] px-5 py-4 mt-2 mb-3">
+              <p className="text-xs text-[#767586]">
+                🏠 Digi Home contacts appear here automatically when you share a project or content planner with another user.
+              </p>
+            </div>
+          )}
           <div className="space-y-2">
             {filteredContacts.map((c) => (
               <ContactRow
