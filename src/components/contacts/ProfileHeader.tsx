@@ -95,7 +95,7 @@ export default function ProfileHeader() {
             <img
               src={avatarUrl}
               alt="Avatar"
-              className="w-20 h-20 rounded-full object-cover"
+              className="w-28 h-28 rounded-full object-cover"
               style={{ border: "3px solid #ffffff", boxShadow: "0 4px 20px rgba(70,69,84,0.12)" }}
             />
           ) : (
