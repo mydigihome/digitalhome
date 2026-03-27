@@ -120,7 +120,7 @@ export default function ProfileHeader() {
         {/* Name + tagline */}
         <div className="flex-1 min-w-0">
           <h2
-            className="font-extrabold text-2xl tracking-tight text-white"
+            className="font-extrabold text-2xl tracking-tight text-[#1a1c1f]"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             {profile?.full_name || "Your Name"}
