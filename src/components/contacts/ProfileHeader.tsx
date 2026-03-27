@@ -138,7 +138,7 @@ export default function ProfileHeader() {
           <div className="font-extrabold text-3xl text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
             {dmsSent}
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-[#767586] mt-0.5">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-white/70 mt-0.5">
             contacts emailed
           </div>
         </div>
