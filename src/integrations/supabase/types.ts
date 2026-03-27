@@ -1835,6 +1835,8 @@ export type Database = {
           cover_type: string | null
           created_at: string
           end_date: string | null
+          financial_goal: number | null
+          financial_goal_set_by: string | null
           goal: string | null
           icon: string | null
           icon_type: string | null
@@ -1853,6 +1855,8 @@ export type Database = {
           cover_type?: string | null
           created_at?: string
           end_date?: string | null
+          financial_goal?: number | null
+          financial_goal_set_by?: string | null
           goal?: string | null
           icon?: string | null
           icon_type?: string | null
@@ -1871,6 +1875,8 @@ export type Database = {
           cover_type?: string | null
           created_at?: string
           end_date?: string | null
+          financial_goal?: number | null
+          financial_goal_set_by?: string | null
           goal?: string | null
           icon?: string | null
           icon_type?: string | null
