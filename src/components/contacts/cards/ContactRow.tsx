@@ -8,6 +8,7 @@ interface ContactData {
   company?: string;
   lastDays: string;
   isPriority: boolean;
+  isDigiHome?: boolean;
 }
 
 interface Props {
