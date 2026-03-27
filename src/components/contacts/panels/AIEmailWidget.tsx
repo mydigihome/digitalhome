@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Paperclip, Link2, Pencil, Send } from "lucide-react";
 import { useGmailConnection } from "@/hooks/useGmail";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,25 +21,46 @@ const DRAFTS: Record<string, string[]> = {
   ],
 };
 
-interface Props {
-  contact: { id: string; name: string; email?: string; lastContactDays: number };
-  onClose: () => void;
+interface ContactInfo {
+  id: string;
+  name: string;
+  email?: string;
+  lastContactDays: number;
+  role?: string;
+  location?: string;
 }
 
-export default function AIEmailWidget({ contact, onClose }: Props) {
-  const firstName = contact.name.split(" ")[0];
-  const category = contact.lastContactDays > 14 ? "overdue" : contact.lastContactDays > 7 ? "dueSoon" : "recent";
+interface Props {
+  contact: ContactInfo | null;
+  suggestedContact: ContactInfo;
+}
+
+export default function AIEmailWidget({ contact, suggestedContact }: Props) {
+  const active = contact || suggestedContact;
+  const firstName = active.name.split(" ")[0];
+  const category = active.lastContactDays > 14 ? "overdue" : active.lastContactDays > 7 ? "dueSoon" : "recent";
   const drafts = DRAFTS[category];
 
   const [draftIndex, setDraftIndex] = useState(0);
   const [body, setBody] = useState(drafts[0].replace(/{name}/g, firstName));
   const [subject, setSubject] = useState(
-    contact.lastContactDays > 14 ? "Checking in" : "Staying connected"
+    active.lastContactDays > 14 ? "Checking in — Investment Property" : "Staying connected"
   );
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const { data: gmailConn } = useGmailConnection();
   const { user } = useAuth();
+
+  // Reset draft when contact changes
+  useEffect(() => {
+    const fn = active.name.split(" ")[0];
+    const cat = active.lastContactDays > 14 ? "overdue" : active.lastContactDays > 7 ? "dueSoon" : "recent";
+    const d = DRAFTS[cat];
+    setDraftIndex(0);
+    setBody(d[0].replace(/{name}/g, fn));
+    setSubject(active.lastContactDays > 14 ? "Checking in — Investment Property" : "Staying connected");
+    setSent(false);
+  }, [active.id]);
 
   const regenerate = () => {
     const next = (draftIndex + 1) % drafts.length;
@@ -52,19 +73,18 @@ export default function AIEmailWidget({ contact, onClose }: Props) {
       toast.error("Connect Gmail to send emails");
       return;
     }
-    if (!contact.email) {
+    if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
     setSending(true);
     try {
       const { error } = await supabase.functions.invoke("gmail-send", {
-        body: { user_id: user?.id, to: contact.email, subject, body },
+        body: { user_id: user?.id, to: active.email, subject, body },
       });
       if (error) throw error;
       setSent(true);
-      toast.success(`Sent to ${contact.name}`);
-      setTimeout(onClose, 2000);
+      toast.success(`Sent to ${active.name}`);
     } catch {
       toast.error("Failed to send email");
     } finally {
@@ -72,79 +92,92 @@ export default function AIEmailWidget({ contact, onClose }: Props) {
     }
   };
 
-  const statusLabel = contact.lastContactDays > 14
-    ? `Overdue · ${contact.lastContactDays}d`
-    : contact.lastContactDays > 7
-    ? `Follow up · ${contact.lastContactDays}d`
-    : `Active · ${contact.lastContactDays}d`;
+  const statusLabel = active.lastContactDays > 14
+    ? `Overdue · ${active.lastContactDays}d`
+    : active.lastContactDays > 7
+    ? `Follow up · ${active.lastContactDays}d`
+    : `Active · ${active.lastContactDays}d`;
 
-  const statusColor = contact.lastContactDays > 14 ? "#f43f5e" : contact.lastContactDays > 7 ? "#f59e0b" : "#22c55e";
+  const statusColor = active.lastContactDays > 14 ? "#f43f5e" : active.lastContactDays > 7 ? "#f59e0b" : "#22c55e";
 
   if (sent) {
     return (
-      <div className="bg-white rounded-[32px] p-6 shadow-[0_12px_40px_rgba(70,69,84,0.08)] flex flex-col items-center justify-center gap-3 min-h-[300px]">
+      <div className="rounded-[24px] p-5 flex flex-col items-center justify-center gap-3 min-h-[200px]"
+        style={{ background: "#ffffff", boxShadow: "0 12px 40px rgba(70,69,84,0.06)", border: "1px solid #f0f0f5" }}>
         <div className="w-12 h-12 rounded-full bg-[#f0fdf4] flex items-center justify-center text-2xl">✓</div>
-        <p className="font-bold text-sm text-[#1a1c1f]">Sent to {contact.name}</p>
+        <p className="font-bold text-sm text-[#1a1c1f]">Sent to {active.name}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-[32px] p-6 shadow-[0_12px_40px_rgba(70,69,84,0.08)] animate-slide-in-right">
+    <div className="rounded-[24px] p-5" style={{ background: "#ffffff", boxShadow: "0 12px 40px rgba(70,69,84,0.06)", border: "1px solid #f0f0f5" }}>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-full font-bold text-xs flex items-center justify-center" style={{ background: `${statusColor}15`, color: statusColor }}>
-          {contact.name[0]}
+      {!contact ? (
+        <div className="mb-3">
+          <div className="text-sm font-bold text-[#1a1c1f]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            ✦ Send an email to...
+          </div>
+          <div className="text-sm font-bold text-[#4648d4] mt-0.5">{active.name}</div>
+          <div className="bg-[#f3f3f8] rounded-full px-3 py-1 text-[10px] font-bold text-[#767586] inline-flex mt-1">
+            {statusLabel} · {active.role} · {active.location}
+          </div>
+          <div className="text-[10px] text-[#767586] mt-1">Or select a contact →</div>
         </div>
-        <div className="flex-1">
-          <div className="font-bold text-sm text-[#1a1c1f]">Email to {contact.name}</div>
-          <span className="text-[10px] font-bold rounded-full px-2 py-0.5" style={{ background: `${statusColor}15`, color: statusColor }}>
-            {statusLabel}
-          </span>
+      ) : (
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center bg-[#e1e0ff] text-[#4648d4] border border-[#e8e8ed]">
+            {active.name[0]}
+          </div>
+          <div className="flex-1">
+            <div className="font-bold text-sm text-[#1a1c1f]">Email to {active.name}</div>
+            <span className="text-[10px] font-bold rounded-full px-2 py-0.5 inline-block mt-0.5"
+              style={{ background: `${statusColor}15`, color: statusColor }}>
+              {statusLabel}
+            </span>
+          </div>
+          {/* No close button — always pinned */}
         </div>
-        <button onClick={onClose} className="w-7 h-7 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:bg-[#e8e8ed] transition-colors">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
+      )}
 
       {/* Subject */}
       <input
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        className="bg-[#f3f3f8] rounded-[16px] px-4 py-2.5 text-sm w-full border-none focus:ring-2 focus:ring-[#4648d4]/20 focus:outline-none mb-3"
+        className="bg-[#f3f3f8] rounded-[14px] px-3 py-2 text-xs w-full border-none focus:ring-1 focus:ring-[#4648d4]/30 focus:outline-none mb-2"
         placeholder="Subject"
       />
 
       {/* AI Draft */}
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[#4648d4] mb-2">✦ AI DRAFT</div>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-[#4648d4] mb-1 mt-2">✦ AI DRAFT</div>
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        className="bg-[#f9f9fe] rounded-[20px] p-4 text-sm text-[#1a1c1f] leading-relaxed w-full border-none resize-y min-h-[180px] focus:ring-2 focus:ring-[#4648d4]/20 focus:outline-none"
+        className="bg-[#f3f3f8] rounded-[16px] p-3 text-xs text-[#1a1c1f] leading-relaxed w-full border-none resize-y min-h-[140px] focus:ring-1 focus:ring-[#4648d4]/20 focus:outline-none"
       />
       <button onClick={regenerate} className="text-[10px] text-[#4648d4] font-bold mt-1 hover:underline">
         ✦ Regenerate
       </button>
 
       {/* Toolbar */}
-      <div className="flex gap-2 items-center mt-3">
-        <button className="w-7 h-7 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586]">
-          <Pencil className="w-3.5 h-3.5" />
+      <div className="flex gap-2 items-center mt-2">
+        <button className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
+          <Pencil className="w-3 h-3" />
         </button>
-        <button onClick={() => toast.info("Attachments coming soon")} className="w-7 h-7 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586]">
-          <Paperclip className="w-3.5 h-3.5" />
+        <button onClick={() => toast.info("Attachments coming soon")} className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
+          <Paperclip className="w-3 h-3" />
         </button>
-        <button className="w-7 h-7 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586]">
-          <Link2 className="w-3.5 h-3.5" />
+        <button className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
+          <Link2 className="w-3 h-3" />
         </button>
       </div>
 
       {/* Send */}
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-3">
         <button
           onClick={handleSend}
           disabled={sending}
-          className="flex-1 text-white rounded-full font-bold text-sm py-3 disabled:opacity-60"
+          className="flex-1 text-white rounded-full font-bold text-xs py-2.5 disabled:opacity-60"
           style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
         >
           {sending ? "Sending..." : gmailConn ? "Send ▶" : "Connect Gmail to Send"}
@@ -152,10 +185,10 @@ export default function AIEmailWidget({ contact, onClose }: Props) {
         <button
           onClick={handleSend}
           disabled={sending}
-          className="w-9 h-9 rounded-full bg-[#4648d4]/10 flex items-center justify-center text-[#4648d4] flex-shrink-0"
+          className="w-8 h-8 rounded-full bg-[#4648d4]/10 flex items-center justify-center text-[#4648d4] flex-shrink-0"
           title="Send directly to Gmail"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
