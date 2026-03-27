@@ -1,0 +1,157 @@
+/* ── Contacts/Relationships Tab Layout ── */
+.contacts-root {
+  background-color: #f9f9fe;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.contacts-tab-rail {
+  width: 48px;
+  flex-shrink: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.contacts-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+}
+
+.contacts-tab-line {
+  width: 4px;
+  height: 48px;
+  border-radius: 9999px;
+  transition: all 200ms ease;
+}
+
+.contacts-tab-line.active {
+  background: #4648d4;
+  box-shadow: 0 0 12px rgba(70, 72, 212, 0.3);
+}
+
+.contacts-tab-line.inactive {
+  background: #e8e8ed;
+}
+
+.contacts-tab-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  transition: color 200ms ease;
+  user-select: none;
+}
+
+.contacts-tab-label.active {
+  color: #4648d4;
+}
+
+.contacts-tab-label.inactive {
+  color: #767586;
+}
+
+.contacts-main {
+  flex: 1;
+  padding: 32px;
+  max-width: 1300px;
+  overflow-y: auto;
+}
+
+.contacts-card {
+  background: #ffffff;
+  border-radius: 32px;
+  padding: 24px;
+  box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
+}
+
+.contacts-card-sm {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
+}
+
+.contacts-card-row {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 16px rgba(70, 69, 84, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.contacts-email-panel {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  min-height: 600px;
+}
+
+.contacts-email-list {
+  background: #ffffff;
+  border-top-left-radius: 32px;
+  border-bottom-left-radius: 32px;
+  border-right: 1px solid #f3f3f8;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.contacts-email-detail {
+  background: #f9f9fe;
+  border-top-right-radius: 32px;
+  border-bottom-right-radius: 32px;
+  padding: 32px;
+}
+
+@media (max-width: 768px) {
+  .contacts-root {
+    flex-direction: column;
+  }
+  .contacts-tab-rail {
+    width: 100%;
+    height: 48px;
+    flex-direction: row;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    gap: 24px;
+  }
+  .contacts-tab-line {
+    width: 48px;
+    height: 4px;
+  }
+  .contacts-tab-label {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+  .contacts-main {
+    padding: 16px;
+  }
+  .contacts-email-panel {
+    grid-template-columns: 1fr;
+  }
+  .contacts-email-list {
+    border-radius: 32px;
+    max-height: 300px;
+  }
+  .contacts-email-detail {
+    border-radius: 32px;
+    margin-top: 16px;
+  }
+}
