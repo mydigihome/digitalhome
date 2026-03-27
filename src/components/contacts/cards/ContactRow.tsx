@@ -25,7 +25,10 @@ function getStatusFromDays(lastDays: string) {
 }
 
 export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
-  const status = getStatusFromDays(contact.lastDays);
+  const isDigiHome = contact.isDigiHome || contact.type === "Digi Home";
+  const status = isDigiHome
+    ? { border: "#4648d4", dotColor: "#4648d4", avatarBg: "rgba(70,72,212,0.1)", avatarText: "#4648d4" }
+    : getStatusFromDays(contact.lastDays);
 
   return (
     <div
