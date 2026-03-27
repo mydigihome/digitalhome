@@ -1,11 +1,5 @@
 import { Star } from "lucide-react";
 
-const TYPE_COLORS: Record<string, string> = {
-  Family: "#f43f5e",
-  Professional: "#4648d4",
-  Friends: "#006c49",
-};
-
 interface ContactData {
   id: string;
   name: string;
@@ -22,15 +16,33 @@ interface Props {
   onClick: (id: string) => void;
 }
 
+function getStatusFromDays(lastDays: string) {
+  const num = parseInt(lastDays);
+  if (isNaN(num) || num <= 7) return { border: "#22c55e", dotColor: "#22c55e", avatarBg: "rgba(34,197,94,0.1)", avatarText: "#22c55e" };
+  if (num <= 14) return { border: "#f59e0b", dotColor: "#f59e0b", avatarBg: "rgba(245,158,11,0.1)", avatarText: "#f59e0b" };
+  return { border: "#f43f5e", dotColor: "#f43f5e", avatarBg: "rgba(244,63,94,0.1)", avatarText: "#f43f5e" };
+}
+
 export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
+  const status = getStatusFromDays(contact.lastDays);
+
   return (
-    <div className="contacts-card-row cursor-pointer" onClick={() => onClick(contact.id)}>
-      <div
-        className="w-3 h-3 rounded-full flex-shrink-0"
-        style={{ background: TYPE_COLORS[contact.type] || "#767586" }}
-      />
-      <div className="w-10 h-10 rounded-full bg-[#f3f3f8] text-[#464554] font-bold flex items-center justify-center flex-shrink-0">
-        {contact.name[0]}
+    <div
+      className="bg-white rounded-[20px] px-5 py-4 flex items-center gap-4 cursor-pointer shadow-[0_4px_16px_rgba(70,69,84,0.04)]"
+      style={{ borderLeft: `4px solid ${status.border}` }}
+      onClick={() => onClick(contact.id)}
+    >
+      <div className="relative flex-shrink-0">
+        <div
+          className="w-10 h-10 rounded-full font-bold flex items-center justify-center text-sm"
+          style={{ background: status.avatarBg, color: status.avatarText }}
+        >
+          {contact.name[0]}
+        </div>
+        <div
+          className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white"
+          style={{ background: status.dotColor }}
+        />
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-bold text-sm text-[#1a1c1f]">{contact.name}</div>
@@ -44,7 +56,7 @@ export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
         className="flex-shrink-0"
       >
         {contact.isPriority ? (
-          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+          <Star className="w-4 h-4 fill-[#f59e0b] text-[#f59e0b]" />
         ) : (
           <Star className="w-4 h-4 text-[#e8e8ed]" />
         )}

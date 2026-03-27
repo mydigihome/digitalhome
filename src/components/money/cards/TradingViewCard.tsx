@@ -103,7 +103,11 @@ function TradingViewWidget({ symbol, containerId, height }: { symbol: string; co
     }
 
     return () => {
-      if (widgetRef.current?.remove) widgetRef.current.remove();
+      try {
+        const el = document.getElementById(containerId);
+        if (el && widgetRef.current?.remove) widgetRef.current.remove();
+      } catch {}
+      widgetRef.current = null;
     };
   }, [symbol, containerId]);
 
