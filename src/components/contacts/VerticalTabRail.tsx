@@ -11,22 +11,19 @@ const tabs = [
 
 export default function VerticalTabRail({ activeView, onViewChange }: Props) {
   return (
-    <div className="contacts-tab-rail">
+    <div className="flex items-center gap-6 mb-6">
       {tabs.map((tab) => (
-        <div
+        <button
           key={tab.key}
-          className="contacts-tab-item"
           onClick={() => onViewChange(tab.key)}
+          className={`text-sm font-bold pb-1 transition-colors duration-200 border-b-2 ${
+            activeView === tab.key
+              ? "text-[#4648d4] border-[#4648d4]"
+              : "text-[#767586] border-transparent hover:text-[#464554]"
+          }`}
         >
-          <div
-            className={`contacts-tab-line ${activeView === tab.key ? "active" : "inactive"}`}
-          />
-          <span
-            className={`contacts-tab-label ${activeView === tab.key ? "active" : "inactive"}`}
-          >
-            {tab.label}
-          </span>
-        </div>
+          {tab.label}
+        </button>
       ))}
     </div>
   );
