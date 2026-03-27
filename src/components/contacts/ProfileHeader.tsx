@@ -50,7 +50,7 @@ export default function ProfileHeader() {
         setTaglineIndex((i) => (i + 1) % TAGLINES.length);
         setFading(false);
       }, 300);
-    }, 6000);
+    }, 3600000);
     return () => clearInterval(interval);
   }, []);
 
