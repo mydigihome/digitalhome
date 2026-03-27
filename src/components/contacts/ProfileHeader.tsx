@@ -100,7 +100,7 @@ export default function ProfileHeader() {
             />
           ) : (
             <div
-              className="w-20 h-20 rounded-full bg-[#e1e0ff] text-[#4648d4] font-extrabold text-2xl flex items-center justify-center"
+              className="w-28 h-28 rounded-full bg-[#e1e0ff] text-[#4648d4] font-extrabold text-3xl flex items-center justify-center"
               style={{ border: "3px solid #ffffff", boxShadow: "0 4px 20px rgba(70,69,84,0.12)" }}
             >
               {initials}
