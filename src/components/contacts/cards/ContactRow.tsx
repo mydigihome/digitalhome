@@ -49,7 +49,14 @@ export default function ContactRow({ contact, onToggleStar, onClick }: Props) {
         />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-sm text-[#1a1c1f]">{contact.name}</div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-bold text-sm text-[#1a1c1f]">{contact.name}</span>
+          {isDigiHome && (
+            <span className="bg-[#4648d4]/10 text-[#4648d4] text-[9px] font-bold rounded-full px-1.5 py-0.5">
+              Digi Home
+            </span>
+          )}
+        </div>
         <div className="text-xs text-[#767586]">
           {contact.type} • {contact.role}{contact.company ? ` • ${contact.company}` : ""}
         </div>
