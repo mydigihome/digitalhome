@@ -39,9 +39,7 @@ export default function ContactsPage() {
   };
 
   return (
-    <div className="contacts-root">
-      <VerticalTabRail activeView={activeView} onViewChange={setActiveView} />
-
+    <div className="contacts-root" style={{ flexDirection: 'column' }}>
       <div className="contacts-main">
         {/* Header */}
         <div className="mb-8">
@@ -76,6 +74,8 @@ export default function ContactsPage() {
             )}
           </div>
         </div>
+
+        <VerticalTabRail activeView={activeView} onViewChange={setActiveView} />
 
         {/* Views */}
         <AnimatePresence mode="wait">
