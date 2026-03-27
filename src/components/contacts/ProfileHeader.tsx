@@ -126,7 +126,7 @@ export default function ProfileHeader() {
             {profile?.full_name || "Your Name"}
           </h2>
           <p
-            className="text-sm text-white/70 italic transition-opacity duration-400"
+            className="text-sm text-[#767586] italic transition-opacity duration-400"
             style={{ opacity: fading ? 0 : 1 }}
           >
             {TAGLINES[taglineIndex]}
