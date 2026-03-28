@@ -464,7 +464,7 @@ function MobileTabBar() {
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: Folder, label: "Projects", path: "/projects" },
     { icon: Wallet, label: "Money", path: "/finance/wealth" },
-    { icon: Mail, label: "Inbox", path: "/inbox" },
+    { icon: Users, label: "Contacts", path: "/relationships" },
     { icon: MoreHorizontal, label: "More", path: "/__more__" },
   ];
 
