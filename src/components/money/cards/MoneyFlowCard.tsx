@@ -8,7 +8,7 @@ const waterfall = [
   { name: "Food", value: -450, fill: "#ba1a1a" },
   { name: "Transport", value: -320, fill: "#ba1a1a" },
   { name: "Other", value: -484, fill: "#ba1a1a" },
-  { name: "Remaining", value: 1300, fill: "#4648d4" },
+  { name: "Remaining", value: 1300, fill: "#6366f1" },
 ];
 
 const fmt = (n: number) =>
@@ -38,11 +38,11 @@ export function MoneyFlowFront() {
           <span style={{ color: "#767586" }}>·</span>
           <span style={{ color: "#ba1a1a" }}>Expenses $3,200</span>
           <span style={{ color: "#767586" }}>·</span>
-          <span style={{ color: "#4648d4" }}>Saved $1,300</span>
+          <span style={{ color: "#6366f1" }}>Saved $1,300</span>
         </div>
         <div className="relative w-48 hidden lg:block">
           <div className="h-2 rounded-full" style={{ background: "#e8e8ed" }}>
-            <div className="h-full rounded-full" style={{ width: "29%", background: "linear-gradient(135deg, #4648d4, #6063ee)" }} />
+            <div className="h-full rounded-full" style={{ width: "29%", background: "linear-gradient(135deg, #6366f1, #818cf8)" }} />
           </div>
           <div className="absolute" style={{ left: "20%", top: -3, transform: "translateX(-50%)" }}>
             <div className="w-0.5 h-4 rounded" style={{ background: "#767586" }} />
@@ -79,14 +79,14 @@ export function MoneyFlowFront() {
           </div>
           <div className="rounded-[16px] p-4" style={{ background: "#f3f3f8" }}>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>NET PROFIT</p>
-            <p className="text-lg font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#4648d4" }}>+$1,300</p>
+            <p className="text-lg font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#6366f1" }}>+$1,300</p>
           </div>
         </div>
       </div>
 
       {/* SECTION C — AI Insight */}
-      <div className="rounded-[16px] p-3 mt-3 flex items-start gap-2" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
-        <span className="material-symbols-outlined text-sm" style={{ color: "#4648d4" }}>auto_awesome</span>
+      <div className="rounded-[16px] p-3 mt-3 flex items-start gap-2" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.1)" }}>
+        <span className="material-symbols-outlined text-sm" style={{ color: "#6366f1" }}>auto_awesome</span>
         <p className="text-xs leading-relaxed font-medium" style={{ color: "#464554" }}>
           At your current savings rate you'll hit $48,900 net worth by year end. Cutting subscriptions by $50/month accelerates this by 3 weeks.
         </p>

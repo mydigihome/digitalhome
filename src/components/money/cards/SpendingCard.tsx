@@ -3,9 +3,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 const categories = [
-  { name: "Housing", emoji: "🏠", spent: 1200, budget: 1500, color: "#4648d4" },
+  { name: "Housing", emoji: "🏠", spent: 1200, budget: 1500, color: "#6366f1" },
   { name: "Food", emoji: "🍔", spent: 450, budget: 600, color: "#6cf8bb" },
-  { name: "Transport", emoji: "🚗", spent: 320, budget: 400, color: "#4648d4" },
+  { name: "Transport", emoji: "🚗", spent: 320, budget: 400, color: "#6366f1" },
   { name: "Entertainment", emoji: "🎬", spent: 280, budget: 300, color: "#f59e0b" },
   { name: "Subscriptions", emoji: "📺", spent: 89, budget: 100, color: "#6cf8bb" },
   { name: "Other", emoji: "💳", spent: 861, budget: 1000, color: "#767586" },
@@ -28,7 +28,7 @@ export function SpendingFront() {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={outerData} cx="50%" cy="50%" innerRadius={55} outerRadius={75} dataKey="value" startAngle={90} endAngle={-270}>
-                <Cell fill="#4648d4" /><Cell fill="#e8e8ed" />
+                <Cell fill="#6366f1" /><Cell fill="#e8e8ed" />
               </Pie>
               <Pie data={innerData} cx="50%" cy="50%" innerRadius={35} outerRadius={52} dataKey="value" startAngle={90} endAngle={-270}>
                 <Cell fill="#6cf8bb" /><Cell fill="#e8e8ed" />

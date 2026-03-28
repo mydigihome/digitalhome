@@ -210,7 +210,7 @@ function WatchlistPanel({
           <button
             onClick={e => { e.stopPropagation(); setAdding(true); }}
             className="flex items-center gap-1 text-xs font-bold"
-            style={{ color: "#4648d4" }}
+            style={{ color: "#6366f1" }}
           >
             <Plus className="w-3 h-3" /> Add symbol
           </button>
@@ -228,10 +228,10 @@ function WatchlistRow({ item, active, onSelect, onToggleFav }: {
   return (
     <button
       onClick={e => { e.stopPropagation(); onSelect(item.symbol); }}
-      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors ${active ? "bg-[#4648d4]/8" : "hover:bg-[#f3f3f8]"}`}
+      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors ${active ? "bg-[#6366f1]/8" : "hover:bg-[#f3f3f8]"}`}
     >
       <div className="min-w-0">
-        <p className={`text-[11px] font-bold truncate ${active ? "text-[#4648d4]" : ""}`} style={active ? {} : { color: "#1a1c1f" }}>{shortName}</p>
+        <p className={`text-[11px] font-bold truncate ${active ? "text-[#6366f1]" : ""}`} style={active ? {} : { color: "#1a1c1f" }}>{shortName}</p>
         <p className="text-[9px] truncate" style={{ color: "#767586" }}>{item.display}</p>
       </div>
       <button
@@ -298,9 +298,9 @@ export function TradingViewFront() {
           <button onClick={e => { e.stopPropagation(); setFullscreen(true); }} className="rounded-full p-2 hover:bg-[#e8e8ed] transition hidden md:flex" style={{ background: "#f3f3f8" }}>
             <Maximize2 className="w-4 h-4" style={{ color: "#767586" }} />
           </button>
-          <button onClick={e => e.stopPropagation()} className="rounded-full px-4 py-1.5 text-xs font-bold border hidden md:inline-flex" style={{ borderColor: "#4648d4", color: "#4648d4" }}>Create Trading Plan</button>
+          <button onClick={e => e.stopPropagation()} className="rounded-full px-4 py-1.5 text-xs font-bold border hidden md:inline-flex" style={{ borderColor: "#6366f1", color: "#6366f1" }}>Create Trading Plan</button>
           <div className="relative">
-            <button onClick={e => { e.stopPropagation(); setShowBrokerMenu(!showBrokerMenu); }} className="rounded-full px-4 py-1.5 text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}>Connect Broker ▼</button>
+            <button onClick={e => { e.stopPropagation(); setShowBrokerMenu(!showBrokerMenu); }} className="rounded-full px-4 py-1.5 text-xs font-bold text-white" style={{ background: "linear-gradient(135deg, #6366f1, #818cf8)" }}>Connect Broker ▼</button>
             {showBrokerMenu && (
               <div className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden z-50" style={{ background: "#fff", boxShadow: "0 12px 40px rgba(0,0,0,0.12)" }}>
                 {["Webull", "TopStep", "IBKR", "E*Trade"].map(b => (
@@ -335,7 +335,7 @@ export function TradingViewFront() {
               key={item.symbol}
               onClick={e => { e.stopPropagation(); setActiveSymbol(item.symbol); }}
               className="shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-colors"
-              style={activeSymbol === item.symbol ? { background: "#4648d4", color: "#fff" } : { background: "#f3f3f8", color: "#464554" }}
+              style={activeSymbol === item.symbol ? { background: "#6366f1", color: "#fff" } : { background: "#f3f3f8", color: "#464554" }}
             >
               {item.favorited && "★ "}{short}
             </button>

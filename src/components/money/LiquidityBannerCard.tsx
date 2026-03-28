@@ -11,7 +11,7 @@ export default function LiquidityBannerCard() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const bannerUrl = cardData?.liquidity_banner_url || null;
-  const fallbackGradient = "linear-gradient(135deg, #006c49, #4648d4)";
+  const fallbackGradient = "linear-gradient(135deg, #006c49, #6366f1)";
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

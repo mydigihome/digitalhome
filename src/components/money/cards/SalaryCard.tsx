@@ -42,7 +42,7 @@ export function SalaryFront() {
           <BarChart data={data} margin={{ top: 20, right: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="salaryGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4648d4" />
+                <stop offset="0%" stopColor="#6366f1" />
                 <stop offset="100%" stopColor="#e1e0ff" />
               </linearGradient>
             </defs>

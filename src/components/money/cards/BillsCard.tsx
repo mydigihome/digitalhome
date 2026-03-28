@@ -50,7 +50,7 @@ export function BillsFront() {
           return (
             <div key={i} className="flex flex-col items-center gap-1">
               <span className="text-[9px]" style={{ color: "#767586" }}>{days[d.getDay()]}</span>
-              <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${isToday ? "text-white" : ""}`} style={isToday ? { background: "#4648d4" } : { color: "#464554" }}>
+              <div className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${isToday ? "text-white" : ""}`} style={isToday ? { background: "#6366f1" } : { color: "#464554" }}>
                 {d.getDate()}
               </div>
               {(i === 2 || i === 5) && <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#f59e0b" }} />}
@@ -82,7 +82,7 @@ export function BillsFront() {
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm" style={{ color: "#1a1c1f" }}>{fmt(bill.amount)}</span>
                 {bill.source === "plaid" ? (
-                  <span className="text-[9px] font-bold rounded-full px-2 py-0.5" style={{ background: "rgba(70,72,212,0.1)", color: "#4648d4" }}>Plaid</span>
+                  <span className="text-[9px] font-bold rounded-full px-2 py-0.5" style={{ background: "rgba(99,102,241,0.1)", color: "#6366f1" }}>Plaid</span>
                 ) : (
                   <>
                     <span className="text-[9px] font-bold rounded-full px-2 py-0.5" style={{ background: "#f3f3f8", color: "#767586" }}>Manual</span>
@@ -96,7 +96,7 @@ export function BillsFront() {
         })}
       </div>
 
-      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-3 rounded-[16px] py-2.5 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(70,72,212,0.3)", color: "#4648d4" }}>
+      <button onClick={(e) => { e.stopPropagation(); addBill(); }} className="w-full mt-3 rounded-[16px] py-2.5 text-sm font-bold border-2 border-dashed" style={{ borderColor: "rgba(99,102,241,0.3)", color: "#6366f1" }}>
         + Add Bill
       </button>
     </div>
