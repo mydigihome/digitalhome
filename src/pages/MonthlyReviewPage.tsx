@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import confetti from "canvas-confetti";
+import { usePremiumStatus } from "@/components/PremiumGate";
 
 const SPENDING = [
   { name: "Housing", color: "#6366f1", amount: 2250 },
@@ -36,6 +37,7 @@ export default function MonthlyReviewPage() {
   const reviewId = searchParams.get("id");
   const readMode = searchParams.get("mode") === "read";
   const { user, profile } = useAuth();
+  const { isPremium } = usePremiumStatus();
   const { data: finances } = useUserFinances();
   const { data: projects = [] } = useProjects();
   const { data: tasks = [] } = useAllTasks();
@@ -92,6 +94,12 @@ export default function MonthlyReviewPage() {
       return d <= (c.contact_frequency_days || 30);
     });
   }, [contacts]);
+
+  // Redirect non-premium users to billing
+  if (!isPremium) {
+    navigate("/settings?tab=billing", { replace: true });
+    return null;
+  }
 
   const handleApprove = async () => {
     if (!user) return;

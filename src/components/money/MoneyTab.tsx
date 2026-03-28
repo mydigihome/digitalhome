@@ -28,6 +28,7 @@ import MoneyTopBar from "./MoneyTopBar";
 import TrackFinanceModal from "./TrackFinanceModal";
 import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import PremiumGate, { usePremiumStatus } from "@/components/PremiumGate";
 import "../../styles/money-tab.css";
 
 const FULL_WIDTH = new Set(["plaid", "moneyflow", "tradingview",
@@ -74,6 +75,12 @@ const CARD_LABELS: Record<string, string> = {
 
 function noop() {}
 
+const PREMIUM_CARD_IDS = new Set([
+  "tradingview", "subscriptions", "net-worth-history", "investment-portfolio",
+  "tax-estimate", "merchant-spending", "category-trends", "cashflow-calendar",
+  "refund-tracker", "large-transactions", "savings-opportunities",
+]);
+
 export default function MoneyTab() {
   const {
     cardOrder,
@@ -83,6 +90,7 @@ export default function MoneyTab() {
     restoreCard,
     restoreAll,
   } = useMoneyPreferences();
+  const { isPremium } = usePremiumStatus();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -211,16 +219,30 @@ export default function MoneyTab() {
                   const c = cardMap[id];
                   if (!c) return null;
                   const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
+                  const needsGate = !isPremium && PREMIUM_CARD_IDS.has(id);
                   return (
                     <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, pointerEvents: isSearchDimmed ? "none" : "auto", transition: "opacity 200ms" }}>
-                      <MoneyCard
-                        id={id}
-                        front={c.front}
-                        back={c.back}
-                        fullWidth={FULL_WIDTH.has(id)}
-                        onHide={() => hideCard(id)}
-                        cardLabel={CARD_LABELS[id] || id}
-                      />
+                      {needsGate ? (
+                        <PremiumGate feature={CARD_LABELS[id] || "This card"} blur>
+                          <MoneyCard
+                            id={id}
+                            front={c.front}
+                            back={c.back}
+                            fullWidth={FULL_WIDTH.has(id)}
+                            onHide={() => hideCard(id)}
+                            cardLabel={CARD_LABELS[id] || id}
+                          />
+                        </PremiumGate>
+                      ) : (
+                        <MoneyCard
+                          id={id}
+                          front={c.front}
+                          back={c.back}
+                          fullWidth={FULL_WIDTH.has(id)}
+                          onHide={() => hideCard(id)}
+                          cardLabel={CARD_LABELS[id] || id}
+                        />
+                      )}
                     </div>
                   );
                 })}

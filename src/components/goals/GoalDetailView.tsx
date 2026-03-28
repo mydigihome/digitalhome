@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { StageFinancialTrigger, StageFinancialPanel } from "@/components/goals/StageFinancialPanel";
+import { usePremiumStatus } from "@/components/PremiumGate";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -81,6 +82,7 @@ interface Props {
 
 export default function GoalDetailView({ projectId, projectName, coverImage }: Props) {
   const navigate = useNavigate();
+  const { isPremium } = usePremiumStatus();
   const { data: stages = [], isLoading: stagesLoading } = useGoalStages(projectId);
   const { data: tasks = [], isLoading: tasksLoading } = useGoalTasks(projectId);
   const createStage = useCreateGoalStage();
@@ -615,27 +617,31 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
                   )}
                 </AnimatePresence>
 
-                {/* Financial AI Trigger */}
-                <StageFinancialTrigger
-                  stageId={stage.id}
-                  stageTitle={stage.name}
-                  stageDescription={stage.description}
-                  projectGoal={null}
-                  projectName={projectName}
-                  expandedId={financialPanelId}
-                  onToggle={toggleFinancialPanel}
-                />
+                {/* Financial AI Trigger — premium only */}
+                {isPremium && (
+                  <StageFinancialTrigger
+                    stageId={stage.id}
+                    stageTitle={stage.name}
+                    stageDescription={stage.description}
+                    projectGoal={null}
+                    projectName={projectName}
+                    expandedId={financialPanelId}
+                    onToggle={toggleFinancialPanel}
+                  />
+                )}
               </motion.div>
 
               {/* Financial Panel (outside card, below it) */}
-              <StageFinancialPanel
-                stageId={stage.id}
-                stageTitle={stage.name}
-                projectGoal={null}
-                projectName={projectName}
-                expandedId={financialPanelId}
-                onClose={() => setFinancialPanelId(null)}
-              />
+              {isPremium && (
+                <StageFinancialPanel
+                  stageId={stage.id}
+                  stageTitle={stage.name}
+                  projectGoal={null}
+                  projectName={projectName}
+                  expandedId={financialPanelId}
+                  onClose={() => setFinancialPanelId(null)}
+                />
+              )}
             </div>
             );
           })}
