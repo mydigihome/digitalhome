@@ -188,14 +188,18 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
       {/* RIGHT COLUMN — always visible */}
       <div className="hidden md:block">
         <div className="sticky top-6 space-y-4">
-          <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+          <PremiumGate feature="AI Email Compose" blur>
+            <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+          </PremiumGate>
           <AITasksWidget activeContactId={activeContactId} />
         </div>
       </div>
 
       {/* Mobile: right panel below */}
       <div className="block md:hidden space-y-4">
-        <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+        <PremiumGate feature="AI Email Compose" blur>
+          <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+        </PremiumGate>
         <AITasksWidget activeContactId={activeContactId} />
       </div>
 

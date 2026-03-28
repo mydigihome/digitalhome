@@ -631,14 +631,16 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
               </motion.div>
 
               {/* Financial Panel (outside card, below it) */}
-              <StageFinancialPanel
-                stageId={stage.id}
-                stageTitle={stage.name}
-                projectGoal={null}
-                projectName={projectName}
-                expandedId={financialPanelId}
-                onClose={() => setFinancialPanelId(null)}
-              />
+              {isPremium && (
+                <StageFinancialPanel
+                  stageId={stage.id}
+                  stageTitle={stage.name}
+                  projectGoal={null}
+                  projectName={projectName}
+                  expandedId={financialPanelId}
+                  onClose={() => setFinancialPanelId(null)}
+                />
+              )}
             </div>
             );
           })}
