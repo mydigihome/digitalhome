@@ -620,7 +620,7 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
                   stageId={stage.id}
                   stageTitle={stage.name}
                   stageDescription={stage.description}
-                  projectGoal={(project as any)?.financial_goal}
+                  projectGoal={null}
                   projectName={projectName}
                   expandedId={financialPanelId}
                   onToggle={toggleFinancialPanel}
@@ -631,11 +631,12 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
               <StageFinancialPanel
                 stageId={stage.id}
                 stageTitle={stage.name}
-                projectGoal={(project as any)?.financial_goal}
+                projectGoal={null}
                 projectName={projectName}
                 expandedId={financialPanelId}
                 onClose={() => setFinancialPanelId(null)}
               />
+            </React.Fragment>
             );
           })}
         </div>
