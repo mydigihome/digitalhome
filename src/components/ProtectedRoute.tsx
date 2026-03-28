@@ -18,12 +18,11 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Redirect to onboarding if not completed (but don't redirect if already on onboarding/welcome)
-  const onboardingPaths = ['/onboarding', '/welcome'];
-  const isOnboardingPath = onboardingPaths.includes(location.pathname);
+  // Redirect to new onboarding if not completed (but don't redirect if already on /welcome)
+  const isOnboardingPath = location.pathname === '/welcome';
 
   if (user && !prefsLoading && !(prefs as any)?.onboarding_completed && !isOnboardingPath) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/welcome" replace />;
   }
 
   // Founding members never get locked out

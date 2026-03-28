@@ -10,8 +10,10 @@ import { useThemeApplicator } from "@/hooks/useThemeApplicator";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-import OnboardingPage from "./pages/OnboardingPage";
-import Welcome from "./pages/Welcome";
+// Old onboarding disabled — replaced by NewOnboarding (Phase 5)
+// import OnboardingPage from "./pages/OnboardingPage";
+// import Welcome from "./pages/Welcome";
+import NewOnboarding from "./pages/NewOnboarding";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
