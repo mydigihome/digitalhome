@@ -95,6 +95,12 @@ export default function MonthlyReviewPage() {
     });
   }, [contacts]);
 
+  // Redirect non-premium users to billing
+  if (!isPremium) {
+    navigate("/settings?tab=billing", { replace: true });
+    return null;
+  }
+
   const handleApprove = async () => {
     if (!user) return;
     setSaving(true);
