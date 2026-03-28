@@ -18,7 +18,7 @@ export default function MoneyTopBar({ searchQuery, onSearchChange, hiddenCount, 
           value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search cards..."
-          className="bg-transparent border-none outline-none text-sm text-[#111827] w-full placeholder:text-[#9ca3af]"
+          className="bg-transparent border-none outline-none text-sm text-[#111827] dark:text-[#f9fafb] w-full placeholder:text-[#9ca3af]"
           style={{ fontFamily: "inherit" }}
         />
         {searchQuery && (
