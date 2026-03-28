@@ -308,6 +308,8 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="min-h-screen bg-background">
+        {/* MONTHLY REVIEW BANNER — absolute top */}
+        <MonthlyReviewBanner />
 
         {/* ═══ HERO HEADER ═══ */}
         <motion.div
