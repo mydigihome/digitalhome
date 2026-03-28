@@ -33,7 +33,27 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   }, [user]);
 
   useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains("dark"));
+    // Initialize dark mode from localStorage, then system preference
+    const saved = localStorage.getItem("digi-home-theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
+      setDarkMode(true);
+    } else if (saved === "light") {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
+      setDarkMode(false);
+    } else {
+      // No saved preference — use system
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+        document.body.classList.add("dark");
+        setDarkMode(true);
+      } else {
+        setDarkMode(document.documentElement.classList.contains("dark"));
+      }
+    }
   }, []);
 
   const upsertPrefs = useUpsertPreferences();
