@@ -30,6 +30,7 @@ import NoteEditor from "@/components/NoteEditor";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
+import AdminReminderWidget from "@/components/AdminReminderWidget";
 
 /* ── Helpers ── */
 function getGreeting() {
