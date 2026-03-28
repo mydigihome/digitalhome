@@ -27,9 +27,6 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
-import AIInsightsBanner from "@/components/dashboard/AIInsightsBanner";
-import AIInsightsWidget from "@/components/dashboard/AIInsightsWidget";
-import GreetingBanner from "@/components/dashboard/GreetingBanner";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
@@ -387,18 +384,6 @@ export default function Dashboard() {
           {/* MONTHLY REVIEW BANNER */}
           <MonthlyReviewBanner />
 
-          {/* GREETING BANNER */}
-          <GreetingBanner />
-
-          {/* AI INSIGHTS */}
-          <div className="mb-4">
-            <AIInsightsWidget
-              goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
-              expenses={expenses}
-              contacts={contacts}
-            />
-          </div>
-
           {/* QUICK ACTIONS */}
           <div className="mb-5">
             <QuickActionsRow
@@ -704,18 +689,6 @@ export default function Dashboard() {
 
             {/* MONTHLY REVIEW BANNER */}
               <MonthlyReviewBanner />
-
-              {/* GREETING BANNER */}
-              <GreetingBanner />
-
-              {/* AI INSIGHTS */}
-              <div className="mb-4">
-                <AIInsightsWidget
-                  goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
-                  expenses={expenses}
-                  contacts={contacts}
-                />
-              </div>
 
               {/* QUICK ACTIONS */}
               <div className="mb-5">
