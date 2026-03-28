@@ -1426,6 +1426,54 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_reviews: {
+        Row: {
+          ai_summary: string | null
+          bills_paid: number | null
+          contacts_reached: number | null
+          created_at: string | null
+          credit_score: number | null
+          full_snapshot: Json | null
+          goals_progress: number | null
+          id: string
+          net_worth: number | null
+          review_date: string | null
+          review_month: string
+          top_spending_category: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          bills_paid?: number | null
+          contacts_reached?: number | null
+          created_at?: string | null
+          credit_score?: number | null
+          full_snapshot?: Json | null
+          goals_progress?: number | null
+          id?: string
+          net_worth?: number | null
+          review_date?: string | null
+          review_month: string
+          top_spending_category?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          bills_paid?: number | null
+          contacts_reached?: number | null
+          created_at?: string | null
+          credit_score?: number | null
+          full_snapshot?: Json | null
+          goals_progress?: number | null
+          id?: string
+          net_worth?: number | null
+          review_date?: string | null
+          review_month?: string
+          top_spending_category?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ninety_day_goals: {
         Row: {
           achieved: string | null
@@ -2504,10 +2552,12 @@ export type Database = {
           dashboard_icon_type: string | null
           density: string | null
           font_size: string | null
+          greeting_dismissed_date: string | null
           home_name: string | null
           home_style: string | null
           id: string
           is_subscribed: boolean | null
+          last_review_month: string | null
           location: string | null
           money_header_type: string | null
           money_header_value: string | null
@@ -2553,10 +2603,12 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          greeting_dismissed_date?: string | null
           home_name?: string | null
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
+          last_review_month?: string | null
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null
@@ -2602,10 +2654,12 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          greeting_dismissed_date?: string | null
           home_name?: string | null
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
+          last_review_month?: string | null
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null

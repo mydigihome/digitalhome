@@ -2,13 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useArchivedProjects, useRestoreProject, useDeleteArchivedProject } from "@/hooks/useArchivedProjects";
+import { useMonthlyReviews, useDeleteMonthlyReview } from "@/hooks/useMonthlyReviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, HeadphonesIcon, Star, CreditCard, Crown, GraduationCap, Check } from "lucide-react";
+import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain, FileText, Calendar, MessageSquare, Zap, Workflow, Layers, Github, TrendingUp, CheckCircle, Columns, AlertCircle, Archive, RotateCcw, Trash2, Settings, HeadphonesIcon, Star, CreditCard, Crown, GraduationCap, Check, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
@@ -97,7 +98,7 @@ const settingsTabs = [
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "account", label: "Account", icon: Shield },
   { id: "resources", label: "AI Resources", icon: Sparkles },
-  { id: "archived", label: "Archived Projects", icon: Archive },
+  { id: "archived", label: "Archive", icon: Archive },
   { id: "support", label: "Support", icon: HeadphonesIcon },
 ] as const;
 
@@ -110,6 +111,8 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: archivedProjects = [] } = useArchivedProjects();
+  const { data: monthlyReviews = [] } = useMonthlyReviews();
+  const deleteMonthlyReview = useDeleteMonthlyReview();
   const restoreProject = useRestoreProject();
   const deleteArchivedProject = useDeleteArchivedProject();
   const [fullName, setFullName] = useState(profile?.full_name || "");
@@ -1143,12 +1146,12 @@ export default function SettingsPage() {
               {activeTab === "archived" && (
                 <>
                   {/* Header */}
-                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                   <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
                     <div className="flex items-start gap-4 mb-2">
                       <Archive size={28} className="text-muted-foreground mt-1" />
                       <div>
-                        <h3 className="text-xl font-semibold text-foreground">Archived Projects</h3>
-                        <p className="text-sm text-muted-foreground">View and manage your archived projects. Restore them to continue working or permanently delete them.</p>
+                        <h3 className="text-xl font-semibold text-foreground">Archive</h3>
+                        <p className="text-sm text-muted-foreground">View your archived projects and past monthly reviews.</p>
                       </div>
                     </div>
                   </div>
@@ -1165,6 +1168,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Project list */}
+                  <h3 className="font-bold text-base text-foreground mb-3">Projects</h3>
                   {!archivedProjects || archivedProjects.length === 0 ? (
                     <div className="bg-card rounded-xl border border-border p-12 text-center shadow-sm">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -1225,6 +1229,56 @@ export default function SettingsPage() {
                       <li>• Permanently deleting an archived project cannot be undone</li>
                     </ul>
                   </div>
+
+                  {/* Monthly Reviews Section */}
+                  <div className="h-px bg-border my-6" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="font-bold text-base text-foreground">Monthly Reviews</h3>
+                    <span className="text-xs text-muted-foreground">{monthlyReviews.length} saved</span>
+                  </div>
+
+                  {monthlyReviews.length === 0 ? (
+                    <div className="bg-secondary/50 rounded-[16px] px-5 py-6 text-center">
+                      <p className="text-sm text-muted-foreground">No monthly reviews yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Reviews appear here after you complete them from the Dashboard.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {monthlyReviews.map((review: any) => (
+                        <div key={review.id} className="bg-card border border-border rounded-[16px] px-5 py-4 flex items-center gap-4 shadow-sm">
+                          <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{ background: "#eef2ff" }}>
+                            <Calendar className="w-4 h-4" style={{ color: "#6366f1" }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground">{review.review_month}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Net worth ${Number(review.net_worth || 0).toLocaleString()} · Credit {review.credit_score || "—"}
+                            </p>
+                            {review.ai_summary && (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate italic">{review.ai_summary.slice(0, 80)}...</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => navigate(`/monthly-review?id=${review.id}`)}
+                            className="text-xs font-semibold" style={{ color: "#6366f1" }}
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("Delete this review?")) {
+                                deleteMonthlyReview.mutate(review.id);
+                                toast.success("Review deleted");
+                              }
+                            }}
+                            className="text-muted-foreground hover:text-destructive ml-1 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
 
