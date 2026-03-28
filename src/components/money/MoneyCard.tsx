@@ -73,7 +73,7 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
       </div>
 
       {/* Edit hint */}
-      <div className="absolute top-3 right-3 z-30 w-6 h-6 rounded-full bg-white/80 backdrop-blur flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex pointer-events-none"
+      <div className="absolute top-3 right-3 z-30 w-6 h-6 rounded-full bg-white/80 dark:bg-[#252836]/80 backdrop-blur flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hidden md:flex pointer-events-none"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
         <Pencil className="w-3 h-3" style={{ color: "#767586" }} />

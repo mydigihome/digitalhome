@@ -19,7 +19,7 @@ export default function VerticalTabRail({ activeView, onViewChange }: Props) {
           className={`text-sm font-bold pb-1 transition-colors duration-200 border-b-2 ${
             activeView === tab.key
               ? "text-[#4648d4] border-[#4648d4]"
-              : "text-[#767586] border-transparent hover:text-[#464554]"
+              : "text-[#767586] dark:text-[#9ca3af] border-transparent hover:text-[#464554] dark:hover:text-[#e5e7eb]"
           }`}
         >
           {tab.label}
