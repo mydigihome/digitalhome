@@ -89,6 +89,8 @@ const App = () => (
             <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplates /></ProtectedRoute>} />
             <Route path="/relationships" element={<ProtectedRoute><RelationshipsPage /></ProtectedRoute>} />
             <Route path="/monthly-review" element={<ProtectedRoute><MonthlyReviewPage /></ProtectedRoute>} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           
