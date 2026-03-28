@@ -84,6 +84,7 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
         className="money-card cursor-pointer"
         style={{
           boxShadow: isDragging ? "0 20px 60px rgba(70,69,84,0.15)" : undefined,
+          overflow: "hidden",
         }}
         onClick={handleFlip}
       >
@@ -120,7 +121,7 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
               <button
                 onClick={(e) => { e.stopPropagation(); handleSave(); }}
                 className="flex-1 rounded-full px-5 py-2 font-bold text-sm text-white"
-                style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
+                style={{ background: "linear-gradient(135deg, #6366f1, #818cf8)" }}
               >
                 Save Changes
               </button>

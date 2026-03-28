@@ -7,7 +7,7 @@ function PlaidLock() {
     <div className="flex flex-col items-center justify-center py-8 gap-3">
       <Lock className="w-10 h-10" style={{ color: "#e8e8ed" }} />
       <p style={{ fontSize: "14px", color: "#767586" }}>Connect Plaid to unlock</p>
-      <button style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)", color: "white", borderRadius: "9999px", padding: "6px 16px", fontSize: "12px", fontWeight: 700, border: "none", cursor: "pointer" }}>
+      <button style={{ background: "linear-gradient(135deg, #6366f1, #818cf8)", color: "white", borderRadius: "9999px", padding: "6px 16px", fontSize: "12px", fontWeight: 700, border: "none", cursor: "pointer" }}>
         Connect Bank
       </button>
     </div>
@@ -47,7 +47,7 @@ export function NetWorthHistoryFront() {
   return (<div><CardHeader icon="📈" title="Net Worth History" />
     <div className="flex items-end gap-1" style={{ height: "120px", padding: "8px 0" }}>
       {[30, 35, 33, 40, 42, 38, 45, 48, 50, 55, 52, 58].map((v, i) => (
-        <div key={i} style={{ flex: 1, height: `${v * 1.8}%`, background: "linear-gradient(180deg, #4648d4, #6063ee)", borderRadius: "4px 4px 0 0", opacity: 0.6 + i * 0.03 }} />
+        <div key={i} style={{ flex: 1, height: `${v * 1.8}%`, background: "linear-gradient(180deg, #6366f1, #818cf8)", borderRadius: "4px 4px 0 0", opacity: 0.6 + i * 0.03 }} />
       ))}
     </div>
     <div className="flex justify-between" style={{ fontSize: "10px", color: "#767586" }}><span>Jan</span><span>Jun</span><span>Dec</span></div>
@@ -97,7 +97,7 @@ export function MerchantSpendingFront() {
       {data.map(([name, val]) => (
         <div key={name}>
           <div className="flex justify-between" style={{ fontSize: "12px", marginBottom: "2px" }}><span style={{ fontWeight: 600, color: "#1a1c1f" }}>{name}</span><span style={{ color: "#767586" }}>${val}</span></div>
-          <div style={{ height: "6px", borderRadius: "3px", backgroundColor: "#f3f3f8" }}><div style={{ height: "100%", width: `${(val / max) * 100}%`, background: "linear-gradient(90deg, #4648d4, #6063ee)", borderRadius: "3px" }} /></div>
+          <div style={{ height: "6px", borderRadius: "3px", backgroundColor: "#f3f3f8" }}><div style={{ height: "100%", width: `${(val / max) * 100}%`, background: "linear-gradient(90deg, #6366f1, #818cf8)", borderRadius: "3px" }} /></div>
         </div>
       ))}
     </div>
@@ -115,7 +115,7 @@ export function CategoryTrendsFront() {
         <div key={cat as string} className="flex-1">
           <div className="flex items-end gap-0.5" style={{ height: "80px" }}>
             {(vals as number[]).map((v, i) => (
-              <div key={i} style={{ flex: 1, height: `${v}%`, backgroundColor: i === 2 ? "#4648d4" : i === 1 ? "#8b8ce6" : "#c0c1ff", borderRadius: "3px 3px 0 0" }} />
+              <div key={i} style={{ flex: 1, height: `${v}%`, backgroundColor: i === 2 ? "#6366f1" : i === 1 ? "#8b8ce6" : "#c0c1ff", borderRadius: "3px 3px 0 0" }} />
             ))}
           </div>
           <div style={{ fontSize: "9px", color: "#767586", textAlign: "center", marginTop: "4px" }}>{cat as string}</div>
@@ -181,7 +181,7 @@ export function LargeTransactionsBack({ onCancel, onSave }: { onCancel: () => vo
 export function SavingsOpportunitiesFront() {
   return (<div><CardHeader icon="💡" title="Savings Opportunities" />
     <div className="flex items-center gap-2 mb-3">
-      <span style={{ color: "#4648d4", fontSize: "14px" }}>✦</span>
+      <span style={{ color: "#6366f1", fontSize: "14px" }}>✦</span>
       <span style={{ fontSize: "14px", fontWeight: 700, color: "#1a1c1f" }}>AI found $94/mo in potential savings</span>
     </div>
     {[["Hulu (unused)", "$17.99"], ["Adobe (low use)", "$54.99"], ["Gym", "$29.99"]].map(([n, v]) => (

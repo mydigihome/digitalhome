@@ -8,7 +8,7 @@ const data = [
   { name: "Food", value: -450, fill: "#ba1a1a" },
   { name: "Transport", value: -320, fill: "#ba1a1a" },
   { name: "Other", value: -484, fill: "#ba1a1a" },
-  { name: "Remaining", value: 1300, fill: "#4648d4" },
+  { name: "Remaining", value: 1300, fill: "#6366f1" },
 ];
 
 const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Math.abs(n));
@@ -57,7 +57,7 @@ export function CashflowFront() {
           </div>
           <div className="rounded-[20px] p-5" style={{ background: "#f3f3f8" }}>
             <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#767586" }}>NET MONTHLY PROFIT</p>
-            <p className="text-xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#4648d4" }}>+$1,300</p>
+            <p className="text-xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#6366f1" }}>+$1,300</p>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ export function CashflowFront() {
           { emoji: "📈", label: "Investments $300" },
           { emoji: "🎯", label: "Goals $500" },
         ].map((p) => (
-          <span key={p.label} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "rgba(70,72,212,0.08)", color: "#4648d4" }}>
+          <span key={p.label} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1" }}>
             {p.emoji} {p.label}
           </span>
         ))}

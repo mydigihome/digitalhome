@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Search, EyeOff, X, Zap } from "lucide-react";
+import { Search, EyeOff, X, Plus } from "lucide-react";
 
 interface Props {
   searchQuery: string;
@@ -13,18 +12,18 @@ export default function MoneyTopBar({ searchQuery, onSearchChange, hiddenCount, 
   return (
     <div className="flex items-center gap-3 mb-4">
       {/* Search */}
-      <div className="flex-1 flex items-center gap-3" style={{ backgroundColor: "#ffffff", borderRadius: "20px", padding: "8px 20px", boxShadow: "0 2px 12px rgba(70,69,84,0.06)" }}>
-        <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#767586" }} />
+      <div className="flex-1 flex items-center gap-3 bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-2.5">
+        <Search className="w-4 h-4 flex-shrink-0 text-[#9ca3af]" />
         <input
           value={searchQuery}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Search cards..."
-          style={{ background: "transparent", border: "none", outline: "none", fontSize: "14px", color: "#1a1c1f", width: "100%", fontFamily: "inherit" }}
-          className="placeholder:text-[#c7c4d7]"
+          className="bg-transparent border-none outline-none text-sm text-[#111827] w-full placeholder:text-[#9ca3af]"
+          style={{ fontFamily: "inherit" }}
         />
         {searchQuery && (
-          <button onClick={() => onSearchChange("")} style={{ background: "none", border: "none", cursor: "pointer" }}>
-            <X className="w-4 h-4" style={{ color: "#767586" }} />
+          <button onClick={() => onSearchChange("")} className="bg-transparent border-none cursor-pointer">
+            <X className="w-4 h-4 text-[#9ca3af]" />
           </button>
         )}
       </div>
@@ -32,26 +31,24 @@ export default function MoneyTopBar({ searchQuery, onSearchChange, hiddenCount, 
       {/* Hidden cards */}
       <button
         onClick={onToggleDrawer}
-        className="flex items-center gap-2"
-        style={{ backgroundColor: "#ffffff", borderRadius: "20px", padding: "8px 16px", boxShadow: "0 2px 12px rgba(70,69,84,0.06)", border: "none", cursor: "pointer" }}
+        className="flex items-center gap-2 bg-white border border-[#e5e7eb] rounded-[12px] px-4 py-2.5 cursor-pointer hover:bg-[#f9fafb] transition-colors"
       >
-        <EyeOff className="w-4 h-4" style={{ color: "#767586" }} />
-        <span style={{ fontSize: "14px", fontWeight: 700, color: "#767586" }}>Hidden</span>
+        <EyeOff className="w-4 h-4 text-[#374151]" />
+        <span className="text-sm font-medium text-[#374151]">Hidden</span>
         {hiddenCount > 0 && (
-          <span style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: "#4648d4", color: "white", fontSize: "10px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span className="w-5 h-5 rounded-full bg-[#6366f1] text-white text-[10px] font-bold flex items-center justify-center">
             {hiddenCount}
           </span>
         )}
       </button>
 
-      {/* Track Finance */}
+      {/* Add Card */}
       <button
         onClick={onOpenTrackFinance}
-        className="flex items-center gap-2"
-        style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)", color: "white", borderRadius: "20px", padding: "8px 20px", border: "none", cursor: "pointer" }}
+        className="flex items-center gap-2 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-[12px] px-4 py-2.5 border-none cursor-pointer transition-colors"
       >
-        <Zap className="w-4 h-4" />
-        <span style={{ fontSize: "14px", fontWeight: 700 }}>Track Finance</span>
+        <Plus className="w-4 h-4" />
+        <span className="text-sm font-semibold">Add Card</span>
       </button>
     </div>
   );

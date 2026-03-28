@@ -36,7 +36,7 @@ export function NetWorthFront() {
           <AreaChart data={defaultData} margin={{ top: 5, right: 5, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(70,72,212,0.15)" />
+                <stop offset="0%" stopColor="rgba(99,102,241,0.15)" />
                 <stop offset="100%" stopColor="transparent" />
               </linearGradient>
             </defs>
@@ -44,7 +44,7 @@ export function NetWorthFront() {
             <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#767586" }} />
             <YAxis domain={['dataMin - 2000', 'dataMax + 1000']} hide />
             <Tooltip content={<GlassTooltip />} />
-            <Area type="monotone" dataKey="value" stroke="#4648d4" strokeWidth={2.5} fill="url(#nwGrad)" />
+            <Area type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={2.5} fill="url(#nwGrad)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
