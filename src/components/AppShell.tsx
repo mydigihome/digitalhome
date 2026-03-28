@@ -490,6 +490,7 @@ function MobileTabBar() {
   const isActive = (path: string) => {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
+    if (path === "/relationships") return location.pathname.startsWith("/relationships");
     if (path === "/__more__") return ["/vision", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
