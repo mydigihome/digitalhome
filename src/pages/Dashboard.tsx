@@ -27,9 +27,8 @@ import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
-import AIInsightsBanner from "@/components/dashboard/AIInsightsBanner";
-import AIInsightsWidget from "@/components/dashboard/AIInsightsWidget";
-import GreetingBanner from "@/components/dashboard/GreetingBanner";
+// Removed: AIInsightsBanner, AIInsightsWidget, GreetingBanner
+import ReviewBanner from "@/components/dashboard/ReviewBanner";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
 
@@ -311,89 +310,19 @@ export default function Dashboard() {
     <AppShell>
       <div className="min-h-screen bg-background">
 
-        {/* ═══ HERO HEADER ═══ */}
-        <motion.div
-          {...stagger(0)}
-          className="relative w-full h-72 overflow-hidden cursor-pointer group"
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "image/*";
-            input.onchange = (e: any) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event: any) => {
-                  upsertPrefs.mutate({ dashboard_cover: event.target.result, dashboard_cover_type: "image" });
-                };
-                reader.readAsDataURL(file);
-              }
-            };
-            input.click();
-          }}
-        >
-          {hasCover ? (
-            <img src={prefs!.dashboard_cover!} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
-          ) : (() => {
-            const bc = (prefs as any)?.banner_color || '#6366F1';
-            return <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${bc}15, ${bc}05)` }} />;
-          })()}
-
-          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-            <div className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-              <Edit2 className="w-4 h-4 text-white" />
-            </div>
-          </div>
-
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-background pointer-events-none" />
-
-          <div className="absolute bottom-10 left-6 sm:left-8 z-10">
-            <p className="text-xs font-medium text-white/85">{currentDate}</p>
-            <h1
-              className="text-[32px] sm:text-[40px] leading-[1.15] mt-0.5 font-semibold text-white"
-              style={{ textShadow: "0 2px 12px rgba(0,0,0,0.3)" }}
-            >
-              {greeting}
-            </h1>
-          </div>
-
-          {/* Monthly Review Button — shows last 3 days of month or ?review=1 */}
-          {(() => {
-            const today = new Date();
-            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-            const showReview = today.getDate() >= lastDay - 2 || searchParams.get("review") === "1";
-            const alreadyDone = (prefs as any)?.last_review_month === `${format(today, "MMMM yyyy")}`;
-            if (!showReview || alreadyDone) return null;
-            return (
-              <button
-                onClick={(e) => { e.stopPropagation(); navigate("/monthly-review"); }}
-                className="absolute bottom-10 right-6 sm:right-8 z-20 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-[12px] transition-colors"
-                style={{ background: "#6366f1" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#4f46e5")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#6366f1")}
-              >
-                <FileText className="w-4 h-4" />
-                Monthly Review
-                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white/30 animate-ping" />
-              </button>
-            );
-          })()}
-        </motion.div>
+        {/* ═══ SIMPLE GREETING (no hero image) ═══ */}
+        <div className="px-6 pt-8 pb-2">
+          <p className="text-xs font-medium text-muted-foreground">{currentDate}</p>
+          <h1 className="text-[28px] sm:text-[32px] leading-[1.15] mt-0.5 font-semibold text-foreground">
+            {greeting}
+          </h1>
+        </div>
 
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
-          {/* GREETING BANNER */}
-          <GreetingBanner />
-
-          {/* AI INSIGHTS */}
-          <div className="mb-4">
-            <AIInsightsWidget
-              goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
-              expenses={expenses}
-              contacts={contacts}
-            />
-          </div>
+          {/* REVIEW BANNER */}
+          <ReviewBanner />
 
           {/* QUICK ACTIONS */}
           <div className="mb-5">
@@ -698,17 +627,8 @@ export default function Dashboard() {
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
 
-              {/* GREETING BANNER */}
-              <GreetingBanner />
-
-              {/* AI INSIGHTS */}
-              <div className="mb-4">
-                <AIInsightsWidget
-                  goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
-                  expenses={expenses}
-                  contacts={contacts}
-                />
-              </div>
+              {/* REVIEW BANNER */}
+              <ReviewBanner />
 
               {/* QUICK ACTIONS */}
               <div className="mb-5">
