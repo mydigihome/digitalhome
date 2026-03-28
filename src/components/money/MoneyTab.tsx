@@ -181,7 +181,7 @@ export default function MoneyTab() {
             >
               <div className="flex items-center gap-2">
                 <EyeOff className="w-4 h-4 text-[#6b7280]" />
-                <span className="text-sm font-semibold text-[#111827]">{hiddenCards.length} hidden card{hiddenCards.length > 1 ? "s" : ""}</span>
+                <span className="text-sm font-semibold text-[#111827] dark:text-[#f9fafb]">{hiddenCards.length} hidden card{hiddenCards.length > 1 ? "s" : ""}</span>
               </div>
               <span className="text-sm font-semibold flex items-center gap-1 text-[#6366f1]">
                 Manage <ChevronDown className={`w-3.5 h-3.5 transition-transform ${drawerOpen ? "rotate-180" : ""}`} />

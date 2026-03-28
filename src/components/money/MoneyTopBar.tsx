@@ -33,8 +33,8 @@ export default function MoneyTopBar({ searchQuery, onSearchChange, hiddenCount, 
         onClick={onToggleDrawer}
         className="flex items-center gap-2 bg-white dark:bg-[#1e2130] border border-[#e5e7eb] dark:border-[#2d3148] rounded-[12px] px-4 py-2.5 cursor-pointer hover:bg-[#f9fafb] dark:hover:bg-[#252836] transition-colors"
       >
-        <EyeOff className="w-4 h-4 text-[#374151]" />
-        <span className="text-sm font-medium text-[#374151]">Hidden</span>
+        <EyeOff className="w-4 h-4 text-[#374151] dark:text-[#e5e7eb]" />
+        <span className="text-sm font-medium text-[#374151] dark:text-[#e5e7eb]">Hidden</span>
         {hiddenCount > 0 && (
           <span className="w-5 h-5 rounded-full bg-[#6366f1] text-white text-[10px] font-bold flex items-center justify-center">
             {hiddenCount}
