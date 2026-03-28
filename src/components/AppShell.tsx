@@ -68,6 +68,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       document.body.classList.remove("dark");
     }
     setDarkMode(newDark);
+    localStorage.setItem("digi-home-theme", newDark ? "dark" : "light");
     upsertPrefs.mutate({ sidebar_theme: newDark ? "dark" : "light" } as any);
   };
 
