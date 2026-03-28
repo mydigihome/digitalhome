@@ -616,16 +616,18 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
                   )}
                 </AnimatePresence>
 
-                {/* Financial AI Trigger */}
-                <StageFinancialTrigger
-                  stageId={stage.id}
-                  stageTitle={stage.name}
-                  stageDescription={stage.description}
-                  projectGoal={null}
-                  projectName={projectName}
-                  expandedId={financialPanelId}
-                  onToggle={toggleFinancialPanel}
-                />
+                {/* Financial AI Trigger — premium only */}
+                {isPremium && (
+                  <StageFinancialTrigger
+                    stageId={stage.id}
+                    stageTitle={stage.name}
+                    stageDescription={stage.description}
+                    projectGoal={null}
+                    projectName={projectName}
+                    expandedId={financialPanelId}
+                    onToggle={toggleFinancialPanel}
+                  />
+                )}
               </motion.div>
 
               {/* Financial Panel (outside card, below it) */}
