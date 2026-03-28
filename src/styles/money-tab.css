@@ -1,6 +1,6 @@
 /* ── Money Tab Layout ── */
 .money-tab-root {
-  background-color: #f3f3f8;
+  background-color: #ffffff;
   min-height: 100vh;
   width: 100%;
   padding: 24px;
@@ -65,13 +65,6 @@
 .tv-chart-container {
   flex: 1;
   height: 520px;
-}
-
-/* ── Background fill ── */
-html, body, #root {
-  background-color: #f3f3f8 !important;
-  margin: 0;
-  padding: 0;
 }
 
 /* ── Mobile ── */

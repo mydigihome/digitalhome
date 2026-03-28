@@ -1,4 +1,10 @@
+import { useRef } from "react";
+import { Camera } from "lucide-react";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
+import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 function SegmentBar({ filled, total, color }: { filled: number; total: number; color: string }) {
   return (
@@ -15,11 +21,62 @@ function SegmentBar({ filled, total, color }: { filled: number; total: number; c
 }
 
 export function EmergencyFundFront() {
+  const { user } = useAuth();
+  const { cardData, saveCardData } = useMoneyPreferences();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const bannerUrl = cardData?.liquidity_banner_url || null;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const path = `${user.id}/liquidity-banner.jpg`;
+    const { error } = await supabase.storage.from("user-assets").upload(path, file, { upsert: true });
+    if (error) { toast.error("Upload failed"); return; }
+    const { data: urlData } = supabase.storage.from("user-assets").getPublicUrl(path);
+    const url = urlData.publicUrl + "?t=" + Date.now();
+    saveCardData("liquidity_banner_url", url);
+    toast.success("Image updated");
+  };
+
   return (
     <div>
+      {/* Banner image strip */}
+      <div
+        style={{
+          width: "calc(100% + 48px)",
+          height: "88px",
+          position: "relative",
+          marginTop: "-24px",
+          marginLeft: "-24px",
+          marginBottom: "16px",
+          borderRadius: "24px 24px 0 0",
+          overflow: "hidden",
+        }}
+      >
+        {bannerUrl ? (
+          <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #006c49, #6366f1)" }} />
+        )}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%)" }} />
+        <button
+          onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+          style={{
+            position: "absolute", top: 8, right: 8, width: 28, height: 28,
+            borderRadius: "50%", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(4px)",
+            border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            color: "white",
+          }}
+        >
+          <Camera className="w-3.5 h-3.5" />
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+      </div>
+
       <div className="flex items-center gap-2 mb-3">
         <h3 className="font-bold text-lg" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>Liquidity Sprints</h3>
-        <span className="material-symbols-outlined text-lg" style={{ color: "#4648d4" }}>bolt</span>
+        <span className="material-symbols-outlined text-lg" style={{ color: "#6366f1" }}>bolt</span>
       </div>
 
       {/* Emergency Fund */}
@@ -33,9 +90,9 @@ export function EmergencyFundFront() {
         </div>
         <p className="text-3xl font-extrabold tracking-tighter" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#1a1c1f" }}>$8,000</p>
         <p className="text-xs mb-3" style={{ color: "#767586" }}>3 months of expenses covered</p>
-        <SegmentBar filled={3} total={5} color="#4648d4" />
+        <SegmentBar filled={3} total={5} color="#6366f1" />
         <p className="text-xs font-bold mt-2" style={{ color: "#006c49" }}>Fully funded in 11 months at $500/month</p>
-        <p className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: "#4648d4" }}>Completion: Nov 2024</p>
+        <p className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: "#6366f1" }}>Completion: Nov 2024</p>
       </div>
 
       <div className="mt-3 h-px" style={{ background: "#f3f3f8" }} />
@@ -54,9 +111,9 @@ export function EmergencyFundFront() {
         <p className="text-[9px] font-bold uppercase mt-2" style={{ color: "#006c49" }}>Active Sprint</p>
       </div>
 
-      <div className="rounded-[16px] p-3 mt-3" style={{ background: "rgba(70,72,212,0.05)", border: "1px solid rgba(70,72,212,0.1)" }}>
+      <div className="rounded-[16px] p-3 mt-3" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.1)" }}>
         <p className="text-xs leading-relaxed" style={{ color: "#464554" }}>
-          <span className="font-bold" style={{ color: "#4648d4" }}>✦</span> Increase monthly transfer by $400 to hit tax goal 12 days early.
+          <span className="font-bold" style={{ color: "#6366f1" }}>✦</span> Increase monthly transfer by $400 to hit tax goal 12 days early.
         </p>
       </div>
     </div>
