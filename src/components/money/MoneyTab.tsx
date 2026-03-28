@@ -75,6 +75,12 @@ const CARD_LABELS: Record<string, string> = {
 
 function noop() {}
 
+const PREMIUM_CARD_IDS = new Set([
+  "tradingview", "subscriptions", "net-worth-history", "investment-portfolio",
+  "tax-estimate", "merchant-spending", "category-trends", "cashflow-calendar",
+  "refund-tracker", "large-transactions", "savings-opportunities",
+]);
+
 export default function MoneyTab() {
   const {
     cardOrder,
@@ -84,6 +90,7 @@ export default function MoneyTab() {
     restoreCard,
     restoreAll,
   } = useMoneyPreferences();
+  const { isPremium } = usePremiumStatus();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
