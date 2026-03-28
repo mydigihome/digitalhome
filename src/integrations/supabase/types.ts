@@ -2563,6 +2563,8 @@ export type Database = {
           money_header_value: string | null
           onboarding_completed: boolean | null
           onboarding_focus: string | null
+          onboarding_skipped_steps: string[] | null
+          onboarding_step: number | null
           profile_photo: string | null
           religion: string | null
           show_scripture_card: boolean | null
@@ -2614,6 +2616,8 @@ export type Database = {
           money_header_value?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
+          onboarding_skipped_steps?: string[] | null
+          onboarding_step?: number | null
           profile_photo?: string | null
           religion?: string | null
           show_scripture_card?: boolean | null
@@ -2665,6 +2669,8 @@ export type Database = {
           money_header_value?: string | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
+          onboarding_skipped_steps?: string[] | null
+          onboarding_step?: number | null
           profile_photo?: string | null
           religion?: string | null
           show_scripture_card?: boolean | null
