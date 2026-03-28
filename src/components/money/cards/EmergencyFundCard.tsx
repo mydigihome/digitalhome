@@ -55,11 +55,7 @@ export function EmergencyFundFront() {
           overflow: "hidden",
         }}
       >
-        {bannerUrl ? (
-          <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #006c49, #6366f1)" }} />
-        )}
+        <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%)" }} />
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
