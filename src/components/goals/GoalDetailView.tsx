@@ -381,8 +381,8 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
             const isExpanded = expandedStages.has(stage.id);
 
             return (
+              <div key={stage.id} className="space-y-0">
               <motion.div
-                key={stage.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: si * 0.05 }}
