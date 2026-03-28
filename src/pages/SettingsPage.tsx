@@ -1228,6 +1228,56 @@ export default function SettingsPage() {
                       <li>• Permanently deleting an archived project cannot be undone</li>
                     </ul>
                   </div>
+
+                  {/* Monthly Reviews Section */}
+                  <div className="h-px bg-border my-6" />
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="font-bold text-base text-foreground">Monthly Reviews</h3>
+                    <span className="text-xs text-muted-foreground">{monthlyReviews.length} saved</span>
+                  </div>
+
+                  {monthlyReviews.length === 0 ? (
+                    <div className="bg-secondary/50 rounded-[16px] px-5 py-6 text-center">
+                      <p className="text-sm text-muted-foreground">No monthly reviews yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Reviews appear here after you complete them from the Dashboard.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {monthlyReviews.map((review: any) => (
+                        <div key={review.id} className="bg-card border border-border rounded-[16px] px-5 py-4 flex items-center gap-4 shadow-sm">
+                          <div className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0" style={{ background: "#eef2ff" }}>
+                            <Calendar className="w-4 h-4" style={{ color: "#6366f1" }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-foreground">{review.review_month}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Net worth ${Number(review.net_worth || 0).toLocaleString()} · Credit {review.credit_score || "—"}
+                            </p>
+                            {review.ai_summary && (
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate italic">{review.ai_summary.slice(0, 80)}...</p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => navigate(`/monthly-review?id=${review.id}`)}
+                            className="text-xs font-semibold" style={{ color: "#6366f1" }}
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("Delete this review?")) {
+                                deleteMonthlyReview.mutate(review.id);
+                                toast.success("Review deleted");
+                              }
+                            }}
+                            className="text-muted-foreground hover:text-destructive ml-1 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
 
