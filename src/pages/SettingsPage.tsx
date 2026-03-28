@@ -105,6 +105,132 @@ const settingsTabs = [
 
 type SettingsTab = typeof settingsTabs[number]["id"];
 
+function AccountTab({ user, newPassword, setNewPassword, changingPw, handleChangePassword, signOut, navigate }: any) {
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportData = async () => {
+    if (!user) return;
+    setExporting(true);
+    try {
+      const tables = ["profiles", "user_preferences", "contacts", "projects", "expenses", "investments", "notes", "tasks", "brain_dumps", "monthly_reviews", "journal_entries", "calendar_events", "habits", "habit_logs", "quick_todos", "applications", "college_applications"];
+      const exportData: Record<string, any> = { exported_at: new Date().toISOString(), user_id: user.id };
+      for (const table of tables) {
+        const { data } = await supabase.from(table as any).select("*");
+        exportData[table] = data || [];
+      }
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `digitalhome-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Data exported successfully");
+    } catch (err) {
+      toast.error("Export failed");
+    }
+    setExporting(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "DELETE") return;
+    setDeleting(true);
+    try {
+      // Delete all user data from tables
+      const tables = ["quick_todos", "habit_logs", "habits", "brain_dumps", "notes", "tasks", "goal_tasks", "goal_stages", "documents", "expenses", "investments", "contacts", "contact_interactions", "priority_contacts", "calendar_events", "monthly_reviews", "applications", "college_applications", "journal_entries", "money_tab_preferences", "user_preferences"];
+      for (const table of tables) {
+        await supabase.from(table as any).delete().eq("user_id", user.id);
+      }
+      // Delete projects (cascades stages/tasks)
+      await supabase.from("projects").delete().eq("user_id", user.id);
+      // Delete profile
+      await supabase.from("profiles").delete().eq("id", user.id);
+      // Sign out
+      await signOut();
+      toast.success("Your account has been deleted.");
+      navigate("/login");
+    } catch (err) {
+      toast.error("Failed to delete account. Please contact support.");
+    }
+    setDeleting(false);
+  };
+
+  return (
+    <>
+      {/* Change password */}
+      <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Change password</h3>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="font-medium">New password</Label>
+            <Input type="password" value={newPassword} onChange={(e: any) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+          </div>
+          <Button onClick={handleChangePassword} disabled={changingPw}>
+            {changingPw ? "Updating..." : "Update Password"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Data export */}
+      <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Export My Data</h3>
+        <p className="text-sm text-muted-foreground mb-4">Download all your data as a JSON file.</p>
+        <button
+          onClick={handleExportData}
+          disabled={exporting}
+          className="rounded-[12px] border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+        >
+          {exporting ? "Exporting..." : "Export My Data"}
+        </button>
+      </div>
+
+      {/* Delete account */}
+      <div className="rounded-xl border-2 border-red-200 dark:border-red-900 p-8">
+        <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">Delete Account</h3>
+        <p className="text-sm text-muted-foreground mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="rounded-[12px] border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-2.5 text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+        >
+          Delete My Account
+        </button>
+      </div>
+
+      {/* Legal links */}
+      <div className="flex gap-4 text-xs text-muted-foreground pt-4">
+        <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+        <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
+      </div>
+
+      {/* Delete modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl border border-border">
+            <h3 className="text-lg font-bold text-foreground mb-2">Permanently Delete Account?</h3>
+            <p className="text-sm text-muted-foreground mb-4">This permanently deletes your account and all data. This cannot be undone.</p>
+            <p className="text-sm text-foreground mb-2 font-medium">Type "DELETE" to confirm:</p>
+            <Input value={deleteConfirm} onChange={(e: any) => setDeleteConfirm(e.target.value)} placeholder="DELETE" className="mb-4" />
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => { setShowDeleteModal(false); setDeleteConfirm(""); }}>Cancel</Button>
+              <Button variant="destructive" className="flex-1" disabled={deleteConfirm !== "DELETE" || deleting} onClick={handleDeleteAccount}>
+                {deleting ? "Deleting..." : "Permanently Delete"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout */}
+      <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+        <Button variant="destructive" onClick={async () => { await signOut(); navigate("/login"); }}>Log out</Button>
+      </div>
+    </>
+  );
+}
+
 export default function SettingsPage() {
   const { user, profile, signOut, updateProfile, updatePassword } = useAuth();
   const { data: prefs } = useUserPreferences();
