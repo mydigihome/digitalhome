@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Camera } from "lucide-react";
+import defaultLiquidityBanner from "@/assets/liquidity-banner-default.jpg";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,7 @@ export function EmergencyFundFront() {
   const { cardData, saveCardData } = useMoneyPreferences();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const bannerUrl = cardData?.liquidity_banner_url || null;
+  const bannerUrl = cardData?.liquidity_banner_url || defaultLiquidityBanner;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,11 +55,7 @@ export function EmergencyFundFront() {
           overflow: "hidden",
         }}
       >
-        {bannerUrl ? (
-          <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #006c49, #6366f1)" }} />
-        )}
+        <img src={bannerUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0) 100%)" }} />
         <button
           onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
