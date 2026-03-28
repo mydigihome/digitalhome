@@ -82,6 +82,7 @@ interface Props {
 
 export default function GoalDetailView({ projectId, projectName, coverImage }: Props) {
   const navigate = useNavigate();
+  const { isPremium } = usePremiumStatus();
   const { data: stages = [], isLoading: stagesLoading } = useGoalStages(projectId);
   const { data: tasks = [], isLoading: tasksLoading } = useGoalTasks(projectId);
   const createStage = useCreateGoalStage();
