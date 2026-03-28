@@ -34,6 +34,8 @@ export interface UserPreferences {
   student_email: string | null;
   founding_member: boolean | null;
   user_number: number | null;
+  onboarding_step: number | null;
+  onboarding_skipped_steps: string[] | null;
   created_at: string;
   updated_at: string;
 }
