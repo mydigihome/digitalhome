@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useArchivedProjects, useRestoreProject, useDeleteArchivedProject } from "@/hooks/useArchivedProjects";
+import { useMonthlyReviews, useDeleteMonthlyReview } from "@/hooks/useMonthlyReviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
