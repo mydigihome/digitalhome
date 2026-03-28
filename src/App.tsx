@@ -29,6 +29,7 @@ import TemplateShop from "./pages/TemplateShop";
 import TemplateSuccess from "./pages/TemplateSuccess";
 import AdminTemplates from "./pages/AdminTemplates";
 import RelationshipsPage from "./pages/RelationshipsPage";
+import MonthlyReviewPage from "./pages/MonthlyReviewPage";
 
 const queryClient = new QueryClient();
 
