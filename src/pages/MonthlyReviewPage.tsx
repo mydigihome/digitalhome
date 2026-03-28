@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import confetti from "canvas-confetti";
+import { usePremiumStatus } from "@/components/PremiumGate";
 
 const SPENDING = [
   { name: "Housing", color: "#6366f1", amount: 2250 },

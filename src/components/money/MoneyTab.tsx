@@ -28,6 +28,7 @@ import MoneyTopBar from "./MoneyTopBar";
 import TrackFinanceModal from "./TrackFinanceModal";
 import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
+import PremiumGate, { usePremiumStatus } from "@/components/PremiumGate";
 import "../../styles/money-tab.css";
 
 const FULL_WIDTH = new Set(["plaid", "moneyflow", "tradingview",

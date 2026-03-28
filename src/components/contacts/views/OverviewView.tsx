@@ -7,6 +7,7 @@ import AIEmailWidget from "../panels/AIEmailWidget";
 import AITasksWidget from "../panels/AITasksWidget";
 import { useCreateContact } from "@/hooks/useContacts";
 import { toast } from "sonner";
+import PremiumGate, { usePremiumStatus } from "@/components/PremiumGate";
 
 const MOCK_PRIORITY = [
   {

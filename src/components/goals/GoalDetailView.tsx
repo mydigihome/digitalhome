@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { StageFinancialTrigger, StageFinancialPanel } from "@/components/goals/StageFinancialPanel";
+import { usePremiumStatus } from "@/components/PremiumGate";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
