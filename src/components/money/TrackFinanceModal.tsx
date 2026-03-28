@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { usePremiumStatus } from "@/components/PremiumGate";
+import { useNavigate } from "react-router-dom";
 
 const CARD_OPTIONS = [
   { id: "subscriptions", icon: "repeat", title: "Subscription Tracker", desc: "Monitor recurring charges and identify unused services.", plaid: true },
