@@ -1,6 +1,5 @@
 /* ── Contacts/Relationships Tab Layout ── */
 .contacts-root {
-  background-color: #f9f9fe;
   min-height: 100vh;
   width: 100%;
   display: flex;
@@ -10,7 +9,6 @@
 .contacts-tab-rail {
   width: 48px;
   flex-shrink: 0;
-  background: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -46,6 +44,10 @@
   background: #e8e8ed;
 }
 
+.dark .contacts-tab-line.inactive {
+  background: #2d3148;
+}
+
 .contacts-tab-label {
   font-size: 10px;
   font-weight: 700;
@@ -65,6 +67,10 @@
   color: #767586;
 }
 
+.dark .contacts-tab-label.inactive {
+  color: #9ca3af;
+}
+
 .contacts-main {
   flex: 1;
   padding: 32px;
@@ -79,11 +85,21 @@
   box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
 }
 
+.dark .contacts-card {
+  background: #1e2130;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
 .contacts-card-sm {
   background: #ffffff;
   border-radius: 24px;
   padding: 16px;
   box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
+}
+
+.dark .contacts-card-sm {
+  background: #1e2130;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 .contacts-card-row {
@@ -94,6 +110,11 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.dark .contacts-card-row {
+  background: #1e2130;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .contacts-email-panel {

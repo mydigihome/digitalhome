@@ -32,6 +32,8 @@ import TemplateSuccess from "./pages/TemplateSuccess";
 import AdminTemplates from "./pages/AdminTemplates";
 import RelationshipsPage from "./pages/RelationshipsPage";
 import MonthlyReviewPage from "./pages/MonthlyReviewPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -78,7 +80,7 @@ const App = () => (
             <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
             <Route path="/vision" element={<ProtectedRoute><ContentPlanner /></ProtectedRoute>} />
-            <Route path="/inbox" element={<ProtectedRoute><PriorityInbox /></ProtectedRoute>} />
+            <Route path="/inbox" element={<Navigate to="/relationships" replace />} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/events/:token" element={<PublicEventPage />} />
@@ -87,6 +89,8 @@ const App = () => (
             <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplates /></ProtectedRoute>} />
             <Route path="/relationships" element={<ProtectedRoute><RelationshipsPage /></ProtectedRoute>} />
             <Route path="/monthly-review" element={<ProtectedRoute><MonthlyReviewPage /></ProtectedRoute>} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           

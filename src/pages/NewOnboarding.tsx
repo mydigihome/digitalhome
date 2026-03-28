@@ -255,6 +255,11 @@ export default function NewOnboarding() {
             >
               Get Started
             </button>
+            <p className="text-xs mt-4" style={{ color: '#9ca3af' }}>
+              By continuing you agree to our{' '}
+              <a href="/terms" className="underline hover:text-white">Terms</a>{' '}and{' '}
+              <a href="/privacy" className="underline hover:text-white">Privacy Policy</a>
+            </p>
           </div>
         </div>
 

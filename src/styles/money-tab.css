@@ -1,10 +1,13 @@
 /* ── Money Tab Layout ── */
 .money-tab-root {
-  background-color: #ffffff;
   min-height: 100vh;
   width: 100%;
   padding: 24px;
   box-sizing: border-box;
+}
+
+.dark .money-tab-root {
+  background-color: transparent;
 }
 
 .money-tab-stack {
@@ -33,6 +36,11 @@
   box-shadow: 0 12px 40px rgba(70, 69, 84, 0.06);
   box-sizing: border-box;
   width: 100%;
+}
+
+.dark .money-card {
+  background: #1e2130;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* ── Recharts containers ── */

@@ -33,7 +33,27 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   }, [user]);
 
   useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains("dark"));
+    // Initialize dark mode from localStorage, then system preference
+    const saved = localStorage.getItem("digi-home-theme");
+    if (saved === "dark") {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
+      setDarkMode(true);
+    } else if (saved === "light") {
+      document.documentElement.classList.remove("dark");
+      document.body.classList.remove("dark");
+      setDarkMode(false);
+    } else {
+      // No saved preference — use system
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+        document.body.classList.add("dark");
+        setDarkMode(true);
+      } else {
+        setDarkMode(document.documentElement.classList.contains("dark"));
+      }
+    }
   }, []);
 
   const upsertPrefs = useUpsertPreferences();
@@ -48,6 +68,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       document.body.classList.remove("dark");
     }
     setDarkMode(newDark);
+    localStorage.setItem("digi-home-theme", newDark ? "dark" : "light");
     upsertPrefs.mutate({ sidebar_theme: newDark ? "dark" : "light" } as any);
   };
 
@@ -69,7 +90,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
@@ -465,7 +485,7 @@ function MobileTabBar() {
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: Folder, label: "Projects", path: "/projects" },
     { icon: Wallet, label: "Money", path: "/finance/wealth" },
-    { icon: Mail, label: "Inbox", path: "/inbox" },
+    { icon: Users, label: "Contacts", path: "/relationships" },
     { icon: MoreHorizontal, label: "More", path: "/__more__" },
   ];
 
@@ -485,9 +505,13 @@ function MobileTabBar() {
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
+  // Update isActive to handle contacts path for mobile tab
+  
+
   const isActive = (path: string) => {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
+    if (path === "/relationships") return location.pathname.startsWith("/relationships");
     if (path === "/__more__") return ["/vision", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
@@ -658,7 +682,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
 
         {/* Main Content */}
-        <main className="transition-all duration-300 min-h-screen" style={{ paddingLeft: `${sidebarWidth}px`, backgroundColor: '#f3f3f8' }}>
+        <main className="transition-all duration-300 min-h-screen bg-[#f3f3f8] dark:bg-[#0f1117]" style={{ paddingLeft: `${sidebarWidth}px` }}>
           <div className="lg:block hidden" /> {/* spacer for transition */}
           <ContentWrapper>{children}</ContentWrapper>
         </main>
