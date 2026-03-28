@@ -1168,6 +1168,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Project list */}
+                  <h3 className="font-bold text-base text-foreground mb-3">Projects</h3>
                   {!archivedProjects || archivedProjects.length === 0 ? (
                     <div className="bg-card rounded-xl border border-border p-12 text-center shadow-sm">
                       <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
