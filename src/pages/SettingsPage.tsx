@@ -125,7 +125,7 @@ function AccountTab({ user, newPassword, setNewPassword, changingPw, handleChang
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `digitalhome-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+      a.download = `digitalhome-export-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Data exported successfully");
