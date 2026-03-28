@@ -1143,12 +1143,12 @@ export default function SettingsPage() {
               {activeTab === "archived" && (
                 <>
                   {/* Header */}
-                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
+                   <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
                     <div className="flex items-start gap-4 mb-2">
                       <Archive size={28} className="text-muted-foreground mt-1" />
                       <div>
-                        <h3 className="text-xl font-semibold text-foreground">Archived Projects</h3>
-                        <p className="text-sm text-muted-foreground">View and manage your archived projects. Restore them to continue working or permanently delete them.</p>
+                        <h3 className="text-xl font-semibold text-foreground">Archive</h3>
+                        <p className="text-sm text-muted-foreground">View your archived projects and past monthly reviews.</p>
                       </div>
                     </div>
                   </div>
