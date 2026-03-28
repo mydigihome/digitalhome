@@ -71,30 +71,13 @@ export default function MonthlyReviewBanner() {
     return (
       <div
         onClick={() => navigate("/monthly-review")}
-        style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe" }}
+        style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe", justifyContent: "center" }}
       >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <span
-            style={{
-              width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
-              marginRight: 10, display: "inline-block", flexShrink: 0,
-            }}
-            className="animate-pulse"
-          />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#312e81" }}>
-            Your {prevMonthName} review is ready —
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", marginLeft: 4 }}>
-            see how you did →
-          </span>
-        </div>
-        <span
-          style={{
-            background: "#6366f1", color: "#ffffff", borderRadius: 20,
-            padding: "4px 14px", fontSize: 12, fontWeight: 600, flexShrink: 0,
-          }}
-        >
-          View Review
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#312e81" }}>
+          Your {prevMonthName} review is ready —
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", marginLeft: 4 }}>
+          see how you did →
         </span>
       </div>
     );
