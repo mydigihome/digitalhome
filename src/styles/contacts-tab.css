@@ -140,6 +140,238 @@
   padding: 32px;
 }
 
+/* ── Dark mode text & nested bg overrides for Contacts ── */
+.dark .contacts-main h2,
+.dark .contacts-main h3,
+.dark .contacts-main .font-bold.text-xl[style*="color: #1a1c1f"],
+.dark .contacts-main .font-bold.text-lg[style*="color: #1a1c1f"],
+.dark .contacts-main .font-bold.text-sm.text-\[\#1a1c1f\],
+.dark .contacts-main .text-sm.text-\[\#1a1c1f\],
+.dark .contacts-main .text-xs.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .font-extrabold.text-2xl.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main span[style*="color: #1a1c1f"],
+.dark .contacts-main div[style*="color: #1a1c1f"],
+.dark .contacts-main p[style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .text-\[\#767586\],
+.dark .contacts-main span[style*="color: #767586"],
+.dark .contacts-main div[style*="color: #767586"],
+.dark .contacts-main p[style*="color: #767586"] {
+  color: #9ca3af !important;
+}
+
+.dark .contacts-main .text-\[\#464554\],
+.dark .contacts-main span[style*="color: #464554"],
+.dark .contacts-main li[style*="color: #464554"] {
+  color: #e5e7eb !important;
+}
+
+.dark .contacts-main .text-xs.text-\[\#464554\] {
+  color: #e5e7eb !important;
+}
+
+/* Contact cards backgrounds */
+.dark .contacts-main div[style*="background: #ffffff"],
+.dark .contacts-main div[style*="backgroundColor: #ffffff"] {
+  background: #1e2130 !important;
+}
+
+.dark .contacts-main .bg-white {
+  background: #1e2130 !important;
+}
+
+.dark .contacts-main .bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+
+.dark .contacts-main div[style*="border: 1px solid #f0f0f5"],
+.dark .contacts-main div[style*="border: 1.5px solid #c0c1ff"] {
+  border-color: #2d3148 !important;
+}
+
+.dark .contacts-main div[style*="boxShadow: inset 3px 0 0 #4648d4"] {
+  background: #1e2130 !important;
+}
+
+/* Email panel dark */
+.dark .contacts-email-list {
+  background: #1e2130 !important;
+  border-right-color: #2d3148 !important;
+}
+
+.dark .contacts-email-detail {
+  background: #181a24 !important;
+}
+
+.dark .contacts-email-detail .bg-white {
+  background: #1e2130 !important;
+}
+
+/* Input backgrounds */
+.dark .contacts-main input.bg-\[\#f3f3f8\],
+.dark .contacts-main textarea.bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main input[style*="color: #767586"] {
+  color: #9ca3af !important;
+}
+
+/* Priority contact card */
+.dark .contacts-main .rounded-\[24px\][style*="background: #ffffff"] {
+  background: #1e2130 !important;
+}
+
+.dark .contacts-main .rounded-\[24px\][style*="backgroundColor: #ffffff"] {
+  background: #1e2130 !important;
+}
+
+.dark .contacts-main .rounded-\[24px\][style*="backgroundColor: #f9f9fe"] {
+  background: #252836 !important;
+}
+
+/* Contact row */
+.dark .contacts-main .rounded-\[20px\][style*="background: #ffffff"] {
+  background: #1e2130 !important;
+  border-color: #2d3148 !important;
+}
+
+/* Filter buttons inactive */
+.dark .contacts-main button.bg-\[\#f3f3f8\].text-\[\#767586\] {
+  background: #252836 !important;
+  color: #9ca3af !important;
+}
+
+/* Action buttons */
+.dark .contacts-main button.bg-\[\#f3f3f8\].text-\[\#1a1c1f\] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+/* Detail panel */
+.dark .contacts-main .bg-white.rounded-\[32px\] {
+  background: #1e2130 !important;
+}
+
+.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[16px\] {
+  background: #252836 !important;
+}
+
+.dark .contacts-main .font-bold.text-lg.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+/* Stat values */
+.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[16px\] .font-bold.text-lg.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+/* Modals (compose, add contact, detail panel) */
+.dark .fixed .bg-white.rounded-\[32px\],
+.dark .fixed .bg-white.rounded-\[24px\] {
+  background: #1e2130 !important;
+}
+
+.dark .fixed .bg-white .text-\[\#1a1c1f\],
+.dark .fixed .bg-white .font-bold.text-xl.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .fixed .rounded-\[32px\] .text-\[\#1a1c1f\],
+.dark .fixed .rounded-\[32px\] h2[style*="color: #1a1c1f"],
+.dark .fixed .rounded-\[24px\] h2[style*="color: #1a1c1f"],
+.dark .fixed .rounded-\[24px\] h3[style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .fixed .rounded-\[32px\] input.bg-\[\#f3f3f8\],
+.dark .fixed .rounded-\[32px\] textarea.bg-\[\#f3f3f8\],
+.dark .fixed .rounded-\[24px\] input.bg-\[\#f3f3f8\],
+.dark .fixed .rounded-\[24px\] textarea.bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .fixed .rounded-\[32px\] .bg-\[\#f3f3f8\],
+.dark .fixed .rounded-\[24px\] .bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+
+.dark .fixed .rounded-\[32px\] .text-\[\#767586\],
+.dark .fixed .rounded-\[24px\] .text-\[\#767586\] {
+  color: #9ca3af !important;
+}
+
+.dark .fixed .rounded-\[32px\] button.bg-\[\#f3f3f8\].text-\[\#1a1c1f\] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+/* AI widgets */
+.dark .contacts-main .rounded-\[24px\][style*="background: #ffffff"][style*="border: 1px solid #f0f0f5"] {
+  background: #1e2130 !important;
+  border-color: #2d3148 !important;
+}
+
+.dark .contacts-main .rounded-\[24px\] .font-bold.text-sm.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .rounded-\[24px\] .text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .rounded-\[24px\] input.bg-\[\#f3f3f8\],
+.dark .contacts-main .rounded-\[24px\] textarea.bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .rounded-\[24px\] .bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+
+/* Email reply area */
+.dark .contacts-email-detail textarea {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .contacts-email-detail .text-sm.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-email-detail h2[style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-email-detail .font-bold.text-sm.text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+/* Digi Home info box */
+.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[20px\] {
+  background: #252836 !important;
+}
+
+/* Border dashed add contact */
+.dark .contacts-main .border-dashed {
+  border-color: rgba(70, 72, 212, 0.3) !important;
+}
+
 @media (max-width: 768px) {
   .contacts-root {
     flex-direction: column;
