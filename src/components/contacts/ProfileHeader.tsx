@@ -120,13 +120,13 @@ export default function ProfileHeader() {
         {/* Name + tagline */}
         <div className="flex-1 min-w-0">
           <h2
-            className="font-extrabold text-2xl tracking-tight text-[#1a1c1f]"
+            className="font-extrabold text-2xl tracking-tight text-foreground"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             {profile?.full_name || "Your Name"}
           </h2>
           <p
-            className="text-sm text-[#767586] italic transition-opacity duration-400"
+            className="text-sm text-muted-foreground italic transition-opacity duration-400"
             style={{ opacity: fading ? 0 : 1 }}
           >
             {TAGLINES[taglineIndex]}
