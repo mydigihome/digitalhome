@@ -761,37 +761,15 @@ export default function SettingsPage() {
 
               {/* ==================== ACCOUNT TAB ==================== */}
               {activeTab === "account" && (
-                <>
-                  {/* Change password */}
-                  <div className="bg-card rounded-xl border border-border p-8 shadow-sm">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Change password</h3>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="font-medium">New password</Label>
-                        <Input
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Min 6 characters"
-                        />
-                      </div>
-                      <Button onClick={handleChangePassword} disabled={changingPw}>
-                        {changingPw ? "Updating..." : "Update Password"}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Danger zone */}
-                  <div className="rounded-xl border-2 border-red-200 p-8">
-                    <h3 className="text-lg font-semibold text-red-600 mb-4">Danger zone</h3>
-                    <Button
-                      variant="destructive"
-                      onClick={async () => { await signOut(); navigate("/login"); }}
-                    >
-                      Log out
-                    </Button>
-                  </div>
-                </>
+                <AccountTab
+                  user={user}
+                  newPassword={newPassword}
+                  setNewPassword={setNewPassword}
+                  changingPw={changingPw}
+                  handleChangePassword={handleChangePassword}
+                  signOut={signOut}
+                  navigate={navigate}
+                />
               )}
 
               {/* ==================== AI RESOURCES TAB ==================== */}
