@@ -69,7 +69,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   const bottomNavItems = [
-    { icon: Mail, label: "Mail", path: "/inbox", active: location.pathname.startsWith("/inbox"), color: "#8B5CF6" },
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
   ];
