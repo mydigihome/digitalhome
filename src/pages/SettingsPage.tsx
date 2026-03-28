@@ -1275,6 +1275,9 @@ export default function SettingsPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-sm text-foreground">{review.review_month}</p>
+                            <p className="text-xs mt-0.5" style={{ color: "#16a34a" }}>
+                              Approved {review.review_date ? new Date(review.review_date).toLocaleDateString() : ""}
+                            </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               Net worth ${Number(review.net_worth || 0).toLocaleString()} · Credit {review.credit_score || "—"}
                             </p>
@@ -1283,7 +1286,7 @@ export default function SettingsPage() {
                             )}
                           </div>
                           <button
-                            onClick={() => navigate(`/monthly-review?id=${review.id}`)}
+                            onClick={() => navigate(`/monthly-review?id=${review.id}&mode=read`)}
                             className="text-xs font-semibold" style={{ color: "#6366f1" }}
                           >
                             View
