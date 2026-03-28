@@ -636,7 +636,7 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
                 expandedId={financialPanelId}
                 onClose={() => setFinancialPanelId(null)}
               />
-            </React.Fragment>
+            </div>
             );
           })}
         </div>
