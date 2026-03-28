@@ -1,10 +1,13 @@
 /* ── Money Tab Layout ── */
 .money-tab-root {
-  background-color: #ffffff;
   min-height: 100vh;
   width: 100%;
   padding: 24px;
   box-sizing: border-box;
+}
+
+.dark .money-tab-root {
+  background-color: transparent;
 }
 
 .money-tab-stack {
