@@ -13,6 +13,7 @@ import { User, Moon, Sun, Sparkles, ExternalLink, Palette, Shield, Camera, Brain
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import AppShell from "@/components/AppShell";
+import BillingTab from "@/components/BillingTab";
 import { Switch } from "@/components/ui/switch";
 import { loadStripe } from "@stripe/stripe-js";
 
