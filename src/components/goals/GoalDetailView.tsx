@@ -112,6 +112,11 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
   const [newResourceTitle, setNewResourceTitle] = useState("");
   const [newResourceUrl, setNewResourceUrl] = useState("");
   const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const [financialPanelId, setFinancialPanelId] = useState<string | null>(null);
+
+  const toggleFinancialPanel = (id: string) => {
+    setFinancialPanelId(prev => prev === id ? null : id);
+  };
 
   useEffect(() => {
     if (stages.length > 0 && expandedStages.size === 0) {
