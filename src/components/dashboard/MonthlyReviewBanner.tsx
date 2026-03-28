@@ -9,7 +9,6 @@ export default function MonthlyReviewBanner() {
   const { data: reviews = [] } = useMonthlyReviews();
   const { data: prefs } = useUserPreferences();
 
-  // Hide for non-subscribers (founding members always see it)
   const isFoundingMember = profile?.founding_member === true;
   const isSubscribed = prefs?.is_subscribed === true;
   if (!isFoundingMember && !isSubscribed) return null;
@@ -33,79 +32,56 @@ export default function MonthlyReviewBanner() {
   // Temporarily force banner visible for testing — remove after confirming
   const showBanner = true;
 
+  const baseStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 24px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontFamily: "Inter, sans-serif",
+    zIndex: 10,
+    position: "relative",
+    cursor: "pointer",
+  };
+
   // STATE A: last 3 days of current month
   if (isLastThreeDays) {
     return (
       <div
         onClick={() => navigate("/monthly-review")}
-        style={{
-          width: "100%",
-          background: "#f9fafb",
-          borderBottom: "1px solid #e5e7eb",
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontFamily: "Inter, sans-serif",
-          zIndex: 10,
-          position: "relative",
-          cursor: "pointer",
-          marginBottom: 16,
-          borderRadius: 12,
-        }}
+        style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe" }}
       >
         <p style={{ margin: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#4338ca" }}>
             Almost done with {monthName} —
           </span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: "#6b7280" }}>
+          <span style={{ fontSize: 13, fontWeight: 400, color: "#6366f1" }}>
             {" "}your review will be ready on the 1st.
           </span>
         </p>
-        <span
-          style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
-        >
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#4f46e5", cursor: "pointer" }}>
           Preview →
         </span>
       </div>
     );
   }
 
-  // STATE B: first 7 days OR forced for testing, review not approved
+  // STATE B: first 7 days OR forced, review not approved
   if ((isFirstSevenDays || showBanner) && !reviewApproved) {
     return (
       <div
         onClick={() => navigate("/monthly-review")}
-        style={{
-          width: "100%",
-          background: "#ffffff",
-          borderBottom: "1px solid rgba(99,102,241,0.2)",
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontFamily: "Inter, sans-serif",
-          zIndex: 10,
-          position: "relative",
-          cursor: "pointer",
-          marginBottom: 16,
-          borderRadius: 12,
-        }}
+        style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe" }}
       >
         <div style={{ display: "flex", alignItems: "center" }}>
           <span
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "#6366f1",
-              marginRight: 10,
-              display: "inline-block",
-              flexShrink: 0,
+              width: 8, height: 8, borderRadius: "50%", background: "#6366f1",
+              marginRight: 10, display: "inline-block", flexShrink: 0,
             }}
             className="animate-pulse"
           />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#312e81" }}>
             Your {prevMonthName} review is ready —
           </span>
           <span style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", marginLeft: 4 }}>
@@ -114,13 +90,8 @@ export default function MonthlyReviewBanner() {
         </div>
         <span
           style={{
-            background: "#6366f1",
-            color: "#ffffff",
-            borderRadius: 20,
-            padding: "4px 14px",
-            fontSize: 12,
-            fontWeight: 600,
-            flexShrink: 0,
+            background: "#6366f1", color: "#ffffff", borderRadius: 20,
+            padding: "4px 14px", fontSize: 12, fontWeight: 600, flexShrink: 0,
           }}
         >
           View Review
@@ -133,20 +104,7 @@ export default function MonthlyReviewBanner() {
   if ((isFirstSevenDays || showBanner) && reviewApproved) {
     return (
       <div
-        style={{
-          width: "100%",
-          background: "#f0fdf4",
-          borderBottom: "1px solid #bbf7d0",
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          fontFamily: "Inter, sans-serif",
-          zIndex: 10,
-          position: "relative",
-          marginBottom: 16,
-          borderRadius: 12,
-        }}
+        style={{ ...baseStyle, background: "#f0fdf4", borderBottom: "1px solid #bbf7d0", cursor: "default" }}
       >
         <span style={{ fontSize: 13, fontWeight: 500, color: "#15803d" }}>
           ✓ {prevMonthName} review approved. Saved to your archive.
