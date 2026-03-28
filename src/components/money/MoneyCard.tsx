@@ -66,7 +66,7 @@ export default function MoneyCard({ id, front, back, className = "", fullWidth, 
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-1 top-3 z-30 w-6 h-7 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-40 hover:!opacity-100 transition-opacity hidden md:flex"
+        className="absolute -left-1 top-3 z-30 w-6 h-7 rounded-lg bg-white/80 dark:bg-[#252836]/80 backdrop-blur flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/card:opacity-40 hover:!opacity-100 transition-opacity hidden md:flex"
         style={{ boxShadow: "0 2px 8px rgba(70,69,84,0.1)" }}
       >
         <GripVertical className="w-3.5 h-3.5" style={{ color: "#767586" }} />
