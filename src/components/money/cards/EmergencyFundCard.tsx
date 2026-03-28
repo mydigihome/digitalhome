@@ -26,7 +26,7 @@ export function EmergencyFundFront() {
   const { cardData, saveCardData } = useMoneyPreferences();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const bannerUrl = cardData?.liquidity_banner_url || null;
+  const bannerUrl = cardData?.liquidity_banner_url || defaultLiquidityBanner;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
