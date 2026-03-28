@@ -46,6 +46,12 @@ export default function TrackFinanceModal({ open, onClose, existingCardIds, onAd
   };
 
   const handleAdd = () => {
+    if (!isPremium) {
+      onClose();
+      navigate("/settings?tab=billing");
+      toast.info("Upgrade to add premium financial cards");
+      return;
+    }
     onAddCards(Array.from(selected));
     setSelected(new Set());
     onClose();
