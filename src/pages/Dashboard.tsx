@@ -308,6 +308,8 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="min-h-screen bg-background">
+        {/* MONTHLY REVIEW BANNER — absolute top */}
+        <MonthlyReviewBanner />
 
         {/* ═══ HERO HEADER ═══ */}
         <motion.div
@@ -381,8 +383,7 @@ export default function Dashboard() {
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
-          {/* MONTHLY REVIEW BANNER */}
-          <MonthlyReviewBanner />
+
 
           {/* QUICK ACTIONS */}
           <div className="mb-5">
@@ -687,8 +688,7 @@ export default function Dashboard() {
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
 
-            {/* MONTHLY REVIEW BANNER */}
-              <MonthlyReviewBanner />
+
 
               {/* QUICK ACTIONS */}
               <div className="mb-5">
