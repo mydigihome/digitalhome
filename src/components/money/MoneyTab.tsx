@@ -26,12 +26,11 @@ import {
 } from "./cards/NewPlaidCards";
 import MoneyTopBar from "./MoneyTopBar";
 import TrackFinanceModal from "./TrackFinanceModal";
-import LiquidityBannerCard from "./LiquidityBannerCard";
 import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
 import { Eye, EyeOff, ChevronDown } from "lucide-react";
 import "../../styles/money-tab.css";
 
-const FULL_WIDTH = new Set(["plaid", "moneyflow", "tradingview", "liquidity-banner",
+const FULL_WIDTH = new Set(["plaid", "moneyflow", "tradingview",
   "subscriptions", "net-worth-history", "category-trends", "cashflow-calendar"]);
 
 const GRID_PAIRS: Record<string, string | undefined> = {
@@ -51,17 +50,16 @@ const GRID_PAIRS: Record<string, string | undefined> = {
 };
 
 const CARD_LABELS: Record<string, string> = {
-  plaid: "Plaid Banner",
+  plaid: "Bank Connection",
   "net-worth": "Net Worth",
   spending: "Spending",
   debt: "Debt Tracker",
   "credit-score": "Credit Score",
   bills: "Bills Calendar",
   moneyflow: "Money Flow",
-  emergency: "Emergency Fund",
+  emergency: "Liquidity Sprints",
   salary: "Salary",
   tradingview: "Market Terminal",
-  "liquidity-banner": "Liquidity Banner",
   subscriptions: "Subscription Tracker",
   "net-worth-history": "Net Worth History",
   "investment-portfolio": "Investment Portfolio",
@@ -132,34 +130,17 @@ export default function MoneyTab() {
   };
 
   const visibleOrder = cardOrder.filter(id => !hiddenCards.includes(id));
-  const searchFiltered = searchQuery
-    ? visibleOrder.filter(id => (CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase()))
-    : visibleOrder;
-
-  // Insert liquidity-banner before emergency if not in order
-  const displayOrder = [...searchFiltered];
-  if (!cardOrder.includes("liquidity-banner")) {
-    const emergencyIdx = displayOrder.indexOf("emergency");
-    if (emergencyIdx >= 0) {
-      displayOrder.splice(emergencyIdx, 0, "liquidity-banner");
-    }
-  }
 
   const rows: string[][] = [];
   const placed = new Set<string>();
-  for (const id of displayOrder) {
+  for (const id of visibleOrder) {
     if (placed.has(id)) continue;
-    if (id === "liquidity-banner") {
-      rows.push([id]);
-      placed.add(id);
-      continue;
-    }
     if (FULL_WIDTH.has(id)) {
       rows.push([id]);
       placed.add(id);
     } else {
       const pair = GRID_PAIRS[id];
-      if (pair && pair !== id && !placed.has(pair) && displayOrder.includes(pair)) {
+      if (pair && pair !== id && !placed.has(pair) && visibleOrder.includes(pair)) {
         rows.push([id, pair]);
         placed.add(id);
         placed.add(pair);
@@ -188,13 +169,13 @@ export default function MoneyTab() {
             <button
               onClick={() => setDrawerOpen(!drawerOpen)}
               className="w-full flex items-center justify-between"
-              style={{ padding: "10px 20px" }}
+              style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer" }}
             >
               <div className="flex items-center gap-2">
-                <EyeOff className="w-4 h-4" style={{ color: "#767586" }} />
-                <span className="text-sm font-bold" style={{ color: "#1a1c1f" }}>{hiddenCards.length} hidden card{hiddenCards.length > 1 ? "s" : ""}</span>
+                <EyeOff className="w-4 h-4 text-[#6b7280]" />
+                <span className="text-sm font-semibold text-[#111827]">{hiddenCards.length} hidden card{hiddenCards.length > 1 ? "s" : ""}</span>
               </div>
-              <span className="text-sm font-bold flex items-center gap-1" style={{ color: "#4648d4" }}>
+              <span className="text-sm font-semibold flex items-center gap-1 text-[#6366f1]">
                 Manage <ChevronDown className={`w-3.5 h-3.5 transition-transform ${drawerOpen ? "rotate-180" : ""}`} />
               </span>
             </button>
@@ -207,14 +188,14 @@ export default function MoneyTab() {
                   <button
                     key={id}
                     onClick={() => restoreCard(id)}
-                    className="flex items-center gap-2 rounded-full text-sm font-bold"
-                    style={{ background: "#f3f3f8", color: "#1a1c1f", padding: "6px 16px" }}
+                    className="flex items-center gap-2 rounded-full text-sm font-semibold border-none cursor-pointer"
+                    style={{ background: "#f3f4f6", color: "#111827", padding: "6px 16px" }}
                   >
                     {CARD_LABELS[id] || id}
-                    <Eye className="w-3.5 h-3.5" style={{ color: "#4648d4" }} />
+                    <Eye className="w-3.5 h-3.5 text-[#6366f1]" />
                   </button>
                 ))}
-                <button onClick={restoreAll} className="text-sm font-bold underline" style={{ color: "#4648d4" }}>
+                <button onClick={restoreAll} className="text-sm font-semibold underline text-[#6366f1] bg-transparent border-none cursor-pointer">
                   Restore All
                 </button>
               </div>
@@ -223,39 +204,28 @@ export default function MoneyTab() {
         )}
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={displayOrder.filter(id => id !== "liquidity-banner")} strategy={verticalListSortingStrategy}>
-            {rows.map((row, ri) => {
-              // Liquidity banner is a special non-sortable row
-              if (row.length === 1 && row[0] === "liquidity-banner") {
-                return (
-                  <div key="liquidity-banner" className="money-tab-row full-width">
-                    <LiquidityBannerCard />
-                  </div>
-                );
-              }
-
-              return (
-                <div key={ri} className={`money-tab-row${row.length === 1 ? " full-width" : ""}`}>
-                  {row.map((id) => {
-                    const c = cardMap[id];
-                    if (!c) return null;
-                    const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
-                    return (
-                      <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, transition: "opacity 200ms" }}>
-                        <MoneyCard
-                          id={id}
-                          front={c.front}
-                          back={c.back}
-                          fullWidth={FULL_WIDTH.has(id)}
-                          onHide={() => hideCard(id)}
-                          cardLabel={CARD_LABELS[id] || id}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+          <SortableContext items={visibleOrder} strategy={verticalListSortingStrategy}>
+            {rows.map((row, ri) => (
+              <div key={ri} className={`money-tab-row${row.length === 1 ? " full-width" : ""}`}>
+                {row.map((id) => {
+                  const c = cardMap[id];
+                  if (!c) return null;
+                  const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
+                  return (
+                    <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, pointerEvents: isSearchDimmed ? "none" : "auto", transition: "opacity 200ms" }}>
+                      <MoneyCard
+                        id={id}
+                        front={c.front}
+                        back={c.back}
+                        fullWidth={FULL_WIDTH.has(id)}
+                        onHide={() => hideCard(id)}
+                        cardLabel={CARD_LABELS[id] || id}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </SortableContext>
         </DndContext>
       </div>
