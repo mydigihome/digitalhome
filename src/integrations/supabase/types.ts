@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_reminders: {
+        Row: {
+          created_at: string | null
+          dismissed: boolean | null
+          id: string
+          message: string
+          remind_at: string
+          reminder_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          message: string
+          remind_at: string
+          reminder_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dismissed?: boolean | null
+          id?: string
+          message?: string
+          remind_at?: string
+          reminder_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           created_at: string
@@ -2552,12 +2582,14 @@ export type Database = {
           dashboard_icon_type: string | null
           density: string | null
           font_size: string | null
+          founding_member_since: string | null
           greeting_dismissed_date: string | null
           home_name: string | null
           home_style: string | null
           id: string
           is_subscribed: boolean | null
           last_review_month: string | null
+          lifetime_offer_dismissed: boolean | null
           location: string | null
           money_header_type: string | null
           money_header_value: string | null
@@ -2605,12 +2637,14 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          founding_member_since?: string | null
           greeting_dismissed_date?: string | null
           home_name?: string | null
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
           last_review_month?: string | null
+          lifetime_offer_dismissed?: boolean | null
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null
@@ -2658,12 +2692,14 @@ export type Database = {
           dashboard_icon_type?: string | null
           density?: string | null
           font_size?: string | null
+          founding_member_since?: string | null
           greeting_dismissed_date?: string | null
           home_name?: string | null
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
           last_review_month?: string | null
+          lifetime_offer_dismissed?: boolean | null
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null
