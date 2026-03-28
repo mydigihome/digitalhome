@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Camera } from "lucide-react";
+import defaultLiquidityBanner from "@/assets/liquidity-banner-default.jpg";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 import { useMoneyPreferences } from "@/hooks/useMoneyPreferences";
 import { supabase } from "@/integrations/supabase/client";
