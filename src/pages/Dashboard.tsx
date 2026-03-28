@@ -688,8 +688,7 @@ export default function Dashboard() {
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
 
-            {/* MONTHLY REVIEW BANNER */}
-              <MonthlyReviewBanner />
+
 
               {/* QUICK ACTIONS */}
               <div className="mb-5">
