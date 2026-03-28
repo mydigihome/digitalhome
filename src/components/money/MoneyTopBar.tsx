@@ -12,7 +12,7 @@ export default function MoneyTopBar({ searchQuery, onSearchChange, hiddenCount, 
   return (
     <div className="flex items-center gap-3 mb-4">
       {/* Search */}
-      <div className="flex-1 flex items-center gap-3 bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] px-4 py-2.5">
+      <div className="flex-1 flex items-center gap-3 bg-[#f9fafb] dark:bg-[#252836] border border-[#e5e7eb] dark:border-[#2d3148] rounded-[12px] px-4 py-2.5">
         <Search className="w-4 h-4 flex-shrink-0 text-[#9ca3af]" />
         <input
           value={searchQuery}
