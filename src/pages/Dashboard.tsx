@@ -32,6 +32,7 @@ import AIInsightsWidget from "@/components/dashboard/AIInsightsWidget";
 import GreetingBanner from "@/components/dashboard/GreetingBanner";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
+import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
 
 /* ── Helpers ── */
 function getGreeting() {
@@ -383,6 +384,9 @@ export default function Dashboard() {
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
+          {/* MONTHLY REVIEW BANNER */}
+          <MonthlyReviewBanner />
+
           {/* GREETING BANNER */}
           <GreetingBanner />
 
@@ -697,6 +701,9 @@ export default function Dashboard() {
 
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
+
+            {/* MONTHLY REVIEW BANNER */}
+              <MonthlyReviewBanner />
 
               {/* GREETING BANNER */}
               <GreetingBanner />
