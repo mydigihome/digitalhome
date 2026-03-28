@@ -39,72 +39,118 @@
 }
 
 .dark .money-card {
-  background: #1e2130;
+  background: #1e2130 !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
-/* ── Dark mode text & nested bg overrides ── */
-.dark .money-card h3,
-.dark .money-card p[style*="color: #1a1c1f"],
-.dark .money-card span[style*="color: #1a1c1f"],
-.dark .money-card div[style*="color: #1a1c1f"],
-.dark .money-card [style*="fill: #1a1c1f"] {
+/* ══════════════════════════════════════════════════
+   DARK MODE — COMPREHENSIVE TEXT OVERRIDES
+   Catch ALL inline-styled text inside .money-card
+   ══════════════════════════════════════════════════ */
+
+/* Primary text: #1a1c1f, #111827 → #f9fafb */
+.dark .money-card [style*="color: #1a1c1f"],
+.dark .money-card [style*="color: #111827"] {
   color: #f9fafb !important;
+}
+
+/* Heading text: #374151, #464554 → #e5e7eb */
+.dark .money-card [style*="color: #374151"],
+.dark .money-card [style*="color: #464554"] {
+  color: #e5e7eb !important;
+}
+
+/* Muted text: #767586, #6b7280 → #9ca3af */
+.dark .money-card [style*="color: #767586"],
+.dark .money-card [style*="color: #6b7280"] {
+  color: #9ca3af !important;
+}
+
+/* Green text: #006c49 stays readable, #92400E amber → muted */
+.dark .money-card [style*="color: #92400E"],
+.dark .money-card [style*="color: #92400e"] {
+  color: #fbbf24 !important;
+}
+
+/* SVG fill overrides */
+.dark .money-card [style*="fill: #1a1c1f"] {
   fill: #f9fafb !important;
 }
-
-.dark .money-card p[style*="color: #111827"],
-.dark .money-card span[style*="color: #111827"],
-.dark .money-card div[style*="color: #111827"] {
-  color: #f9fafb !important;
+.dark .money-card [style*="fill: #767586"] {
+  fill: #9ca3af !important;
+}
+.dark .money-card svg text[style*="fill: #1a1c1f"] {
+  fill: #f9fafb !important;
+}
+.dark .money-card svg text[style*="fill: #767586"] {
+  fill: #9ca3af !important;
 }
 
-.dark .money-card p[style*="color: #464554"],
-.dark .money-card span[style*="color: #464554"],
-.dark .money-card div[style*="color: #464554"] {
-  color: #e5e7eb !important;
+/* Chart axis ticks */
+.dark .money-card .recharts-cartesian-axis-tick text {
+  fill: #9ca3af !important;
+}
+.dark .money-card .recharts-cartesian-grid line {
+  stroke: #2d3148 !important;
 }
 
-.dark .money-card p[style*="color: #374151"],
-.dark .money-card span[style*="color: #374151"],
-.dark .money-card div[style*="color: #374151"] {
-  color: #e5e7eb !important;
+/* ══════════════════════════════════════════════════
+   DARK MODE — BACKGROUND OVERRIDES
+   ══════════════════════════════════════════════════ */
+
+/* Nested sections: #f3f3f8 → #252836 */
+.dark .money-card [style*="background: #f3f3f8"],
+.dark .money-card [style*="background-color: #f3f3f8"],
+.dark .money-card [style*="backgroundColor: #f3f3f8"] {
+  background: #252836 !important;
+  background-color: #252836 !important;
 }
 
-.dark .money-card p[style*="color: #767586"],
-.dark .money-card span[style*="color: #767586"],
-.dark .money-card div[style*="color: #767586"],
-.dark .money-card label[style*="color: #767586"] {
-  color: #9ca3af !important;
-}
-
-.dark .money-card p[style*="color: #6b7280"],
-.dark .money-card span[style*="color: #6b7280"],
-.dark .money-card div[style*="color: #6b7280"] {
-  color: #9ca3af !important;
-}
-
-.dark .money-card p[style*="color: #9ca3af"],
-.dark .money-card span[style*="color: #9ca3af"] {
-  color: #6b7280 !important;
-}
-
-.dark .money-card div[style*="background: #f3f3f8"],
-.dark .money-card div[style*="background-color: #f3f3f8"],
-.dark .money-card .rounded-xl[style*="background: #f3f3f8"],
-.dark .money-card .rounded-\[16px\][style*="background: #f3f3f8"],
-.dark .money-card .rounded-\[20px\][style*="background: #f3f3f8"] {
+/* Light nested: #f9f9fb, #f9fafb, #fafafa → #252836 */
+.dark .money-card [style*="background: #f9f9fb"],
+.dark .money-card [style*="background: #f9fafb"],
+.dark .money-card [style*="backgroundColor: #f9f9fb"],
+.dark .money-card [style*="backgroundColor: #f9fafb"],
+.dark .money-card [style*="background: #fafafa"],
+.dark .money-card [style*="backgroundColor: #fafafa"] {
   background: #252836 !important;
 }
 
-.dark .money-card div[style*="background: #e8e8ed"],
-.dark .money-card .h-2[style*="background: #e8e8ed"],
-.dark .money-card .h-1\.5[style*="background: #e8e8ed"],
-.dark .money-card .h-3[style*="background: #e8e8ed"] {
+/* Deep nested / progress bars: #e8e8ed → #2d3148 */
+.dark .money-card [style*="background: #e8e8ed"],
+.dark .money-card [style*="backgroundColor: #e8e8ed"] {
   background: #2d3148 !important;
 }
 
-.dark .money-card input[style*="background: #f3f3f8"] {
+/* White nested: #fff, #ffffff → card bg */
+.dark .money-card [style*="background: #fff"],
+.dark .money-card [style*="background: #ffffff"],
+.dark .money-card [style*="backgroundColor: #ffffff"],
+.dark .money-card [style*="background: white"] {
+  background: #1e2130 !important;
+}
+
+/* Amber/warning rows: #FFFBEB → muted dark amber */
+.dark .money-card [style*="background: #FFFBEB"],
+.dark .money-card [style*="background: #fffbeb"],
+.dark .money-card [style*="backgroundColor: #fffbeb"],
+.dark .money-card [style*="backgroundColor: #FFFBEB"] {
+  background: #2d2a1e !important;
+}
+
+/* Green positive bg: #dcfce7 → muted dark green */
+.dark .money-card [style*="backgroundColor: #dcfce7"] {
+  background-color: #1a2e1e !important;
+}
+
+/* Red negative bg: #ffe4e6 → muted dark red */
+.dark .money-card [style*="backgroundColor: #ffe4e6"] {
+  background-color: #2d1b1e !important;
+}
+
+/* Input fields */
+.dark .money-card input[style*="background: #f3f3f8"],
+.dark .money-card input[style*="backgroundColor: #f3f3f8"] {
   background: #252836 !important;
   color: #f9fafb !important;
 }
@@ -113,86 +159,121 @@
   color: #f9fafb !important;
 }
 
+/* Buttons */
 .dark .money-card button[style*="background: #f3f3f8"],
 .dark .money-card button[style*="color: #464554"] {
   background: #252836 !important;
   color: #e5e7eb !important;
 }
 
-.dark .money-card svg text[style*="fill: #1a1c1f"] {
-  fill: #f9fafb !important;
+/* ══════════════════════════════════════════════════
+   DARK MODE — BORDER OVERRIDES
+   ══════════════════════════════════════════════════ */
+
+.dark .money-card [style*="border-bottom: 1px solid #f3f3f8"],
+.dark .money-card [style*="borderBottom: 1px solid #f3f3f8"] {
+  border-bottom-color: #2d3148 !important;
 }
 
-.dark .money-card svg text[style*="fill: #767586"] {
-  fill: #9ca3af !important;
+.dark .money-card [style*="border-top: 1px solid #f3f3f8"],
+.dark .money-card [style*="borderTop: 1px solid #f3f3f8"] {
+  border-top-color: #2d3148 !important;
+}
+
+.dark .money-card [style*="borderColor: #f3f3f8"],
+.dark .money-card [style*="border-color: #f3f3f8"] {
+  border-color: #2d3148 !important;
+}
+
+.dark .money-card [style*="border: 1px solid #FDE68A"],
+.dark .money-card [style*="border: 1px solid #fde68a"] {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.dark .money-card [style*="border: 1px solid rgba(99,102,241,0.1)"] {
+  border-color: rgba(99, 102, 241, 0.2) !important;
 }
 
 .dark .money-card path[stroke="#f3f3f8"] {
   stroke: #2d3148;
 }
 
-.dark .money-card div[style*="border-bottom: 1px solid #f3f3f8"] {
-  border-bottom-color: #2d3148 !important;
+/* Divider lines */
+.dark .money-card .h-px[style*="background: #f3f3f8"],
+.dark .money-card div.h-px[style*="background: #f3f3f8"] {
+  background: #2d3148 !important;
 }
 
-.dark .money-card div[style*="borderBottom: 1px solid #f3f3f8"] {
-  border-bottom-color: #2d3148 !important;
+/* ══════════════════════════════════════════════════
+   DARK MODE — PILL BADGES
+   ══════════════════════════════════════════════════ */
+
+/* Plaid/indigo pills */
+.dark .money-card [style*="background: rgba(99,102,241,0.1)"],
+.dark .money-card [style*="backgroundColor: rgba(99,102,241,0.1)"] {
+  background: #2d2b4e !important;
 }
 
-.dark .money-card div[style*="border-top: 1px solid #f3f3f8"],
-.dark .money-card div[style*="borderTop: 1px solid #f3f3f8"] {
-  border-top-color: #2d3148 !important;
-}
-
-.dark .money-card div[style*="background: #f9f9fb"],
-.dark .money-card div[style*="background: #f9fafb"],
-.dark .money-card div[style*="backgroundColor: #f9f9fb"] {
+/* Manual badge pills with #f3f3f8 bg */
+.dark .money-card span[style*="background: #f3f3f8"][style*="color: #767586"] {
   background: #252836 !important;
-}
-
-.dark .money-card div[style*="background: #fafafa"],
-.dark .money-card div[style*="backgroundColor: #fafafa"] {
-  background: #1a1d27 !important;
-}
-
-.dark .money-card div[style*="borderColor: #f3f3f8"],
-.dark .money-card div[style*="border-color: #f3f3f8"] {
-  border-color: #2d3148 !important;
-}
-
-/* NewPlaidCards inline style overrides */
-.dark .money-card span[style*="fontWeight: 700"][style*="color: #1a1c1f"],
-.dark .money-card span[style*="fontWeight: 800"][style*="color: #1a1c1f"],
-.dark .money-card div[style*="fontWeight: 800"][style*="color: #1a1c1f"],
-.dark .money-card div[style*="fontSize:"][style*="color: #1a1c1f"],
-.dark .money-card span[style*="fontSize:"][style*="color: #1a1c1f"] {
-  color: #f9fafb !important;
-}
-
-.dark .money-card span[style*="color: #767586"][style*="fontSize"],
-.dark .money-card div[style*="color: #767586"][style*="fontSize"] {
   color: #9ca3af !important;
 }
 
-.dark .money-card div[style*="backgroundColor: #f3f3f8"] {
-  background-color: #252836 !important;
+/* Amber badge pills */
+.dark .money-card [style*="backgroundColor: #fffbeb"][style*="color: #92400e"],
+.dark .money-card [style*="backgroundColor: #fffbeb"][style*="color: #92400E"] {
+  background-color: #2d2a1e !important;
+  color: #fbbf24 !important;
 }
 
-.dark .money-card div[style*="backgroundColor: #dcfce7"] {
-  background-color: rgba(34, 197, 94, 0.15) !important;
+/* Green badge */
+.dark .money-card [style*="background: rgba(108,248,187,0.3)"] {
+  background: rgba(74, 222, 128, 0.15) !important;
 }
 
-.dark .money-card div[style*="backgroundColor: #ffe4e6"] {
-  background-color: rgba(244, 63, 94, 0.15) !important;
+/* ══════════════════════════════════════════════════
+   DARK MODE — TOOLTIPS
+   ══════════════════════════════════════════════════ */
+
+.dark .money-card [style*="background: rgba(255,255,255,0.7)"] {
+  background: rgba(30, 33, 48, 0.9) !important;
+  color: #f9fafb !important;
 }
 
-/* Watchlist panel dark */
-.dark .money-card div[style*="background: #fff"],
-.dark .money-card div[style*="background: #ffffff"] {
+/* ══════════════════════════════════════════════════
+   DARK MODE — CREDIT SCORE MODAL
+   ══════════════════════════════════════════════════ */
+
+.dark .fixed .bg-white.rounded-\[24px\] {
   background: #1e2130 !important;
 }
 
-/* Money tab top bar overrides */
+.dark .fixed .bg-white.rounded-\[24px\] [style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .fixed .bg-white.rounded-\[24px\] [style*="color: #767586"] {
+  color: #9ca3af !important;
+}
+
+.dark .fixed .bg-white.rounded-\[24px\] [style*="color: #464554"] {
+  color: #e5e7eb !important;
+}
+
+.dark .fixed .bg-white.rounded-\[24px\] [style*="background: #f3f3f8"],
+.dark .fixed .bg-white.rounded-\[24px\] input[style*="background: #f3f3f8"] {
+  background: #252836 !important;
+}
+
+.dark .fixed .bg-white.rounded-\[24px\] input[style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE — MONEY TOP BAR & HIDDEN DRAWER
+   ══════════════════════════════════════════════════ */
+
 .dark .money-tab-stack .bg-\[\#f9fafb\] {
   background: #252836 !important;
 }
@@ -209,7 +290,6 @@
   border-color: #2d3148 !important;
 }
 
-/* Hidden cards drawer */
 .dark .money-tab-stack button[style*="background: #f3f4f6"] {
   background: #252836 !important;
   color: #f9fafb !important;
@@ -218,7 +298,10 @@
   color: #f9fafb !important;
 }
 
-/* Track Finance Modal dark */
+/* ══════════════════════════════════════════════════
+   DARK MODE — TRACK FINANCE MODAL
+   ══════════════════════════════════════════════════ */
+
 .dark .money-tab-root ~ div .bg-white.rounded-\[24px\],
 .dark div[class*="TrackFinance"] .bg-white {
   background: #1e2130 !important;
@@ -258,9 +341,42 @@
   padding: 12px;
 }
 
+.dark .tv-watchlist-panel {
+  border-right-color: #2d3148;
+}
+
 .tv-chart-container {
   flex: 1;
   height: 520px;
+}
+
+/* ── Tailwind class-based overrides ── */
+.dark .money-card .bg-white {
+  background: #1e2130 !important;
+}
+.dark .money-card .bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+.dark .money-card .bg-gray-50 {
+  background: #252836 !important;
+}
+.dark .money-card .bg-amber-50 {
+  background: #2d2a1e !important;
+}
+.dark .money-card .text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+.dark .money-card .text-\[\#111827\] {
+  color: #f9fafb !important;
+}
+.dark .money-card .text-\[\#767586\] {
+  color: #9ca3af !important;
+}
+.dark .money-card .text-\[\#464554\] {
+  color: #e5e7eb !important;
+}
+.dark .money-card .border-\[\#f0f0f5\] {
+  border-color: #2d3148 !important;
 }
 
 /* ── Mobile ── */

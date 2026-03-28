@@ -86,7 +86,7 @@
 }
 
 .dark .contacts-card {
-  background: #1e2130;
+  background: #1e2130 !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -98,7 +98,7 @@
 }
 
 .dark .contacts-card-sm {
-  background: #1e2130;
+  background: #1e2130 !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
@@ -113,7 +113,7 @@
 }
 
 .dark .contacts-card-row {
-  background: #1e2130;
+  background: #1e2130 !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -140,53 +140,93 @@
   padding: 32px;
 }
 
-/* ── Dark mode text & nested bg overrides for Contacts ── */
-.dark .contacts-main h2,
-.dark .contacts-main h3,
-.dark .contacts-main .font-bold.text-xl[style*="color: #1a1c1f"],
-.dark .contacts-main .font-bold.text-lg[style*="color: #1a1c1f"],
-.dark .contacts-main .font-bold.text-sm.text-\[\#1a1c1f\],
-.dark .contacts-main .text-sm.text-\[\#1a1c1f\],
-.dark .contacts-main .text-xs.text-\[\#1a1c1f\] {
+/* ══════════════════════════════════════════════════
+   DARK MODE — COMPREHENSIVE TEXT OVERRIDES
+   Catch ALL inline-styled text inside .contacts-main
+   ══════════════════════════════════════════════════ */
+
+/* Primary text: #1a1c1f, #111827 → #f9fafb */
+.dark .contacts-main [style*="color: #1a1c1f"],
+.dark .contacts-main [style*="color: #111827"] {
   color: #f9fafb !important;
 }
 
-.dark .contacts-main .font-extrabold.text-2xl.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
+/* Heading text: #374151, #464554 → #e5e7eb */
+.dark .contacts-main [style*="color: #374151"],
+.dark .contacts-main [style*="color: #464554"] {
+  color: #e5e7eb !important;
 }
 
-.dark .contacts-main span[style*="color: #1a1c1f"],
-.dark .contacts-main div[style*="color: #1a1c1f"],
-.dark .contacts-main p[style*="color: #1a1c1f"] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-main .text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-main .text-\[\#767586\],
-.dark .contacts-main span[style*="color: #767586"],
-.dark .contacts-main div[style*="color: #767586"],
-.dark .contacts-main p[style*="color: #767586"] {
+/* Muted text: #767586, #6b7280 → #9ca3af */
+.dark .contacts-main [style*="color: #767586"],
+.dark .contacts-main [style*="color: #6b7280"] {
   color: #9ca3af !important;
 }
 
-.dark .contacts-main .text-\[\#464554\],
-.dark .contacts-main span[style*="color: #464554"],
-.dark .contacts-main li[style*="color: #464554"] {
-  color: #e5e7eb !important;
+/* SVG fill */
+.dark .contacts-main [style*="fill: #1a1c1f"] {
+  fill: #f9fafb !important;
 }
 
-.dark .contacts-main .text-xs.text-\[\#464554\] {
-  color: #e5e7eb !important;
+/* ══════════════════════════════════════════════════
+   DARK MODE — BACKGROUND OVERRIDES
+   ══════════════════════════════════════════════════ */
+
+/* Nested sections: #f3f3f8 → #252836 */
+.dark .contacts-main [style*="background: #f3f3f8"],
+.dark .contacts-main [style*="backgroundColor: #f3f3f8"],
+.dark .contacts-main [style*="background-color: #f3f3f8"] {
+  background: #252836 !important;
+  background-color: #252836 !important;
 }
 
-/* Contact cards backgrounds */
-.dark .contacts-main div[style*="background: #ffffff"],
-.dark .contacts-main div[style*="backgroundColor: #ffffff"] {
+/* White backgrounds → card dark */
+.dark .contacts-main [style*="background: #ffffff"],
+.dark .contacts-main [style*="backgroundColor: #ffffff"],
+.dark .contacts-main [style*="background: #fff"],
+.dark .contacts-main [style*="background: white"] {
   background: #1e2130 !important;
 }
+
+/* Light nested: #f9f9fe, #f9fafb → #252836 */
+.dark .contacts-main [style*="background: #f9f9fe"],
+.dark .contacts-main [style*="backgroundColor: #f9f9fe"],
+.dark .contacts-main [style*="background: #f9fafb"],
+.dark .contacts-main [style*="backgroundColor: #f9fafb"] {
+  background: #252836 !important;
+}
+
+/* Input backgrounds */
+.dark .contacts-main input[style*="background: #f3f3f8"],
+.dark .contacts-main textarea[style*="background: #f3f3f8"] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main input[style*="color: #1a1c1f"],
+.dark .contacts-main input[style*="color: #767586"] {
+  color: #f9fafb !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE — BORDER OVERRIDES
+   ══════════════════════════════════════════════════ */
+
+.dark .contacts-main [style*="border: 1px solid #f0f0f5"],
+.dark .contacts-main [style*="border: 1.5px solid #c0c1ff"],
+.dark .contacts-main [style*="borderColor: #f3f3f8"],
+.dark .contacts-main [style*="border-color: #f3f3f8"] {
+  border-color: #2d3148 !important;
+}
+
+.dark .contacts-main [style*="borderBottom: 1px solid #f3f3f8"],
+.dark .contacts-main [style*="border-bottom: 1px solid #f3f3f8"] {
+  border-bottom-color: #2d3148 !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE — TAILWIND CLASS OVERRIDES
+   ══════════════════════════════════════════════════ */
 
 .dark .contacts-main .bg-white {
   background: #1e2130 !important;
@@ -196,16 +236,52 @@
   background: #252836 !important;
 }
 
-.dark .contacts-main div[style*="border: 1px solid #f0f0f5"],
-.dark .contacts-main div[style*="border: 1.5px solid #c0c1ff"] {
+.dark .contacts-main .text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .text-\[\#767586\] {
+  color: #9ca3af !important;
+}
+
+.dark .contacts-main .text-\[\#464554\] {
+  color: #e5e7eb !important;
+}
+
+.dark .contacts-main .text-\[\#111827\] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-main .border-\[\#f0f0f5\] {
   border-color: #2d3148 !important;
 }
 
-.dark .contacts-main div[style*="boxShadow: inset 3px 0 0 #4648d4"] {
-  background: #1e2130 !important;
+/* Avatar circles */
+.dark .contacts-main .bg-\[\#e1e0ff\] {
+  background: #2d2b4e !important;
+}
+.dark .contacts-main .bg-\[\#e1e0ff\] + *,
+.dark .contacts-main .text-\[\#4648d4\] {
+  color: #a5b4fc !important;
 }
 
-/* Email panel dark */
+.dark .contacts-main .bg-\[\#ffe4e6\] {
+  background: #2d1b1e !important;
+}
+
+.dark .contacts-main .bg-\[\#dcfce7\] {
+  background: #1a2e1e !important;
+}
+
+/* Filter/action buttons */
+.dark .contacts-main button.bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+
+/* ══════════════════════════════════════════════════
+   DARK MODE — EMAIL PANEL
+   ══════════════════════════════════════════════════ */
+
 .dark .contacts-email-list {
   background: #1e2130 !important;
   border-right-color: #2d3148 !important;
@@ -219,46 +295,61 @@
   background: #1e2130 !important;
 }
 
-/* Input backgrounds */
-.dark .contacts-main input.bg-\[\#f3f3f8\],
-.dark .contacts-main textarea.bg-\[\#f3f3f8\] {
+.dark .contacts-email-detail [style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .contacts-email-detail [style*="color: #767586"] {
+  color: #9ca3af !important;
+}
+
+.dark .contacts-email-detail textarea {
   background: #252836 !important;
   color: #f9fafb !important;
 }
 
-.dark .contacts-main input[style*="color: #767586"] {
+/* ══════════════════════════════════════════════════
+   DARK MODE — MODALS (compose, add contact, detail)
+   ══════════════════════════════════════════════════ */
+
+.dark .fixed .bg-white.rounded-\[32px\],
+.dark .fixed .bg-white.rounded-\[24px\] {
+  background: #1e2130 !important;
+}
+
+.dark .fixed [style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .fixed [style*="color: #767586"] {
   color: #9ca3af !important;
 }
 
-/* Priority contact card */
-.dark .contacts-main .rounded-\[24px\][style*="background: #ffffff"] {
-  background: #1e2130 !important;
+.dark .fixed [style*="color: #464554"] {
+  color: #e5e7eb !important;
 }
 
-.dark .contacts-main .rounded-\[24px\][style*="backgroundColor: #ffffff"] {
-  background: #1e2130 !important;
-}
-
-.dark .contacts-main .rounded-\[24px\][style*="backgroundColor: #f9f9fe"] {
+.dark .fixed [style*="background: #f3f3f8"],
+.dark .fixed [style*="backgroundColor: #f3f3f8"] {
   background: #252836 !important;
 }
 
-/* Contact row */
-.dark .contacts-main .rounded-\[20px\][style*="background: #ffffff"] {
-  background: #1e2130 !important;
-  border-color: #2d3148 !important;
-}
-
-/* Filter buttons inactive */
-.dark .contacts-main button.bg-\[\#f3f3f8\].text-\[\#767586\] {
-  background: #252836 !important;
-  color: #9ca3af !important;
-}
-
-/* Action buttons */
-.dark .contacts-main button.bg-\[\#f3f3f8\].text-\[\#1a1c1f\] {
+.dark .fixed input[style*="background: #f3f3f8"],
+.dark .fixed textarea[style*="background: #f3f3f8"] {
   background: #252836 !important;
   color: #f9fafb !important;
+}
+
+.dark .fixed .bg-\[\#f3f3f8\] {
+  background: #252836 !important;
+}
+
+.dark .fixed .text-\[\#1a1c1f\] {
+  color: #f9fafb !important;
+}
+
+.dark .fixed .text-\[\#767586\] {
+  color: #9ca3af !important;
 }
 
 /* Detail panel */
@@ -266,105 +357,14 @@
   background: #1e2130 !important;
 }
 
-.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[16px\] {
-  background: #252836 !important;
-}
-
-.dark .contacts-main .font-bold.text-lg.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-/* Stat values */
-.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[16px\] .font-bold.text-lg.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-/* Modals (compose, add contact, detail panel) */
-.dark .fixed .bg-white.rounded-\[32px\],
-.dark .fixed .bg-white.rounded-\[24px\] {
-  background: #1e2130 !important;
-}
-
-.dark .fixed .bg-white .text-\[\#1a1c1f\],
-.dark .fixed .bg-white .font-bold.text-xl.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-.dark .fixed .rounded-\[32px\] .text-\[\#1a1c1f\],
-.dark .fixed .rounded-\[32px\] h2[style*="color: #1a1c1f"],
-.dark .fixed .rounded-\[24px\] h2[style*="color: #1a1c1f"],
-.dark .fixed .rounded-\[24px\] h3[style*="color: #1a1c1f"] {
-  color: #f9fafb !important;
-}
-
-.dark .fixed .rounded-\[32px\] input.bg-\[\#f3f3f8\],
-.dark .fixed .rounded-\[32px\] textarea.bg-\[\#f3f3f8\],
-.dark .fixed .rounded-\[24px\] input.bg-\[\#f3f3f8\],
-.dark .fixed .rounded-\[24px\] textarea.bg-\[\#f3f3f8\] {
-  background: #252836 !important;
-  color: #f9fafb !important;
-}
-
-.dark .fixed .rounded-\[32px\] .bg-\[\#f3f3f8\],
-.dark .fixed .rounded-\[24px\] .bg-\[\#f3f3f8\] {
-  background: #252836 !important;
-}
-
-.dark .fixed .rounded-\[32px\] .text-\[\#767586\],
-.dark .fixed .rounded-\[24px\] .text-\[\#767586\] {
-  color: #9ca3af !important;
-}
-
-.dark .fixed .rounded-\[32px\] button.bg-\[\#f3f3f8\].text-\[\#1a1c1f\] {
-  background: #252836 !important;
-  color: #f9fafb !important;
-}
-
-/* AI widgets */
-.dark .contacts-main .rounded-\[24px\][style*="background: #ffffff"][style*="border: 1px solid #f0f0f5"] {
-  background: #1e2130 !important;
-  border-color: #2d3148 !important;
-}
-
-.dark .contacts-main .rounded-\[24px\] .font-bold.text-sm.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-main .rounded-\[24px\] .text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-main .rounded-\[24px\] input.bg-\[\#f3f3f8\],
-.dark .contacts-main .rounded-\[24px\] textarea.bg-\[\#f3f3f8\] {
-  background: #252836 !important;
-  color: #f9fafb !important;
-}
-
-.dark .contacts-main .rounded-\[24px\] .bg-\[\#f3f3f8\] {
-  background: #252836 !important;
-}
-
-/* Email reply area */
-.dark .contacts-email-detail textarea {
-  background: #252836 !important;
-  color: #f9fafb !important;
-}
-
-.dark .contacts-email-detail .text-sm.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-email-detail h2[style*="color: #1a1c1f"] {
-  color: #f9fafb !important;
-}
-
-.dark .contacts-email-detail .font-bold.text-sm.text-\[\#1a1c1f\] {
-  color: #f9fafb !important;
-}
-
-/* Digi Home info box */
+.dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[16px\],
 .dark .contacts-main .bg-\[\#f3f3f8\].rounded-\[20px\] {
   background: #252836 !important;
+}
+
+/* Active email row highlight */
+.dark .contacts-main [style*="boxShadow: inset 3px 0 0 #4648d4"] {
+  background: #1e2130 !important;
 }
 
 /* Border dashed add contact */
@@ -372,6 +372,7 @@
   border-color: rgba(70, 72, 212, 0.3) !important;
 }
 
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .contacts-root {
     flex-direction: column;
