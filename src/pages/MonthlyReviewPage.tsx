@@ -329,7 +329,7 @@ export default function MonthlyReviewPage() {
                   </div>
                   <div className="flex-1">
                     <span className="font-semibold text-sm" style={{ color: "#111827" }}>{c.name}</span>
-                    {c.job_title && <span className="text-xs ml-2" style={{ color: "#9ca3af" }}>{c.job_title}</span>}
+                    {(c as any).job_title && <span className="text-xs ml-2" style={{ color: "#9ca3af" }}>{(c as any).job_title}</span>}
                   </div>
                   <span className="text-xs font-semibold" style={{ color: isOverdue ? "#f59e0b" : "#16a34a" }}>
                     {isOverdue ? `⚠ ${daysSince || "?"}d — reach out` : "✓ Active"}
