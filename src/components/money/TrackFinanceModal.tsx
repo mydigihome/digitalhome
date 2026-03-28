@@ -27,6 +27,8 @@ interface Props {
 
 export default function TrackFinanceModal({ open, onClose, existingCardIds, onAddCards, plaidConnected = false }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { isPremium } = usePremiumStatus();
+  const navigate = useNavigate();
 
   if (!open) return null;
 
