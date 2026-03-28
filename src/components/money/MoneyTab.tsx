@@ -243,7 +243,6 @@ export default function MoneyTab() {
                           cardLabel={CARD_LABELS[id] || id}
                         />
                       )}
-                      />
                     </div>
                   );
                 })}
