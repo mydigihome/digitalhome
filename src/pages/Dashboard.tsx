@@ -356,6 +356,28 @@ export default function Dashboard() {
               {greeting}
             </h1>
           </div>
+
+          {/* Monthly Review Button — shows last 3 days of month or ?review=1 */}
+          {(() => {
+            const today = new Date();
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            const showReview = today.getDate() >= lastDay - 2 || searchParams.get("review") === "1";
+            const alreadyDone = (prefs as any)?.last_review_month === `${format(today, "MMMM yyyy")}`;
+            if (!showReview || alreadyDone) return null;
+            return (
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate("/monthly-review"); }}
+                className="absolute bottom-10 right-6 sm:right-8 z-20 flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-[12px] transition-colors"
+                style={{ background: "#6366f1" }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#4f46e5")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#6366f1")}
+              >
+                <FileText className="w-4 h-4" />
+                Monthly Review
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-white/30 animate-ping" />
+              </button>
+            );
+          })()}
         </motion.div>
 
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
