@@ -484,6 +484,9 @@ function MobileTabBar() {
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
+  // Update isActive to handle contacts path for mobile tab
+  
+
   const isActive = (path: string) => {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
