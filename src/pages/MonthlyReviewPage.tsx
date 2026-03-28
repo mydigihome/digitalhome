@@ -47,12 +47,6 @@ export default function MonthlyReviewPage() {
   const [saving, setSaving] = useState(false);
   const [approved, setApproved] = useState(false);
 
-  // Redirect non-premium users to billing
-  if (!isPremium) {
-    navigate("/settings?tab=billing", { replace: true });
-    return null;
-  }
-
   const { data: savedReview } = useQuery({
     queryKey: ["monthly_review", reviewId],
     queryFn: async () => {
