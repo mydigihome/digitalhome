@@ -38,6 +38,11 @@
   width: 100%;
 }
 
+.dark .money-card {
+  background: #1e2130;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
 /* ── Recharts containers ── */
 .money-chart-area {
   width: 100%;
