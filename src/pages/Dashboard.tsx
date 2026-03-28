@@ -627,17 +627,8 @@ export default function Dashboard() {
             {/* LEFT COLUMN (~65%) */}
             <div className="flex-[2] min-w-0">
 
-              {/* GREETING BANNER */}
-              <GreetingBanner />
-
-              {/* AI INSIGHTS */}
-              <div className="mb-4">
-                <AIInsightsWidget
-                  goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
-                  expenses={expenses}
-                  contacts={contacts}
-                />
-              </div>
+              {/* REVIEW BANNER */}
+              <ReviewBanner />
 
               {/* QUICK ACTIONS */}
               <div className="mb-5">
