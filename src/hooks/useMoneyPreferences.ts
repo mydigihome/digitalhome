@@ -87,7 +87,11 @@ export function useMoneyPreferences() {
 
   const hideCard = useCallback((id: string) => {
     setPrefs(p => {
-      const n = { ...p, hiddenCards: [...p.hiddenCards, id] };
+      const n = {
+        ...p,
+        cardOrder: p.cardOrder.filter(c => c !== id),
+        hiddenCards: [...p.hiddenCards.filter(c => c !== id), id],
+      };
       persist(n);
       return n;
     });
@@ -95,14 +99,26 @@ export function useMoneyPreferences() {
 
   const restoreCard = useCallback((id: string) => {
     setPrefs(p => {
-      const n = { ...p, hiddenCards: p.hiddenCards.filter(c => c !== id) };
+      const n = {
+        ...p,
+        hiddenCards: p.hiddenCards.filter(c => c !== id),
+        cardOrder: [...p.cardOrder, id],
+      };
       persist(n);
       return n;
     });
   }, [persist]);
 
   const restoreAll = useCallback(() => {
-    setPrefs(p => { const n = { ...p, hiddenCards: [] }; persist(n); return n; });
+    setPrefs(p => {
+      const n = {
+        ...p,
+        cardOrder: [...p.cardOrder, ...p.hiddenCards],
+        hiddenCards: [],
+      };
+      persist(n);
+      return n;
+    });
   }, [persist]);
 
   const saveCardData = useCallback((cardId: string, data: any) => {
