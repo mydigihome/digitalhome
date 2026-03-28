@@ -383,8 +383,7 @@ export default function Dashboard() {
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
-          {/* MONTHLY REVIEW BANNER */}
-          <MonthlyReviewBanner />
+
 
           {/* QUICK ACTIONS */}
           <div className="mb-5">
