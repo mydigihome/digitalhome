@@ -2588,6 +2588,7 @@ export type Database = {
           home_style: string | null
           id: string
           is_subscribed: boolean | null
+          last_active_at: string | null
           last_review_month: string | null
           lifetime_offer_dismissed: boolean | null
           location: string | null
@@ -2643,6 +2644,7 @@ export type Database = {
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
+          last_active_at?: string | null
           last_review_month?: string | null
           lifetime_offer_dismissed?: boolean | null
           location?: string | null
@@ -2698,6 +2700,7 @@ export type Database = {
           home_style?: string | null
           id?: string
           is_subscribed?: boolean | null
+          last_active_at?: string | null
           last_review_month?: string | null
           lifetime_offer_dismissed?: boolean | null
           location?: string | null
