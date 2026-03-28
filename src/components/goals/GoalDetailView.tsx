@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { StageFinancialTrigger, StageFinancialPanel } from "@/components/goals/StageFinancialPanel";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -111,6 +112,11 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
   const [newResourceTitle, setNewResourceTitle] = useState("");
   const [newResourceUrl, setNewResourceUrl] = useState("");
   const [showEmailComposer, setShowEmailComposer] = useState(false);
+  const [financialPanelId, setFinancialPanelId] = useState<string | null>(null);
+
+  const toggleFinancialPanel = (id: string) => {
+    setFinancialPanelId(prev => prev === id ? null : id);
+  };
 
   useEffect(() => {
     if (stages.length > 0 && expandedStages.size === 0) {
@@ -375,8 +381,8 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
             const isExpanded = expandedStages.has(stage.id);
 
             return (
+              <div key={stage.id} className="space-y-0">
               <motion.div
-                key={stage.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: si * 0.05 }}
@@ -608,7 +614,29 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* Financial AI Trigger */}
+                <StageFinancialTrigger
+                  stageId={stage.id}
+                  stageTitle={stage.name}
+                  stageDescription={stage.description}
+                  projectGoal={null}
+                  projectName={projectName}
+                  expandedId={financialPanelId}
+                  onToggle={toggleFinancialPanel}
+                />
               </motion.div>
+
+              {/* Financial Panel (outside card, below it) */}
+              <StageFinancialPanel
+                stageId={stage.id}
+                stageTitle={stage.name}
+                projectGoal={null}
+                projectName={projectName}
+                expandedId={financialPanelId}
+                onClose={() => setFinancialPanelId(null)}
+              />
+            </div>
             );
           })}
         </div>
