@@ -361,9 +361,12 @@ export default function Dashboard() {
         {/* ═══ MOBILE LAYOUT (hidden on desktop) ═══ */}
         <div className="lg:hidden max-w-xl mx-auto px-4 pb-28 -mt-8 relative z-10">
 
+          {/* GREETING BANNER */}
+          <GreetingBanner />
+
           {/* AI INSIGHTS */}
           <div className="mb-4">
-            <AIInsightsBanner
+            <AIInsightsWidget
               goals={activeProjects.map(p => ({ id: p.id, name: p.name, done: p.done, total: p.total }))}
               expenses={expenses}
               contacts={contacts}
