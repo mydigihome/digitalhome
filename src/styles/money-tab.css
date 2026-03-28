@@ -43,6 +43,194 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
+/* ── Dark mode text & nested bg overrides ── */
+.dark .money-card h3,
+.dark .money-card p[style*="color: #1a1c1f"],
+.dark .money-card span[style*="color: #1a1c1f"],
+.dark .money-card div[style*="color: #1a1c1f"],
+.dark .money-card [style*="fill: #1a1c1f"] {
+  color: #f9fafb !important;
+  fill: #f9fafb !important;
+}
+
+.dark .money-card p[style*="color: #111827"],
+.dark .money-card span[style*="color: #111827"],
+.dark .money-card div[style*="color: #111827"] {
+  color: #f9fafb !important;
+}
+
+.dark .money-card p[style*="color: #464554"],
+.dark .money-card span[style*="color: #464554"],
+.dark .money-card div[style*="color: #464554"] {
+  color: #e5e7eb !important;
+}
+
+.dark .money-card p[style*="color: #374151"],
+.dark .money-card span[style*="color: #374151"],
+.dark .money-card div[style*="color: #374151"] {
+  color: #e5e7eb !important;
+}
+
+.dark .money-card p[style*="color: #767586"],
+.dark .money-card span[style*="color: #767586"],
+.dark .money-card div[style*="color: #767586"],
+.dark .money-card label[style*="color: #767586"] {
+  color: #9ca3af !important;
+}
+
+.dark .money-card p[style*="color: #6b7280"],
+.dark .money-card span[style*="color: #6b7280"],
+.dark .money-card div[style*="color: #6b7280"] {
+  color: #9ca3af !important;
+}
+
+.dark .money-card p[style*="color: #9ca3af"],
+.dark .money-card span[style*="color: #9ca3af"] {
+  color: #6b7280 !important;
+}
+
+.dark .money-card div[style*="background: #f3f3f8"],
+.dark .money-card div[style*="background-color: #f3f3f8"],
+.dark .money-card .rounded-xl[style*="background: #f3f3f8"],
+.dark .money-card .rounded-\[16px\][style*="background: #f3f3f8"],
+.dark .money-card .rounded-\[20px\][style*="background: #f3f3f8"] {
+  background: #252836 !important;
+}
+
+.dark .money-card div[style*="background: #e8e8ed"],
+.dark .money-card .h-2[style*="background: #e8e8ed"],
+.dark .money-card .h-1\.5[style*="background: #e8e8ed"],
+.dark .money-card .h-3[style*="background: #e8e8ed"] {
+  background: #2d3148 !important;
+}
+
+.dark .money-card input[style*="background: #f3f3f8"] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+
+.dark .money-card input[style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .money-card button[style*="background: #f3f3f8"],
+.dark .money-card button[style*="color: #464554"] {
+  background: #252836 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .money-card svg text[style*="fill: #1a1c1f"] {
+  fill: #f9fafb !important;
+}
+
+.dark .money-card svg text[style*="fill: #767586"] {
+  fill: #9ca3af !important;
+}
+
+.dark .money-card path[stroke="#f3f3f8"] {
+  stroke: #2d3148;
+}
+
+.dark .money-card div[style*="border-bottom: 1px solid #f3f3f8"] {
+  border-bottom-color: #2d3148 !important;
+}
+
+.dark .money-card div[style*="borderBottom: 1px solid #f3f3f8"] {
+  border-bottom-color: #2d3148 !important;
+}
+
+.dark .money-card div[style*="border-top: 1px solid #f3f3f8"],
+.dark .money-card div[style*="borderTop: 1px solid #f3f3f8"] {
+  border-top-color: #2d3148 !important;
+}
+
+.dark .money-card div[style*="background: #f9f9fb"],
+.dark .money-card div[style*="background: #f9fafb"],
+.dark .money-card div[style*="backgroundColor: #f9f9fb"] {
+  background: #252836 !important;
+}
+
+.dark .money-card div[style*="background: #fafafa"],
+.dark .money-card div[style*="backgroundColor: #fafafa"] {
+  background: #1a1d27 !important;
+}
+
+.dark .money-card div[style*="borderColor: #f3f3f8"],
+.dark .money-card div[style*="border-color: #f3f3f8"] {
+  border-color: #2d3148 !important;
+}
+
+/* NewPlaidCards inline style overrides */
+.dark .money-card span[style*="fontWeight: 700"][style*="color: #1a1c1f"],
+.dark .money-card span[style*="fontWeight: 800"][style*="color: #1a1c1f"],
+.dark .money-card div[style*="fontWeight: 800"][style*="color: #1a1c1f"],
+.dark .money-card div[style*="fontSize:"][style*="color: #1a1c1f"],
+.dark .money-card span[style*="fontSize:"][style*="color: #1a1c1f"] {
+  color: #f9fafb !important;
+}
+
+.dark .money-card span[style*="color: #767586"][style*="fontSize"],
+.dark .money-card div[style*="color: #767586"][style*="fontSize"] {
+  color: #9ca3af !important;
+}
+
+.dark .money-card div[style*="backgroundColor: #f3f3f8"] {
+  background-color: #252836 !important;
+}
+
+.dark .money-card div[style*="backgroundColor: #dcfce7"] {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+.dark .money-card div[style*="backgroundColor: #ffe4e6"] {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+/* Watchlist panel dark */
+.dark .money-card div[style*="background: #fff"],
+.dark .money-card div[style*="background: #ffffff"] {
+  background: #1e2130 !important;
+}
+
+/* Money tab top bar overrides */
+.dark .money-tab-stack .bg-\[\#f9fafb\] {
+  background: #252836 !important;
+}
+.dark .money-tab-stack .bg-white {
+  background: #1e2130 !important;
+}
+.dark .money-tab-stack .text-\[\#111827\] {
+  color: #f9fafb !important;
+}
+.dark .money-tab-stack .text-\[\#374151\] {
+  color: #e5e7eb !important;
+}
+.dark .money-tab-stack .border-\[\#e5e7eb\] {
+  border-color: #2d3148 !important;
+}
+
+/* Hidden cards drawer */
+.dark .money-tab-stack button[style*="background: #f3f4f6"] {
+  background: #252836 !important;
+  color: #f9fafb !important;
+}
+.dark .money-tab-stack span.text-sm.font-semibold.text-\[\#111827\] {
+  color: #f9fafb !important;
+}
+
+/* Track Finance Modal dark */
+.dark .money-tab-root ~ div .bg-white.rounded-\[24px\],
+.dark div[class*="TrackFinance"] .bg-white {
+  background: #1e2130 !important;
+}
+.dark .fixed .bg-white.rounded-\[24px\] .text-\[\#111827\],
+.dark .fixed .bg-white.rounded-\[24px\] .text-xl.text-\[\#111827\] {
+  color: #f9fafb !important;
+}
+.dark .fixed .bg-white.rounded-\[24px\] .text-\[\#6b7280\] {
+  color: #9ca3af !important;
+}
+
 /* ── Recharts containers ── */
 .money-chart-area {
   width: 100%;
