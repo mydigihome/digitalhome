@@ -467,6 +467,30 @@ export default function SettingsPage() {
                       <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
                         {saving ? "Saving..." : "Save Profile"}
                       </Button>
+
+                      {/* Onboarding restart */}
+                      <div className="mt-6 pt-6 border-t border-border">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-sm text-foreground">Onboarding</p>
+                            <p className="text-xs text-muted-foreground">Redo setup walkthrough</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              await upsertPrefs.mutateAsync({
+                                onboarding_completed: false,
+                                onboarding_step: 0,
+                                onboarding_skipped_steps: [],
+                              } as any);
+                              navigate('/welcome');
+                            }}
+                          >
+                            Restart Setup
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </>
