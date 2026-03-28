@@ -97,7 +97,7 @@ const settingsTabs = [
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "account", label: "Account", icon: Shield },
   { id: "resources", label: "AI Resources", icon: Sparkles },
-  { id: "archived", label: "Archived Projects", icon: Archive },
+  { id: "archived", label: "Archive", icon: Archive },
   { id: "support", label: "Support", icon: HeadphonesIcon },
 ] as const;
 
