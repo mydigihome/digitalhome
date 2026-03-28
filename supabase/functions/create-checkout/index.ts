@@ -39,8 +39,8 @@ serve(async (req) => {
     const { plan, successUrl, cancelUrl } = await req.json();
     
     // Input validation
-    if (!plan || typeof plan !== "string" || !["student", "pro"].includes(plan)) {
-      throw new Error("Invalid plan. Must be 'student' or 'pro'.");
+    if (!plan || typeof plan !== "string" || !["student", "pro", "founding"].includes(plan)) {
+      throw new Error("Invalid plan. Must be 'student', 'pro', or 'founding'.");
     }
     if (successUrl && typeof successUrl !== "string") throw new Error("Invalid successUrl");
     if (cancelUrl && typeof cancelUrl !== "string") throw new Error("Invalid cancelUrl");
@@ -62,7 +62,33 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    const priceAmount = plan === "student" ? 10000 : 20000;
+    if (plan === "founding") {
+      // One-time payment for founding member
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: { name: "Founding Member — Lifetime Access" },
+              unit_amount: 900,
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: { user_id: user.id, plan: "founding" },
+      });
+
+      return new Response(JSON.stringify({ url: session.url }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Subscription plans
+    const priceAmount = plan === "student" ? 4900 : 9900;
     const planName = plan === "student" ? "Pro Membership (Student)" : "Pro Membership";
 
     const session = await stripe.checkout.sessions.create({
