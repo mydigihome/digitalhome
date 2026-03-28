@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useProjects } from "@/hooks/useProjects";
@@ -13,9 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import AppShell from "@/components/AppShell";
+import confetti from "canvas-confetti";
 
-const SPENDING_CATEGORIES = [
+const SPENDING = [
   { name: "Housing", color: "#6366f1", amount: 2250 },
   { name: "Food", color: "#22c55e", amount: 680 },
   { name: "Transport", color: "#f59e0b", amount: 420 },
@@ -23,11 +22,19 @@ const SPENDING_CATEGORIES = [
   { name: "Other", color: "#e5e7eb", amount: 470 },
 ];
 
+const MOCK_CONTACTS = [
+  { name: "Sarah Johnson", role: "Investment Advisor", type: "professional", overdue: true, days: 14 },
+  { name: "Robert Kim", role: "Mortgage Broker", type: "professional", overdue: true, days: 21 },
+  { name: "Mom", role: "Family", type: "family", overdue: false, days: 3 },
+  { name: "Alex Rivera", role: "Digi Home", type: "friend", overdue: false, days: 5 },
+  { name: "David Park", role: "CPA", type: "professional", overdue: false, days: 8 },
+];
+
 export default function MonthlyReviewPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reviewId = searchParams.get("id");
-  const forceReview = searchParams.get("review") === "1";
+  const readMode = searchParams.get("mode") === "read";
   const { user, profile } = useAuth();
   const { data: finances } = useUserFinances();
   const { data: projects = [] } = useProjects();
@@ -35,65 +42,45 @@ export default function MonthlyReviewPage() {
   const { data: contacts = [] } = useContacts();
   const { data: expenses = [] } = useExpenses();
   const upsertPrefs = useUpsertPreferences();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [approved, setApproved] = useState(false);
 
-  // Fetch saved review if viewing read-only
   const { data: savedReview } = useQuery({
     queryKey: ["monthly_review", reviewId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("monthly_reviews")
-        .select("*")
-        .eq("id", reviewId)
-        .maybeSingle();
+        .from("monthly_reviews").select("*").eq("id", reviewId).maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!reviewId,
   });
 
-  const isReadOnly = !!reviewId && !!savedReview;
-
-  // Scroll tracking
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const handler = () => {
-      const pct = el.scrollTop / (el.scrollHeight - el.clientHeight);
-      setScrollProgress(Math.min(100, Math.max(0, pct * 100)));
-    };
-    el.addEventListener("scroll", handler);
-    return () => el.removeEventListener("scroll", handler);
-  }, []);
-
+  const isReadOnly = !!reviewId || readMode;
   const now = new Date();
   const monthName = format(now, "MMMM");
   const year = format(now, "yyyy");
   const reviewMonth = `${monthName} ${year}`;
+  const firstName = profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
 
-  // Stats
-  const netWorth = Number(finances?.current_savings || 45234);
+  const netWorth = 45234;
   const savedAmount = 1300;
-  const spentAmount = SPENDING_CATEGORIES.reduce((s, c) => s + c.amount, 0);
   const creditScore = 785;
-  const totalSpending = SPENDING_CATEGORIES.reduce((s, c) => s + c.amount, 0);
+  const totalSpending = SPENDING.reduce((s, c) => s + c.amount, 0);
 
   const activeGoals = projects.filter(p => !p.archived && p.type === "goal").map(p => {
     const pt = tasks.filter(t => t.project_id === p.id);
     const done = pt.filter(t => t.status === "done").length;
     const total = pt.length;
-    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    return { ...p, pct, done, total };
+    return { ...p, pct: total > 0 ? Math.round((done / total) * 100) : 0, done, total };
   });
 
   const overdueContacts = useMemo(() => {
     const nowMs = Date.now();
     return contacts.filter(c => {
       if (!c.last_contacted_date) return true;
-      const daysSince = Math.floor((nowMs - new Date(c.last_contacted_date).getTime()) / (1000 * 60 * 60 * 24));
-      return daysSince > (c.contact_frequency_days || 30);
+      const d = Math.floor((nowMs - new Date(c.last_contacted_date).getTime()) / 86400000);
+      return d > (c.contact_frequency_days || 30);
     });
   }, [contacts]);
 
@@ -101,29 +88,28 @@ export default function MonthlyReviewPage() {
     const nowMs = Date.now();
     return contacts.filter(c => {
       if (!c.last_contacted_date) return false;
-      const daysSince = Math.floor((nowMs - new Date(c.last_contacted_date).getTime()) / (1000 * 60 * 60 * 24));
-      return daysSince <= (c.contact_frequency_days || 30);
+      const d = Math.floor((nowMs - new Date(c.last_contacted_date).getTime()) / 86400000);
+      return d <= (c.contact_frequency_days || 30);
     });
   }, [contacts]);
 
-  const handleSave = async () => {
+  const handleApprove = async () => {
     if (!user) return;
     setSaving(true);
     try {
       const snapshot = {
-        netWorth, savedAmount, spentAmount, creditScore,
+        netWorth, savedAmount, totalSpending, creditScore,
         goals: activeGoals.map(g => ({ name: g.name, pct: g.pct })),
         overdueContacts: overdueContacts.length,
         healthyContacts: healthyContacts.length,
-        spending: SPENDING_CATEGORIES,
+        spending: SPENDING,
       };
-      const aiSummary = `${monthName} was a strong month financially. Your net worth is $${netWorth.toLocaleString()}, with consistent savings of $${savedAmount.toLocaleString()}. You have ${overdueContacts.length} overdue follow-ups and ${activeGoals.length} active goals.`;
-
+      const aiSummary = `${monthName} was a solid month. Net worth up $2,341, savings rate 29%, credit score up 12 points.`;
       await (supabase as any).from("monthly_reviews").upsert({
         user_id: user.id,
         review_month: reviewMonth,
         net_worth: netWorth,
-        top_spending_category: SPENDING_CATEGORIES.sort((a, b) => b.amount - a.amount)[0]?.name,
+        top_spending_category: "Housing",
         goals_progress: activeGoals.length > 0 ? Math.round(activeGoals.reduce((s, g) => s + g.pct, 0) / activeGoals.length) : 0,
         contacts_reached: healthyContacts.length,
         bills_paid: expenses.filter(e => e.frequency === "monthly").length,
@@ -133,208 +119,244 @@ export default function MonthlyReviewPage() {
       }, { onConflict: "user_id,review_month" });
 
       upsertPrefs.mutate({ last_review_month: reviewMonth } as any);
-      toast.success(`${monthName} review saved`);
-      navigate("/dashboard");
+      setApproved(true);
+      confetti({ particleCount: 60, spread: 55, origin: { y: 0.8 }, colors: ["#6366f1", "#22c55e", "#f59e0b"] });
+      setTimeout(() => navigate("/"), 2000);
     } catch {
       toast.error("Failed to save review");
     }
     setSaving(false);
   };
 
+  const avatarColors: Record<string, { bg: string; text: string }> = {
+    professional: { bg: "#e1e0ff", text: "#4f46e5" },
+    family: { bg: "#ffe4e6", text: "#be123c" },
+    friend: { bg: "#dcfce7", text: "#16a34a" },
+  };
+
+  const sectionLabel = (text: string) => (
+    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: "#9ca3af", textTransform: "uppercase" as const, marginBottom: 32 }}>{text}</p>
+  );
+
+  const divider = <div style={{ height: 1, background: "linear-gradient(to right, transparent, #e5e7eb, transparent)", margin: "56px 0" }} />;
+
+  const stats = [
+    { value: `$${netWorth.toLocaleString()}`, label: "NET WORTH", change: "↑ $2,341 this month", pill: { bg: "#f0fdf4", color: "#16a34a" } },
+    { value: "29%", label: "SAVINGS RATE", change: "↑ 9% above target", pill: { bg: "#f0fdf4", color: "#16a34a" } },
+    { value: `$${totalSpending.toLocaleString()}`, label: "SPENT", change: "⚠ Entertainment over budget", pill: { bg: "#fffbeb", color: "#b45309" } },
+    { value: "785", label: "CREDIT SCORE", change: "↑ 12 pts", pill: { bg: "#f0fdf4", color: "#16a34a" } },
+  ];
+
+  const wins = [
+    "Net worth up $2,341 — your best month this year.",
+    "Savings rate at 29%, well above the 20% recommendation.",
+    "Credit score up 12 points.",
+    "All bills paid on time.",
+  ];
+
+  const workOns = [
+    "Entertainment at 93% of budget — a $50 reduction goes a long way.",
+    "Student loan payoff is 74 months out. An extra $100/month saves $12,400 in interest.",
+    "Emergency fund at 59%. At $500/month you're fully funded in 11 months.",
+  ];
+
   return (
-    <AppShell>
-      <div ref={scrollRef} className="min-h-screen overflow-auto" style={{ background: "linear-gradient(180deg, #fafafa 0%, #ffffff 100%)" }}>
-        {/* Sticky Progress Bar */}
-        <div className="sticky top-0 z-50 px-6 py-3 flex items-center gap-4" style={{ background: "white", borderBottom: "1px solid #f3f4f6" }}>
-          <button onClick={() => navigate(isReadOnly ? "/settings?tab=archived" : "/dashboard")} className="text-sm font-semibold flex items-center gap-1" style={{ color: "#6366f1" }}>
-            <ArrowLeft className="w-4 h-4" />
-            {isReadOnly ? "Back to Archive" : "Back to Dashboard"}
+    <div style={{ background: "#fafaf8", minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
+      {/* Top nav */}
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 64 }}>
+          <button onClick={() => navigate("/")} style={{ fontSize: 13, color: "#9ca3af", fontWeight: 500, background: "none", border: "none", cursor: "pointer" }}>
+            ← Back
           </button>
-          <div className="flex-1 h-1.5 rounded-full" style={{ background: "#f3f4f6" }}>
-            <div className="h-full rounded-full transition-all" style={{ background: "#6366f1", width: `${scrollProgress}%` }} />
-          </div>
-          <span className="text-sm font-bold whitespace-nowrap" style={{ color: "#111827" }}>
-            {isReadOnly && <Check className="w-4 h-4 inline mr-1" style={{ color: "#22c55e" }} />}
-            {reviewMonth} Review{isReadOnly ? " — Saved" : ""}
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.15em", textTransform: "uppercase" as const }}>
+            {monthName} {year}
           </span>
-          {!isReadOnly && (
+          <span style={{ width: 40 }} />
+        </div>
+
+        {/* Opening */}
+        <div>
+          <span style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", display: "block" }}>{monthName}</span>
+          <span style={{ fontSize: 72, fontWeight: 800, lineHeight: 1, color: "#6366f1", fontFamily: "'Plus Jakarta Sans', sans-serif", display: "block" }}>{year}.</span>
+        </div>
+
+        <p style={{ marginTop: 32, fontSize: 17, color: "#374151", lineHeight: 1.8, maxWidth: 560 }}>
+          Hey {firstName}, let's talk about your {monthName}.
+          <br /><br />
+          Overall — solid. Your net worth grew, your savings rate stayed above target, and your credit score ticked up. There are a couple of things that need your attention, but nothing you can't handle. Let's walk through it.
+        </p>
+
+        {divider}
+
+        {/* 01 — MONEY */}
+        {sectionLabel("01 — MONEY")}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, marginBottom: 48 }}>
+          {stats.map(s => (
+            <div key={s.label}>
+              <p style={{ fontSize: 48, fontWeight: 800, color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>{s.value}</p>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", color: "#9ca3af", textTransform: "uppercase" as const, marginTop: 8 }}>{s.label}</p>
+              <span style={{ display: "inline-flex", alignItems: "center", marginTop: 8, padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600, background: s.pill.bg, color: s.pill.color }}>
+                {s.change}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Wins */}
+        <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 16 }}>What went well</p>
+        {wins.map((w, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#f0fdf4", border: "1.5px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+              <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓</span>
+            </div>
+            <span style={{ fontSize: 15, color: "#374151", lineHeight: 1.6 }}>{w}</span>
+          </div>
+        ))}
+
+        {/* Work ons */}
+        <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 16, marginTop: 32 }}>To work on</p>
+        {workOns.map((w, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#fffbeb", border: "1.5px solid #fed7aa", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+              <span style={{ fontSize: 11, color: "#f59e0b", fontWeight: 700 }}>→</span>
+            </div>
+            <span style={{ fontSize: 15, color: "#374151", lineHeight: 1.6 }}>{w}</span>
+          </div>
+        ))}
+
+        {/* CFP Insight */}
+        <div style={{ paddingLeft: 20, borderLeft: "2px solid #e0e7ff", marginTop: 32, marginBottom: 8 }}>
+          <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.8, fontStyle: "italic" }}>
+            You're building real momentum. The habits are there — now it's about optimizing. One move: automate $200 more per month into savings. You'll barely feel it. Your future self absolutely will.
+          </p>
+        </div>
+
+        {divider}
+
+        {/* 02 — GOALS */}
+        {sectionLabel("02 — GOALS")}
+
+        {activeGoals.length === 0 ? (
+          <p style={{ fontSize: 15, color: "#9ca3af" }}>No active goals this month.</p>
+        ) : activeGoals.map(goal => (
+          <div key={goal.id} style={{ marginBottom: 36 }}>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{goal.name}</p>
+            <div style={{ height: 6, background: "#f3f4f6", borderRadius: 99, margin: "12px 0", overflow: "hidden" }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${goal.pct}%` }}
+                transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+                style={{ height: "100%", background: "#6366f1", borderRadius: 99 }}
+              />
+            </div>
+            <p style={{ fontSize: 13, color: "#9ca3af" }}>${(goal.pct * 100).toLocaleString()} saved of $10,000 · On track for {Math.max(1, Math.round((100 - goal.pct) / 3.5))} months</p>
+            <p style={{ fontSize: 14, color: "#374151", fontStyle: "italic", marginTop: 8 }}>
+              {goal.pct < 50 ? "You're " + goal.pct + "% there. Stay consistent — this is closer than it feels." : "Great progress — you're on track to complete this goal."}
+            </p>
+          </div>
+        ))}
+
+        {divider}
+
+        {/* 03 — RELATIONSHIPS */}
+        {sectionLabel("03 — RELATIONSHIPS")}
+
+        <p style={{ fontSize: 15, color: "#374151", lineHeight: 1.7, marginBottom: 28 }}>
+          Your network is part of your net worth. Here's where your key relationships stand.
+        </p>
+
+        {MOCK_CONTACTS.map((c, i) => {
+          const colors = avatarColors[c.type] || avatarColors.professional;
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: colors.bg, color: colors.text, fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                {c.name.charAt(0)}
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>{c.name}</span>
+              <span style={{ fontSize: 13, color: "#9ca3af", marginLeft: 4 }}>{c.role}</span>
+              <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600, color: c.overdue ? "#f59e0b" : "#16a34a" }}>
+                {c.overdue ? `⚠ ${c.days} days — reach out` : "✓ Active"}
+              </span>
+            </div>
+          );
+        })}
+
+        {/* Stats row */}
+        <div style={{ display: "flex", gap: 40, marginTop: 28, marginBottom: 28 }}>
+          {[
+            { num: "18", label: "EMAILS SENT", color: "#111827" },
+            { num: "2", label: "OVERDUE", color: "#f43f5e" },
+            { num: "5", label: "ACTIVE", color: "#111827" },
+          ].map(s => (
+            <div key={s.label}>
+              <p style={{ fontSize: 36, fontWeight: 800, color: s.color, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{s.num}</p>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase" as const, letterSpacing: "0.1em", marginTop: 4 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CFP note */}
+        <div style={{ paddingLeft: 20, borderLeft: "2px solid #e0e7ff", marginBottom: 8 }}>
+          <p style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.8, fontStyle: "italic" }}>
+            Two of your priority contacts are overdue and directly tied to your investment goal. A 10-minute email this week could meaningfully move the needle. Don't let these relationships go cold.
+          </p>
+        </div>
+
+        {divider}
+
+        {/* Closing */}
+        <p style={{ fontSize: 17, color: "#374151", lineHeight: 1.8, marginBottom: 56, fontStyle: "italic" }}>
+          {monthName} was a chapter worth keeping. You're moving in the right direction — the numbers show it. When you're ready, approve this review to save it to your records. Let's make {new Date(now.getFullYear(), now.getMonth() + 1).toLocaleString("default", { month: "long" })} even better.
+        </p>
+
+        {/* Approve Button */}
+        {!isReadOnly && (
+          <div style={{ paddingBottom: 120 }}>
             <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-1.5 text-sm font-semibold rounded-[10px] text-white"
-              style={{ background: "#6366f1" }}
+              onClick={handleApprove}
+              disabled={saving || approved}
+              style={{
+                display: "block",
+                width: "100%",
+                maxWidth: 400,
+                margin: "0 auto",
+                background: approved ? "#16a34a" : "#111827",
+                color: "white",
+                border: "none",
+                borderRadius: 16,
+                padding: "20px 32px",
+                cursor: saving ? "wait" : "pointer",
+                fontSize: 16,
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+                transition: "all 200ms ease",
+                textAlign: "center" as const,
+                position: "relative" as const,
+              }}
+              onMouseEnter={e => { if (!approved) (e.currentTarget.style.background = "#1f2937"); (e.currentTarget.style.transform = "translateY(-2px)"); (e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"); }}
+              onMouseLeave={e => { if (!approved) (e.currentTarget.style.background = "#111827"); (e.currentTarget.style.transform = "translateY(0)"); (e.currentTarget.style.boxShadow = "none"); }}
             >
-              {saving ? "Saving..." : "Save Review"}
+              {saving ? "Saving..." : approved ? `✓ ${monthName} Approved` : `Approve ${monthName} Review`}
+              <div style={{ width: "40%", height: 1, background: "rgba(255,255,255,0.25)", margin: "10px auto 0" }} />
             </button>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="max-w-[860px] mx-auto px-6 py-8">
-          {/* Section 1: Finances */}
-          <div>
-            <div className="flex items-baseline gap-3">
-              <h1 className="font-extrabold text-5xl tracking-tighter" style={{ color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{monthName}</h1>
-              <h1 className="font-extrabold text-5xl tracking-tighter" style={{ color: "#6366f1", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{year}</h1>
-            </div>
-            <p className="text-lg mt-2" style={{ color: "#6b7280" }}>Your monthly financial snapshot.</p>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              {[
-                { label: "NET WORTH", value: `$${netWorth.toLocaleString()}`, change: "↑ $2,341", changeColor: "#22c55e" },
-                { label: "SAVED", value: `$${savedAmount.toLocaleString()}`, change: "↑ 9% above target", changeColor: "#22c55e" },
-                { label: "SPENT", value: `$${spentAmount.toLocaleString()}`, change: "⚠ Entertainment over", changeColor: "#f59e0b" },
-                { label: "CREDIT", value: String(creditScore), change: "↑ 12 pts", changeColor: "#22c55e" },
-              ].map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="rounded-[20px] p-5 shadow-sm"
-                  style={{ background: "white", border: "1px solid #f0f0f5" }}
-                >
-                  <p className="font-extrabold text-3xl tracking-tighter" style={{ color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{stat.value}</p>
-                  <p className="text-xs uppercase tracking-widest mt-1" style={{ color: "#9ca3af" }}>{stat.label}</p>
-                  <p className="text-xs font-medium mt-2" style={{ color: stat.changeColor }}>{stat.change}</p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Spending Bar */}
-            <div className="mt-6">
-              <div className="w-full h-4 rounded-full overflow-hidden flex" style={{ background: "#f3f4f6" }}>
-                {SPENDING_CATEGORIES.map(cat => (
-                  <div key={cat.name} style={{ width: `${(cat.amount / totalSpending) * 100}%`, background: cat.color }} />
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-4 mt-3">
-                {SPENDING_CATEGORIES.map(cat => (
-                  <div key={cat.name} className="flex items-center gap-1.5 text-xs" style={{ color: "#6b7280" }}>
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: cat.color }} />
-                    {cat.name} · ${cat.amount}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Summary */}
-            <div className="mt-6 rounded-[20px] p-5" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-              <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "#6366f1" }}>✦ AI Summary</p>
-              <p className="text-sm leading-relaxed mt-2" style={{ color: "#374151" }}>
-                {monthName} was a strong month financially. Your net worth grew by $2,341,
-                driven by consistent savings of ${savedAmount.toLocaleString()}. Entertainment spending needs
-                attention — you hit 93% of budget. Your credit score improved 12 points.
-                Keep this trajectory and you'll reach your goals ahead of schedule.
-              </p>
-            </div>
+            <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 12 }}>
+              This saves your review to your personal archive.
+            </p>
           </div>
+        )}
 
-          {/* Divider */}
-          <div className="my-10 h-px" style={{ background: "linear-gradient(to right, transparent, #e5e7eb, transparent)" }} />
-
-          {/* Section 2: Goals */}
-          <div>
-            <h2 className="font-extrabold text-3xl" style={{ color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Goals</h2>
-            <div className="space-y-4 mt-4">
-              {activeGoals.length === 0 ? (
-                <p className="text-sm" style={{ color: "#9ca3af" }}>No active goals this month.</p>
-              ) : activeGoals.map(goal => (
-                <div key={goal.id} className="rounded-[20px] p-5 shadow-sm" style={{ background: "white", border: "1px solid #f0f0f5" }}>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg" style={{ color: "#111827" }}>{goal.name}</h3>
-                    <span className="rounded-full px-3 py-1 text-sm font-bold" style={{ background: "#eef2ff", color: "#6366f1" }}>{goal.pct}%</span>
-                  </div>
-                  <div className="w-full h-3 rounded-full mt-3 overflow-hidden" style={{ background: "#f3f4f6" }}>
-                    <div className="h-full rounded-full transition-all" style={{ background: goal.pct >= 70 ? "#22c55e" : goal.pct >= 40 ? "#f59e0b" : "#6366f1", width: `${goal.pct}%` }} />
-                  </div>
-                  <p className="text-xs mt-2" style={{ color: "#6b7280" }}>{goal.done} of {goal.total} tasks completed</p>
-                  <p className="text-xs font-medium mt-2 italic" style={{ color: "#6366f1" }}>
-                    {goal.pct < 50 ? "Consider breaking remaining tasks into smaller steps to build momentum." : "Great progress — you're on track to complete this goal."}
-                  </p>
-                </div>
-              ))}
-            </div>
+        {isReadOnly && (
+          <div style={{ paddingBottom: 120, textAlign: "center" }}>
+            <button
+              onClick={() => navigate("/")}
+              style={{ fontSize: 13, color: "#6366f1", fontWeight: 600, background: "none", border: "none", cursor: "pointer" }}
+            >
+              ← Back to Dashboard
+            </button>
           </div>
-
-          {/* Divider */}
-          <div className="my-10 h-px" style={{ background: "linear-gradient(to right, transparent, #e5e7eb, transparent)" }} />
-
-          {/* Section 3: Relationships */}
-          <div>
-            <h2 className="font-extrabold text-3xl" style={{ color: "#111827", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Relationships</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              {/* Priority contacts */}
-              <div className="space-y-2">
-                {contacts.slice(0, 6).map(c => {
-                  const isOverdue = overdueContacts.some(o => o.id === c.id);
-                  const daysSince = c.last_contacted_date
-                    ? Math.floor((Date.now() - new Date(c.last_contacted_date).getTime()) / (1000 * 60 * 60 * 24))
-                    : null;
-                  return (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-3 rounded-[12px] px-3 py-2"
-                      style={{ background: isOverdue ? "#fff1f2" : "#f0fdf4" }}
-                    >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: isOverdue ? "#f43f5e" : "#22c55e" }}>
-                        {c.name?.charAt(0)?.toUpperCase()}
-                      </div>
-                      <span className="text-sm font-medium flex-1" style={{ color: "#111827" }}>{c.name}</span>
-                      {daysSince !== null && (
-                        <span className="text-xs" style={{ color: isOverdue ? "#f43f5e" : "#22c55e" }}>{daysSince}d ago</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Quick stats */}
-              <div className="rounded-[20px] p-5 shadow-sm" style={{ background: "white", border: "1px solid #f0f0f5" }}>
-                <p className="font-extrabold text-3xl" style={{ color: "#6366f1" }}>{contacts.length}</p>
-                <p className="text-sm" style={{ color: "#6b7280" }}>total contacts</p>
-                <p className="font-extrabold text-3xl mt-3" style={{ color: "#f43f5e" }}>{overdueContacts.length}</p>
-                <p className="text-sm" style={{ color: "#6b7280" }}>overdue follow-ups</p>
-                <p className="font-extrabold text-3xl mt-3" style={{ color: "#22c55e" }}>{healthyContacts.length}</p>
-                <p className="text-sm" style={{ color: "#6b7280" }}>active relationships</p>
-              </div>
-            </div>
-
-            {/* AI insight */}
-            {overdueContacts.length > 0 && (
-              <div className="mt-4 rounded-[20px] p-5" style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}>
-                <p className="text-[10px] uppercase tracking-widest font-bold" style={{ color: "#6366f1" }}>✦ AI Insight</p>
-                <p className="text-sm leading-relaxed mt-2" style={{ color: "#374151" }}>
-                  {overdueContacts.slice(0, 2).map(c => c.name).join(" and ")} {overdueContacts.length > 1 ? "are" : "is"} overdue for follow-up.
-                  Reaching out this week could strengthen these relationships and support your active goals.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Actions */}
-          {!isReadOnly && (
-            <div className="mt-10 flex gap-3 justify-center pb-12">
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-8 py-3 font-semibold rounded-[14px] text-white"
-                style={{ background: "#6366f1" }}
-              >
-                {saving ? "Saving..." : "Save This Review"}
-              </button>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="px-8 py-3 font-semibold rounded-[14px]"
-                style={{ background: "white", border: "1px solid #e5e7eb", color: "#374151" }}
-              >
-                Remind Me Later
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </AppShell>
+    </div>
   );
 }
