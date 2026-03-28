@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Converts a hex color string to HSL values string (e.g. "258 89% 66%")
