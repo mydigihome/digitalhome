@@ -219,15 +219,30 @@ export default function MoneyTab() {
                   const c = cardMap[id];
                   if (!c) return null;
                   const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
+                  const needsGate = !isPremium && PREMIUM_CARD_IDS.has(id);
                   return (
                     <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, pointerEvents: isSearchDimmed ? "none" : "auto", transition: "opacity 200ms" }}>
-                      <MoneyCard
-                        id={id}
-                        front={c.front}
-                        back={c.back}
-                        fullWidth={FULL_WIDTH.has(id)}
-                        onHide={() => hideCard(id)}
-                        cardLabel={CARD_LABELS[id] || id}
+                      {needsGate ? (
+                        <PremiumGate feature={CARD_LABELS[id] || "This card"} blur>
+                          <MoneyCard
+                            id={id}
+                            front={c.front}
+                            back={c.back}
+                            fullWidth={FULL_WIDTH.has(id)}
+                            onHide={() => hideCard(id)}
+                            cardLabel={CARD_LABELS[id] || id}
+                          />
+                        </PremiumGate>
+                      ) : (
+                        <MoneyCard
+                          id={id}
+                          front={c.front}
+                          back={c.back}
+                          fullWidth={FULL_WIDTH.has(id)}
+                          onHide={() => hideCard(id)}
+                          cardLabel={CARD_LABELS[id] || id}
+                        />
+                      )}
                       />
                     </div>
                   );
