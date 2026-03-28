@@ -1,107 +1,162 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useMonthlyReviews } from "@/hooks/useMonthlyReviews";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 export default function MonthlyReviewBanner() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: reviews = [] } = useMonthlyReviews();
+  const { data: prefs } = useUserPreferences();
+
+  // Hide for non-subscribers (founding members always see it)
+  const isFoundingMember = profile?.founding_member === true;
+  const isSubscribed = prefs?.is_subscribed === true;
+  if (!isFoundingMember && !isSubscribed) return null;
 
   const today = new Date();
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const dayOfMonth = today.getDate();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  const lastDay = new Date(year, month + 1, 0).getDate();
   const isLastThreeDays = dayOfMonth >= lastDay - 2;
   const isFirstSevenDays = dayOfMonth <= 7;
   const monthName = today.toLocaleString("default", { month: "long" });
-  const prevMonthName = new Date(today.getFullYear(), today.getMonth() - 1).toLocaleString("default", { month: "long" });
+  const prevMonthName = new Date(year, month - 1, 1).toLocaleString("default", { month: "long" });
 
   const prevMonthReview = reviews.find((r: any) => {
     const rm = (r.review_month || "").toLowerCase();
     return rm.includes(prevMonthName.toLowerCase());
   });
-  const bannerApproved = !!prevMonthReview;
+  const reviewApproved = !!prevMonthReview;
+
+  // Temporarily force banner visible for testing — remove after confirming
+  const showBanner = true;
 
   // STATE A: last 3 days of current month
   if (isLastThreeDays) {
     return (
       <div
-        className="flex items-center justify-between mb-4 px-5 py-3 rounded-[16px]"
-        style={{ background: "#f9fafb", border: "1px solid #e5e7eb" }}
+        onClick={() => navigate("/monthly-review")}
+        style={{
+          width: "100%",
+          background: "#f9fafb",
+          borderBottom: "1px solid #e5e7eb",
+          padding: "10px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontFamily: "Inter, sans-serif",
+          zIndex: 10,
+          position: "relative",
+          cursor: "pointer",
+          marginBottom: 16,
+          borderRadius: 12,
+        }}
       >
-        <p className="text-sm">
-          <span className="font-semibold" style={{ color: "#374151" }}>
+        <p style={{ margin: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
             Almost done with {monthName} —
           </span>
-          <span style={{ color: "#6b7280" }}> your review will be ready on the 1st.</span>
+          <span style={{ fontSize: 13, fontWeight: 400, color: "#6b7280" }}>
+            {" "}your review will be ready on the 1st.
+          </span>
         </p>
-        <button
-          onClick={() => navigate("/monthly-review")}
-          className="text-sm font-semibold shrink-0 ml-3"
-          style={{ color: "#6366f1" }}
+        <span
+          style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
         >
           Preview →
-        </button>
+        </span>
       </div>
     );
   }
 
-  // STATE B: first 7 days, no approved review
-  if (isFirstSevenDays && !bannerApproved) {
+  // STATE B: first 7 days OR forced for testing, review not approved
+  if ((isFirstSevenDays || showBanner) && !reviewApproved) {
     return (
       <div
         onClick={() => navigate("/monthly-review")}
-        className="flex items-center justify-between mb-4 px-5 py-3 rounded-[16px] cursor-pointer"
         style={{
+          width: "100%",
           background: "#ffffff",
-          border: "1px solid rgba(99,102,241,0.2)",
-          boxShadow: "0 2px 12px rgba(99,102,241,0.08)",
+          borderBottom: "1px solid rgba(99,102,241,0.2)",
+          padding: "10px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontFamily: "Inter, sans-serif",
+          zIndex: 10,
+          position: "relative",
+          cursor: "pointer",
+          marginBottom: 16,
+          borderRadius: 12,
         }}
       >
-        <div className="flex items-center text-sm">
+        <div style={{ display: "flex", alignItems: "center" }}>
           <span
-            className="w-2 h-2 rounded-full mr-3 shrink-0 animate-pulse"
-            style={{ background: "#6366f1" }}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: "#6366f1",
+              marginRight: 10,
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+            className="animate-pulse"
           />
-          <span className="font-semibold" style={{ color: "#111827" }}>
-            Your {prevMonthName} review is ready.
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>
+            Your {prevMonthName} review is ready —
           </span>
-          <span className="ml-1" style={{ color: "#6366f1" }}>
-            See how you did →
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#6366f1", marginLeft: 4 }}>
+            see how you did →
           </span>
         </div>
-        <button
-          className="shrink-0 ml-3 px-4 py-1.5 rounded-full text-xs font-semibold text-white"
-          style={{ background: "#6366f1" }}
+        <span
+          style={{
+            background: "#6366f1",
+            color: "#ffffff",
+            borderRadius: 20,
+            padding: "4px 14px",
+            fontSize: 12,
+            fontWeight: 600,
+            flexShrink: 0,
+          }}
         >
           View Review
-        </button>
+        </span>
       </div>
     );
   }
 
   // STATE C: first 7 days, approved
-  if (isFirstSevenDays && bannerApproved) {
+  if ((isFirstSevenDays || showBanner) && reviewApproved) {
     return (
       <div
-        className="flex items-center justify-between mb-4 px-5 py-3 rounded-[16px]"
-        style={{ background: "#f0fdf4", border: "1px solid #bbf7d0" }}
+        style={{
+          width: "100%",
+          background: "#f0fdf4",
+          borderBottom: "1px solid #bbf7d0",
+          padding: "10px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontFamily: "Inter, sans-serif",
+          zIndex: 10,
+          position: "relative",
+          marginBottom: 16,
+          borderRadius: 12,
+        }}
       >
-        <div className="flex items-center text-sm">
-          <span className="mr-2" style={{ color: "#16a34a" }}>✓</span>
-          <span className="font-semibold" style={{ color: "#15803d" }}>
-            {prevMonthName} review approved.
-          </span>
-          <span className="ml-1" style={{ color: "#6b7280" }}>
-            Saved to your archive.
-          </span>
-        </div>
-        <button
+        <span style={{ fontSize: 13, fontWeight: 500, color: "#15803d" }}>
+          ✓ {prevMonthName} review approved. Saved to your archive.
+        </span>
+        <span
           onClick={() => navigate("/monthly-review?mode=read")}
-          className="text-xs font-semibold shrink-0 ml-3"
-          style={{ color: "#16a34a" }}
+          style={{ fontSize: 12, fontWeight: 600, color: "#16a34a", cursor: "pointer" }}
         >
           View
-        </button>
+        </span>
       </div>
     );
   }
