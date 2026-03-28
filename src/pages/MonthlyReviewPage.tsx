@@ -37,6 +37,7 @@ export default function MonthlyReviewPage() {
   const reviewId = searchParams.get("id");
   const readMode = searchParams.get("mode") === "read";
   const { user, profile } = useAuth();
+  const { isPremium } = usePremiumStatus();
   const { data: finances } = useUserFinances();
   const { data: projects = [] } = useProjects();
   const { data: tasks = [] } = useAllTasks();
@@ -45,6 +46,12 @@ export default function MonthlyReviewPage() {
   const upsertPrefs = useUpsertPreferences();
   const [saving, setSaving] = useState(false);
   const [approved, setApproved] = useState(false);
+
+  // Redirect non-premium users to billing
+  if (!isPremium) {
+    navigate("/settings?tab=billing", { replace: true });
+    return null;
+  }
 
   const { data: savedReview } = useQuery({
     queryKey: ["monthly_review", reviewId],
