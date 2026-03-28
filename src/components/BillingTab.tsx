@@ -424,6 +424,12 @@ export default function BillingTab({
           )}
         </div>
       )}
+
+      {/* Legal footer */}
+      <div className="flex gap-4 text-xs text-muted-foreground pt-6">
+        <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+        <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
+      </div>
     </>
   );
 }

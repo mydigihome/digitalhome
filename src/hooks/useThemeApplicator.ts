@@ -59,7 +59,25 @@ const DENSITY_MAP: Record<string, string> = {
 
 export function useThemeApplicator() {
   const { data: prefs } = useUserPreferences();
+  const { user, signOut } = useAuth();
+  const upsertPrefs = useUpsertPreferences();
 
+  // Session security: update last_active_at and check for inactivity
+  useEffect(() => {
+    if (!user || !prefs) return;
+    
+    // Update last_active_at
+    supabase.from("user_preferences").update({ last_active_at: new Date().toISOString() } as any).eq("user_id", user.id).then(() => {});
+    
+    // Check for 30-day inactivity
+    const lastActive = (prefs as any)?.last_active_at;
+    if (lastActive) {
+      const daysSinceActive = (Date.now() - new Date(lastActive).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceActive > 30) {
+        signOut();
+      }
+    }
+  }, [user?.id]);
   useEffect(() => {
     if (!prefs) return;
     const root = document.documentElement;
