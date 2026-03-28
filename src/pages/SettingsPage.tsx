@@ -111,6 +111,8 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: archivedProjects = [] } = useArchivedProjects();
+  const { data: monthlyReviews = [] } = useMonthlyReviews();
+  const deleteMonthlyReview = useDeleteMonthlyReview();
   const restoreProject = useRestoreProject();
   const deleteArchivedProject = useDeleteArchivedProject();
   const [fullName, setFullName] = useState(profile?.full_name || "");
