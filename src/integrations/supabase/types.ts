@@ -234,6 +234,7 @@ export type Database = {
         Row: {
           brand_name: string
           contact_email: string | null
+          contact_id: string | null
           contact_name: string | null
           created_at: string | null
           deadline: string | null
@@ -242,6 +243,9 @@ export type Database = {
           deliverables: string | null
           id: string
           notes: string | null
+          payout_amount: number | null
+          payout_date: string | null
+          payout_status: string | null
           platforms: string[] | null
           status: string | null
           user_id: string
@@ -249,6 +253,7 @@ export type Database = {
         Insert: {
           brand_name: string
           contact_email?: string | null
+          contact_id?: string | null
           contact_name?: string | null
           created_at?: string | null
           deadline?: string | null
@@ -257,6 +262,9 @@ export type Database = {
           deliverables?: string | null
           id?: string
           notes?: string | null
+          payout_amount?: number | null
+          payout_date?: string | null
+          payout_status?: string | null
           platforms?: string[] | null
           status?: string | null
           user_id: string
@@ -264,6 +272,7 @@ export type Database = {
         Update: {
           brand_name?: string
           contact_email?: string | null
+          contact_id?: string | null
           contact_name?: string | null
           created_at?: string | null
           deadline?: string | null
@@ -272,11 +281,22 @@ export type Database = {
           deliverables?: string | null
           id?: string
           notes?: string | null
+          payout_amount?: number | null
+          payout_date?: string | null
+          payout_status?: string | null
           platforms?: string[] | null
           status?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "brand_deals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendar_events: {
         Row: {
@@ -670,6 +690,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           assigned_to: string | null
+          brand_id: string | null
           caption: string | null
           created_at: string | null
           hashtags: string[] | null
@@ -689,6 +710,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           assigned_to?: string | null
+          brand_id?: string | null
           caption?: string | null
           created_at?: string | null
           hashtags?: string[] | null
@@ -708,6 +730,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           assigned_to?: string | null
+          brand_id?: string | null
           caption?: string | null
           created_at?: string | null
           hashtags?: string[] | null
@@ -721,7 +744,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_pieces_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_planner_data: {
         Row: {
@@ -2302,9 +2333,67 @@ export type Database = {
         }
         Relationships: []
       }
+      social_comments: {
+        Row: {
+          comment_text: string | null
+          commented_at: string | null
+          commenter_avatar: string | null
+          commenter_username: string | null
+          connection_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          platform: string
+          platform_comment_id: string | null
+          post_caption_snippet: string | null
+          post_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_text?: string | null
+          commented_at?: string | null
+          commenter_avatar?: string | null
+          commenter_username?: string | null
+          connection_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          platform: string
+          platform_comment_id?: string | null
+          post_caption_snippet?: string | null
+          post_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_text?: string | null
+          commented_at?: string | null
+          commenter_avatar?: string | null
+          commenter_username?: string | null
+          connection_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          platform?: string
+          platform_comment_id?: string | null
+          post_caption_snippet?: string | null
+          post_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "social_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_connections: {
         Row: {
           access_token: string | null
+          avg_engagement_rate: number | null
+          brand_id: string | null
           connected_at: string | null
           expires_at: string | null
           follower_count: number | null
@@ -2317,10 +2406,14 @@ export type Database = {
           platform_username: string | null
           post_count: number | null
           refresh_token: string | null
+          total_interactions_30d: number | null
+          total_reach_30d: number | null
           user_id: string
         }
         Insert: {
           access_token?: string | null
+          avg_engagement_rate?: number | null
+          brand_id?: string | null
           connected_at?: string | null
           expires_at?: string | null
           follower_count?: number | null
@@ -2333,10 +2426,14 @@ export type Database = {
           platform_username?: string | null
           post_count?: number | null
           refresh_token?: string | null
+          total_interactions_30d?: number | null
+          total_reach_30d?: number | null
           user_id: string
         }
         Update: {
           access_token?: string | null
+          avg_engagement_rate?: number | null
+          brand_id?: string | null
           connected_at?: string | null
           expires_at?: string | null
           follower_count?: number | null
@@ -2349,14 +2446,25 @@ export type Database = {
           platform_username?: string | null
           post_count?: number | null
           refresh_token?: string | null
+          total_interactions_30d?: number | null
+          total_reach_30d?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "social_connections_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_posts: {
         Row: {
           caption: string | null
           comments: number | null
+          connection_id: string | null
           content_piece_id: string | null
           created_at: string | null
           engagement_rate: number | null
@@ -2376,6 +2484,7 @@ export type Database = {
         Insert: {
           caption?: string | null
           comments?: number | null
+          connection_id?: string | null
           content_piece_id?: string | null
           created_at?: string | null
           engagement_rate?: number | null
@@ -2395,6 +2504,7 @@ export type Database = {
         Update: {
           caption?: string | null
           comments?: number | null
+          connection_id?: string | null
           content_piece_id?: string | null
           created_at?: string | null
           engagement_rate?: number | null
@@ -2412,6 +2522,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "social_posts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "social_connections"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "social_posts_content_piece_id_fkey"
             columns: ["content_piece_id"]
@@ -2505,6 +2622,36 @@ export type Database = {
           id?: string
           user_id?: string
           verified?: boolean
+        }
+        Relationships: []
+      }
+      studio_brands: {
+        Row: {
+          avatar_url: string | null
+          brand_color: string | null
+          brand_name: string
+          brand_type: string | null
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          brand_color?: string | null
+          brand_name: string
+          brand_type?: string | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          brand_color?: string | null
+          brand_name?: string
+          brand_type?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
