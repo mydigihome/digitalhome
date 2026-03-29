@@ -503,6 +503,7 @@ function MobileTabBar() {
 
   const moreItems = [
     { icon: Sparkles, label: "Content Planner", path: "/vision" },
+    { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
