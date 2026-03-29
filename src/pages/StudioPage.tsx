@@ -18,8 +18,8 @@ export default function StudioPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   const today = new Date();
-  const dayName = today.toLocaleDateString("en-US", { weekday: "long" });
-  const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const timeStr = today.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZoneName: "short" });
 
   const renderContent = () => {
     switch (activeTab) {
@@ -36,30 +36,32 @@ export default function StudioPage() {
     <AppShell>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 sm:px-8 py-4 border-b border-[#f0f0f5] dark:border-[#2d3148]">
-          <span className="text-sm text-[#9ca3af] font-medium">{dayName}, {dateStr}</span>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-[#111827] dark:text-[#f9fafb]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Studio
-            </h1>
-            <span className="text-[10px] font-bold text-[#6366f1] animate-pulse">● LIVE</span>
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-8 py-4">
+          <span className="text-[15px] font-semibold text-[#111827] dark:text-[#f9fafb]">
+            Command Center
+          </span>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] inline-block" />
+              <span className="text-[10px] font-medium text-[#16a34a]">LIVE</span>
+            </span>
+            <span className="text-[11px] text-[#9ca3af]">{dateStr} at {timeStr}</span>
+            <button className="text-[11px] text-[#6366f1] hover:underline">Refresh</button>
+            <button className="text-[11px] text-[#9ca3af] hover:text-[#374151]">Restart</button>
           </div>
-          <button className="text-xs text-[#6b7280] dark:text-[#9ca3af] hover:text-[#374151] dark:hover:text-[#e5e7eb] transition font-medium">
-            Sync All
-          </button>
         </div>
 
         {/* Tabs */}
-        <div className="shrink-0 border-b border-[#f0f0f5] dark:border-[#2d3148] px-4 sm:px-8">
-          <div className="flex items-center gap-6 overflow-x-auto">
+        <div className="shrink-0 border-b border-[#e5e7eb] dark:border-[#2d3148] px-4 sm:px-8">
+          <div className="flex items-center gap-5 overflow-x-auto">
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
-                className={`pb-2 pt-3 text-sm whitespace-nowrap transition-colors border-b-2 ${
+                className={`pb-2.5 text-[13px] whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === t.id
-                    ? "border-[#6366f1] text-[#6366f1] font-semibold"
-                    : "border-transparent text-[#9ca3af] hover:text-[#374151] dark:hover:text-[#e5e7eb]"
+                    ? "border-[#111827] dark:border-[#f9fafb] text-[#111827] dark:text-[#f9fafb] font-medium"
+                    : "border-transparent text-[#6b7280] hover:text-[#374151] dark:hover:text-[#e5e7eb]"
                 }`}
               >
                 {t.label}
