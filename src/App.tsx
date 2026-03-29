@@ -24,6 +24,7 @@ import WealthTrackerPage from "./pages/WealthTrackerPage";
 import ApplicationsTrackerPage from "./pages/ApplicationsTrackerPage";
 import NotFound from "./pages/NotFound";
 import ContentPlanner from "./pages/ContentPlanner";
+import StudioPage from "./pages/StudioPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
 import PublicEventPage from "./pages/PublicEventPage";
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
             <Route path="/vision" element={<ProtectedRoute><ContentPlanner /></ProtectedRoute>} />
+            <Route path="/studio" element={<ProtectedRoute><StudioPage /></ProtectedRoute>} />
             <Route path="/inbox" element={<Navigate to="/relationships" replace />} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

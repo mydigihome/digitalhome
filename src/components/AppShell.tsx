@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -92,6 +92,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
+    { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio"), color: "#8B5CF6" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
@@ -502,6 +503,7 @@ function MobileTabBar() {
 
   const moreItems = [
     { icon: Sparkles, label: "Content Planner", path: "/vision" },
+    { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
@@ -512,7 +514,7 @@ function MobileTabBar() {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
     if (path === "/relationships") return location.pathname.startsWith("/relationships");
-    if (path === "/__more__") return ["/vision", "/settings"].some(p => location.pathname.startsWith(p));
+    if (path === "/__more__") return ["/vision", "/studio", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
 
@@ -601,7 +603,7 @@ function MobileTabBar() {
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isFullBleed = location.pathname === "/vision";
+  const isFullBleed = location.pathname === "/vision" || location.pathname === "/studio";
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isFinance = location.pathname.startsWith("/finance");
 

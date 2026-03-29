@@ -230,6 +230,54 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_deals: {
+        Row: {
+          brand_name: string
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string | null
+          deadline: string | null
+          deal_type: string | null
+          deal_value: number | null
+          deliverables: string | null
+          id: string
+          notes: string | null
+          platforms: string[] | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          deal_type?: string | null
+          deal_value?: number | null
+          deliverables?: string | null
+          id?: string
+          notes?: string | null
+          platforms?: string[] | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          deal_type?: string | null
+          deal_value?: number | null
+          deliverables?: string | null
+          id?: string
+          notes?: string | null
+          platforms?: string[] | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           all_day: boolean
@@ -579,6 +627,98 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_comments: {
+        Row: {
+          comment: string
+          content_piece_id: string | null
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          content_piece_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          content_piece_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_comments_content_piece_id_fkey"
+            columns: ["content_piece_id"]
+            isOneToOne: false
+            referencedRelation: "content_pieces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_pieces: {
+        Row: {
+          ai_caption: string | null
+          ai_hashtags: string[] | null
+          approved_at: string | null
+          approved_by: string | null
+          assigned_to: string | null
+          caption: string | null
+          created_at: string | null
+          hashtags: string[] | null
+          id: string
+          media_urls: string[] | null
+          notes: string | null
+          platforms: string[] | null
+          scheduled_for: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_to?: string | null
+          caption?: string | null
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          notes?: string | null
+          platforms?: string[] | null
+          scheduled_for?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_caption?: string | null
+          ai_hashtags?: string[] | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_to?: string | null
+          caption?: string | null
+          created_at?: string | null
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          notes?: string | null
+          platforms?: string[] | null
+          scheduled_for?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2075,6 +2215,39 @@ export type Database = {
           },
         ]
       }
+      revenue_entries: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          platform: string | null
+          received_at: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          platform?: string | null
+          received_at?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          platform?: string | null
+          received_at?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shop_templates: {
         Row: {
           created_at: string
@@ -2128,6 +2301,125 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      social_connections: {
+        Row: {
+          access_token: string | null
+          connected_at: string | null
+          expires_at: string | null
+          follower_count: number | null
+          following_count: number | null
+          id: string
+          last_synced: string | null
+          platform: string
+          platform_avatar_url: string | null
+          platform_user_id: string | null
+          platform_username: string | null
+          post_count: number | null
+          refresh_token: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string | null
+          expires_at?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string
+          last_synced?: string | null
+          platform: string
+          platform_avatar_url?: string | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          post_count?: number | null
+          refresh_token?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string | null
+          expires_at?: string | null
+          follower_count?: number | null
+          following_count?: number | null
+          id?: string
+          last_synced?: string | null
+          platform?: string
+          platform_avatar_url?: string | null
+          platform_user_id?: string | null
+          platform_username?: string | null
+          post_count?: number | null
+          refresh_token?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          caption: string | null
+          comments: number | null
+          content_piece_id: string | null
+          created_at: string | null
+          engagement_rate: number | null
+          id: string
+          impressions: number | null
+          likes: number | null
+          media_urls: string[] | null
+          platform: string
+          platform_post_id: string | null
+          post_type: string | null
+          posted_at: string | null
+          reach: number | null
+          saves: number | null
+          shares: number | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          comments?: number | null
+          content_piece_id?: string | null
+          created_at?: string | null
+          engagement_rate?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          media_urls?: string[] | null
+          platform: string
+          platform_post_id?: string | null
+          post_type?: string | null
+          posted_at?: string | null
+          reach?: number | null
+          saves?: number | null
+          shares?: number | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          comments?: number | null
+          content_piece_id?: string | null
+          created_at?: string | null
+          engagement_rate?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          media_urls?: string[] | null
+          platform?: string
+          platform_post_id?: string | null
+          post_type?: string | null
+          posted_at?: string | null
+          reach?: number | null
+          saves?: number | null
+          shares?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_content_piece_id_fkey"
+            columns: ["content_piece_id"]
+            isOneToOne: false
+            referencedRelation: "content_pieces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_loans: {
         Row: {
