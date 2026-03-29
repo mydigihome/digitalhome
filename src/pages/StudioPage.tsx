@@ -23,12 +23,12 @@ export default function StudioPage() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "overview": return <StudioOverview />;
+      case "overview": return <StudioOverview onNavigateDeals={() => setActiveTab("deals")} />;
       case "hq": return <StudioHQView />;
       case "platforms": return <StudioPlatformsView />;
       case "deals": return <StudioDealsView />;
       case "revenue": return <StudioRevenueView />;
-      default: return <StudioOverview />;
+      default: return <StudioOverview onNavigateDeals={() => setActiveTab("deals")} />;
     }
   };
 
@@ -36,7 +36,7 @@ export default function StudioPage() {
     <AppShell>
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between px-4 sm:px-8 py-4">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4">
           <span className="text-[15px] font-semibold text-[#111827] dark:text-[#f9fafb]">
             Command Center
           </span>
@@ -46,13 +46,13 @@ export default function StudioPage() {
               <span className="text-[10px] font-medium text-[#16a34a]">LIVE</span>
             </span>
             <span className="text-[11px] text-[#9ca3af]">{dateStr} at {timeStr}</span>
-            <button className="text-[11px] text-[#6366f1] hover:underline">Refresh</button>
-            <button className="text-[11px] text-[#9ca3af] hover:text-[#374151]">Restart</button>
+            <button onClick={() => window.location.reload()} className="text-[11px] text-[#6366f1] hover:underline">Refresh</button>
+            <button onClick={() => window.location.reload()} className="text-[11px] text-[#9ca3af] hover:text-[#374151]">Restart</button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="shrink-0 border-b border-[#e5e7eb] dark:border-[#2d3148] px-4 sm:px-8">
+        <div className="shrink-0 border-b border-[#e5e7eb] dark:border-[#1f2937] px-4 sm:px-6">
           <div className="flex items-center gap-5 overflow-x-auto">
             {TABS.map(t => (
               <button
@@ -60,8 +60,8 @@ export default function StudioPage() {
                 onClick={() => setActiveTab(t.id)}
                 className={`pb-2.5 text-[13px] whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === t.id
-                    ? "border-[#111827] dark:border-[#f9fafb] text-[#111827] dark:text-[#f9fafb] font-medium"
-                    : "border-transparent text-[#6b7280] hover:text-[#374151] dark:hover:text-[#e5e7eb]"
+                    ? "border-[#6366f1] text-[#111827] dark:text-[#f9fafb] font-medium"
+                    : "border-transparent text-[#9ca3af] hover:text-[#374151] dark:hover:text-[#e5e7eb]"
                 }`}
               >
                 {t.label}
@@ -71,7 +71,7 @@ export default function StudioPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-4 sm:p-8 bg-[#f3f3f8] dark:bg-[#0f1117]">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 bg-white dark:bg-[#0f1117]">
           {renderContent()}
         </div>
       </div>
