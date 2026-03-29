@@ -2655,6 +2655,97 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_ideas: {
+        Row: {
+          brand_id: string | null
+          content_type: string | null
+          created_at: string | null
+          id: string
+          idea: string
+          notes: string | null
+          platform: string | null
+          promoted_to_content: boolean | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_id?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          id?: string
+          idea: string
+          notes?: string | null
+          platform?: string | null
+          promoted_to_content?: boolean | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_id?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          id?: string
+          idea?: string
+          notes?: string | null
+          platform?: string | null
+          promoted_to_content?: boolean | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_ideas_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_strategy: {
+        Row: {
+          brand_id: string | null
+          brand_voice: string | null
+          competitor_analysis: string | null
+          content_pillars: string | null
+          id: string
+          primary_goals: string | null
+          target_audience: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          brand_id?: string | null
+          brand_voice?: string | null
+          competitor_analysis?: string | null
+          content_pillars?: string | null
+          id?: string
+          primary_goals?: string | null
+          target_audience?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          brand_id?: string | null
+          brand_voice?: string | null
+          competitor_analysis?: string | null
+          content_pillars?: string | null
+          id?: string
+          primary_goals?: string | null
+          target_audience?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_strategy_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "studio_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null
