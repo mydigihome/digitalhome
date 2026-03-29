@@ -1,22 +1,9 @@
 import { useState } from "react";
-import { Plus, X, Calendar, LayoutGrid, Trash2 } from "lucide-react";
+import { Calendar, LayoutGrid, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-type Stream = {
-  id: string;
-  name: string;
-  type: string;
-  monthlyRevenue: number;
-  notes: string;
-};
-
-type Idea = {
-  id: string;
-  text: string;
-  platform: string;
-  contentType: string;
-  date: string;
-};
+type Stream = { id: string; name: string; type: string; monthlyRevenue: number; notes: string };
+type Idea = { id: string; text: string; platform: string; contentType: string; date: string };
 
 const MOCK_IDEAS: Idea[] = [
   { id: "1", text: "Behind the scenes of my morning routine", platform: "Instagram", contentType: "Reel", date: "Mar 27" },
@@ -56,6 +43,7 @@ export default function StudioHQView() {
   const [ideaFilter, setIdeaFilter] = useState("All");
   const [planView, setPlanView] = useState<"kanban" | "calendar">("kanban");
   const [showContentPanel, setShowContentPanel] = useState(false);
+  const [contentForm, setContentForm] = useState({ title: "", caption: "", status: "idea", contentType: "Reel", platforms: [] as string[], schedule: "", notes: "" });
 
   const addStream = () => {
     if (!newStream.name.trim()) return;
@@ -70,68 +58,65 @@ export default function StudioHQView() {
     setNewIdea("");
   };
 
+  const promoteIdea = (idea: Idea) => {
+    setContentForm({ title: idea.text, caption: "", status: "idea", contentType: idea.contentType || "Reel", platforms: idea.platform ? [idea.platform] : [], schedule: "", notes: "" });
+    setShowContentPanel(true);
+  };
+
+  const deleteIdea = (id: string) => setIdeas(prev => prev.filter(x => x.id !== id));
+
+  const saveContent = (status: string) => {
+    // Would save to DB here
+    setShowContentPanel(false);
+    setContentForm({ title: "", caption: "", status: "idea", contentType: "Reel", platforms: [], schedule: "", notes: "" });
+  };
+
+  const togglePlatform = (p: string) => {
+    setContentForm(prev => ({
+      ...prev,
+      platforms: prev.platforms.includes(p) ? prev.platforms.filter(x => x !== p) : [...prev.platforms, p]
+    }));
+  };
+
   const filteredIdeas = ideaFilter === "All" ? ideas : ideas.filter(i => i.contentType === ideaFilter);
 
   return (
-    <div className="space-y-5 max-w-[1200px] mx-auto">
+    <div className="space-y-3 max-w-[1200px] mx-auto">
       {/* Revenue Streams */}
-      <div className="bg-white dark:bg-[#1e2130] p-4" style={{ border: "1px solid #e5e7eb" }}>
+      <div className="bg-white dark:bg-[#0f1117] rounded-lg border border-[#e5e7eb] dark:border-[#1f2937] p-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-3">Your Streams</p>
         {streams.length === 0 && !showAddStream ? (
           <div className="text-center py-6">
             <p className="text-[13px] text-[#374151] dark:text-[#e5e7eb]">No revenue streams added yet.</p>
             <p className="text-[12px] text-[#9ca3af] mt-1 mb-3">Add the parts of your business you want to track.</p>
-            <button onClick={() => setShowAddStream(true)} className="text-[12px] font-medium text-[#111827] dark:text-[#f9fafb] border border-[#e5e7eb] dark:border-[#2d3148] px-3 py-1.5 hover:bg-[#fafafa] dark:hover:bg-[#252836] transition">
+            <button onClick={() => setShowAddStream(true)} className="text-[12px] font-medium text-[#111827] dark:text-[#f9fafb] border border-[#e5e7eb] dark:border-[#1f2937] px-3 py-1.5 rounded-md hover:bg-[#fafafa] dark:hover:bg-[#0d1017] transition">
               + Add Stream
             </button>
           </div>
         ) : (
           <>
-            <div className="space-y-0">
-              {streams.map((s, i) => (
-                <div key={s.id} className="flex items-center gap-4 py-2.5 text-[13px]" style={{ borderBottom: "1px solid #f5f5f5" }}>
-                  <span className="font-medium text-[#111827] dark:text-[#f9fafb] flex-1">{s.name}</span>
-                  <span className="text-[#9ca3af]">{s.type}</span>
-                  <span className="font-medium text-[#111827] dark:text-[#f9fafb]" style={{ fontVariantNumeric: "tabular-nums" }}>${s.monthlyRevenue.toLocaleString()}/mo</span>
-                  <button onClick={() => setStreams(prev => prev.filter(x => x.id !== s.id))} className="text-[#9ca3af] hover:text-[#dc2626]">
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {!showAddStream && (
-              <button onClick={() => setShowAddStream(true)} className="text-[11px] text-[#6366f1] font-medium mt-3">
-                + Add Stream
-              </button>
-            )}
+            {streams.map(s => (
+              <div key={s.id} className="flex items-center gap-4 py-2.5 text-[13px] border-b border-[#f5f5f5] dark:border-[#1a1d27]">
+                <span className="font-medium text-[#111827] dark:text-[#f9fafb] flex-1">{s.name}</span>
+                <span className="text-[#9ca3af]">{s.type}</span>
+                <span className="font-medium text-[#111827] dark:text-[#f9fafb]" style={{ fontVariantNumeric: "tabular-nums" }}>${s.monthlyRevenue.toLocaleString()}/mo</span>
+                <button onClick={() => setStreams(prev => prev.filter(x => x.id !== s.id))} className="text-[#9ca3af] hover:text-[#dc2626]"><Trash2 className="w-3 h-3" /></button>
+              </div>
+            ))}
+            {!showAddStream && <button onClick={() => setShowAddStream(true)} className="text-[11px] text-[#6366f1] font-medium mt-3">+ Add Stream</button>}
           </>
         )}
         {showAddStream && (
-          <div className="mt-3 pt-3 space-y-2" style={{ borderTop: "1px solid #f5f5f5" }}>
+          <div className="mt-3 pt-3 space-y-2 border-t border-[#f5f5f5] dark:border-[#1a1d27]">
             <div className="flex gap-2">
-              <input
-                className="flex-1 text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] bg-transparent dark:text-[#f9fafb] px-3 py-1.5 outline-none focus:border-[#111827]"
-                placeholder="Stream name"
-                value={newStream.name}
-                onChange={e => setNewStream(prev => ({ ...prev, name: e.target.value }))}
-              />
-              <select
-                className="text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] bg-transparent dark:text-[#f9fafb] px-2 py-1.5 outline-none"
-                value={newStream.type}
-                onChange={e => setNewStream(prev => ({ ...prev, type: e.target.value }))}
-              >
+              <input className="flex-1 text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] bg-transparent dark:text-[#f9fafb] px-3 py-1.5 rounded-md outline-none focus:border-[#6366f1]" placeholder="Stream name" value={newStream.name} onChange={e => setNewStream(prev => ({ ...prev, name: e.target.value }))} />
+              <select className="text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] bg-transparent dark:text-[#f9fafb] px-2 py-1.5 rounded-md outline-none" value={newStream.type} onChange={e => setNewStream(prev => ({ ...prev, type: e.target.value }))}>
                 {STREAM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
-              <input
-                className="w-24 text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] bg-transparent dark:text-[#f9fafb] px-3 py-1.5 outline-none focus:border-[#111827]"
-                placeholder="$/mo"
-                type="number"
-                value={newStream.monthlyRevenue || ""}
-                onChange={e => setNewStream(prev => ({ ...prev, monthlyRevenue: Number(e.target.value) }))}
-              />
+              <input className="w-24 text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] bg-transparent dark:text-[#f9fafb] px-3 py-1.5 rounded-md outline-none focus:border-[#6366f1]" placeholder="$/mo" type="number" value={newStream.monthlyRevenue || ""} onChange={e => setNewStream(prev => ({ ...prev, monthlyRevenue: Number(e.target.value) }))} />
             </div>
             <div className="flex gap-2">
-              <button onClick={addStream} className="text-[12px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] px-3 py-1.5">Add</button>
+              <button onClick={addStream} className="text-[12px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] px-3 py-1.5 rounded-md">Add</button>
               <button onClick={() => setShowAddStream(false)} className="text-[12px] text-[#9ca3af] px-3 py-1.5">Cancel</button>
             </div>
           </div>
@@ -139,39 +124,26 @@ export default function StudioHQView() {
       </div>
 
       {/* Ideas Bank */}
-      <div className="bg-white dark:bg-[#1e2130] p-4" style={{ border: "1px solid #e5e7eb" }}>
+      <div className="bg-white dark:bg-[#0f1117] rounded-lg border border-[#e5e7eb] dark:border-[#1f2937] p-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-3">Ideas Bank</p>
         <div className="flex gap-2 mb-3">
-          <input
-            className="flex-1 text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none focus:border-[#111827] dark:focus:border-[#f9fafb] dark:placeholder-[#6b7280]"
-            placeholder="Drop an idea..."
-            value={newIdea}
-            onChange={e => setNewIdea(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && addIdea()}
-          />
-          <button onClick={addIdea} className="text-[13px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] px-3 py-2">+</button>
+          <input className="flex-1 text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none focus:border-[#6366f1] dark:placeholder-[#6b7280]" placeholder="Drop an idea..." value={newIdea} onChange={e => setNewIdea(e.target.value)} onKeyDown={e => e.key === "Enter" && addIdea()} />
+          <button onClick={addIdea} className="text-[13px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] px-3 py-2 rounded-md">+</button>
         </div>
         <div className="flex items-center gap-3 mb-3">
           {CONTENT_TYPES.map(ct => (
-            <button
-              key={ct}
-              onClick={() => setIdeaFilter(ct)}
-              className={`text-[11px] transition ${ideaFilter === ct ? "text-[#111827] dark:text-[#f9fafb] font-medium" : "text-[#9ca3af]"}`}
-            >
-              {ct}
-            </button>
+            <button key={ct} onClick={() => setIdeaFilter(ct)} className={`text-[11px] transition ${ideaFilter === ct ? "text-[#111827] dark:text-[#f9fafb] font-medium" : "text-[#9ca3af]"}`}>{ct}</button>
           ))}
         </div>
         <div className="space-y-0">
           {filteredIdeas.map(idea => (
-            <div key={idea.id} className="group flex items-center gap-3 py-2.5 -mx-4 px-4 hover:bg-[#fafafa] dark:hover:bg-[#252836] transition" style={{ borderBottom: "1px solid #f5f5f5" }}>
+            <div key={idea.id} className="group flex items-center gap-3 py-2.5 -mx-4 px-4 hover:bg-[#fafafa] dark:hover:bg-[#0d1017] transition border-b border-[#f5f5f5] dark:border-[#1a1d27]">
               <span className="text-[13px] text-[#111827] dark:text-[#f9fafb] flex-1">{idea.text}</span>
               {idea.contentType && <span className="text-[10px] text-[#9ca3af]">{idea.contentType}</span>}
-              {idea.platform && <span className="text-[10px] text-[#9ca3af]">{idea.platform}</span>}
               <span className="text-[10px] text-[#9ca3af]">{idea.date}</span>
               <div className="hidden group-hover:flex items-center gap-2">
-                <button className="text-[11px] text-[#6366f1]">Promote to Content</button>
-                <button onClick={() => setIdeas(prev => prev.filter(x => x.id !== idea.id))} className="text-[11px] text-[#9ca3af]">Delete</button>
+                <button onClick={() => promoteIdea(idea)} className="text-[11px] text-[#6366f1]">Promote</button>
+                <button onClick={() => deleteIdea(idea.id)} className="text-[11px] text-[#9ca3af] hover:text-[#dc2626]">Delete</button>
               </div>
             </div>
           ))}
@@ -179,21 +151,15 @@ export default function StudioHQView() {
       </div>
 
       {/* Content Plan */}
-      <div className="bg-white dark:bg-[#1e2130] p-4" style={{ border: "1px solid #e5e7eb" }}>
+      <div className="bg-white dark:bg-[#0f1117] rounded-lg border border-[#e5e7eb] dark:border-[#1f2937] p-4">
         <div className="flex items-center justify-between mb-4">
           <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af]">Content Plan</p>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPlanView("kanban")}
-                className={`flex items-center gap-1 px-2 py-1 text-[11px] transition ${planView === "kanban" ? "text-[#111827] dark:text-[#f9fafb] font-medium" : "text-[#9ca3af]"}`}
-              >
+              <button onClick={() => setPlanView("kanban")} className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-md transition ${planView === "kanban" ? "text-[#111827] dark:text-[#f9fafb] font-medium bg-[#fafafa] dark:bg-[#0d1017]" : "text-[#9ca3af]"}`}>
                 <LayoutGrid className="w-3 h-3" /> Kanban
               </button>
-              <button
-                onClick={() => setPlanView("calendar")}
-                className={`flex items-center gap-1 px-2 py-1 text-[11px] transition ${planView === "calendar" ? "text-[#111827] dark:text-[#f9fafb] font-medium" : "text-[#9ca3af]"}`}
-              >
+              <button onClick={() => setPlanView("calendar")} className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-md transition ${planView === "calendar" ? "text-[#111827] dark:text-[#f9fafb] font-medium bg-[#fafafa] dark:bg-[#0d1017]" : "text-[#9ca3af]"}`}>
                 <Calendar className="w-3 h-3" /> Calendar
               </button>
             </div>
@@ -202,11 +168,11 @@ export default function StudioHQView() {
         </div>
 
         {planView === "kanban" ? (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-0" style={{ border: "1px solid #e5e7eb" }}>
-            {Object.entries(STATUS_MAP).map(([statusId, info], ci) => {
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-1">
+            {Object.entries(STATUS_MAP).map(([statusId, info]) => {
               const items = MOCK_CONTENT.filter(c => c.status === statusId);
               return (
-                <div key={statusId} className="p-3 min-h-[200px]" style={{ borderRight: ci < 3 ? "1px solid #e5e7eb" : "none" }}>
+                <div key={statusId} className="bg-[#fafafa] dark:bg-[#0d1017] rounded-lg p-3 min-h-[200px]">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: info.color }} />
                     <span className="text-[12px] font-semibold text-[#111827] dark:text-[#f9fafb]">{info.label}</span>
@@ -214,19 +180,15 @@ export default function StudioHQView() {
                   </div>
                   <div className="space-y-2">
                     {items.map(item => (
-                      <div key={item.id} className="p-3" style={{ border: "1px solid #f0f0f0", background: "white" }}>
+                      <div key={item.id} className="p-3 bg-white dark:bg-[#0f1117] rounded-lg border border-[#f0f0f0] dark:border-[#1a1d27] cursor-pointer hover:border-[#e5e7eb] transition">
                         <p className="text-[12px] font-medium text-[#111827] dark:text-[#f9fafb] mb-1">{item.title}</p>
                         <div className="flex items-center gap-1.5">
-                          {item.platforms.map(p => (
-                            <div key={p} className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PLATFORM_COLORS[p] || "#6b7280" }} title={p} />
-                          ))}
+                          {item.platforms.map(p => <div key={p} className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PLATFORM_COLORS[p] || "#6b7280" }} title={p} />)}
                         </div>
                         {item.date && <p className="text-[10px] text-[#9ca3af] mt-1">{item.date}</p>}
                       </div>
                     ))}
-                    <button className="w-full text-[11px] text-[#9ca3af] py-2 border border-dashed border-[#e5e7eb] hover:text-[#374151] transition">
-                      + Add
-                    </button>
+                    <button onClick={() => setShowContentPanel(true)} className="w-full text-[11px] text-[#9ca3af] py-2 border border-dashed border-[#e5e7eb] dark:border-[#1f2937] rounded-md hover:text-[#374151] transition">+ Add</button>
                   </div>
                 </div>
               );
@@ -242,21 +204,18 @@ export default function StudioHQView() {
 
       {/* Content Creation Panel */}
       <Sheet open={showContentPanel} onOpenChange={setShowContentPanel}>
-        <SheetContent side="right" className="w-[380px] p-0 border-l border-[#e5e7eb] dark:border-[#2d3148] shadow-none rounded-none">
+        <SheetContent side="right" className="w-full sm:w-[380px] p-0 border-l border-[#e5e7eb] dark:border-[#1f2937] shadow-none">
           <div className="h-full flex flex-col">
-            <SheetHeader className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid #e5e7eb" }}>
+            <SheetHeader className="px-5 pt-5 pb-4 border-b border-[#e5e7eb] dark:border-[#1f2937]">
               <SheetTitle className="text-[15px] font-semibold text-[#111827] dark:text-[#f9fafb]">New Content</SheetTitle>
             </SheetHeader>
             <div className="flex-1 overflow-auto px-5 py-4 space-y-5">
-              <input
-                className="w-full text-[15px] font-medium bg-transparent border-0 border-b border-[#e5e7eb] dark:border-[#2d3148] outline-none pb-2 text-[#111827] dark:text-[#f9fafb] dark:placeholder-[#6b7280]"
-                placeholder="Give this a title..."
-              />
+              <input className="w-full text-[15px] font-medium bg-transparent border-0 border-b border-[#e5e7eb] dark:border-[#1f2937] outline-none pb-2 text-[#111827] dark:text-[#f9fafb] dark:placeholder-[#6b7280]" placeholder="Give this a title..." value={contentForm.title} onChange={e => setContentForm(prev => ({ ...prev, title: e.target.value }))} />
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Platforms</p>
                 <div className="flex gap-1.5">
                   {Object.entries(PLATFORM_COLORS).map(([p, color]) => (
-                    <button key={p} className="w-7 h-7 rounded flex items-center justify-center bg-[#f5f5f5] dark:bg-[#252836] hover:opacity-80 transition" title={p}>
+                    <button key={p} onClick={() => togglePlatform(p)} className={`w-7 h-7 rounded-md flex items-center justify-center transition ${contentForm.platforms.includes(p) ? "ring-2 ring-[#6366f1]" : "bg-[#f5f5f5] dark:bg-[#1f2937]"}`} title={p}>
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
                     </button>
                   ))}
@@ -264,56 +223,44 @@ export default function StudioHQView() {
               </div>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Content Type</p>
-                <select className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none">
-                  {["Reel", "Post", "Video", "Carousel", "Story", "Tweet", "Pin", "Article"].map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
+                <select className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] bg-transparent dark:text-[#f9fafb] px-3 py-2 rounded-md outline-none" value={contentForm.contentType} onChange={e => setContentForm(prev => ({ ...prev, contentType: e.target.value }))}>
+                  {["Reel", "Post", "Video", "Carousel", "Story", "Tweet", "Pin", "Article"].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Caption</p>
-                <textarea
-                  className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2.5 outline-none resize-none dark:placeholder-[#6b7280]"
-                  placeholder="Write your caption..."
-                  rows={4}
-                />
+                <textarea className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2.5 outline-none resize-none dark:placeholder-[#6b7280]" placeholder="Write your caption..." rows={4} value={contentForm.caption} onChange={e => setContentForm(prev => ({ ...prev, caption: e.target.value }))} />
                 <button className="text-[11px] text-[#6366f1] font-medium mt-1">Write with AI</button>
               </div>
-              <div>
-                <button className="text-[11px] text-[#6366f1] font-medium">Generate Hashtags</button>
-              </div>
+              <button className="text-[11px] text-[#6366f1] font-medium">Generate Hashtags</button>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Media</p>
-                <div className="border border-dashed border-[#e5e7eb] dark:border-[#2d3148] rounded-md py-5 text-center">
+                <div className="border border-dashed border-[#e5e7eb] dark:border-[#1f2937] rounded-md py-5 text-center cursor-pointer hover:border-[#9ca3af] transition">
                   <p className="text-[12px] text-[#9ca3af]">Drop media here or click to upload</p>
                 </div>
               </div>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Schedule</p>
-                <input type="datetime-local" className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none" />
+                <input type="datetime-local" className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] bg-transparent dark:text-[#f9fafb] px-3 py-2 rounded-md outline-none" value={contentForm.schedule} onChange={e => setContentForm(prev => ({ ...prev, schedule: e.target.value }))} />
               </div>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Status</p>
                 <div className="flex gap-4">
-                  {["Idea", "In Progress", "Scheduled"].map(s => (
-                    <label key={s} className="flex items-center gap-1.5 text-[13px] text-[#374151] dark:text-[#e5e7eb] cursor-pointer">
-                      <input type="radio" name="status" className="accent-[#111827]" /> {s}
+                  {[{ v: "idea", l: "Idea" }, { v: "in_progress", l: "In Progress" }, { v: "scheduled", l: "Scheduled" }].map(s => (
+                    <label key={s.v} className="flex items-center gap-1.5 text-[13px] text-[#374151] dark:text-[#e5e7eb] cursor-pointer">
+                      <input type="radio" name="status" checked={contentForm.status === s.v} onChange={() => setContentForm(prev => ({ ...prev, status: s.v }))} className="accent-[#111827]" /> {s.l}
                     </label>
                   ))}
                 </div>
               </div>
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[#9ca3af] mb-2">Notes</p>
-                <textarea
-                  className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#2d3148] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none resize-none dark:placeholder-[#6b7280]"
-                  placeholder="Optional notes..."
-                  rows={2}
-                />
+                <textarea className="w-full text-[13px] border border-[#e5e7eb] dark:border-[#1f2937] rounded-md bg-transparent dark:text-[#f9fafb] px-3 py-2 outline-none resize-none dark:placeholder-[#6b7280]" placeholder="Optional notes..." rows={2} value={contentForm.notes} onChange={e => setContentForm(prev => ({ ...prev, notes: e.target.value }))} />
               </div>
             </div>
-            <div className="shrink-0 flex gap-2 px-5 py-4" style={{ borderTop: "1px solid #e5e7eb" }}>
-              <button className="flex-1 text-[12px] font-medium border border-[#e5e7eb] dark:border-[#2d3148] text-[#374151] dark:text-[#e5e7eb] py-2">Save as Draft</button>
-              <button className="flex-1 text-[12px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] py-2">Add to Plan</button>
+            <div className="shrink-0 flex gap-2 px-5 py-4 border-t border-[#e5e7eb] dark:border-[#1f2937]">
+              <button onClick={() => saveContent("idea")} className="flex-1 text-[12px] font-medium border border-[#e5e7eb] dark:border-[#1f2937] text-[#374151] dark:text-[#e5e7eb] py-2 rounded-md hover:bg-[#fafafa] dark:hover:bg-[#0d1017] transition">Save as Draft</button>
+              <button onClick={() => saveContent("in_progress")} className="flex-1 text-[12px] font-medium bg-[#111827] dark:bg-[#f9fafb] text-white dark:text-[#111827] py-2 rounded-md hover:opacity-90 transition">Add to Plan</button>
             </div>
           </div>
         </SheetContent>
