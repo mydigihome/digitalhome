@@ -92,6 +92,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
+    { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio"), color: "#8B5CF6" },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
