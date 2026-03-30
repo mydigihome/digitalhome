@@ -68,25 +68,35 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     setBody(drafts[next].replace(/{name}/g, firstName));
   };
 
-  const handleSend = async () => {
-    if (!gmailConn) {
-      toast.error("Connect Gmail to send emails");
+  const handleMailto = () => {
+    if (!active.email) {
+      toast.error("No email address for this contact");
       return;
     }
+    const mailto = `mailto:${encodeURIComponent(active.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    toast.success("Email app opened");
+  };
+
+  const handleGmailDraft = async () => {
     if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("gmail-send", {
-        body: { user_id: user?.id, to: active.email, subject, body },
+      const { data, error } = await supabase.functions.invoke("gmail-create-draft", {
+        body: { to: active.email, subject, body },
       });
       if (error) throw error;
+      if (data?.draftLink) {
+        window.open(data.draftLink, "_blank");
+        toast.success("Draft saved to Gmail ✓");
+      }
       setSent(true);
-      toast.success(`Sent to ${active.name}`);
     } catch {
-      toast.error("Failed to send email");
+      // Fallback to mailto
+      handleMailto();
     } finally {
       setSending(false);
     }
