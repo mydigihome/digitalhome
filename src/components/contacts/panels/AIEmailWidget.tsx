@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Paperclip, Link2, Pencil, Send } from "lucide-react";
+import { X, Paperclip, Link2, Pencil, Send, Mail } from "lucide-react";
 import { useGmailConnection } from "@/hooks/useGmail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
