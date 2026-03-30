@@ -174,7 +174,6 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
                 id: activeContact.id,
                 name: activeContact.name,
                 email: activeContact.email || "",
-                type: activeContact.relationship_type || "Professional",
                 role: activeContact.title || "",
                 lastContactDays: daysSinceLast(activeContact),
               } : null}
@@ -182,7 +181,6 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
                 id: suggestedContact.id,
                 name: suggestedContact.name,
                 email: suggestedContact.email || "",
-                type: suggestedContact.relationship_type || "Professional",
                 role: suggestedContact.title || "",
                 lastContactDays: daysSinceLast(suggestedContact),
               } : undefined}
@@ -200,7 +198,6 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
               id: activeContact.id,
               name: activeContact.name,
               email: activeContact.email || "",
-              type: activeContact.relationship_type || "Professional",
               role: activeContact.title || "",
               lastContactDays: daysSinceLast(activeContact),
             } : null}
@@ -208,7 +205,6 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
               id: suggestedContact.id,
               name: suggestedContact.name,
               email: suggestedContact.email || "",
-              type: suggestedContact.relationship_type || "Professional",
               role: suggestedContact.title || "",
               lastContactDays: daysSinceLast(suggestedContact),
             } : undefined}
