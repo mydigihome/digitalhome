@@ -5,11 +5,21 @@ import ProfileHeader from "./ProfileHeader";
 import OverviewView from "./views/OverviewView";
 import EmailView from "./views/EmailView";
 import ComposeModal from "./modals/ComposeModal";
+import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
 import { useGmailConnection, useConnectGmail } from "@/hooks/useGmail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import "../../styles/contacts-tab.css";
+
+interface LinkedInConnection {
+  name: string;
+  email: string | null;
+  job_title: string | null;
+  company: string | null;
+  photo_url: string | null;
+  linkedin_url: string | null;
+}
 
 export default function ContactsPage() {
   const [activeView, setActiveView] = useState("overview");
@@ -21,6 +31,11 @@ export default function ContactsPage() {
     threadId?: string;
     isReply?: boolean;
   }>({ open: false, to: "", name: "" });
+
+  const [linkedInPanel, setLinkedInPanel] = useState<{
+    open: boolean;
+    connections: LinkedInConnection[];
+  }>({ open: false, connections: [] });
 
   const { data: gmailConnection } = useGmailConnection();
   const { connect: connectGmail, connecting } = useConnectGmail();
@@ -35,7 +50,6 @@ export default function ContactsPage() {
 
     if (code && state && savedState === state) {
       sessionStorage.removeItem("linkedin_oauth_state");
-      // Clean the URL
       window.history.replaceState({}, "", url.pathname);
 
       (async () => {
@@ -54,9 +68,9 @@ export default function ContactsPage() {
             console.error(error);
             return;
           }
-          if (data?.success) {
-            toast.success(data.message || "LinkedIn connected!");
-            queryClient.invalidateQueries({ queryKey: ["contacts"] });
+          if (data?.success && data?.connections) {
+            // Open selection panel instead of auto-importing
+            setLinkedInPanel({ open: true, connections: data.connections });
           } else {
             toast.error(data?.error || "LinkedIn import failed");
           }
@@ -67,14 +81,6 @@ export default function ContactsPage() {
       })();
     }
   }, [queryClient]);
-
-  const handleGmailImport = () => {
-    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-      toast.error("Add Google Client ID in settings to enable Gmail");
-      return;
-    }
-    connectGmail();
-  };
 
   const handleLinkedInImport = async () => {
     try {
@@ -89,9 +95,13 @@ export default function ContactsPage() {
       const state = crypto.randomUUID();
       sessionStorage.setItem("linkedin_oauth_state", state);
       window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
-    } catch (err) {
+    } catch {
       toast.error("Failed to start LinkedIn connection");
     }
+  };
+
+  const handleGmailImport = () => {
+    connectGmail();
   };
 
   const openCompose = (to: string, name: string, subject?: string, threadId?: string, isReply?: boolean) => {
@@ -168,6 +178,12 @@ export default function ContactsPage() {
         subject={compose.subject}
         threadId={compose.threadId}
         isReply={compose.isReply}
+      />
+
+      <LinkedInSelectionPanel
+        isOpen={linkedInPanel.open}
+        onClose={() => setLinkedInPanel({ open: false, connections: [] })}
+        connections={linkedInPanel.connections}
       />
     </div>
   );
