@@ -31,8 +31,22 @@ export default function ContactsPage() {
     connectGmail();
   };
 
-  const handleLinkedInImport = () => {
-    toast.info("Add LinkedIn Client ID in settings to enable LinkedIn import");
+  const handleLinkedInImport = async () => {
+    try {
+      const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in to connect LinkedIn");
+        return;
+      }
+      const redirectUri = `${window.location.origin}/relationships`;
+      const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID || "86vrea7sthla29";
+      const scope = "openid profile email";
+      const state = crypto.randomUUID();
+      sessionStorage.setItem("linkedin_oauth_state", state);
+      window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
+    } catch (err) {
+      toast.error("Failed to start LinkedIn connection");
+    }
   };
 
   const openCompose = (to: string, name: string, subject?: string, threadId?: string, isReply?: boolean) => {
