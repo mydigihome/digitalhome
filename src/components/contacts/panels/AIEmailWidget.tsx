@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Paperclip, Link2, Pencil, Send } from "lucide-react";
+import { X, Paperclip, Link2, Pencil, Send, Mail } from "lucide-react";
 import { useGmailConnection } from "@/hooks/useGmail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -68,25 +68,35 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     setBody(drafts[next].replace(/{name}/g, firstName));
   };
 
-  const handleSend = async () => {
-    if (!gmailConn) {
-      toast.error("Connect Gmail to send emails");
+  const handleMailto = () => {
+    if (!active.email) {
+      toast.error("No email address for this contact");
       return;
     }
+    const mailto = `mailto:${encodeURIComponent(active.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+    toast.success("Email app opened");
+  };
+
+  const handleGmailDraft = async () => {
     if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
     setSending(true);
     try {
-      const { error } = await supabase.functions.invoke("gmail-send", {
-        body: { user_id: user?.id, to: active.email, subject, body },
+      const { data, error } = await supabase.functions.invoke("gmail-create-draft", {
+        body: { to: active.email, subject, body },
       });
       if (error) throw error;
+      if (data?.draftLink) {
+        window.open(data.draftLink, "_blank");
+        toast.success("Draft saved to Gmail ✓");
+      }
       setSent(true);
-      toast.success(`Sent to ${active.name}`);
     } catch {
-      toast.error("Failed to send email");
+      // Fallback to mailto
+      handleMailto();
     } finally {
       setSending(false);
     }
@@ -173,23 +183,37 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
       </div>
 
       {/* Send */}
-      <div className="flex gap-2 mt-3">
-        <button
-          onClick={handleSend}
-          disabled={sending}
-          className="flex-1 text-white rounded-full font-bold text-xs py-2.5 disabled:opacity-60"
-          style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
-        >
-          {sending ? "Sending..." : gmailConn ? "Send ▶" : "Connect Gmail to Send"}
-        </button>
-        <button
-          onClick={handleSend}
-          disabled={sending}
-          className="w-8 h-8 rounded-full bg-[#4648d4]/10 flex items-center justify-center text-[#4648d4] flex-shrink-0"
-          title="Send directly to Gmail"
-        >
-          <Send className="w-3.5 h-3.5" />
-        </button>
+      <div className="flex flex-col gap-2 mt-3">
+        <div className="flex gap-2">
+          {gmailConn ? (
+            <>
+              <button
+                onClick={handleGmailDraft}
+                disabled={sending}
+                className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 disabled:opacity-60 flex items-center justify-center gap-1.5"
+              >
+                {sending ? "Saving..." : "Save to Gmail Drafts"}
+              </button>
+              <button
+                onClick={handleMailto}
+                className="bg-[#f3f3f8] text-[#374151] rounded-[8px] font-bold text-xs py-2.5 px-3 flex items-center gap-1"
+                title="Open in Email App"
+              >
+                <Mail className="w-3 h-3" /> Email App
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleMailto}
+              className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5"
+            >
+              <Mail className="w-3 h-3" /> Open in Email App
+            </button>
+          )}
+        </div>
+        <p className="text-[10px] text-[#9ca3af] text-center">
+          Your email will open pre-filled and ready to send.
+        </p>
       </div>
     </div>
   );

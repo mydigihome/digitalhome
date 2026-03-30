@@ -75,69 +75,42 @@ Deno.serve(async (req) => {
       expires_at: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString(),
     }, { onConflict: "user_id" });
 
-    // Fetch the authenticated user's own LinkedIn profile using the userinfo endpoint
+    // Fetch the authenticated user's own LinkedIn profile
     const profileResp = await fetch("https://api.linkedin.com/v2/userinfo", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
-    let imported = 0;
+    const connections: Array<{
+      name: string;
+      email: string | null;
+      job_title: string | null;
+      company: string | null;
+      photo_url: string | null;
+      linkedin_url: string | null;
+    }> = [];
 
     if (profileResp.ok) {
       const profile = await profileResp.json();
-      // profile contains: sub, name, given_name, family_name, picture, email, email_verified
       const contactName = profile.name || `${profile.given_name || ""} ${profile.family_name || ""}`.trim();
-      const contactEmail = profile.email || null;
-      const photoUrl = profile.picture || null;
-
       if (contactName) {
-        // Upsert: if a contact with same email exists for this user, update; otherwise insert
-        if (contactEmail) {
-          const { data: existing } = await serviceClient
-            .from("contacts")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("email", contactEmail)
-            .maybeSingle();
-
-          if (existing) {
-            await serviceClient.from("contacts").update({
-              name: contactName,
-              photo_url: photoUrl,
-              imported_from: "linkedin",
-              linkedin_url: profile.sub ? `https://www.linkedin.com/in/${profile.sub}` : null,
-            }).eq("id", existing.id);
-          } else {
-            await serviceClient.from("contacts").insert({
-              user_id: user.id,
-              name: contactName,
-              email: contactEmail,
-              photo_url: photoUrl,
-              imported_from: "linkedin",
-              relationship_type: "Professional",
-              linkedin_url: profile.sub ? `https://www.linkedin.com/in/${profile.sub}` : null,
-            });
-          }
-          imported = 1;
-        } else {
-          // No email — just insert (can't deduplicate)
-          await serviceClient.from("contacts").insert({
-            user_id: user.id,
-            name: contactName,
-            photo_url: photoUrl,
-            imported_from: "linkedin",
-            relationship_type: "Professional",
-          });
-          imported = 1;
-        }
+        connections.push({
+          name: contactName,
+          email: profile.email || null,
+          job_title: null,
+          company: null,
+          photo_url: profile.picture || null,
+          linkedin_url: profile.sub ? `https://www.linkedin.com/in/${profile.sub}` : null,
+        });
       }
     }
 
+    // Return connections for the selection panel — do NOT auto-import
     return new Response(JSON.stringify({
       success: true,
-      imported,
-      message: imported > 0
-        ? `LinkedIn profile imported as contact.`
-        : "LinkedIn connected but no profile data was available to import.",
+      connections,
+      message: connections.length > 0
+        ? `${connections.length} connections found. Select which to import.`
+        : "LinkedIn connected but no profile data was available.",
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
