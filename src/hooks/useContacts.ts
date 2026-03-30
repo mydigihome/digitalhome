@@ -16,6 +16,9 @@ export interface Contact {
   contact_frequency_days: number;
   notes: string | null;
   created_at: string;
+  imported_from: string | null;
+  linkedin_url: string | null;
+  job_title: string | null;
 }
 
 export interface ContactInteraction {

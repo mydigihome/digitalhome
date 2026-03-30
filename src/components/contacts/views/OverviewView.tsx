@@ -5,50 +5,27 @@ import AddContactModal from "../modals/AddContactModal";
 import ContactDetailPanel from "../panels/ContactDetailPanel";
 import AIEmailWidget from "../panels/AIEmailWidget";
 import AITasksWidget from "../panels/AITasksWidget";
-import { useCreateContact } from "@/hooks/useContacts";
+import { useContacts, useCreateContact, useUpdateContact, type Contact } from "@/hooks/useContacts";
 import { toast } from "sonner";
-import PremiumGate, { usePremiumStatus } from "@/components/PremiumGate";
-
-const MOCK_PRIORITY = [
-  {
-    id: "p1", name: "Sarah Johnson", role: "Real Estate Agent", location: "Denver, CO",
-    isPriority: true, whyPriority: ["Linked to Buy Investment Property project", "Can save you $10k in realtor fees"],
-    lastContactDays: 14, recentEmail: "Found 3 properties that match your ROI criteria...", email: "sarah@realestate.com", type: "Professional",
-  },
-  {
-    id: "p2", name: "Mike Thompson", role: "Contractor", location: "Austin, TX",
-    isPriority: true, whyPriority: ["Kitchen remodel quote expires in 48 hours", "Approval needed for electrical work"],
-    lastContactDays: 3, recentEmail: "Just checking if you had a chance to look at the quartzite...", email: "mike@contractor.com", type: "Professional",
-  },
-];
-
-const MOCK_EMAILS_PRIORITY = [
-  { id: "pe1", sender: "Sarah Johnson", initial: "S", subject: "Updated Investment ROI Sheet", snippet: "Hi Alex, I've attached the latest figures...", time: "2h ago", email: "sarah@realestate.com" },
-  { id: "pe2", sender: "Mike Thompson", initial: "M", subject: "Kitchen remodel materials", snippet: "Just checking if you had a chance...", time: "Yesterday", email: "mike@contractor.com" },
-];
-
-const MOCK_ALL_CONTACTS = [
-  { id: "c1", name: "Elena Rodriguez", type: "Professional", role: "Design Consultant", company: "Studio ER", lastDays: "3d ago", isPriority: false },
-  { id: "c2", name: "David Miller", type: "Family", role: "Brother", lastDays: "5h ago", isPriority: false },
-  { id: "c3", name: "James Chen", type: "Professional", role: "Financial Advisor", company: "Meridian Capital", lastDays: "12d ago", isPriority: false },
-  { id: "c4", name: "Maria Santos", type: "Friends", role: "College Friend", lastDays: "2d ago", isPriority: false },
-  { id: "c5", name: "Robert Kim", type: "Professional", role: "Mortgage Broker", company: "First Capital", lastDays: "21d ago", isPriority: false },
-  { id: "c6", name: "Alex Rivera", type: "Digi Home", role: "Project Collaborator", company: "Interior Design 2024", lastDays: "1h ago", isPriority: false, isDigiHome: true },
-];
+import PremiumGate from "@/components/PremiumGate";
+import { Loader2, Users } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 const FILTERS = ["All", "Family", "Friends", "Professional", "Digi Home"];
 
-const MOCK_DETAIL = {
-  id: "p1", name: "Sarah Johnson", role: "Real Estate Agent", company: "Denver Realty", type: "Professional",
-  isPriority: true, emailCount: 12, meetingCount: 3, daysSince: 14,
-  linkedProjects: ["Buy Investment Property"],
-  recentEmails: [
-    { subject: "Updated Investment ROI Sheet", date: "2h ago" },
-    { subject: "Property viewing - Thursday 3pm", date: "2d ago" },
-    { subject: "Market analysis Q1", date: "1w ago" },
-  ],
-  notes: "Great contact for Denver market. Has 15+ years experience.",
-};
+function contactLastDays(c: Contact): string {
+  if (!c.last_contacted_date) return "Never";
+  try {
+    return formatDistanceToNow(new Date(c.last_contacted_date), { addSuffix: true });
+  } catch {
+    return "Unknown";
+  }
+}
+
+function daysSinceLast(c: Contact): number {
+  if (!c.last_contacted_date) return 999;
+  return Math.floor((Date.now() - new Date(c.last_contacted_date).getTime()) / (1000 * 60 * 60 * 24));
+}
 
 interface Props {
   onSwitchToEmails: () => void;
@@ -58,111 +35,105 @@ interface Props {
 export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
   const [filter, setFilter] = useState("All");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [detailContact, setDetailContact] = useState<typeof MOCK_DETAIL | null>(null);
+  const [detailContact, setDetailContact] = useState<Contact | null>(null);
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
-  const [priorityStars, setPriorityStars] = useState<Record<string, boolean>>({
-    p1: true, p2: true, c1: false, c2: false, c3: false, c4: false, c5: false, c6: false,
-  });
+  const [priorityStars, setPriorityStars] = useState<Record<string, boolean>>({});
   const createContact = useCreateContact();
+  const updateContact = useUpdateContact();
+
+  const { data: contacts = [], isLoading } = useContacts();
 
   const toggleStar = (id: string) => {
     setPriorityStars((prev) => ({ ...prev, [id]: !prev[id] }));
     toast.success(priorityStars[id] ? "Removed from priority" : "Added to priority");
   };
 
-  const filteredContacts = MOCK_ALL_CONTACTS.filter(
-    (c) => filter === "All" || c.type === filter
-  );
+  const filteredContacts = contacts.filter((c) => {
+    if (filter === "All") return true;
+    if (filter === "Digi Home") return c.relationship_type === "digihome" || c.imported_from === "digihome";
+    return c.relationship_type === filter;
+  });
 
-  // The most overdue priority contact is the default suggestion
-  const suggestedContact = MOCK_PRIORITY.reduce((a, b) => a.lastContactDays > b.lastContactDays ? a : b);
-
-  // Active contact for the right panel
   const activeContact = activeContactId
-    ? MOCK_PRIORITY.find(c => c.id === activeContactId) || null
+    ? contacts.find(c => c.id === activeContactId) || null
     : null;
+
+  const suggestedContact = contacts.length > 0
+    ? contacts.reduce((a, b) => daysSinceLast(a) > daysSinceLast(b) ? a : b)
+    : null;
+
+  const openDetail = (c: Contact) => {
+    setDetailContact(c);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (contacts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#f3f3f8] dark:bg-[#252836] flex items-center justify-center mb-4">
+          <Users className="w-8 h-8 text-[#767586]" />
+        </div>
+        <h3 className="font-bold text-lg text-foreground mb-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+          No contacts yet
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-sm mb-6">
+          Import from LinkedIn or Gmail to get started, or add contacts manually.
+        </p>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="rounded-full px-6 py-2.5 font-bold text-sm text-white"
+          style={{ background: "linear-gradient(135deg, #4648d4, #6063ee)" }}
+        >
+          + Add Contact
+        </button>
+        <AddContactModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAdd={(data) => {
+            createContact.mutate(data);
+            toast.success(`${data.name} added`);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-6">
       {/* LEFT COLUMN */}
       <div>
-        {/* Priority Contacts */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-bold text-xl text-[#1a1c1f]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Priority Contacts
-            </h2>
-            <span className="text-[10px] text-[#767586] uppercase tracking-widest font-bold">THIS SEASON · Q1 2026</span>
-          </div>
-          <button className="text-[#4648d4] text-sm font-bold">View All</button>
-        </div>
-        <div className="space-y-3">
-          {MOCK_PRIORITY.map((c) => (
-            <PriorityContactCard
-              key={c.id}
-              contact={{ ...c, isPriority: priorityStars[c.id] ?? true }}
-              isActive={activeContactId === c.id}
-              onToggleStar={toggleStar}
-              onEmail={(id) => setActiveContactId(id)}
-              onSchedule={() => toast.info("Schedule feature coming soon")}
-              onEdit={() => setDetailContact(MOCK_DETAIL)}
-              onSelect={(id) => setActiveContactId(id)}
-            />
-          ))}
-        </div>
-
-        {/* Priority Emails */}
-        <div className="mt-6">
-          <h2 className="font-bold text-lg text-[#1a1c1f] mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Priority Emails
-          </h2>
-          <p className="text-xs text-[#767586] mb-3">From your priority contacts</p>
-          <div className="space-y-2">
-            {MOCK_EMAILS_PRIORITY.map((em) => (
-              <div
-                key={em.id}
-                className="group bg-white rounded-[20px] px-4 py-3 flex items-center gap-3"
-                style={{ boxShadow: "inset 3px 0 0 #4648d4, 0 4px 16px rgba(70,69,84,0.04)", border: "1px solid #f0f0f5" }}
-              >
-                <div className="w-8 h-8 rounded-full bg-[#e1e0ff] text-[#4648d4] font-bold text-xs flex items-center justify-center flex-shrink-0 border border-[#e8e8ed]">
-                  {em.initial}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-xs text-[#1a1c1f]">{em.sender}</span>
-                  <span className="text-xs text-[#1a1c1f] ml-2 truncate">{em.subject}</span>
-                </div>
-                <span className="text-[10px] text-[#767586] flex-shrink-0">{em.time}</span>
-                <div className="hidden group-hover:flex gap-2 flex-shrink-0">
-                  <button onClick={() => onCompose(em.email, em.sender)} className="text-[10px] font-bold text-[#4648d4]">Reply</button>
-                  <button className="text-[10px] font-bold text-[#767586]">Archive</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* All Contacts */}
-        <div className="mt-8">
-          <h2 className="font-bold text-xl text-[#1a1c1f] mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            All Contacts
-          </h2>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              All Contacts
+            </h2>
+            <span className="text-xs text-muted-foreground">{contacts.length} contacts</span>
+          </div>
           <div className="flex gap-2 mb-4">
             {FILTERS.map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
-                  filter === f ? "bg-[#4648d4] text-white" : "bg-[#f3f3f8] text-[#767586]"
+                  filter === f ? "bg-[#4648d4] text-white" : "bg-[#f3f3f8] dark:bg-[#252836] text-[#767586]"
                 }`}
               >
                 {f}
               </button>
             ))}
           </div>
-          {filter === "Digi Home" && filteredContacts.filter(c => c.type === "Digi Home").length <= 1 && (
-            <div className="bg-[#f3f3f8] rounded-[20px] px-5 py-4 mt-2 mb-3">
-              <p className="text-xs text-[#767586]">
-                🏠 Digi Home contacts appear here automatically when you share a project or content planner with another user.
+          {filter === "Digi Home" && filteredContacts.length === 0 && (
+            <div className="bg-[#f3f3f8] dark:bg-[#252836] rounded-[20px] px-5 py-4 mt-2 mb-3">
+              <p className="text-xs text-muted-foreground">
+                Digi Home contacts appear here automatically when you share a project with another user.
               </p>
             </div>
           )}
@@ -170,9 +141,18 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
             {filteredContacts.map((c) => (
               <ContactRow
                 key={c.id}
-                contact={{ ...c, isPriority: priorityStars[c.id] ?? false }}
+                contact={{
+                  id: c.id,
+                  name: c.name,
+                  type: c.relationship_type || "Professional",
+                  role: c.title || c.company || "",
+                  company: c.company || undefined,
+                  lastDays: contactLastDays(c),
+                  isPriority: priorityStars[c.id] ?? false,
+                  isDigiHome: c.relationship_type === "digihome" || c.imported_from === "digihome",
+                }}
                 onToggleStar={toggleStar}
-                onClick={() => setDetailContact({ ...MOCK_DETAIL, id: c.id, name: c.name, role: c.role, company: c.company })}
+                onClick={() => openDetail(c)}
               />
             ))}
           </div>
@@ -189,7 +169,22 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
       <div className="hidden md:block">
         <div className="sticky top-6 space-y-4">
           <PremiumGate feature="AI Email Compose" blur>
-            <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+            <AIEmailWidget
+              contact={activeContact ? {
+                id: activeContact.id,
+                name: activeContact.name,
+                email: activeContact.email || "",
+                role: activeContact.title || "",
+                lastContactDays: daysSinceLast(activeContact),
+              } : null}
+              suggestedContact={suggestedContact ? {
+                id: suggestedContact.id,
+                name: suggestedContact.name,
+                email: suggestedContact.email || "",
+                role: suggestedContact.title || "",
+                lastContactDays: daysSinceLast(suggestedContact),
+              } : undefined}
+            />
           </PremiumGate>
           <AITasksWidget activeContactId={activeContactId} />
         </div>
@@ -198,18 +193,49 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
       {/* Mobile: right panel below */}
       <div className="block md:hidden space-y-4">
         <PremiumGate feature="AI Email Compose" blur>
-          <AIEmailWidget contact={activeContact} suggestedContact={suggestedContact} />
+          <AIEmailWidget
+            contact={activeContact ? {
+              id: activeContact.id,
+              name: activeContact.name,
+              email: activeContact.email || "",
+              role: activeContact.title || "",
+              lastContactDays: daysSinceLast(activeContact),
+            } : null}
+            suggestedContact={suggestedContact ? {
+              id: suggestedContact.id,
+              name: suggestedContact.name,
+              email: suggestedContact.email || "",
+              role: suggestedContact.title || "",
+              lastContactDays: daysSinceLast(suggestedContact),
+            } : undefined}
+          />
         </PremiumGate>
         <AITasksWidget activeContactId={activeContactId} />
       </div>
 
       {detailContact && (
         <ContactDetailPanel
-          contact={detailContact}
+          contact={{
+            id: detailContact.id,
+            name: detailContact.name,
+            role: detailContact.title || "",
+            company: detailContact.company || undefined,
+            type: detailContact.relationship_type || "Professional",
+            isPriority: priorityStars[detailContact.id] ?? false,
+            emailCount: 0,
+            meetingCount: 0,
+            daysSince: daysSinceLast(detailContact),
+            linkedProjects: [],
+            recentEmails: [],
+            notes: detailContact.notes || "",
+          }}
           onClose={() => setDetailContact(null)}
           onToggleStar={toggleStar}
-          onEmail={() => onCompose("sarah@realestate.com", detailContact.name)}
-          onNotesChange={() => toast.success("Notes saved")}
+          onEmail={() => onCompose(detailContact.email || "", detailContact.name)}
+          onNotesChange={(id, notes) => {
+            updateContact.mutate({ id, notes });
+            toast.success("Notes saved");
+          }}
         />
       )}
 
