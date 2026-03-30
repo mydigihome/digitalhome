@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import VerticalTabRail from "./VerticalTabRail";
 import ProfileHeader from "./ProfileHeader";
@@ -6,7 +6,9 @@ import OverviewView from "./views/OverviewView";
 import EmailView from "./views/EmailView";
 import ComposeModal from "./modals/ComposeModal";
 import { useGmailConnection, useConnectGmail } from "@/hooks/useGmail";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import "../../styles/contacts-tab.css";
 
 export default function ContactsPage() {
@@ -22,6 +24,49 @@ export default function ContactsPage() {
 
   const { data: gmailConnection } = useGmailConnection();
   const { connect: connectGmail, connecting } = useConnectGmail();
+  const queryClient = useQueryClient();
+
+  // Handle LinkedIn OAuth callback
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const savedState = sessionStorage.getItem("linkedin_oauth_state");
+
+    if (code && state && savedState === state) {
+      sessionStorage.removeItem("linkedin_oauth_state");
+      // Clean the URL
+      window.history.replaceState({}, "", url.pathname);
+
+      (async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            toast.error("Please sign in to connect LinkedIn");
+            return;
+          }
+          const redirectUri = `${window.location.origin}/relationships`;
+          const { data, error } = await supabase.functions.invoke("linkedin-import", {
+            body: { code, redirect_uri: redirectUri },
+          });
+          if (error) {
+            toast.error("LinkedIn import failed");
+            console.error(error);
+            return;
+          }
+          if (data?.success) {
+            toast.success(data.message || "LinkedIn connected!");
+            queryClient.invalidateQueries({ queryKey: ["contacts"] });
+          } else {
+            toast.error(data?.error || "LinkedIn import failed");
+          }
+        } catch (err) {
+          console.error("LinkedIn callback error:", err);
+          toast.error("Failed to complete LinkedIn import");
+        }
+      })();
+    }
+  }, [queryClient]);
 
   const handleGmailImport = () => {
     if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
@@ -33,7 +78,7 @@ export default function ContactsPage() {
 
   const handleLinkedInImport = async () => {
     try {
-      const { data: { session } } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please sign in to connect LinkedIn");
         return;
@@ -56,10 +101,8 @@ export default function ContactsPage() {
   return (
     <div className="contacts-root" style={{ flexDirection: 'column' }}>
       <div className="contacts-main">
-        {/* Profile Header */}
         <ProfileHeader />
 
-        {/* Import buttons */}
         <div className="flex gap-3 mb-6">
           <button
             onClick={handleLinkedInImport}
@@ -88,7 +131,6 @@ export default function ContactsPage() {
 
         <VerticalTabRail activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Views */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeView}
