@@ -3,7 +3,7 @@ import AppShell from "@/components/AppShell";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useAuth } from "@/hooks/useAuth";
 import WealthOnboarding from "@/components/wealth/WealthOnboarding";
-import MoneyTab from "@/components/money/MoneyTab";
+import MoneyTabWithSubTabs from "@/components/money/MoneyTabWithSubTabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WealthTrackerPage() {
@@ -33,7 +33,7 @@ export default function WealthTrackerPage() {
 
   return (
     <AppShell>
-      <MoneyTab />
+      <MoneyTabWithSubTabs />
     </AppShell>
   );
 }

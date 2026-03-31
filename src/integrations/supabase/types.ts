@@ -999,7 +999,9 @@ export type Database = {
           expense_date: string
           frequency: string
           id: string
+          plaid_transaction_id: string | null
           priority: string
+          source: string | null
           user_id: string
         }
         Insert: {
@@ -1010,7 +1012,9 @@ export type Database = {
           expense_date?: string
           frequency?: string
           id?: string
+          plaid_transaction_id?: string | null
           priority?: string
+          source?: string | null
           user_id: string
         }
         Update: {
@@ -1021,7 +1025,9 @@ export type Database = {
           expense_date?: string
           frequency?: string
           id?: string
+          plaid_transaction_id?: string | null
           priority?: string
+          source?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1326,6 +1332,33 @@ export type Database = {
           is_custom?: boolean | null
           name?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      income_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          source: string | null
+          total_income: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          source?: string | null
+          total_income: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          source?: string | null
+          total_income?: number
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
