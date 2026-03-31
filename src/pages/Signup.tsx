@@ -128,6 +128,12 @@ export default function Signup() {
           <Button type="submit" className="w-full h-12 text-[15px] font-semibold" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </Button>
+          <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
+            By creating an account you agree to our{" "}
+            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+            {" "}and{" "}
+            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+          </p>
         </form>
 
         {/* Divider */}
