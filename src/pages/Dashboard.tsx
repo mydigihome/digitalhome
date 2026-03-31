@@ -192,20 +192,8 @@ export default function Dashboard() {
     if (paymentParam === "success") {
       if (planParam === "founding") {
         upsertPrefs.mutate({ is_subscribed: true, subscription_type: "founding", founding_member_since: new Date().toISOString() } as any);
-        // Also set founding_member on profiles
         if (user) {
-          supabase.from("profiles").update({ founding_member: true }).eq("id", user.id).then(() => {});
-          // Insert admin reminders for the admin
-          const insertReminders = async () => {
-            const { data: adminProfile } = await supabase.from("profiles").select("id").eq("full_name", "").limit(1);
-            // Look up admin by email - we'll use a direct approach
-            const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true }).eq("founding_member", true);
-            const n = (count || 0);
-            const adminUserId = user.id; // reminders go to admin, but we store for now
-            // We can't look up by email from client, so reminders are created server-side ideally
-            // For now, skip client-side reminder creation - it would be handled by webhook
-          };
-          insertReminders();
+          supabase.from("profiles").update({ founding_member: true } as any).eq("id", user.id).then(() => {});
         }
       } else {
         upsertPrefs.mutate({ is_subscribed: true, subscription_type: planParam || "pro" } as any);
