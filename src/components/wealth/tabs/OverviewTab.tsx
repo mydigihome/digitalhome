@@ -3,10 +3,6 @@ import SummaryCards from "../SummaryCards";
 import NetWorthHero from "../NetWorthHero";
 import SavingsProgress from "../SavingsProgress";
 import CreditScoreWheel from "../CreditScoreWheel";
-import { PlaidBannerFront } from "../cards/PlaidBanner";
-import MoneyCard from "../MoneyCard";
-
-function noop() {}
 
 export default function OverviewTab() {
   return (
@@ -16,9 +12,6 @@ export default function OverviewTab() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      {/* Plaid Connection Banner */}
-      <MoneyCard id="plaid" front={<PlaidBannerFront />} back={null} fullWidth onHide={noop} cardLabel="Bank Connection" />
-
       {/* Summary row */}
       <SummaryCards />
 

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import DebtOverview from "../DebtOverview";
 import CreditScoreWheel from "../CreditScoreWheel";
-import StudentLoanCard from "../StudentLoanCard";
+import { StudentLoanCard } from "../StudentLoanCard";
 
 export default function DebtTab() {
   return (
