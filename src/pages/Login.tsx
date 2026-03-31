@@ -182,6 +182,12 @@ export default function Login() {
             Create account
           </Link>
         </div>
+
+        <p className="mt-4 text-[11px] text-center text-muted-foreground">
+          <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+          <span className="mx-2">·</span>
+          <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+        </p>
       </motion.div>
     </div>
   );

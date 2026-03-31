@@ -1211,6 +1211,13 @@ export default function SettingsPage() {
                 </>
               )}
             </div>
+
+            {/* Legal Links Footer */}
+            <div className="mt-12 pt-6 border-t border-border text-center">
+              <a href="/privacy" className="text-[11px] text-muted-foreground hover:text-primary transition-colors">Privacy Policy</a>
+              <span className="text-[11px] text-muted-foreground mx-2">·</span>
+              <a href="/terms" className="text-[11px] text-muted-foreground hover:text-primary transition-colors">Terms of Service</a>
+            </div>
           </div>
         </div>
       </div>

@@ -329,6 +329,15 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
         </ul>
       </nav>
 
+      {/* Legal Footer Links */}
+      {!collapsed && (
+        <div className="px-3 pb-2 text-center">
+          <a href="/privacy" className="text-[10px] text-[#9ca3af] hover:text-[#6366f1] transition-colors">Privacy</a>
+          <span className="text-[10px] text-[#9ca3af] mx-1.5">·</span>
+          <a href="/terms" className="text-[10px] text-[#9ca3af] hover:text-[#6366f1] transition-colors">Terms</a>
+        </div>
+      )}
+
       {/* Bottom Profile Section */}
       <div className="shrink-0 px-3 pb-4 relative">
         {collapsed ? (
