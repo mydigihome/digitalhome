@@ -80,7 +80,60 @@ serve(async (req) => {
         success_url: successUrl,
         cancel_url: cancelUrl,
         metadata: { user_id: user.id, plan: "founding" },
+        payment_intent_data: {
+          metadata: { user_id: user.id, plan: "founding" },
+        },
       });
+
+      // On session creation, set founding member status immediately
+      // (Stripe redirects to success_url only after payment succeeds)
+      // We'll also handle this client-side on redirect for instant UX
+      const serviceClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      );
+
+      // Pre-register: the client-side success handler will also do this,
+      // but we prepare admin reminders server-side where we can query by email
+      const { data: adminUsers } = await serviceClient
+        .from("profiles")
+        .select("id")
+        .limit(100);
+
+      // Look up admin by checking user_roles or known email
+      const { data: adminAuth } = await serviceClient.auth.admin.listUsers({ perPage: 1000 });
+      const adminUser = adminAuth?.users?.find((u: any) => u.email === "myslimher@gmail.com");
+
+      if (adminUser) {
+        const { count } = await serviceClient
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("founding_member", true);
+        const n = (count || 0) + 1;
+
+        const now = new Date();
+        const threeMonths = new Date(now);
+        threeMonths.setMonth(threeMonths.getMonth() + 3);
+        const sixMonths = new Date(now);
+        sixMonths.setMonth(sixMonths.getMonth() + 6);
+
+        await serviceClient.from("admin_reminders").insert([
+          {
+            user_id: adminUser.id,
+            reminder_type: "lifetime_offer",
+            message: `You now have ${n} founding members. Consider sending them a lifetime upgrade offer at a special rate. They paid $9 to believe in you early — reward them.`,
+            remind_at: threeMonths.toISOString(),
+            dismissed: false,
+          },
+          {
+            user_id: adminUser.id,
+            reminder_type: "lifetime_offer",
+            message: `Final reminder: ${n} founding members are waiting. Time to launch the lifetime offer. Suggested price: $149 (vs $199 for everyone else).`,
+            remind_at: sixMonths.toISOString(),
+            dismissed: false,
+          },
+        ]);
+      }
 
       return new Response(JSON.stringify({ url: session.url }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
