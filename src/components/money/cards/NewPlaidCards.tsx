@@ -162,7 +162,7 @@ export function RefundTrackerBack({ onCancel, onSave }: { onCancel: () => void; 
 
 // ── Large Transaction Alerts ──
 export function LargeTransactionsFront() {
-  return (<div><CardHeader icon="🚨" title="Large Transaction Alerts" />
+  return (<div><CardHeader title="Large Transaction Alerts" />
     <div style={{ fontSize: "12px", color: "#767586", marginBottom: "8px" }}>Threshold: <strong style={{ color: "#1a1c1f" }}>$500</strong></div>
     {[["Rent", "$2,250"], ["Car Payment", "$485"]].map(([n, v]) => (
       <div key={n} className="flex justify-between py-2" style={{ borderBottom: "1px solid #f3f3f8", fontSize: "13px" }}>
