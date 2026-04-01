@@ -97,8 +97,8 @@ export function CreditScoreFront() {
 
       <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#767586" }}>FACTORS HELPING</p>
-        <p className="text-xs" style={{ color: "#006c49" }}>✅ Payment history: 100% on-time payments</p>
-        <p className="text-xs" style={{ color: "#006c49" }}>✅ Credit age: 5 year average</p>
+        <p className="text-xs" style={{ color: "#006c49" }}>Payment history: 100% on-time payments</p>
+        <p className="text-xs" style={{ color: "#006c49" }}>Credit age: 5 year average</p>
       </div>
 
       <div className="mt-2">
