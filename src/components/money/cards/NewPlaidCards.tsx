@@ -146,7 +146,7 @@ export function CashFlowCalendarBack({ onCancel, onSave }: { onCancel: () => voi
 
 // ── Refund Tracker ──
 export function RefundTrackerFront() {
-  return (<div><CardHeader icon="🔄" title="Refund Tracker" />
+  return (<div><CardHeader title="Refund Tracker" />
     <div style={{ fontSize: "14px", fontWeight: 700, color: "#1a1c1f", marginBottom: "8px" }}>2 pending refunds · $127 total</div>
     {[["Amazon", "$89"], ["Apple", "$38"]].map(([n, v]) => (
       <div key={n} className="flex justify-between py-2" style={{ borderBottom: "1px solid #f3f3f8", fontSize: "13px" }}>
