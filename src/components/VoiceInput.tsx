@@ -113,7 +113,7 @@ export default function VoiceInput() {
     });
 
     if (!error) {
-      toast({ title: "✅ Task added", description: title });
+      toast({ title: " Task added", description: title });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } else {
       toast({ title: "Failed to add task", description: error.message, variant: "destructive" });
@@ -155,7 +155,7 @@ export default function VoiceInput() {
     });
 
     if (!error) {
-      toast({ title: "📅 Event added", description: `${title} — ${eventDate.toLocaleString()}` });
+      toast({ title: " Event added", description: `${title} — ${eventDate.toLocaleString()}` });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
     } else {
       toast({ title: "Failed to add event", description: error.message, variant: "destructive" });

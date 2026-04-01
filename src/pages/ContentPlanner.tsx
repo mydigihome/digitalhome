@@ -88,7 +88,7 @@ function ContentPaywall() {
 
           {/* Early access badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-5 text-xs font-semibold" style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}>
-            🎉 First 50 users get FREE access!
+             First 50 users get FREE access!
           </div>
 
           {/* Features */}
@@ -151,7 +151,7 @@ export default function ContentPlanner() {
   useEffect(() => {
     if (searchParams.get("payment") === "success") {
       upsertPrefs.mutate({ content_planner_access: true } as any);
-      toast.success("Content Planner unlocked! 🎉");
+      toast.success("Content Planner unlocked! ");
       setSearchParams({}, { replace: true });
     }
   }, []);

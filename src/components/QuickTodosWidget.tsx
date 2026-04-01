@@ -76,7 +76,7 @@ export default function QuickTodosWidget() {
               onClick={() => handleToggle(todo)}
               className="flex h-[18px] w-[18px] items-center justify-center rounded border-2 border-border hover:border-primary transition-colors flex-shrink-0"
             >
-              {todo.completed && <span className="text-[10px]">✓</span>}
+              {todo.completed && <span className="text-[10px]"></span>}
             </button>
             <input
               type="text"

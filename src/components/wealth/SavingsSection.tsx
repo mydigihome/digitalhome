@@ -72,7 +72,7 @@ export default function SavingsSection() {
     const next = goals.map(g => g.id === id ? { ...g, currentSaved: Number(v) || 0 } : g);
     persist(next);
     const g = next.find(g => g.id === id);
-    if (g && g.currentSaved >= g.targetAmount) { confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } }); toast.success("🎉 Goal reached!"); }
+    if (g && g.currentSaved >= g.targetAmount) { confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } }); toast.success(" Goal reached!"); }
   };
 
   const leftover = getMonthlyLeftover();
@@ -107,7 +107,7 @@ export default function SavingsSection() {
 
       {goals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="text-4xl mb-3">🎯</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-base font-semibold text-foreground mb-1">No savings goals yet</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Create goals and track your progress toward each one.</p>
         </div>
@@ -148,7 +148,7 @@ export default function SavingsSection() {
                 </div>
                 {g.backedBySpending && leftover > 0 && (
                   <div className="text-[11px] text-emerald-600 bg-emerald-50 rounded-lg px-3 py-1.5">
-                    ~${leftover.toFixed(0)}/mo available {leftover >= monthlyNeeded ? "✅ On track" : `⚠️ Need $${(monthlyNeeded - leftover).toFixed(0)} more`}
+                    ~${leftover.toFixed(0)}/mo available {leftover >= monthlyNeeded ? " On track" : ` Need $${(monthlyNeeded - leftover).toFixed(0)} more`}
                   </div>
                 )}
                 {g.backedBySpending && leftover <= 0 && (

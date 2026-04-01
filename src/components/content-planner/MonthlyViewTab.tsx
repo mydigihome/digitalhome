@@ -157,7 +157,7 @@ export default function MonthlyViewTab({ setup, getAllPosts }: Props) {
             disabled={syncing}
             className="ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 disabled:opacity-50"
           >
-            📅 {syncing ? "Syncing..." : "Sync to Calendar"}
+             {syncing ? "Syncing..." : "Sync to Calendar"}
           </button>
         </div>
 

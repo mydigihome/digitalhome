@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 type Focus = 'organize' | 'money' | 'future' | 'build';
 
 const focusOptions: { id: Focus; icon: string; label: string; desc: string }[] = [
-  { id: 'organize', icon: '📋', label: 'Organize my life', desc: 'Projects, tasks, and planning' },
-  { id: 'money', icon: '💰', label: 'Track my money', desc: 'Bills, savings, and investments' },
-  { id: 'future', icon: '🎯', label: 'Plan my future', desc: 'Goals, college, and career' },
-  { id: 'build', icon: '✨', label: 'Build something meaningful', desc: 'Create, launch, and grow' },
+  { id: 'organize', icon: '', label: 'Organize my life', desc: 'Projects, tasks, and planning' },
+  { id: 'money', icon: '', label: 'Track my money', desc: 'Bills, savings, and investments' },
+  { id: 'future', icon: '', label: 'Plan my future', desc: 'Goals, college, and career' },
+  { id: 'build', icon: '', label: 'Build something meaningful', desc: 'Create, launch, and grow' },
 ];
 
 interface FocusStepProps {

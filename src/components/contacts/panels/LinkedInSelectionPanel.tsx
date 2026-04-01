@@ -190,7 +190,7 @@ export default function LinkedInSelectionPanel({ isOpen, onClose, connections: r
                     {[c.job_title, c.company].filter(Boolean).join(" · ") || "No details"}
                   </div>
                   {alreadyImported && (
-                    <span className="text-[10px] text-[#16a34a]">✓ Already in contacts</span>
+                    <span className="text-[10px] text-[#16a34a]"> Already in contacts</span>
                   )}
                 </div>
               </div>

@@ -111,7 +111,7 @@ export default function SavingsGoalsTab() {
     const goal = next.find(g => g.id === id);
     if (goal && goal.currentSaved >= goal.targetAmount) {
       confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-      toast.success("🎉 Goal reached!");
+      toast.success(" Goal reached!");
     }
   };
 
@@ -160,7 +160,7 @@ export default function SavingsGoalsTab() {
       {/* Goal cards */}
       {goals.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="text-4xl mb-3">🎯</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-lg font-semibold text-foreground mb-1">No savings goals yet</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Create goals like "Emergency Fund" or "Dream Vacation" and track your progress toward each one.</p>
         </div>
@@ -226,8 +226,8 @@ export default function SavingsGoalsTab() {
                   <div className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2">
                     Based on your avg spending, you have ~${monthlyLeftover.toFixed(0)}/mo available.
                     {monthlyLeftover >= monthlyNeeded
-                      ? " ✅ You're on track!"
-                      : ` ⚠️ You need $${(monthlyNeeded - monthlyLeftover).toFixed(0)} more/mo.`}
+                      ? "  You're on track!"
+                      : `  You need $${(monthlyNeeded - monthlyLeftover).toFixed(0)} more/mo.`}
                   </div>
                 )}
                 {g.backedBySpending && monthlyLeftover <= 0 && avgSpending > 0 && (

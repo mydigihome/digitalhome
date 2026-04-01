@@ -121,7 +121,7 @@ export default function TrackFinanceModal({ open, onClose, existingCardIds, onAd
                 {/* Right indicator */}
                 <div className="flex-shrink-0">
                   {isExisting ? (
-                    <span className="text-[#6366f1] font-bold text-sm">✓</span>
+                    <span className="text-[#6366f1] font-bold text-sm"></span>
                   ) : isLocked ? (
                     <span className="material-symbols-outlined text-[#d1d5db] text-lg">lock</span>
                   ) : (

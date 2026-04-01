@@ -207,7 +207,7 @@ export default function JournalEntryModal({ open, onClose, entry, readOnly = fal
     });
     if (editor) {
       const timeStr = `${Math.floor(timeSeconds / 60)}:${(timeSeconds % 60).toString().padStart(2, "0")}`;
-      editor.commands.insertContent(`<p>🧩 I completed <strong>${gameName}</strong> in <strong>${timeStr}</strong>!</p>`);
+      editor.commands.insertContent(`<p> I completed <strong>${gameName}</strong> in <strong>${timeStr}</strong>!</p>`);
     }
   };
 

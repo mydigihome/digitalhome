@@ -7,13 +7,13 @@ import { toast } from "sonner";
 
 const BROKERS = [
   { name: "Bull (Futures)", url: "https://www.bullmarkets.com", logo: "🐂" },
-  { name: "TopStepX", url: "https://www.topstepx.com", logo: "📈" },
-  { name: "Vanguard", url: "https://www.vanguard.com", logo: "🏦" },
-  { name: "Fidelity", url: "https://www.fidelity.com", logo: "💼" },
-  { name: "Charles Schwab", url: "https://www.schwab.com", logo: "💹" },
-  { name: "TD Ameritrade", url: "https://www.tdameritrade.com", logo: "📊" },
+  { name: "TopStepX", url: "https://www.topstepx.com", logo: "" },
+  { name: "Vanguard", url: "https://www.vanguard.com", logo: "" },
+  { name: "Fidelity", url: "https://www.fidelity.com", logo: "" },
+  { name: "Charles Schwab", url: "https://www.schwab.com", logo: "" },
+  { name: "TD Ameritrade", url: "https://www.tdameritrade.com", logo: "" },
   { name: "Interactive Brokers", url: "https://www.interactivebrokers.com", logo: "🌐" },
-  { name: "Robinhood", url: "https://www.robinhood.com", logo: "🎯" },
+  { name: "Robinhood", url: "https://www.robinhood.com", logo: "" },
   { name: "Coinbase (Crypto)", url: "https://www.coinbase.com", logo: "₿" },
   { name: "Binance (Crypto)", url: "https://www.binance.com", logo: "🔶" },
 ];

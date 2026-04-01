@@ -209,7 +209,7 @@ export default function JournalEntriesList() {
                     {format(new Date(entry.entry_date), "MMM d, yyyy")}
                   </p>
                   {entry.is_locked ? (
-                    <p className="mt-2 text-xs text-muted-foreground/60 italic">🔒 Locked — tap to enter PIN</p>
+                    <p className="mt-2 text-xs text-muted-foreground/60 italic"> Locked — tap to enter PIN</p>
                   ) : entry.content_preview ? (
                     <p className="mt-2 line-clamp-2 text-xs text-muted-foreground/80">
                       {entry.content_preview}

@@ -546,7 +546,7 @@ export default function NinetyDayGoalWidget() {
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                     size="lg"
                   >
-                    Lock in My Goal 🔒
+                    Lock in My Goal 
                   </Button>
                 </div>
               </motion.div>
@@ -567,7 +567,7 @@ export default function NinetyDayGoalWidget() {
                       <p className="text-sm font-medium text-foreground">{g.goal_text}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {format(new Date(g.start_date), "MMM d")} – {format(new Date(g.end_date), "MMM d, yyyy")}
-                        {g.achieved && <span className="ml-2">· {g.achieved === "yes" ? "✅" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
+                        {g.achieved && <span className="ml-2">· {g.achieved === "yes" ? "" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
                       </p>
                     </div>
                   ))}
@@ -584,7 +584,7 @@ export default function NinetyDayGoalWidget() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
               className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[10002] rounded-xl bg-primary px-6 py-3 text-primary-foreground text-sm font-medium shadow-2xl"
             >
-              Goal locked in! You've got this 💪
+              Goal locked in! You've got this 
             </motion.div>
           )}
         </AnimatePresence>
@@ -723,7 +723,7 @@ export default function NinetyDayGoalWidget() {
                 <p className="text-xs font-medium text-foreground">{g.goal_text}</p>
                 <p className="text-[10px] text-muted-foreground">
                   {format(new Date(g.start_date), "MMM d")} – {format(new Date(g.end_date), "MMM d, yyyy")}
-                  {g.achieved && <span className="ml-1">· {g.achieved === "yes" ? "✅" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
+                  {g.achieved && <span className="ml-1">· {g.achieved === "yes" ? "" : g.achieved === "partial" ? "🟡" : "❌"}</span>}
                 </p>
               </div>
             ))}
@@ -889,7 +889,7 @@ export default function NinetyDayGoalWidget() {
               onClick={e => e.stopPropagation()}
               className="w-[420px] max-w-[90vw] bg-card rounded-2xl p-6 shadow-2xl"
             >
-              <h3 className="text-base font-semibold text-foreground mb-1">⚠️ Edit Goal</h3>
+              <h3 className="text-base font-semibold text-foreground mb-1"> Edit Goal</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Changing your goal restarts your commitment. This should only be used in emergencies.
               </p>
@@ -940,7 +940,7 @@ export default function NinetyDayGoalWidget() {
               initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="w-[420px] max-w-[90vw] bg-card rounded-2xl p-8 shadow-2xl text-center"
             >
-              <p className="text-3xl mb-2">🎉</p>
+              <p className="text-3xl mb-2"></p>
               <h3 className="text-lg font-semibold text-foreground mb-1">90 days complete!</h3>
               <p className="text-sm text-muted-foreground mb-4">Did you achieve your goal?</p>
               <div className="flex gap-2 justify-center mb-4">
@@ -953,7 +953,7 @@ export default function NinetyDayGoalWidget() {
                       completionAchieved === v ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"
                     )}
                   >
-                    {v === "yes" ? "Yes ✅" : v === "partial" ? "Partially 🟡" : "No ❌"}
+                    {v === "yes" ? "Yes " : v === "partial" ? "Partially 🟡" : "No ❌"}
                   </button>
                 ))}
               </div>

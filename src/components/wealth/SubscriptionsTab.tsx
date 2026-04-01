@@ -154,7 +154,7 @@ export default function SubscriptionsTab() {
       {/* Table */}
       {subs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="text-4xl mb-3">📋</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-lg font-semibold text-foreground mb-1">No subscriptions yet</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Track your recurring subscriptions to see how much you're spending each month.</p>
         </div>

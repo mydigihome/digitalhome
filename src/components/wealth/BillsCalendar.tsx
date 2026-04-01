@@ -124,7 +124,7 @@ export default function BillsCalendar() {
       {/* Bills timeline */}
       {allBills.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="text-4xl mb-3">📅</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-base font-semibold text-foreground mb-1">No upcoming bills</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Add subscriptions or one-off bills to see your upcoming due dates here.</p>
         </div>

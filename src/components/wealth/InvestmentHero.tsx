@@ -87,7 +87,7 @@ export default function InvestmentHero({ onOpenTradingPlan }: InvestmentHeroProp
     } else {
       if (watchlist.length >= 15) { toast.error("Max 15 watchlist items"); return; }
       next = [...watchlist, { symbol: sym, name }];
-      toast.success(`${sym} added to watchlist ⭐`);
+      toast.success(`${sym} added to watchlist `);
     }
     setWatchlist(next);
     saveWatchlist(next);
@@ -192,7 +192,7 @@ export default function InvestmentHero({ onOpenTradingPlan }: InvestmentHeroProp
                   {/* Watchlist items */}
                   {watchlist.length > 0 && !searchQuery && (
                     <div className="p-2 border-t border-border">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-1">⭐ Watchlist</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-1"> Watchlist</p>
                       {watchlist.map(w => (
                         <div
                           key={w.symbol}

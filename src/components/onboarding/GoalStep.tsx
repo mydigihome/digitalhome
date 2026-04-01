@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { Target } from 'lucide-react';
 
 const EXAMPLE_GOALS = [
-  { emoji: '🏠', label: 'Buy investment property' },
-  { emoji: '💰', label: 'Save $10K' },
-  { emoji: '🎓', label: 'Pay off loans' },
-  { emoji: '🚀', label: 'Start a business' },
+  { emoji: '', label: 'Buy investment property' },
+  { emoji: '', label: 'Save $10K' },
+  { emoji: '', label: 'Pay off loans' },
+  { emoji: '', label: 'Start a business' },
 ];
 
 interface GoalStepProps {

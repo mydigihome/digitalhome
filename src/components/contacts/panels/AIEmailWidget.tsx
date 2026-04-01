@@ -91,7 +91,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
       if (error) throw error;
       if (data?.draftLink) {
         window.open(data.draftLink, "_blank");
-        toast.success("Draft saved to Gmail ✓");
+        toast.success("Draft saved to Gmail ");
       }
       setSent(true);
     } catch {
@@ -114,7 +114,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     return (
       <div className="rounded-[24px] p-5 flex flex-col items-center justify-center gap-3 min-h-[200px]"
         style={{ background: "#ffffff", boxShadow: "0 12px 40px rgba(70,69,84,0.06)", border: "1px solid #f0f0f5" }}>
-        <div className="w-12 h-12 rounded-full bg-[#f0fdf4] flex items-center justify-center text-2xl">✓</div>
+        <div className="w-12 h-12 rounded-full bg-[#f0fdf4] flex items-center justify-center text-2xl"></div>
         <p className="font-bold text-sm text-[#1a1c1f]">Sent to {active.name}</p>
       </div>
     );

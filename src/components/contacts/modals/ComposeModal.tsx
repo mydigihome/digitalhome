@@ -42,7 +42,7 @@ export default function ComposeModal({ isOpen, onClose, to, toName, subject: ini
       if (error) throw error;
       if (data?.draftLink) {
         setDraftLink(data.draftLink);
-        toast.success("Draft saved to Gmail ✓");
+        toast.success("Draft saved to Gmail ");
       }
     } catch {
       // Fallback to mailto on error
@@ -101,7 +101,7 @@ export default function ComposeModal({ isOpen, onClose, to, toName, subject: ini
         {/* Draft saved success */}
         {draftLink && (
           <div className="mt-4 p-3 bg-[#f0fdf4] dark:bg-[#052e16] rounded-[12px] flex items-center justify-between">
-            <span className="text-sm text-[#16a34a] font-medium">Draft saved to Gmail ✓</span>
+            <span className="text-sm text-[#16a34a] font-medium">Draft saved to Gmail </span>
             <a
               href={draftLink}
               target="_blank"

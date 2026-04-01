@@ -161,7 +161,7 @@ export default function InvestmentsTab() {
       {/* Watchlist */}
       {watchlist.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="text-4xl mb-3">📈</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-lg font-semibold text-foreground mb-1">Your watchlist is empty</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Search for stocks, ETFs, or mutual funds to research and add to your investment watchlist.</p>
         </div>

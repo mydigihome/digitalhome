@@ -91,7 +91,7 @@ export const InvestmentScheduleCard = () => {
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{s.company_name}</p>
                   <p className="text-[11px] text-slate-400">
-                    {s.is_private_company && "🔒 Private · "}
+                    {s.is_private_company && " Private · "}
                     {s.investment_type}
                   </p>
                 </div>

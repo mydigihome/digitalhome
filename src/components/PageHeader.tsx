@@ -158,7 +158,7 @@ export default function PageHeader({
                 editable && "hover:scale-105 cursor-pointer"
               )}
             >
-              {icon || "📋"}
+              {icon || ""}
             </button>
 
             {/* Icon Picker */}

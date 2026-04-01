@@ -13,7 +13,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
   const steps = [
     {
       id: 1,
-      title: "Welcome to Digital Home! 🏠",
+      title: "Welcome to Digital Home! ",
       subtitle: "Let's get you set up in just 3 easy steps",
       description: "Digital Home is like having your entire life organized in one magical place. Think of it as your personal command center!",
     },
@@ -31,7 +31,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
     },
     {
       id: 4,
-      title: "You're all set! 🎉",
+      title: "You're all set! ",
       subtitle: "Here's what you can do in Digital Home",
       description: "We've prepared everything for you. Let's explore!",
     },
@@ -39,14 +39,14 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
 
   const workspaces = [
     { id: 'personal', name: 'Personal Projects', icon: Home, description: 'Like building a home or planning renovations', color: 'blue' },
-    { id: 'trips', name: 'Trips & Travel', icon: '✈️', description: 'Vacations, weekend getaways, and adventures', color: 'purple' },
-    { id: 'goals', name: 'Life Goals', icon: '🎯', description: 'Learning new skills, graduating, career goals', color: 'green' },
+    { id: 'trips', name: 'Trips & Travel', icon: '', description: 'Vacations, weekend getaways, and adventures', color: 'purple' },
+    { id: 'goals', name: 'Life Goals', icon: '', description: 'Learning new skills, graduating, career goals', color: 'green' },
   ];
 
   const features = [
-    { icon: '📋', title: 'Daily To-Do Lists', description: 'See your tasks for today and this week' },
+    { icon: '', title: 'Daily To-Do Lists', description: 'See your tasks for today and this week' },
     { icon: '📁', title: 'Project Workspaces', description: 'Organize everything in one place' },
-    { icon: '👥', title: 'Team Collaboration', description: 'Invite friends and family to help' },
+    { icon: '', title: 'Team Collaboration', description: 'Invite friends and family to help' },
     { icon: '🤖', title: 'AI Assistant', description: 'Get help organizing and planning' },
   ];
 
@@ -106,7 +106,7 @@ const OnboardingFlow = ({ onComplete }: OnboardingFlowProps) => {
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-500 rounded-3xl mx-auto mb-6 flex items-center justify-center animate-bounce">
                   <Sparkles className="w-12 h-12 text-white" />
                 </div>
-                <p className="text-lg text-gray-700">Ready to organize your life? Let's go! 🚀</p>
+                <p className="text-lg text-gray-700">Ready to organize your life? Let's go! </p>
               </div>
             )}
 

@@ -143,7 +143,7 @@ interface ProjectCardProps {
   onClick?: () => void;
 }
 
-export const ProjectCard = ({ category, name, progress, color = 'blue', icon = '💼', onClick }: ProjectCardProps) => {
+export const ProjectCard = ({ category, name, progress, color = 'blue', icon = '', onClick }: ProjectCardProps) => {
   const gradientClasses: Record<string, string> = {
     blue: 'bg-gradient-to-br from-blue-50 to-blue-100',
     rose: 'bg-gradient-to-br from-rose-50 to-rose-100',
@@ -186,7 +186,7 @@ interface TaskGroupCardProps {
   onClick?: () => void;
 }
 
-export const TaskGroupCard = ({ name, taskCount, progress, color = 'pink', icon = '💼', onClick }: TaskGroupCardProps) => {
+export const TaskGroupCard = ({ name, taskCount, progress, color = 'pink', icon = '', onClick }: TaskGroupCardProps) => {
   const textColorMap: Record<string, string> = {
     pink: 'text-pink-500', purple: 'text-purple-500', orange: 'text-orange-500',
     yellow: 'text-yellow-500', blue: 'text-blue-500',
@@ -219,7 +219,7 @@ interface TaskItemProps {
   onClick?: () => void;
 }
 
-export const TaskItem = ({ project, taskName, time, status = 'todo', icon = '💼', iconBg = 'pink', onClick }: TaskItemProps) => {
+export const TaskItem = ({ project, taskName, time, status = 'todo', icon = '', iconBg = 'pink', onClick }: TaskItemProps) => {
   const statusClass = STATUS_COLORS[status] || STATUS_COLORS.todo;
   const statusText: Record<string, string> = { done: 'Done', 'in-progress': 'In Progress', todo: 'To-do', blocked: 'Blocked' };
 

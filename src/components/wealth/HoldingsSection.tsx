@@ -151,7 +151,7 @@ export default function HoldingsSection({ onViewChart, onTradingPlan }: Holdings
       {/* Holdings Cards */}
       {!investments?.length ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="text-4xl mb-3">📊</div>
+          <div className="text-4xl mb-3"></div>
           <h3 className="text-base font-semibold text-foreground mb-1">No holdings yet</h3>
           <p className="text-sm text-muted-foreground max-w-sm">Add your investments to track performance and create trading plans.</p>
         </div>

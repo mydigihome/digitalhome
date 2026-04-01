@@ -81,7 +81,7 @@ export default function HabitTrackerWidget() {
     const hrs = parseFloat(logHoursValue);
     if (isNaN(hrs) || hrs <= 0) { toast.error("Enter valid hours"); return; }
     logHours.mutate({ habit_id: selectedHabitId, hours: hrs, week_start_date: weekStart }, {
-      onSuccess: () => { toast.success(`Logged ${hrs} hours ✓`); setShowLogModal(false); setLogHoursValue(""); setSelectedHabitId(null); setAddingCustom(false); },
+      onSuccess: () => { toast.success(`Logged ${hrs} hours `); setShowLogModal(false); setLogHoursValue(""); setSelectedHabitId(null); setAddingCustom(false); },
     });
   };
 

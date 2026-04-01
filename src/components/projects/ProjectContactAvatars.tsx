@@ -128,7 +128,7 @@ export default function ProjectContactAvatars({ projectId }: { projectId: string
                   </>
                 )}
                 <div style={{ fontSize: "9px", marginTop: "4px" }}>
-                  {isOverdue ? `🔴 Overdue · ${days}d ago` : "🟢 Active"}
+                  {isOverdue ? ` Overdue · ${days}d ago` : "🟢 Active"}
                 </div>
               </div>
             )}

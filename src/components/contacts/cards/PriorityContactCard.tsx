@@ -83,7 +83,7 @@ export default function PriorityContactCard({ contact, isActive, onToggleStar, o
 
       {/* Why priority */}
       <div className="bg-[#f3f3f8] rounded-[16px] p-3 mt-3">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-[#4648d4] mb-2">⚡ WHY PRIORITY</div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-[#4648d4] mb-2"> WHY PRIORITY</div>
         <ul className="space-y-1">
           {contact.whyPriority.map((r, i) => (
             <li key={i} className="text-xs text-[#464554]">• {r}</li>
