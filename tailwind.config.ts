@@ -109,8 +109,8 @@ export default {
         ],
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-        'gradient-subtle': 'linear-gradient(180deg, rgba(139,92,246,0.1) 0%, rgba(139,92,246,0) 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #2D6A4F 0%, #1B4332 100%)',
+        'gradient-subtle': 'linear-gradient(180deg, rgba(45,106,79,0.1) 0%, rgba(45,106,79,0) 100%)',
       },
       boxShadow: {
         '2xs': 'var(--shadow-2xs)',
