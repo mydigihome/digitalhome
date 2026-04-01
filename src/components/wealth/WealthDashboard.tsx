@@ -28,17 +28,17 @@ import SubscriptionsSection from "./SubscriptionsSection";
 import SavingsSection from "./SavingsSection";
 
 const ALL_CARDS = [
-  { id: "investments", label: "💹 Investments" },
-  { id: "summary", label: "📊 Summary Cards" },
-  { id: "credit-score", label: "🎯 Credit Score" },
-  { id: "savings-progress", label: "💰 Savings Goal" },
-  { id: "net-worth", label: "🏦 Net Worth" },
-  { id: "debt", label: "📉 Debt Overview" },
-  { id: "spending", label: "💳 Monthly Spending" },
-  { id: "budget", label: "📦 Budget Envelopes" },
-  { id: "bills", label: "📅 Bills & Due Dates" },
-  { id: "subscriptions", label: "📋 Subscriptions" },
-  { id: "savings-goals", label: "🎯 Savings Goals" },
+  { id: "investments", label: "Investments" },
+  { id: "summary", label: "Summary Cards" },
+  { id: "credit-score", label: "Credit Score" },
+  { id: "savings-progress", label: "Savings Goal" },
+  { id: "net-worth", label: "Net Worth" },
+  { id: "debt", label: "Debt Overview" },
+  { id: "spending", label: "Monthly Spending" },
+  { id: "budget", label: "Budget Envelopes" },
+  { id: "bills", label: "Bills & Due Dates" },
+  { id: "subscriptions", label: "Subscriptions" },
+  { id: "savings-goals", label: "Savings Goals" },
 ] as const;
 
 export default function WealthDashboard() {
