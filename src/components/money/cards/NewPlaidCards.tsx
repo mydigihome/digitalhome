@@ -108,7 +108,7 @@ export function MerchantSpendingBack({ onCancel, onSave }: { onCancel: () => voi
 
 // ── Category Trends ──
 export function CategoryTrendsFront() {
-  return (<div><CardHeader icon="📊" title="Category Trends" />
+  return (<div><CardHeader title="Category Trends" />
     <div className="flex items-end gap-2" style={{ height: "100px" }}>
       {[["Food", [60, 55, 70]], ["Transport", [30, 35, 25]], ["Shopping", [45, 50, 40]]].map(([cat, vals]) => (
         <div key={cat as string} className="flex-1">
