@@ -130,7 +130,7 @@ export function CategoryTrendsBack({ onCancel, onSave }: { onCancel: () => void;
 // ── Cash Flow Calendar ──
 export function CashFlowCalendarFront() {
   const days = Array.from({ length: 28 }, (_, i) => ({ day: i + 1, type: i % 7 === 0 ? "income" : i % 3 === 0 ? "expense" : "none" }));
-  return (<div><CardHeader icon="📅" title="Cash Flow Calendar" />
+  return (<div><CardHeader title="Cash Flow Calendar" />
     <div className="grid grid-cols-7 gap-1">
       {days.map(d => (
         <div key={d.day} className="flex items-center justify-center" style={{ width: "100%", aspectRatio: "1", borderRadius: "6px", backgroundColor: d.type === "income" ? "#dcfce7" : d.type === "expense" ? "#ffe4e6" : "#f9f9fb", fontSize: "10px", fontWeight: 600, color: "#767586" }}>
