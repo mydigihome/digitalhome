@@ -43,7 +43,7 @@ export function SubscriptionsBack({ onCancel, onSave }: { onCancel: () => void; 
 
 // ── Net Worth History ──
 export function NetWorthHistoryFront() {
-  return (<div><CardHeader icon="📈" title="Net Worth History" />
+  return (<div><CardHeader title="Net Worth History" />
     <div className="flex items-end gap-1" style={{ height: "120px", padding: "8px 0" }}>
       {[30, 35, 33, 40, 42, 38, 45, 48, 50, 55, 52, 58].map((v, i) => (
         <div key={i} style={{ flex: 1, height: `${v * 1.8}%`, background: "linear-gradient(180deg, #6366f1, #818cf8)", borderRadius: "4px 4px 0 0", opacity: 0.6 + i * 0.03 }} />
