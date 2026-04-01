@@ -17,7 +17,7 @@ const gradientPresets = [
   { id: "pink", label: "Pink", value: "linear-gradient(135deg, #EC4899 0%, #BE185D 100%)" },
 ];
 
-const emojiList = ["📋", "🏠", "📅", "🎯", "💼", "✈️", "🧠", "⚙️", "📊", "🎨", "🚀", "💡", "📝", "🔥", "⭐", "🎉", "💪", "🌟", "📌", "🎓", "🏋️", "🌍", "💰", "🎵"];
+const emojiList = ["clipboard", "home", "calendar", "target", "briefcase", "plane", "brain", "settings", "bar-chart", "palette", "rocket", "lightbulb", "pen-line", "flame", "star", "party-popper", "dumbbell", "sparkles", "pin", "graduation-cap", "weight", "globe", "dollar-sign", "music"];
 
 interface PageHeaderProps {
   title: string;
