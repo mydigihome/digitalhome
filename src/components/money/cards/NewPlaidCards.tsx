@@ -91,7 +91,7 @@ export function TaxEstimateBack({ onCancel, onSave }: { onCancel: () => void; on
 export function MerchantSpendingFront() {
   const data = [["Amazon", 340], ["Whole Foods", 210], ["Shell", 180], ["Uber", 145], ["Netflix", 15]] as const;
   const max = 340;
-  return (<div><CardHeader icon="🏪" title="Merchant Spending" />
+  return (<div><CardHeader title="Merchant Spending" />
     <div className="space-y-2 mt-2">
       {data.map(([name, val]) => (
         <div key={name}>
