@@ -1,4 +1,4 @@
-/* System font - San Francisco */
+/* System font - Inter */
 
 @tailwind base;
 @tailwind components;
@@ -8,63 +8,64 @@
 
 @layer base {
   :root {
-    /* Notion-inspired warm palette */
-    --background: 40 7% 98%;       /* #FBFBFA */
-    --foreground: 30 15% 20%;      /* #37352F */
+    /* Mature design system */
+    --background: 210 5% 97%;        /* #F8F9FA */
+    --foreground: 0 0% 5%;           /* #0D0D0D */
 
-    --card: 0 0% 100%;             /* #FFFFFF */
-    --card-foreground: 30 15% 20%;
+    --card: 0 0% 100%;               /* #FFFFFF */
+    --card-foreground: 0 0% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 30 15% 20%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Brand purple */
-    --primary: 258 89% 66%;        /* #8B5CF6 */
+    /* Deep green primary */
+    --primary: 153 42% 30%;           /* #2D6A4F */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 3% 93%;        /* #EFEFEF */
-    --secondary-foreground: 30 15% 20%;
+    --secondary: 210 5% 94%;          /* #EFEFEF */
+    --secondary-foreground: 0 0% 5%;
 
-    --muted: 40 3% 93%;
-    --muted-foreground: 30 3% 47%; /* #787774 */
+    --muted: 210 5% 94%;
+    --muted-foreground: 220 5% 47%;   /* #6B7280 */
 
-    --accent: 258 89% 93%;         /* #DDD6FE */
-    --accent-foreground: 263 70% 50%; /* #6D28D9 */
+    --accent: 267 28% 51%;            /* #7B5EA7 */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 65% 55%;      /* #E03E3E */
+    --destructive: 0 72% 51%;         /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 168 80% 27%;        /* #0F7B6C */
+    --success: 142 64% 34%;           /* #16A34A */
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 100% 57%;        /* #FFB224 */
-    --warning-foreground: 30 15% 20%;
+    --warning: 36 100% 57%;           /* #FFB224 */
+    --warning-foreground: 0 0% 5%;
 
-    --info: 206 52% 55%;           /* #529CCA */
+    --info: 206 52% 55%;              /* #529CCA */
     --info-foreground: 0 0% 100%;
 
-    --border: 40 5% 90%;           /* #E3E3E0 */
-    --input: 40 5% 90%;
-    --ring: 258 89% 66%;
+    --border: 220 9% 90%;             /* #E5E7EB */
+    --input: 220 9% 90%;
+    --ring: 153 42% 30%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 30 15% 20%;
-    --sidebar-primary: 258 89% 66%;
+    /* Sidebar: charcoal in light mode */
+    --sidebar-background: 240 4% 12%;  /* #1C1C1E */
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 153 42% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 258 89% 93%;
-    --sidebar-accent-foreground: 263 70% 50%;
-    --sidebar-border: 40 7% 94%;
-    --sidebar-ring: 258 89% 66%;
+    --sidebar-accent: 153 30% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 153 42% 30%;
 
-    --chart-1: 258 89% 66%;
-    --chart-2: 263 70% 50%;
+    --chart-1: 153 42% 30%;
+    --chart-2: 267 28% 51%;
     --chart-3: 206 52% 55%;
-    --chart-4: 168 80% 27%;
+    --chart-4: 142 64% 34%;
     --chart-5: 36 100% 57%;
 
-    /* Notion-style shadows */
+    /* Shadows */
     --shadow-2xs: 0 1px 2px rgba(0,0,0,0.04);
     --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
@@ -73,63 +74,64 @@
     --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08);
     --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.15);
 
-    --sidebar: 0 0% 100%;
-    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    --sidebar: 240 4% 12%;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 220 10% 10%;
-    --foreground: 0 0% 95%;
+    --background: 0 0% 6%;            /* #0F0F0F */
+    --foreground: 0 0% 95%;           /* #F2F2F2 */
 
-    --card: 220 10% 13%;
+    --card: 0 0% 10%;                 /* #1A1A1A */
     --card-foreground: 0 0% 95%;
 
-    --popover: 220 10% 15%;
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 258 89% 70%;
+    --primary: 153 42% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 8% 20%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 95%;
 
-    --muted: 220 8% 20%;
+    --muted: 0 0% 15%;
     --muted-foreground: 220 5% 60%;
 
-    --accent: 258 40% 22%;
-    --accent-foreground: 258 89% 75%;
+    --accent: 267 28% 40%;
+    --accent-foreground: 267 40% 85%;
 
-    --destructive: 0 65% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 168 80% 35%;
+    --success: 142 64% 40%;
     --success-foreground: 0 0% 100%;
 
     --warning: 36 100% 57%;
-    --warning-foreground: 30 15% 20%;
+    --warning-foreground: 0 0% 5%;
 
     --info: 206 52% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 8% 22%;
-    --input: 220 8% 22%;
-    --ring: 258 89% 70%;
+    --border: 0 0% 17%;               /* #2A2A2A */
+    --input: 0 0% 17%;
+    --ring: 153 42% 38%;
 
-    --sidebar-background: 220 10% 8%;
+    /* Sidebar: near-black in dark mode */
+    --sidebar-background: 0 0% 7%;    /* #111111 */
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 258 89% 70%;
+    --sidebar-primary: 153 42% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 258 40% 22%;
-    --sidebar-accent-foreground: 258 89% 75%;
-    --sidebar-border: 220 8% 22%;
-    --sidebar-ring: 258 89% 70%;
+    --sidebar-accent: 153 30% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 17%;
+    --sidebar-ring: 153 42% 38%;
 
-    --chart-1: 258 89% 70%;
-    --chart-2: 258 70% 60%;
+    --chart-1: 153 42% 38%;
+    --chart-2: 267 28% 55%;
     --chart-3: 206 52% 55%;
-    --chart-4: 168 80% 35%;
+    --chart-4: 142 64% 40%;
     --chart-5: 36 100% 57%;
 
     --shadow-2xs: 0 1px 2px rgba(0,0,0,0.2);
@@ -140,8 +142,8 @@
     --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.3);
     --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.4);
 
-    --radius: 0.5rem;
-    --sidebar: 220 10% 13%;
+    --radius: 0.75rem;
+    --sidebar: 0 0% 10%;
   }
 }
 
@@ -166,7 +168,6 @@
 }
 
 @layer components {
-  /* Notion-style glass effect */
   .glass {
     @apply bg-white/80 backdrop-blur-xl;
   }
@@ -175,7 +176,6 @@
     @apply bg-gray-900/80 backdrop-blur-xl;
   }
 
-  /* Progress bar */
   .progress-bar {
     @apply relative w-full h-2 bg-secondary rounded-full overflow-hidden;
   }
@@ -186,12 +186,10 @@
 }
 
 @layer utilities {
-  /* Text gradient */
   .text-gradient-primary {
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
 
-  /* Skeleton shimmer */
   @keyframes shimmer {
     0% { background-position: -200% 0; }
     100% { background-position: 200% 0; }
@@ -203,13 +201,11 @@
     animation: shimmer 1.5s infinite;
   }
 
-  /* Smooth transitions */
   .transition-smooth {
     @apply transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)];
   }
 }
 
-/* Root styles */
 #root {
   max-width: 100%;
   margin: 0;
@@ -265,7 +261,6 @@
   accent-color: hsl(var(--primary));
 }
 
-/* Animated icon float */
 @keyframes iconFloat {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
@@ -277,28 +272,23 @@
 
 /* ══════════════════════════════════════════════════════════
    MOBILE APP EXPERIENCE — max-width: 767px ONLY
-   Desktop (768px+) remains completely untouched.
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
-  /* ── Prevent iOS auto-zoom on input focus ── */
   input, select, textarea {
     font-size: 16px !important;
   }
 
-  /* ── Touch targets: minimum 44px ── */
   button, a, [role="button"] {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* ── Bottom tab bar spacing — push content above tab bar ── */
   .mobile-main-content {
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
     padding-left: 16px !important;
     padding-right: 16px !important;
   }
 
-  /* ── Mobile tab bar native feel ── */
   .mobile-tab-bar nav {
     box-shadow: 0 -1px 0 hsl(var(--border)), 0 -4px 12px rgba(0,0,0,0.06);
   }
@@ -313,7 +303,6 @@
     transition: transform 0.1s ease;
   }
 
-  /* ── Cards: native rounded feel with depth ── */
   .bg-card {
     border-radius: 16px !important;
   }
@@ -326,12 +315,10 @@
     border-radius: 14px !important;
   }
 
-  /* ── Subtle depth shadows for cards ── */
   .shadow-sm, .border {
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
   }
 
-  /* ── Stack grid layouts vertically ── */
   .grid-cols-2,
   .grid-cols-3,
   .sm\:grid-cols-2,
@@ -343,20 +330,17 @@
     grid-template-columns: 1fr !important;
   }
 
-  /* Allow 2-col for small stat cards */
   .grid-cols-2.gap-3,
   .grid-cols-2.gap-4 {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
-  /* ── Mobile header styling ── */
   .mobile-header {
     height: 52px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
 }
 
-/* Marquee animation for ticker tape */
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
