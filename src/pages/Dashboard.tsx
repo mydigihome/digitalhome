@@ -202,7 +202,7 @@ export default function Dashboard() {
         const confetti = m.default;
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
       });
-      toast.success(planParam === "founding" ? "Welcome, Founding Member! Full access unlocked 🏅" : "You're all set — Pro features unlocked 🎉");
+      toast.success(planParam === "founding" ? "Welcome, Founding Member! Full access unlocked " : "You're all set — Pro features unlocked ");
       setSearchParams({}, { replace: true });
     }
   }, []);
@@ -432,7 +432,7 @@ export default function Dashboard() {
                   <span className="text-[22px] font-bold text-foreground">{totalHours}h</span>
                 </ProgressRing>
               </div>
-              <p className="text-[10px] font-medium mt-2 text-muted-foreground">🔥 {streakDays} days</p>
+              <p className="text-[10px] font-medium mt-2 text-muted-foreground"> {streakDays} days</p>
             </button>
           </motion.div>
 
@@ -833,7 +833,7 @@ export default function Dashboard() {
                   className="flex-1 p-4 flex items-center gap-4 cursor-pointer hover:opacity-90 transition bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                   <ProgressRing progress={habitsProgress} size={68} strokeWidth={6} gradientId="h-grad" color1="#10B981" color2="#34D399">
                     <div className="flex flex-col items-center">
-                      <span className="text-[10px]">🔥</span>
+                      <span className="text-[10px]"></span>
                       <span className="text-[14px] font-bold text-foreground">{streakDays}</span>
                     </div>
                   </ProgressRing>
@@ -918,7 +918,7 @@ export default function Dashboard() {
                   {(journalEntries.length > 0 ? journalEntries : [
                     { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), content_preview: "Woke up feeling incredibly refreshed today. The meditation session really helped clear the fog before starting the major project review...", mood_emoji: "❤️" },
                     { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), content_preview: "Today was challenging. Sometimes the market doesn't go the way you expect, but it's important to stay disciplined with the long-term plan...", mood_emoji: "🌧" },
-                    { id: "sample3", title: "Small Wins Matter", created_at: new Date(Date.now() - 172800000).toISOString(), content_preview: "The new design system component was finally approved. It feels good to see the months of effort co...", mood_emoji: "⚙️" },
+                    { id: "sample3", title: "Small Wins Matter", created_at: new Date(Date.now() - 172800000).toISOString(), content_preview: "The new design system component was finally approved. It feels good to see the months of effort co...", mood_emoji: "" },
                   ]).slice(0, 3).map((entry: any) => {
                     const entryDate = new Date(entry.created_at);
                     const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d, yyyy").toUpperCase();
@@ -957,7 +957,7 @@ export default function Dashboard() {
               {/* MONEY REMINDERS — solid dark card */}
               <motion.div {...stagger(1)} className="p-5 mb-4 rounded-[20px] bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><span className="text-base">💳</span></div>
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"><span className="text-base"></span></div>
                   <h2 className="text-[17px] font-bold text-white">Money Reminders</h2>
                 </div>
                 {moneyReminders.length > 0 ? (

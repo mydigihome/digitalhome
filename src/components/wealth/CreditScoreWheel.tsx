@@ -37,7 +37,7 @@ export default function CreditScoreWheel() {
   const getLabel = (s: number) =>
     s >= 750 ? "Excellent" : s >= 670 ? "Good" : s >= 580 ? "Fair" : "Poor";
   const getEmoji = (s: number) =>
-    s >= 750 ? "🟢" : s >= 670 ? "🟢" : s >= 580 ? "🟡" : "🔴";
+    s >= 750 ? "🟢" : s >= 670 ? "🟢" : s >= 580 ? "🟡" : "";
 
   const color = getColor(clampedScore);
   const label = getLabel(clampedScore);
@@ -123,7 +123,7 @@ export default function CreditScoreWheel() {
                 { range: "750-850", label: "Excellent", color: "bg-success", emoji: "🟢" },
                 { range: "670-749", label: "Good", color: "bg-success/60", emoji: "🟢" },
                 { range: "580-669", label: "Fair", color: "bg-warning", emoji: "🟡" },
-                { range: "300-579", label: "Poor", color: "bg-destructive", emoji: "🔴" },
+                { range: "300-579", label: "Poor", color: "bg-destructive", emoji: "" },
               ].map((r) => (
                 <div key={r.range} className="flex items-center gap-2 text-sm">
                   <span className={`w-2 h-2 rounded-full ${r.color}`} />

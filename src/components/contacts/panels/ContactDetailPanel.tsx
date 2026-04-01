@@ -123,7 +123,7 @@ export default function ContactDetailPanel({ contact, onClose, onToggleStar, onE
           ▶ Send Email
         </button>
         <button className="w-full bg-[#f3f3f8] text-[#1a1c1f] rounded-full py-2.5 font-bold text-sm">
-          📅 Schedule Meeting
+           Schedule Meeting
         </button>
         <button className="w-full bg-[#f3f3f8] text-[#1a1c1f] rounded-full py-2.5 font-bold text-sm">
           🔗 Share Profile

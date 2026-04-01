@@ -97,7 +97,7 @@ export default function SavingsProgress() {
               </p>
               <p className="text-sm text-muted-foreground">
                 ${remaining.toLocaleString()} to go
-                {pct >= 100 ? " 🎉" : " 🎯"}
+                {pct >= 100 ? " " : " "}
               </p>
             </div>
             {remaining > 0 && monthlySavingRate > 0 && (

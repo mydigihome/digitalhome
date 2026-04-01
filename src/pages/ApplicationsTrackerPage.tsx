@@ -179,7 +179,7 @@ export default function ApplicationsTrackerPage() {
                   onClick={async () => {
                     const current = (prefs as any)?.template_notifications ?? false;
                     await upsertPrefs.mutateAsync({ template_notifications: !current } as any);
-                    toast.success(!current ? "You'll be notified of new templates! 🔔" : "Notifications turned off");
+                    toast.success(!current ? "You'll be notified of new templates! " : "Notifications turned off");
                   }}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition"
                 >
@@ -268,7 +268,7 @@ export default function ApplicationsTrackerPage() {
                       : "bg-card text-muted-foreground font-semibold border border-border hover:border-primary/30"
                   )}
                 >
-                  🎓 College
+                   College
                 </button>
               )}
               {!isStudent && (
@@ -276,7 +276,7 @@ export default function ApplicationsTrackerPage() {
                   onClick={() => setShowStudentPrompt(true)}
                   className="px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap border border-dashed border-border text-muted-foreground hover:border-primary/30 transition-all"
                 >
-                  🎓 College
+                   College
                 </button>
               )}
             </div>
@@ -462,7 +462,7 @@ export default function ApplicationsTrackerPage() {
         {showStudentPrompt && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setShowStudentPrompt(false)}>
             <div className="w-full max-w-[360px] rounded-3xl bg-card p-6 shadow-xl text-center" onClick={(e) => e.stopPropagation()}>
-              <p className="text-lg font-bold text-foreground mb-2">🎓 Are you a student?</p>
+              <p className="text-lg font-bold text-foreground mb-2"> Are you a student?</p>
               <p className="text-sm text-muted-foreground mb-6">Enable the College Applications tracker to manage your college journey.</p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setShowStudentPrompt(false)} className="flex-1 rounded-xl">No</Button>
@@ -537,7 +537,7 @@ function FeaturedTemplatesSection({ userId }: { userId?: string }) {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm">✨</span>
+            <span className="text-primary text-sm"></span>
           </div>
           <h2 className="text-xl font-bold text-foreground">Featured Templates</h2>
         </div>

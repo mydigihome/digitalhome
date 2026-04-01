@@ -157,7 +157,7 @@ export default function YourDayAgenda() {
                 </span>
                 {event.source !== "manual" && (
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 opacity-70">
-                    {event.source === "google_calendar" ? "📅 Google" : event.source}
+                    {event.source === "google_calendar" ? " Google" : event.source}
                   </Badge>
                 )}
                 <button

@@ -221,7 +221,7 @@ export default function ProjectDetail() {
             {/* Page Header */}
             <PageHeader
               title={project?.name || "Project"}
-              icon={project?.icon || "📋"}
+              icon={project?.icon || ""}
               iconType={project?.icon_type || "emoji"}
               coverImage={project?.cover_image}
               coverType={project?.cover_type || "none"}
@@ -426,7 +426,7 @@ export default function ProjectDetail() {
             </div>
 
             <div className="mb-5 rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-              <p className="text-sm font-medium text-destructive mb-1">⚠️ This action will permanently delete your project</p>
+              <p className="text-sm font-medium text-destructive mb-1"> This action will permanently delete your project</p>
               <p className="text-xs text-muted-foreground">All project data, tasks, and files will be lost forever. You can choose to archive instead.</p>
             </div>
 

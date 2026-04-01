@@ -364,7 +364,7 @@ const COLORING_PAGES = {
     ]),
   },
   geometricMandala: {
-    name: "✨ Geometric Mandala",
+    name: " Geometric Mandala",
     viewBox: "0 0 500 500",
     sections: makeSections([
       // Outer ring segments

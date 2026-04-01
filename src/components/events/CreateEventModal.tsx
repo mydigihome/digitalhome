@@ -17,13 +17,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 const EVENT_TYPES = [
-  { value: "dinner_party", label: "Dinner Party", emoji: "🍽️" },
-  { value: "book_club", label: "Book Club", emoji: "📚" },
-  { value: "sorority_event", label: "Sorority Event", emoji: "💜" },
-  { value: "trip", label: "Trip", emoji: "✈️" },
-  { value: "workshop", label: "Workshop", emoji: "🎨" },
-  { value: "birthday", label: "Birthday", emoji: "🎂" },
-  { value: "other", label: "Other", emoji: "🎯" },
+  { value: "dinner_party", label: "Dinner Party", emoji: "dinner" },
+  { value: "book_club", label: "Book Club", emoji: "book" },
+  { value: "sorority_event", label: "Sorority Event", emoji: "heart" },
+  { value: "trip", label: "Trip", emoji: "plane" },
+  { value: "workshop", label: "Workshop", emoji: "palette" },
+  { value: "birthday", label: "Birthday", emoji: "cake" },
+  { value: "other", label: "Other", emoji: "target" },
 ];
 
 interface Props {

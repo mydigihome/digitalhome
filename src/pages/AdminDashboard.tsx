@@ -338,7 +338,7 @@ function OverviewTab() {
             <span className="text-lg">💾</span> Export All Data
           </button>
           <button onClick={handleRefreshAnalytics} disabled={refreshing} className="flex items-center gap-2 rounded-lg bg-secondary border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-            <span className="text-lg">{refreshing ? "⏳" : "🔄"}</span> {refreshing ? "Refreshing..." : "Refresh Analytics"}
+            <span className="text-lg">{refreshing ? "⏳" : ""}</span> {refreshing ? "Refreshing..." : "Refresh Analytics"}
           </button>
         </div>
       </div>
@@ -679,7 +679,7 @@ function ContentTab() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground">{item.email || "Anonymous"}</span>
-                  {item.rating && <span className="text-xs text-muted-foreground">⭐ {item.rating}/5</span>}
+                  {item.rating && <span className="text-xs text-muted-foreground"> {item.rating}/5</span>}
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   item.status === "resolved" ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
@@ -850,7 +850,7 @@ function SystemTab() {
           </button>
           <button onClick={() => toast.info("Cache clearing requires backend implementation")}
             className="flex flex-col items-center gap-2 rounded-lg bg-amber-500 p-4 text-sm font-medium text-white hover:bg-amber-600 transition-colors">
-            <span className="text-2xl">⚡</span> Clear Cache
+            <span className="text-2xl"></span> Clear Cache
           </button>
         </div>
       </div>
@@ -1199,11 +1199,11 @@ function TemplatesTab() {
     if (editingId) {
       const { error } = await supabase.from("shop_templates").update(record).eq("id", editingId);
       if (error) { toast.error("Failed to update"); return; }
-      toast.success("✓ Template updated successfully!");
+      toast.success(" Template updated successfully!");
     } else {
       const { error } = await supabase.from("shop_templates").insert(record);
       if (error) { toast.error("Failed to create"); return; }
-      toast.success("✓ Template published successfully!");
+      toast.success(" Template published successfully!");
     }
     resetForm(); setShowForm(false); fetchData();
   };
@@ -1255,7 +1255,7 @@ function TemplatesTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">📚</span>
+          <span className="text-2xl"></span>
           <h2 className="text-xl font-semibold text-foreground">Template Library Manager</h2>
           <Badge variant="secondary">{templates.length} templates</Badge>
         </div>
@@ -1323,7 +1323,7 @@ function TemplatesTab() {
                   onClick={() => document.getElementById("preview-upload")?.click()}
                 >
                   {previewFile ? (
-                    <p className="text-sm text-foreground">✓ {previewFile.name}</p>
+                    <p className="text-sm text-foreground"> {previewFile.name}</p>
                   ) : (
                     <p className="text-sm text-muted-foreground">Drag image here or click to browse<br /><span className="text-xs">Recommended: 600×400px (.jpg, .png, .webp)</span></p>
                   )}
@@ -1334,7 +1334,7 @@ function TemplatesTab() {
                 <div className="space-y-1">
                   <Label>Main Template File *</Label>
                   <Input type="file" accept=".docx,.pptx,.pdf,.zip" onChange={e => setTemplateFile(e.target.files?.[0] || null)} />
-                  {templateFile && <p className="text-xs text-muted-foreground">✓ {templateFile.name}</p>}
+                  {templateFile && <p className="text-xs text-muted-foreground"> {templateFile.name}</p>}
                 </div>
                 <div className="space-y-1">
                   <Label>Additional File (optional)</Label>
@@ -1426,10 +1426,10 @@ function TemplatesTab() {
                         <TableCell>{t.price_cents === 0 ? "Free" : `$${(t.price_cents / 100).toFixed(0)}`}</TableCell>
                         <TableCell>
                           <Badge variant={t.is_active ? "default" : "secondary"} className="text-xs">
-                            {t.is_active ? "✅ Live" : "Draft"}
+                            {t.is_active ? " Live" : "Draft"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{t.download_count} ⬇️</TableCell>
+                        <TableCell>{t.download_count} </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button variant="ghost" size="icon" onClick={() => openEdit(t)} title="Edit"><Pencil className="h-3.5 w-3.5" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => handleToggleActive(t.id, t.is_active)} title={t.is_active ? "Unpublish" : "Publish"}>
@@ -1675,7 +1675,7 @@ function WaitlistTab() {
                   </p>
                 </div>
                 {item.notified && (
-                  <Badge variant="secondary" className="text-xs">Notified ✓</Badge>
+                  <Badge variant="secondary" className="text-xs">Notified </Badge>
                 )}
               </div>
             ))}

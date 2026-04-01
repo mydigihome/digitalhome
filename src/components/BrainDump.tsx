@@ -98,7 +98,7 @@ export default function BrainDump() {
     });
 
     setOpen(false);
-    toast.success("Saved to Notes ✓");
+    toast.success("Saved to Notes ");
     setText("");
     setTranscription("");
     setResult(null);
@@ -319,7 +319,7 @@ export default function BrainDump() {
             className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium text-white disabled:opacity-50 transition-all"
             style={{ background: `linear-gradient(135deg, ${cardColor}, ${cardColor}dd)` }}
           >
-            {organizing ? (<><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>) : (<><Sparkles className="h-4 w-4" /> Organize My Thoughts ✨</>)}
+            {organizing ? (<><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>) : (<><Sparkles className="h-4 w-4" /> Organize My Thoughts </>)}
           </button>
           <button
             onClick={handleSave}

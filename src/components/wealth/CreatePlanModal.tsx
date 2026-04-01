@@ -17,7 +17,7 @@ interface CreatePlanModalProps {
 
 const ASSET_TYPES = [
   { value: "forex", label: "Forex", icon: "💱", unit: "lots" },
-  { value: "stocks", label: "Stocks", icon: "📈", unit: "shares" },
+  { value: "stocks", label: "Stocks", icon: "", unit: "shares" },
   { value: "futures", label: "Futures", icon: "🔮", unit: "contracts" },
   { value: "crypto", label: "Crypto", icon: "₿", unit: "units" },
 ];
@@ -106,7 +106,7 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
       return;
     }
     if (calc?.isOverLeveraged) {
-      toast.error(`⚠️ Over-leveraged! Max ${calc.suggestedSize} ${positionUnit}`);
+      toast.error(` Over-leveraged! Max ${calc.suggestedSize} ${positionUnit}`);
       return;
     }
 
@@ -161,7 +161,7 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
           {/* Account Setup */}
           <section>
             <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              💰 Account Setup
+               Account Setup
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -179,7 +179,7 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
           {/* Trader Profile */}
           <section>
             <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              👤 Trader Profile
+               Trader Profile
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -228,7 +228,7 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
           {/* Entry Strategy */}
           <section>
             <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-              📊 Entry Strategy
+               Entry Strategy
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -269,7 +269,7 @@ export default function CreatePlanModal({ pair, currentPrice, onClose }: CreateP
               }`}
             >
               <p className={`font-bold text-sm mb-3 ${calc.isOverLeveraged ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                {calc.isOverLeveraged ? "⚠️ OVER-LEVERAGED" : "✅ Plan Analysis"}
+                {calc.isOverLeveraged ? " OVER-LEVERAGED" : " Plan Analysis"}
               </p>
 
               {/* Risk per trade */}

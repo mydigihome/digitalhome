@@ -216,7 +216,7 @@ export default function MonthlyReviewPage() {
         {wins.map((w, i) => (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 14 }}>
             <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#f0fdf4", border: "1.5px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-              <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓</span>
+              <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}></span>
             </div>
             <span style={{ fontSize: 15, color: "#374151", lineHeight: 1.6 }}>{w}</span>
           </div>
@@ -284,7 +284,7 @@ export default function MonthlyReviewPage() {
               <span style={{ fontSize: 15, fontWeight: 600, color: "#111827" }}>{c.name}</span>
               <span style={{ fontSize: 13, color: "#9ca3af", marginLeft: 4 }}>{c.role}</span>
               <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 600, color: c.overdue ? "#f59e0b" : "#16a34a" }}>
-                {c.overdue ? `⚠ ${c.days} days — reach out` : "✓ Active"}
+                {c.overdue ? `⚠ ${c.days} days — reach out` : " Active"}
               </span>
             </div>
           );
@@ -345,7 +345,7 @@ export default function MonthlyReviewPage() {
               onMouseEnter={e => { if (!approved) (e.currentTarget.style.background = "#1f2937"); (e.currentTarget.style.transform = "translateY(-2px)"); (e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)"); }}
               onMouseLeave={e => { if (!approved) (e.currentTarget.style.background = "#111827"); (e.currentTarget.style.transform = "translateY(0)"); (e.currentTarget.style.boxShadow = "none"); }}
             >
-              {saving ? "Saving..." : approved ? `✓ ${monthName} Approved` : `Approve ${monthName} Review`}
+              {saving ? "Saving..." : approved ? ` ${monthName} Approved` : `Approve ${monthName} Review`}
               <div style={{ width: "40%", height: 1, background: "rgba(255,255,255,0.25)", margin: "10px auto 0" }} />
             </button>
             <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 12 }}>

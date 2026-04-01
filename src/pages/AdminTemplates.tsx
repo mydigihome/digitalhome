@@ -215,12 +215,12 @@ export default function AdminTemplates() {
                   <div className="space-y-1">
                     <Label>Preview Image * (600×400 recommended)</Label>
                     <Input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setPreviewFile(e.target.files?.[0] || null)} />
-                    {previewFile && <p className="text-xs text-muted-foreground">{previewFile.name} ✓</p>}
+                    {previewFile && <p className="text-xs text-muted-foreground">{previewFile.name} </p>}
                   </div>
                   <div className="space-y-1">
                     <Label>Template File * (.docx, .pptx, .pdf, .zip)</Label>
                     <Input type="file" accept=".docx,.pdf,.zip,.pptx" onChange={(e) => setTemplateFile(e.target.files?.[0] || null)} />
-                    {templateFile && <p className="text-xs text-muted-foreground">{templateFile.name} ✓</p>}
+                    {templateFile && <p className="text-xs text-muted-foreground">{templateFile.name} </p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -311,7 +311,7 @@ export default function AdminTemplates() {
                           <TableCell>{t.price_cents === 0 ? "Free" : `$${(t.price_cents / 100).toFixed(0)}`}</TableCell>
                           <TableCell>
                             <Badge variant={t.is_active ? "default" : "secondary"} className="text-xs">
-                              {t.is_active ? "✅ Live" : "Draft"}
+                              {t.is_active ? " Live" : "Draft"}
                             </Badge>
                           </TableCell>
                           <TableCell>{t.download_count}</TableCell>

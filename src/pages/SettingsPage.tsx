@@ -514,7 +514,7 @@ export default function SettingsPage() {
                     </p>
                     {profile?.founding_member && (
                       <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800 border border-amber-200">
-                        ⭐ Founding Member
+                         Founding Member
                       </span>
                     )}
                   </div>
@@ -1198,7 +1198,7 @@ export default function SettingsPage() {
                             });
                             setSendingFeedback(false);
                             if (error) { toast.error("Failed to send feedback"); console.error(error); }
-                            else { setFeedbackSent(true); toast.success("Feedback sent! Thank you 💜"); }
+                            else { setFeedbackSent(true); toast.success("Feedback sent! Thank you "); }
                           }}
                           disabled={sendingFeedback || !feedbackMsg.trim()}
                           className="w-full sm:w-auto"

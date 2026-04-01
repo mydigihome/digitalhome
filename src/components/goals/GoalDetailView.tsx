@@ -24,10 +24,10 @@ import QuickEmailComposer from "@/components/events/QuickEmailComposer";
 
 const AFFIRMATIONS: Record<number, { message: string; emoji: string }> = {
   0: { message: "Every journey begins with a single step", emoji: "🌱" },
-  10: { message: "You've started! Keep the momentum going ✨", emoji: "✨" },
-  25: { message: "A quarter of the way there! 💪", emoji: "💪" },
-  50: { message: "Halfway to your goal! You're crushing it! 🎉", emoji: "🎉" },
-  75: { message: "Almost there! The finish line is in sight 🚀", emoji: "🚀" },
+  10: { message: "You've started! Keep the momentum going ", emoji: "" },
+  25: { message: "A quarter of the way there! ", emoji: "" },
+  50: { message: "Halfway to your goal! You're crushing it! ", emoji: "" },
+  75: { message: "Almost there! The finish line is in sight ", emoji: "" },
   100: { message: "Goal achieved! You did it! 🏆", emoji: "🏆" },
 };
 
@@ -156,13 +156,13 @@ export default function GoalDetailView({ projectId, projectName, coverImage }: P
         toast.success("🏆 Goal achieved! Congratulations!");
       } else if (newProgress >= 75 && progress < 75) {
         confetti({ particleCount: 80, spread: 60, colors: ["#6366F1", "#8B5CF6", "#A78BFA"] });
-        toast.success("🚀 Almost there! 75% complete!");
+        toast.success(" Almost there! 75% complete!");
       } else if (newProgress >= 50 && progress < 50) {
         confetti({ particleCount: 60, spread: 50, colors: ["#6366F1", "#8B5CF6", "#A78BFA"] });
-        toast.success("🎉 Halfway there!");
+        toast.success(" Halfway there!");
       } else if (newProgress >= 25 && progress < 25) {
         confetti({ particleCount: 40, spread: 40, colors: ["#6366F1", "#8B5CF6", "#A78BFA"] });
-        toast.success("💪 25% done! Keep going!");
+        toast.success(" 25% done! Keep going!");
       } else {
         confetti({ particleCount: 15, spread: 30, origin: { y: 0.7 }, colors: ["#6366F1", "#8B5CF6", "#A78BFA"] });
       }

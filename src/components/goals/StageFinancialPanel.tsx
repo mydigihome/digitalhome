@@ -84,10 +84,10 @@ function contactBg(type?: string | null) {
 }
 
 function daysAgo(date?: string | null) {
-  if (!date) return { label: "No contact", color: "#ef4444", dot: "🔴" };
+  if (!date) return { label: "No contact", color: "#ef4444", dot: "" };
   const d = Math.floor((Date.now() - new Date(date).getTime()) / 86400000);
   if (d <= 14) return { label: `${d}d ago`, color: "#22c55e", dot: "🟢" };
-  return { label: `${d}d ago`, color: "#ef4444", dot: "🔴" };
+  return { label: `${d}d ago`, color: "#ef4444", dot: "" };
 }
 
 /* ── Trigger Row ── */

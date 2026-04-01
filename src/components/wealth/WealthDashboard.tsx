@@ -28,17 +28,17 @@ import SubscriptionsSection from "./SubscriptionsSection";
 import SavingsSection from "./SavingsSection";
 
 const ALL_CARDS = [
-  { id: "investments", label: "💹 Investments" },
-  { id: "summary", label: "📊 Summary Cards" },
-  { id: "credit-score", label: "🎯 Credit Score" },
-  { id: "savings-progress", label: "💰 Savings Goal" },
-  { id: "net-worth", label: "🏦 Net Worth" },
-  { id: "debt", label: "📉 Debt Overview" },
-  { id: "spending", label: "💳 Monthly Spending" },
-  { id: "budget", label: "📦 Budget Envelopes" },
-  { id: "bills", label: "📅 Bills & Due Dates" },
-  { id: "subscriptions", label: "📋 Subscriptions" },
-  { id: "savings-goals", label: "🎯 Savings Goals" },
+  { id: "investments", label: "Investments" },
+  { id: "summary", label: "Summary Cards" },
+  { id: "credit-score", label: "Credit Score" },
+  { id: "savings-progress", label: "Savings Goal" },
+  { id: "net-worth", label: "Net Worth" },
+  { id: "debt", label: "Debt Overview" },
+  { id: "spending", label: "Monthly Spending" },
+  { id: "budget", label: "Budget Envelopes" },
+  { id: "bills", label: "Bills & Due Dates" },
+  { id: "subscriptions", label: "Subscriptions" },
+  { id: "savings-goals", label: "Savings Goals" },
 ] as const;
 
 export default function WealthDashboard() {
@@ -190,7 +190,7 @@ export default function WealthDashboard() {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-foreground">⚙️ Customize Dashboard</h3>
+                <h3 className="text-sm font-semibold text-foreground">Customize Dashboard</h3>
                 <Button variant="ghost" size="sm" className="text-xs" onClick={() => {
                   upsertLayout.mutate({ hidden_cards: [], card_order: ALL_CARDS.map(c => c.id) });
                 }}>

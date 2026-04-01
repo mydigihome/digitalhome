@@ -101,7 +101,7 @@ export default function BillingTab({
               "w-12 h-12 rounded-full flex items-center justify-center text-2xl",
               isExpired ? "bg-destructive/10" : daysLeft <= 3 ? "bg-amber-100" : "bg-blue-100"
             )}>
-              {isExpired ? '🔒' : daysLeft <= 3 ? '⚠️' : '🎁'}
+              {isExpired ? '' : daysLeft <= 3 ? '' : ''}
             </div>
             <div>
               <h4 className="font-semibold text-foreground text-lg">
@@ -118,12 +118,12 @@ export default function BillingTab({
       {/* Founding Member Active Badge */}
       {isFoundingMember && (
         <div style={{ background: "#fef3c7", border: "1px solid #fde68a" }} className="rounded-xl p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ background: "#fde68a" }}>🏅</div>
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ background: "#fde68a" }}></div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-semibold text-foreground text-lg">Founding Member · Full Access</h4>
               <span style={{ background: "#fef3c7", color: "#92400e", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 9999 }}>
-                FOUNDING MEMBER 🏅
+                FOUNDING MEMBER 
               </span>
             </div>
             <p className="text-sm" style={{ color: "#9ca3af" }}>

@@ -3,12 +3,12 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { EditLabel, EditInput, EditActions } from "../MoneyCard";
 
 const categories = [
-  { name: "Housing", emoji: "🏠", spent: 1200, budget: 1500, color: "#6366f1" },
+  { name: "Housing", emoji: "", spent: 1200, budget: 1500, color: "#6366f1" },
   { name: "Food", emoji: "🍔", spent: 450, budget: 600, color: "#6cf8bb" },
   { name: "Transport", emoji: "🚗", spent: 320, budget: 400, color: "#6366f1" },
   { name: "Entertainment", emoji: "🎬", spent: 280, budget: 300, color: "#f59e0b" },
-  { name: "Subscriptions", emoji: "📺", spent: 89, budget: 100, color: "#6cf8bb" },
-  { name: "Other", emoji: "💳", spent: 861, budget: 1000, color: "#767586" },
+  { name: "Subscriptions", emoji: "", spent: 89, budget: 100, color: "#6cf8bb" },
+  { name: "Other", emoji: "", spent: 861, budget: 1000, color: "#767586" },
 ];
 
 const outerData = [{ name: "Essentials", value: 66 }, { name: "Rest", value: 34 }];

@@ -63,12 +63,12 @@ export function CashflowFront() {
       </div>
       <div className="flex flex-wrap gap-3 mt-6">
         {[
-          { emoji: "🏦", label: "Savings $500" },
-          { emoji: "📈", label: "Investments $300" },
-          { emoji: "🎯", label: "Goals $500" },
+          { label: "Savings $500" },
+          { label: "Investments $300" },
+          { label: "Goals $500" },
         ].map((p) => (
           <span key={p.label} className="rounded-full px-4 py-2 text-xs font-bold" style={{ background: "rgba(99,102,241,0.08)", color: "#6366f1" }}>
-            {p.emoji} {p.label}
+            {p.label}
           </span>
         ))}
       </div>

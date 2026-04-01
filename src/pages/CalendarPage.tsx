@@ -267,7 +267,7 @@ function GoogleCalendarBar({ connection, loading, connecting, syncing, onConnect
   return (
     <div className="mb-4 flex items-center gap-3 rounded-xl border border-success/20 bg-success/5 p-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10 flex-shrink-0">
-        <span className="text-lg">✅</span>
+        <span className="text-lg"></span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">Google Calendar Connected</p>

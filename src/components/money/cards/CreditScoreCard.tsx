@@ -59,7 +59,7 @@ export function CreditScoreFront() {
         </div>
       ) : (
         <div className="flex items-center justify-between mb-3 px-1">
-          <span className="text-xs font-bold" style={{ color: "#006c49" }}>✓ Score entered manually</span>
+          <span className="text-xs font-bold" style={{ color: "#006c49" }}>Score entered manually</span>
           <button onClick={e => { e.stopPropagation(); setConnection(null); }} className="text-[10px] font-bold" style={{ color: "#ba1a1a" }}>Reset</button>
         </div>
       )}
@@ -97,17 +97,17 @@ export function CreditScoreFront() {
 
       <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#767586" }}>FACTORS HELPING</p>
-        <p className="text-xs" style={{ color: "#006c49" }}>✅ Payment history: 100% on-time payments</p>
-        <p className="text-xs" style={{ color: "#006c49" }}>✅ Credit age: 5 year average</p>
+        <p className="text-xs" style={{ color: "#006c49" }}>Payment history: 100% on-time payments</p>
+        <p className="text-xs" style={{ color: "#006c49" }}>Credit age: 5 year average</p>
       </div>
 
       <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#f59e0b" }}>QUICK WIN</p>
-        <p className="text-xs font-bold" style={{ color: "#6366f1" }}>⚡ Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
+        <p className="text-xs font-bold" style={{ color: "#6366f1" }}>Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
       </div>
 
       <div className="rounded-xl p-3 mt-2" style={{ background: "#f3f3f8" }}>
-        <p className="text-xs" style={{ color: "#ba1a1a" }}>🔴 Recent Hard Inquiry — Car Loan · Feb 2024</p>
+        <p className="text-xs" style={{ color: "#ba1a1a" }}>Recent Hard Inquiry — Car Loan · Feb 2024</p>
       </div>
 
       {/* Modal */}

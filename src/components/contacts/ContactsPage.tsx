@@ -126,7 +126,7 @@ export default function ContactsPage() {
           </button>
           {gmailConnection ? (
             <button className="bg-[#006c49] text-white rounded-full px-6 py-2.5 font-bold text-sm">
-              ✓ Gmail Connected
+               Gmail Connected
             </button>
           ) : (
             <button

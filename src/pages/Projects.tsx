@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
 
 
 const EVENT_TYPE_EMOJIS: Record<string, string> = {
-  dinner_party: "🍽️", book_club: "📚", sorority_event: "💜",
-  trip: "✈️", workshop: "🎨", birthday: "🎂", other: "🎯",
+  dinner_party: "", book_club: "", sorority_event: "",
+  trip: "", workshop: "", birthday: "", other: "",
 };
 
 const TYPE_COLORS = {

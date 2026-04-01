@@ -15,14 +15,14 @@ import { useCreateGoalStage, useCreateGoalTask } from "@/hooks/useGoals";
 import { supabase } from "@/integrations/supabase/client";
 
 const GOAL_TYPES = [
-  { value: "buy_home", label: "Buy a Home", emoji: "🏠" },
-  { value: "music_ep", label: "Launch Music EP", emoji: "🎵" },
-  { value: "family_cookout", label: "Plan Family Cookout", emoji: "🍖" },
-  { value: "start_business", label: "Start a Business", emoji: "💼" },
-  { value: "wedding", label: "Wedding Planning", emoji: "💍" },
-  { value: "career_change", label: "Career Change", emoji: "🚀" },
-  { value: "fitness", label: "Fitness Goal", emoji: "💪" },
-  { value: "custom", label: "Custom", emoji: "✨" },
+  { value: "buy_home", label: "Buy a Home", emoji: "home" },
+  { value: "music_ep", label: "Launch Music EP", emoji: "music" },
+  { value: "family_cookout", label: "Plan Family Cookout", emoji: "utensils" },
+  { value: "start_business", label: "Start a Business", emoji: "briefcase" },
+  { value: "wedding", label: "Wedding Planning", emoji: "heart" },
+  { value: "career_change", label: "Career Change", emoji: "rocket" },
+  { value: "fitness", label: "Fitness Goal", emoji: "dumbbell" },
+  { value: "custom", label: "Custom", emoji: "sparkles" },
 ];
 
 interface StageData {

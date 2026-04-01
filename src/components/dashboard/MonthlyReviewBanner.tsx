@@ -90,7 +90,7 @@ export default function MonthlyReviewBanner() {
         style={{ ...baseStyle, background: "#f0fdf4", borderBottom: "1px solid #bbf7d0", cursor: "default" }}
       >
         <span style={{ fontSize: 13, fontWeight: 500, color: "#15803d" }}>
-          ✓ {prevMonthName} review approved. Saved to your archive.
+           {prevMonthName} review approved. Saved to your archive.
         </span>
         <span
           onClick={() => navigate("/monthly-review?mode=read")}

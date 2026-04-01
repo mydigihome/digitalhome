@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const ALL_TOOLS = [
-  { id: "canva", label: "Canva", icon: "🎨", url: "https://canva.com", desc: "Design graphics" },
+  { id: "canva", label: "Canva", icon: "", url: "https://canva.com", desc: "Design graphics" },
   { id: "capcut", label: "CapCut", icon: "🎬", url: "https://capcut.com", desc: "Edit videos" },
   { id: "descript", label: "Descript", icon: "🎙️", url: "https://descript.com", desc: "Edit audio & video" },
   { id: "finalcut", label: "Final Cut Pro", icon: "🎞️", url: "", desc: "macOS only" },

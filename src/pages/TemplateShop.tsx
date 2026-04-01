@@ -19,12 +19,12 @@ const typeIcons: Record<string, React.ReactNode> = {
 
 const categoryLabels: Record<string, string> = {
   resume: "📄 Resumes",
-  portfolio: "🎨 Portfolios",
+  portfolio: " Portfolios",
   email: "✉️ Email Templates",
 };
 
 const ctaMessages = [
-  { icon: "💼", text: "Want to track your applications too?", cta: "Try Digital Home Free", link: "/signup" },
+  { icon: "", text: "Want to track your applications too?", cta: "Try Digital Home Free", link: "/signup" },
   { icon: "✉️", text: "Need a portfolio or cold email template?", cta: "Browse our complete library below ↓", link: null },
 ];
 
@@ -188,7 +188,7 @@ export default function TemplateShop() {
               <section>
                 <Card className="bg-gradient-to-br from-accent to-card border-2 border-primary/20 rounded-3xl overflow-hidden">
                   <CardContent className="p-8 text-center">
-                    <div className="text-3xl mb-2">🎁</div>
+                    <div className="text-3xl mb-2"></div>
                     <h2 className="text-2xl font-bold text-foreground mb-2">Complete Career Kit</h2>
                     <p className="text-muted-foreground mb-4">
                       Get ALL {bundleTemplates.length} templates — resumes, portfolios & emails

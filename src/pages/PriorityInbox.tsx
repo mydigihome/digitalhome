@@ -263,7 +263,7 @@ export default function PriorityInbox() {
               >
                 <div className="rounded-[19px] bg-white dark:bg-card p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm">✨</span>
+                    <span className="text-sm"></span>
                     <span className="text-xs font-bold text-primary uppercase tracking-wider">
                       Summary
                     </span>
