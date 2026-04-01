@@ -74,7 +74,7 @@ export function InvestmentPortfolioBack({ onCancel, onSave }: { onCancel: () => 
 
 // ── Tax Estimate ──
 export function TaxEstimateFront() {
-  return (<div><CardHeader icon="🧾" title="Tax Estimate" />
+  return (<div><CardHeader title="Tax Estimate" />
     <div style={{ fontSize: "32px", fontWeight: 800, color: "#1a1c1f" }}>$1,840</div>
     <span style={{ backgroundColor: "#fffbeb", color: "#92400e", fontSize: "11px", fontWeight: 700, borderRadius: "8px", padding: "2px 8px" }}>Due Jun 15</span>
     <div className="mt-3 space-y-1">
