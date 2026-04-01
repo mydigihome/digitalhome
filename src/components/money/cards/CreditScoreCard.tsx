@@ -103,7 +103,7 @@ export function CreditScoreFront() {
 
       <div className="mt-2">
         <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "#f59e0b" }}>QUICK WIN</p>
-        <p className="text-xs font-bold" style={{ color: "#6366f1" }}>⚡ Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
+        <p className="text-xs font-bold" style={{ color: "#6366f1" }}>Pay $1,500 on Sapphire Reserve → Est. +20 points</p>
       </div>
 
       <div className="rounded-xl p-3 mt-2" style={{ background: "#f3f3f8" }}>
