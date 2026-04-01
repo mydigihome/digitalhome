@@ -14,10 +14,9 @@ function PlaidLock() {
   );
 }
 
-function CardHeader({ icon, title }: { icon: string; title: string }) {
+function CardHeader({ title }: { icon?: string; title: string }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <span style={{ fontSize: "20px" }}>{icon}</span>
       <span style={{ fontWeight: 700, fontSize: "16px", color: "#1a1c1f" }}>{title}</span>
     </div>
   );
