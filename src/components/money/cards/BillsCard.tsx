@@ -9,11 +9,11 @@ interface Bill {
 }
 
 const initialBills: Bill[] = [
-  { id: "1", icon: "🏠", name: "Monthly Rent", amount: 2250, dueDays: 5, source: "manual" },
-  { id: "2", icon: "🎵", name: "Spotify Premium", amount: 16.99, dueDays: 18, source: "plaid" },
-  { id: "3", icon: "📺", name: "Netflix", amount: 15.49, dueDays: 18, source: "plaid" },
-  { id: "4", icon: "💳", name: "Credit Card Min", amount: 85, dueDays: 20, source: "manual" },
-  { id: "5", icon: "🎓", name: "Student Loan", amount: 280, dueDays: 25, source: "manual" },
+  { id: "1", icon: "H", name: "Monthly Rent", amount: 2250, dueDays: 5, source: "manual" },
+  { id: "2", icon: "M", name: "Spotify Premium", amount: 16.99, dueDays: 18, source: "plaid" },
+  { id: "3", icon: "T", name: "Netflix", amount: 15.49, dueDays: 18, source: "plaid" },
+  { id: "4", icon: "C", name: "Credit Card Min", amount: 85, dueDays: 20, source: "manual" },
+  { id: "5", icon: "S", name: "Student Loan", amount: 280, dueDays: 25, source: "manual" },
 ];
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
