@@ -21,11 +21,11 @@ import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 
 const STITCH_MOODS = [
-  { emoji: "😊", label: "Happy" },
-  { emoji: "🌿", label: "Calm" },
-  { emoji: "✨", label: "Inspired" },
-  { emoji: "🎯", label: "Focused" },
-  { emoji: "😢", label: "Sad" },
+  { emoji: "happy", label: "Happy" },
+  { emoji: "calm", label: "Calm" },
+  { emoji: "inspired", label: "Inspired" },
+  { emoji: "focused", label: "Focused" },
+  { emoji: "sad", label: "Sad" },
 ];
 
 interface JournalEntryModalProps {

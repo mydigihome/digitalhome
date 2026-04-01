@@ -178,9 +178,8 @@ export function LargeTransactionsBack({ onCancel, onSave }: { onCancel: () => vo
 
 // ── Savings Opportunities ──
 export function SavingsOpportunitiesFront() {
-  return (<div><CardHeader icon="💡" title="Savings Opportunities" />
+  return (<div><CardHeader title="Savings Opportunities" />
     <div className="flex items-center gap-2 mb-3">
-      <span style={{ color: "#6366f1", fontSize: "14px" }}>✦</span>
       <span style={{ fontSize: "14px", fontWeight: 700, color: "#1a1c1f" }}>AI found $94/mo in potential savings</span>
     </div>
     {[["Hulu (unused)", "$17.99"], ["Adobe (low use)", "$54.99"], ["Gym", "$29.99"]].map(([n, v]) => (

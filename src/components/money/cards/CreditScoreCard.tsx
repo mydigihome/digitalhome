@@ -107,7 +107,7 @@ export function CreditScoreFront() {
       </div>
 
       <div className="rounded-xl p-3 mt-2" style={{ background: "#f3f3f8" }}>
-        <p className="text-xs" style={{ color: "#ba1a1a" }}>🔴 Recent Hard Inquiry — Car Loan · Feb 2024</p>
+        <p className="text-xs" style={{ color: "#ba1a1a" }}>Recent Hard Inquiry — Car Loan · Feb 2024</p>
       </div>
 
       {/* Modal */}

@@ -2,6 +2,7 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { AlertTriangle, Gift } from "lucide-react";
 
 export function TrialBadge() {
   const { data: prefs } = useUserPreferences();
@@ -21,13 +22,8 @@ export function TrialBadge() {
     }
   }, [prefs?.trial_end_date, prefs?.is_subscribed, isFoundingMember]);
 
-  // Founding members never see trial badge
   if (isFoundingMember) return null;
-
-  // Don't show if subscribed or no trial data
   if ((!daysLeft && daysLeft !== 0) || prefs?.is_subscribed) return null;
-
-  // Don't show expired in toolbar (only in settings)
   if (daysLeft === 0) return null;
 
   const isWarning = daysLeft <= 3;
@@ -46,7 +42,7 @@ export function TrialBadge() {
       }}
     >
       <span style={{ fontSize: '14px' }}>
-        {isWarning ? '⚠️' : '🎁'}
+        {isWarning ? <AlertTriangle className="w-4 h-4 text-warning" /> : <Gift className="w-4 h-4 text-primary" />}
       </span>
       <span
         style={{
