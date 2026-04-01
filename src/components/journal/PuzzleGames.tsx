@@ -268,9 +268,9 @@ interface PuzzleGamesProps {
 }
 
 const GAME_CARDS: { id: GameType; name: string; desc: string; emoji: string }[] = [
-  { id: "word-search", name: "Word Search", desc: "Find hidden wellness words in the grid", emoji: "🔍" },
-  { id: "jigsaw", name: "Jigsaw Puzzle", desc: "Swap pieces to solve the pattern", emoji: "🧩" },
-  { id: "sudoku", name: "Sudoku (Easy)", desc: "Fill the 9×9 grid with numbers 1-9", emoji: "🔢" },
+  { id: "word-search", name: "Word Search", desc: "Find hidden wellness words in the grid", emoji: "search" },
+  { id: "jigsaw", name: "Jigsaw Puzzle", desc: "Swap pieces to solve the pattern", emoji: "puzzle" },
+  { id: "sudoku", name: "Sudoku (Easy)", desc: "Fill the 9×9 grid with numbers 1-9", emoji: "hash" },
 ];
 
 export default function PuzzleGames({ open, onClose, onComplete }: PuzzleGamesProps) {

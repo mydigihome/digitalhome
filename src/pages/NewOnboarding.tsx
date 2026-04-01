@@ -27,10 +27,10 @@ const TOTAL_SCREENS = 6;
 
 // Goal options
 const goalOptions = [
-  { emoji: '🏠', label: 'Buy a Home' },
-  { emoji: '💰', label: 'Build Savings' },
-  { emoji: '📈', label: 'Invest' },
-  { emoji: '✈️', label: 'Travel / Experience' },
+  { emoji: 'home', label: 'Buy a Home' },
+  { emoji: 'piggy-bank', label: 'Build Savings' },
+  { emoji: 'trending-up', label: 'Invest' },
+  { emoji: 'plane', label: 'Travel / Experience' },
 ];
 
 // Progress dots component
