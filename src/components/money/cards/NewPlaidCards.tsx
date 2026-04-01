@@ -24,7 +24,7 @@ function CardHeader({ title }: { icon?: string; title: string }) {
 
 // ── Subscription Tracker ──
 export function SubscriptionsFront() {
-  return (<div><CardHeader icon="📺" title="Subscription Tracker" />
+  return (<div><CardHeader title="Subscription Tracker" />
     <div style={{ fontSize: "32px", fontWeight: 800, color: "#1a1c1f" }}>$187<span style={{ fontSize: "16px", color: "#767586" }}>/mo</span></div>
     {[["Netflix", "$15.49"], ["Spotify", "$9.99"], ["iCloud", "$2.99"], ["Hulu", "$17.99"]].map(([n, p]) => (
       <div key={n} className="flex justify-between items-center py-2" style={{ borderBottom: "1px solid #f3f3f8" }}>
