@@ -18,18 +18,18 @@ export const ASSETS = {
     study: 'https://api.dicebear.com/7.x/shapes/svg?seed=study&backgroundColor=eab308',
   },
 
-  // Emoji icons used in Figma design
-  emojis: {
-    briefcase: '💼',
-    user: '👤',
-    book: '📚',
-    cart: '🛒',
-    calendar: '📅',
-    target: '🎯',
-    checkmark: '✅',
-    rocket: '🚀',
-    fire: '🔥',
-    star: '⭐',
+  // Icon keys (no longer emojis, use Lucide icons in components)
+  icons: {
+    briefcase: 'briefcase',
+    user: 'user',
+    book: 'book',
+    cart: 'shopping-cart',
+    calendar: 'calendar',
+    target: 'target',
+    checkmark: 'check',
+    rocket: 'rocket',
+    fire: 'flame',
+    star: 'star',
   },
 
   // Background patterns from Figma
