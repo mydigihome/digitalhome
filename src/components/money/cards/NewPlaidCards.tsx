@@ -58,7 +58,7 @@ export function NetWorthHistoryBack({ onCancel, onSave }: { onCancel: () => void
 
 // ── Investment Portfolio ──
 export function InvestmentPortfolioFront() {
-  return (<div><CardHeader icon="💼" title="Investment Portfolio" />
+  return (<div><CardHeader title="Investment Portfolio" />
     <div style={{ fontSize: "32px", fontWeight: 800, color: "#006c49" }}>$12,450</div>
     {[["AAPL", "10 shares", "$1,850", "+1.2%"], ["NVDA", "5 shares", "$5,400", "+3.1%"], ["SPY", "3 shares", "$1,680", "-0.4%"]].map(([n, s, v, c]) => (
       <div key={n} className="flex justify-between items-center py-2" style={{ borderBottom: "1px solid #f3f3f8" }}>
