@@ -59,7 +59,7 @@ export function CreditScoreFront() {
         </div>
       ) : (
         <div className="flex items-center justify-between mb-3 px-1">
-          <span className="text-xs font-bold" style={{ color: "#006c49" }}>✓ Score entered manually</span>
+          <span className="text-xs font-bold" style={{ color: "#006c49" }}>Score entered manually</span>
           <button onClick={e => { e.stopPropagation(); setConnection(null); }} className="text-[10px] font-bold" style={{ color: "#ba1a1a" }}>Reset</button>
         </div>
       )}

@@ -32,7 +32,7 @@ export function BillsFront() {
   const removeBill = (id: string) => setBills((b) => b.filter((x) => x.id !== id));
   const addBill = () => {
     const id = String(Date.now());
-    setBills((b) => [...b, { id, icon: "📋", name: "New Bill", amount: 0, dueDays: 30, source: "manual" }]);
+    setBills((b) => [...b, { id, icon: "N", name: "New Bill", amount: 0, dueDays: 30, source: "manual" }]);
     setEditingId(id);
   };
 
