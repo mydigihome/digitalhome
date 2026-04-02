@@ -363,24 +363,24 @@ export default function StudioHQView() {
 
         {calView === "pipeline" ? (
           /* KANBAN */
-          <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
             {STAGES.map(stage => {
               const cards = contentItems.filter(c => c.stage === stage.id);
               return (
                 <div key={stage.id} style={{
-                  minWidth: "200px", width: "200px", flexShrink: 0,
-                  background: isDark ? `${stage.color}14` : stage.bg,
-                  borderRadius: "10px",
-                  border: `1px solid ${isDark ? `${stage.color}33` : stage.border}`,
-                  padding: "12px",
+                  background: isDark ? "#1C1C1E" : "white",
+                  borderRadius: "12px",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                  padding: "16px",
+                  minHeight: "400px",
                 }}>
                   {/* Column header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: stage.color }} />
-                    <span style={{ fontSize: "12px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
                       {stage.label}
                     </span>
-                    <span style={{ fontSize: "10px", color: "#9CA3AF", marginLeft: "auto" }}>{cards.length}</span>
+                    <span style={{ fontSize: "11px", color: "#9CA3AF", marginLeft: "auto", fontWeight: 500 }}>{cards.length}</span>
                   </div>
 
                   {/* Drop zone */}
@@ -390,65 +390,174 @@ export default function StudioHQView() {
                       const id = e.dataTransfer.getData("contentId");
                       if (id) handleStageDrop(id, stage.id);
                     }}
-                    style={{ minHeight: "200px", display: "flex", flexDirection: "column", gap: "8px" }}
+                    style={{ minHeight: "300px", display: "flex", flexDirection: "column", gap: "8px" }}
                   >
                     {cards.map(card => (
                       <div
                         key={card.id}
                         draggable
                         onDragStart={e => e.dataTransfer.setData("contentId", card.id)}
-                        onClick={() => setDetailCard(card)}
                         style={{
-                          background: isDark ? "#1C1C1E" : "white",
+                          background: isDark ? "#252528" : "white",
                           borderRadius: "10px",
-                          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-                          padding: "12px", cursor: "pointer",
+                          border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                          padding: "14px",
+                          cursor: "grab",
                           boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
                           transition: "all 150ms",
+                          position: "relative",
                         }}
                         onMouseEnter={e => {
                           (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "0 4px 12px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.1)";
-                          (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+                          (e.currentTarget as HTMLDivElement).style.borderColor = isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB";
                         }}
                         onMouseLeave={e => {
                           (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "none" : "0 1px 3px rgba(0,0,0,0.06)";
-                          (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                          (e.currentTarget as HTMLDivElement).style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6";
                         }}
                       >
-                        {/* Badges */}
-                        <div style={{ display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }}>
+                        {/* Platform + type tags */}
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
                           {card.platform && (
                             <span style={{
-                              padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 500,
-                              background: `${PLATFORM_COLORS[card.platform] || "#6366F1"}20`,
-                              color: PLATFORM_COLORS[card.platform] || "#6366F1",
+                              padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600,
+                              background: card.platform === "Instagram" ? "#FDF2F8" : card.platform === "YouTube" ? "#FEF2F2" : card.platform === "TikTok" ? "#F0FDF4" : card.platform === "Twitter" ? "#EFF6FF" : card.platform === "LinkedIn" ? "#EFF6FF" : "#F3F4F6",
+                              color: card.platform === "Instagram" ? "#BE185D" : card.platform === "YouTube" ? "#DC2626" : card.platform === "TikTok" ? "#065F46" : card.platform === "Twitter" ? "#1D4ED8" : card.platform === "LinkedIn" ? "#1D4ED8" : "#6B7280",
+                              border: "1px solid",
+                              borderColor: card.platform === "Instagram" ? "#FBCFE8" : card.platform === "YouTube" ? "#FECACA" : card.platform === "TikTok" ? "#BBF7D0" : "#BFDBFE",
                             }}>{card.platform}</span>
                           )}
                           {card.content_type && (
                             <span style={{
                               padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 500,
-                              background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
-                              color: "#9CA3AF",
+                              background: isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB",
+                              color: "#6B7280", border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
                             }}>{card.content_type}</span>
                           )}
                         </div>
-                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 4px", lineHeight: "1.3", fontFamily: "Inter, sans-serif" }}>
+
+                        {/* Title — editable inline */}
+                        <p
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={async e => {
+                            const newTitle = e.currentTarget.textContent || "";
+                            if (newTitle && newTitle !== card.title) {
+                              await supabase.from("content_items").update({ title: newTitle }).eq("id", card.id);
+                              setContentItems(prev => prev.map(c => c.id === card.id ? { ...c, title: newTitle } : c));
+                            }
+                          }}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
+                          style={{
+                            fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827",
+                            lineHeight: "1.4", marginBottom: "10px", fontFamily: "Inter, sans-serif",
+                            outline: "none", cursor: "text", borderRadius: "4px", padding: "2px 4px",
+                            margin: "0 -4px 10px", transition: "background 150ms",
+                          }}
+                          onFocus={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB"; e.currentTarget.style.outline = "2px solid #10B981"; }}
+                          onBlurCapture={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.outline = "none"; }}
+                        >
                           {card.title}
                         </p>
+
+                        {/* Due date */}
                         {card.due_date && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "6px" }}>
-                            <Clock size={10} color="#9CA3AF" />
-                            <span style={{ fontSize: "11px", color: "#9CA3AF" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
+                            <Calendar size={11} color={new Date(card.due_date) < new Date() ? "#EF4444" : "#9CA3AF"} />
+                            <span style={{
+                              fontSize: "11px", fontFamily: "Inter, sans-serif",
+                              color: new Date(card.due_date) < new Date() ? "#EF4444" : "#6B7280",
+                            }}>
                               {new Date(card.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </span>
+                            {new Date(card.due_date) < new Date() && (
+                              <span style={{ fontSize: "10px", color: "#EF4444", fontWeight: 600 }}>Overdue</span>
+                            )}
                           </div>
                         )}
-                        {(card.comment_count || 0) > 0 && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "3px", marginTop: "6px" }}>
-                            <MessageSquare size={10} color="#9CA3AF" />
-                            <span style={{ fontSize: "10px", color: "#9CA3AF" }}>{card.comment_count}</span>
-                          </div>
+
+                        {/* Caption preview */}
+                        {card.caption_notes && (
+                          <p style={{
+                            fontSize: "11px", color: "#9CA3AF", lineHeight: "1.4", marginBottom: "10px",
+                            fontFamily: "Inter, sans-serif", overflow: "hidden",
+                            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                          }}>{card.caption_notes}</p>
                         )}
+
+                        {/* Divider */}
+                        <div style={{ height: "1px", background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB", margin: "10px -14px" }} />
+
+                        {/* Footer */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            {[card.assigned_to, card.created_by].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).map((userId, i) => {
+                              const person = userId === user?.id ? user : collaborators?.find((c: any) => c.id === userId);
+                              return (
+                                <div key={i} title={(person as any)?.full_name || (person as any)?.email || "Unknown"} style={{
+                                  width: "24px", height: "24px", borderRadius: "50%",
+                                  border: "2px solid white", background: i === 0 ? "#F5F3FF" : "#F0FDF4",
+                                  overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: "9px", fontWeight: 700, color: i === 0 ? "#7B5EA7" : "#065F46",
+                                  marginLeft: i > 0 ? "-6px" : "0", boxShadow: "0 0 0 2px white",
+                                }}>
+                                  {((person as any)?.full_name || (person as any)?.email || "?").charAt(0).toUpperCase()}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            {(card.comment_count || 0) > 0 && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "3px", color: "#9CA3AF" }}>
+                                <MessageSquare size={11} />
+                                <span style={{ fontSize: "11px" }}>{card.comment_count}</span>
+                              </div>
+                            )}
+                            <div style={{ position: "relative" }}>
+                              <button
+                                onClick={e => { e.stopPropagation(); setCardMenuOpen(cardMenuOpen === card.id ? null : card.id); }}
+                                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "2px", borderRadius: "4px", display: "flex", alignItems: "center" }}>
+                                <MoreHorizontal size={13} />
+                              </button>
+                              {cardMenuOpen === card.id && (
+                                <div style={{
+                                  position: "absolute", right: 0, top: "100%", zIndex: 50,
+                                  background: isDark ? "#1C1C1E" : "white", borderRadius: "10px",
+                                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)", minWidth: "160px", overflow: "hidden",
+                                }}>
+                                  {[
+                                    { label: "Open details", Icon: Maximize2, action: () => setDetailCard(card) },
+                                    { label: "Move to...", Icon: MoveRight, action: () => {} },
+                                  ].map(item => (
+                                    <button key={item.label} onClick={() => { item.action(); setCardMenuOpen(null); }}
+                                      style={{
+                                        width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px",
+                                        border: "none", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+                                        background: "transparent", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151",
+                                        cursor: "pointer", textAlign: "left", fontFamily: "Inter, sans-serif",
+                                      }}>
+                                      <item.Icon size={13} color="#9CA3AF" /> {item.label}
+                                    </button>
+                                  ))}
+                                  <button onClick={async () => {
+                                    if (window.confirm("Delete this content?")) {
+                                      await supabase.from("content_items").delete().eq("id", card.id);
+                                      setContentItems(prev => prev.filter(c => c.id !== card.id));
+                                    }
+                                    setCardMenuOpen(null);
+                                  }} style={{
+                                    width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px",
+                                    border: "none", background: "transparent", fontSize: "13px", color: "#DC2626",
+                                    cursor: "pointer", textAlign: "left", fontFamily: "Inter, sans-serif",
+                                  }}>
+                                    <Trash2 size={13} color="#DC2626" /> Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
 
