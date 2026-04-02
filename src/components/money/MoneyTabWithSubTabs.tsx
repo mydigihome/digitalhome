@@ -116,10 +116,25 @@ export default function MoneyTabWithSubTabs() {
   } = useMoneyPreferences();
   const { isPremium } = usePremiumStatus();
 
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    return (localStorage.getItem("dh_money_tab") as TabId) || "overview";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [trackFinanceOpen, setTrackFinanceOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("dh_money_tab", activeTab);
+  }, [activeTab]);
+
+  const handleTabClick = (tabId: TabId) => {
+    if (tabId === "applications") {
+      navigate("/finance/applications");
+    } else {
+      setActiveTab(tabId);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
