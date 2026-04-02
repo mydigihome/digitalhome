@@ -473,6 +473,88 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           )}
         </motion.div>
 
+        {/* ═══ PREPARATION TIMELINE ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
+            Preparation Timeline
+          </p>
+          {projectTasks.length === 0 ? (
+            <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
+              <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
+              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
+              <p style={{ fontSize: 13, color: "#9CA3AF" }}>AI-generated preparation tasks will appear here after event creation.</p>
+            </div>
+          ) : (
+            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
+              {projectTasks
+                .sort((a, b) => {
+                  if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+                  return a.position - b.position;
+                })
+                .map((task, i) => {
+                  const isDone = task.status === "done" || completedTasks.has(task.id);
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-start gap-3 transition-colors"
+                      style={{ padding: "14px 20px", borderBottom: i < projectTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <button
+                        onClick={async () => {
+                          const newStatus = isDone ? "backlog" : "done";
+                          setCompletedTasks(prev => {
+                            const next = new Set(prev);
+                            if (isDone) next.delete(task.id); else next.add(task.id);
+                            return next;
+                          });
+                          await supabase.from("tasks").update({ status: newStatus }).eq("id", task.id);
+                        }}
+                        className="mt-0.5 shrink-0 cursor-pointer"
+                        style={{
+                          width: 22, height: 22, borderRadius: "50%",
+                          border: `2px solid ${isDone ? "#10B981" : "#D1D5DB"}`,
+                          background: isDone ? "#10B981" : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 200ms",
+                        }}
+                      >
+                        {isDone && <CheckCircle className="h-3 w-3 text-white" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p style={{
+                          fontSize: 14, fontWeight: 500, color: isDone ? "#9CA3AF" : "#1F2937",
+                          textDecoration: isDone ? "line-through" : "none",
+                          lineHeight: 1.4,
+                        }}>
+                          {task.title}
+                        </p>
+                        {task.due_date && (
+                          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                            Due {format(new Date(task.due_date), "MMM d, yyyy")}
+                          </p>
+                        )}
+                      </div>
+                      {task.ai_generated && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, color: "#8B5CF6",
+                          background: "rgba(139,92,246,0.1)", padding: "2px 8px",
+                          borderRadius: 6, whiteSpace: "nowrap",
+                        }}>
+                          AI
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </motion.div>
+
         {/* ═══ DELETE SECTION ═══ */}
         <div className="text-center" style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #F3F4F6" }}>
           <button
