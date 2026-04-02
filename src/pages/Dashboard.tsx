@@ -49,7 +49,8 @@ import {
   arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Minimize2, Maximize2 } from "lucide-react";
+import { Maximize2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 /* ── Helpers ── */
