@@ -288,7 +288,7 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
         display: "flex", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
         marginBottom: "20px", gap: 0,
       }}>
-        {["Overview", "Emails", "Contacts"].map(tab => (
+        {["Overview", "Emails"].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} style={{
             padding: "10px 20px", border: "none", background: "transparent", fontSize: "14px",
             fontWeight: activeTab === tab ? 600 : 400,
