@@ -69,8 +69,7 @@ export default function TradingViewWidget() {
 
   return (
     <div
-      className="tradingview-widget-container w-full"
-      style={{ height: 500 }}
+      className="tradingview-widget-container w-full h-full"
     >
       <div ref={containerRef} className="w-full h-full" />
     </div>
