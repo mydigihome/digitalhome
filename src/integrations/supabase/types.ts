@@ -649,6 +649,7 @@ export type Database = {
           phone: string | null
           photo_url: string | null
           relationship_type: string | null
+          status: string | null
           title: string | null
           user_id: string
         }
@@ -671,6 +672,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           relationship_type?: string | null
+          status?: string | null
           title?: string | null
           user_id: string
         }
@@ -693,6 +695,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           relationship_type?: string | null
+          status?: string | null
           title?: string | null
           user_id?: string
         }
