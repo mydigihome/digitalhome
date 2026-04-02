@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Plus, Pencil, Trash2, FileX, ChevronDown, ExternalLink, Lightbulb } from "lucide-react";
+import { Plus, Pencil, Trash2, FileX, ChevronDown, ExternalLink, Lightbulb, Loader2 } from "lucide-react";
 import { useDebts, useAddDebt, useDeleteDebt, useUpdateDebt, type Debt } from "@/hooks/useDebts";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useUserFinances } from "@/hooks/useUserFinances";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { format, startOfMonth } from "date-fns";
+import { format, startOfMonth, addMonths } from "date-fns";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -53,6 +54,15 @@ function roundUp50(n: number) {
   return Math.ceil(n / 50) * 50;
 }
 
+function getCreditScoreSuggestion(score: number | null | undefined) {
+  if (!score) return { rate: "Set your credit score to see suggestion", color: "#9CA3AF" };
+  if (score >= 800) return { rate: "3–5%", color: "#10B981" };
+  if (score >= 740) return { rate: "5–7%", color: "#10B981" };
+  if (score >= 670) return { rate: "8–12%", color: "#7B5EA7" };
+  if (score >= 580) return { rate: "13–17%", color: "#F59E0B" };
+  return { rate: "18–24%", color: "#DC2626" };
+}
+
 function CustomPaymentTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const value = payload[0].value;
@@ -79,6 +89,7 @@ function CustomPaymentTooltip({ active, payload }: any) {
 export default function DebtTab() {
   const { data: debts = [] } = useDebts();
   const { data: transactions = [] } = useTransactions();
+  const { data: finances } = useUserFinances();
   const addDebt = useAddDebt();
   const deleteDebt = useDeleteDebt();
   const updateDebt = useUpdateDebt();
@@ -88,7 +99,8 @@ export default function DebtTab() {
   const loanCalcRef = useRef<HTMLDivElement>(null);
 
   const [selectedTier, setSelectedTier] = useState<'minimum' | 'recommended' | 'aggressive'>('recommended');
-  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [recordModalOpen, setRecordModalOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [paymentNote, setPaymentNote] = useState("");
   const [chartPeriod, setChartPeriod] = useState("5 Months");
   const [showChartDropdown, setShowChartDropdown] = useState(false);
@@ -96,9 +108,9 @@ export default function DebtTab() {
   const [showAddDebt, setShowAddDebt] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [showNoUrlModal, setShowNoUrlModal] = useState(false);
+  const [noUrlModalOpen, setNoUrlModalOpen] = useState(false);
   const [noUrlDebt, setNoUrlDebt] = useState<Debt | null>(null);
-  const [tempPaymentUrl, setTempPaymentUrl] = useState("");
+  const [newPaymentUrl, setNewPaymentUrl] = useState("");
   const [debtForm, setDebtForm] = useState({
     creditor: "", type: "Credit Card", balance: "", interest_rate: "",
     monthly_payment: "", due_date: "", notes: "", payment_url: "",
@@ -114,6 +126,31 @@ export default function DebtTab() {
   const highestDebt = activeDebts.length > 0
     ? activeDebts.reduce((max, d) => d.balance > max.balance ? d : max, activeDebts[0])
     : null;
+
+  const creditScore = finances?.credit_score;
+  const scoreSuggestion = getCreditScoreSuggestion(creditScore);
+
+  // Loan period calculation
+  const loanPeriod = useMemo(() => {
+    if (activeDebts.length === 0) return { start: "—", end: "—" };
+    const earliest = activeDebts.reduce((min, d) => {
+      const date = new Date(d.created_at);
+      return date < min ? date : min;
+    }, new Date(activeDebts[0].created_at));
+    // Estimate payoff from recommended tier
+    const recPayment = totalDebt > 0 ? roundUp50(calcPayment(totalDebt, monthlyRate, 36)) : 0;
+    const payoffMonths = recPayment > 0 ? calcPayoffMonths(totalDebt, monthlyRate, recPayment) : 36;
+    const endDate = addMonths(new Date(), payoffMonths === Infinity ? 120 : payoffMonths);
+    return {
+      start: format(earliest, "MMM dd, yyyy"),
+      end: format(endDate, "MMM dd, yyyy"),
+    };
+  }, [activeDebts, totalDebt, monthlyRate]);
+
+  // Estimated annual fee (balance * rate)
+  const estimatedFee = useMemo(() => {
+    return activeDebts.reduce((s, d) => s + (d.balance * d.interest_rate / 100), 0);
+  }, [activeDebts]);
 
   // Debt type breakdown for segmented bar
   const typeBreakdown = useMemo(() => {
@@ -193,8 +230,6 @@ export default function DebtTab() {
       : null
   , [activeDebts]);
 
-  const debtsWithUrls = useMemo(() => activeDebts.filter(d => d.payment_url), [activeDebts]);
-
   const filteredDebts = useMemo(() => {
     if (debtTab === "All") return debts;
     const typeMap: Record<string, string> = {
@@ -204,11 +239,52 @@ export default function DebtTab() {
     return debts.filter(d => d.type === (typeMap[debtTab] || debtTab));
   }, [debts, debtTab]);
 
-  const handleRecordPayment = async () => {
+  // ---- FIX #2: Record Payment handler ----
+  const handleConfirmRecord = async () => {
     if (!user || activeDebts.length === 0) return;
+    setIsRecording(true);
     try {
-      // 1. Record payment
-      await (supabase as any).from("loan_payments").insert({
+      // 1. Get sorted debts (highest rate first)
+      const sorted = [...activeDebts].sort((a, b) => b.interest_rate - a.interest_rate);
+
+      // 2. Calculate distribution (avalanche)
+      let remaining = currentTier.amount;
+      const updates: { id: string; newBalance: number; applied: number; paidOff: boolean }[] = [];
+
+      for (const debt of sorted) {
+        if (remaining <= 0) break;
+        const minPay = Math.min(debt.monthly_payment || 0, debt.balance);
+        const extra = debt === sorted[0] ? remaining - sorted.reduce((s, d) => d !== sorted[0] ? s + Math.min(d.monthly_payment || 0, d.balance) : s, 0) : 0;
+        const totalApplied = Math.min(
+          minPay + Math.max(extra, 0),
+          debt.balance,
+          remaining
+        );
+        updates.push({
+          id: debt.id,
+          newBalance: Math.max(0, debt.balance - totalApplied),
+          applied: totalApplied,
+          paidOff: debt.balance - totalApplied <= 0,
+        });
+        remaining -= totalApplied;
+      }
+
+      // 3. Update each debt in Supabase
+      for (const update of updates) {
+        if (update.applied > 0) {
+          await supabase
+            .from('debts')
+            .update({
+              balance: update.newBalance,
+              status: update.paidOff ? 'paid_off' : 'current',
+            })
+            .eq('id', update.id)
+            .eq('user_id', user.id);
+        }
+      }
+
+      // 4. Log payment record
+      await (supabase as any).from('loan_payments').insert({
         user_id: user.id,
         amount: currentTier.amount,
         payment_date: new Date().toISOString().split('T')[0],
@@ -216,63 +292,52 @@ export default function DebtTab() {
         note: paymentNote || null,
       });
 
-      // 2. Debt avalanche distribution
-      let remaining = currentTier.amount;
-      const sorted = [...activeDebts].sort((a, b) => b.interest_rate - a.interest_rate);
-
-      // Pay minimums first
-      for (const debt of sorted) {
-        const minPay = Math.min(debt.monthly_payment, debt.balance, remaining);
-        if (minPay > 0) {
-          remaining -= minPay;
-          const newBal = Math.max(0, debt.balance - minPay);
-          await (supabase as any).from("debts").update({
-            balance: newBal,
-            ...(newBal === 0 ? { status: 'paid_off' } : {}),
-          }).eq("id", debt.id);
-        }
-      }
-
-      // Apply remainder to highest rate
-      if (remaining > 0 && sorted.length > 0) {
-        const target = sorted[0];
-        const newBal = Math.max(0, target.balance - remaining);
-        await (supabase as any).from("debts").update({
-          balance: newBal,
-          ...(newBal === 0 ? { status: 'paid_off' } : {}),
-        }).eq("id", target.id);
-      }
-
+      // 5. Refresh debts data
       qc.invalidateQueries({ queryKey: ["debts"] });
-      setShowPaymentConfirm(false);
+
+      // 6. Close modal and show toast
+      setRecordModalOpen(false);
       setPaymentNote("");
-      toast.success(`Payment of $${currentTier.amount.toLocaleString()} recorded!`);
-    } catch {
-      toast.error("Failed to record payment");
+      toast.success(`Payment of $${currentTier.amount.toLocaleString()} applied using debt avalanche method.`);
+    } catch (error) {
+      console.error('Payment record failed:', error);
+      toast.error("Something went wrong. Payment was not recorded. Please try again.");
+    } finally {
+      setIsRecording(false);
     }
   };
 
+  // ---- FIX #3: Make Payment handler ----
   const handleMakePayment = () => {
-    if (debtsWithUrls.length > 1) {
-      // Multiple debts with URLs - could show a selector, for now open highest rate one
-      const target = debtsWithUrls.sort((a, b) => b.interest_rate - a.interest_rate)[0];
-      window.open(target.payment_url!, '_blank');
-    } else if (highestRateDebt?.payment_url) {
-      window.open(highestRateDebt.payment_url, '_blank');
-    } else if (highestRateDebt) {
-      setNoUrlDebt(highestRateDebt);
-      setTempPaymentUrl("");
-      setShowNoUrlModal(true);
+    if (!debts || debts.length === 0) {
+      toast.info("No debts found. Add a debt below to get started.");
+      return;
+    }
+
+    const targetDebt = activeDebts
+      .sort((a, b) => b.interest_rate - a.interest_rate)[0];
+
+    if (!targetDebt) {
+      toast.success("All debts paid off! Amazing work. 🎉");
+      return;
+    }
+
+    if (targetDebt.payment_url && targetDebt.payment_url.trim() !== '') {
+      window.open(targetDebt.payment_url, '_blank', 'noopener,noreferrer');
+    } else {
+      setNoUrlDebt(targetDebt);
+      setNewPaymentUrl("");
+      setNoUrlModalOpen(true);
     }
   };
 
   const handleSaveAndOpenUrl = async () => {
-    if (!noUrlDebt || !tempPaymentUrl) return;
+    if (!noUrlDebt || !newPaymentUrl) return;
     try {
-      await (supabase as any).from("debts").update({ payment_url: tempPaymentUrl }).eq("id", noUrlDebt.id);
+      await supabase.from("debts").update({ payment_url: newPaymentUrl }).eq("id", noUrlDebt.id);
       qc.invalidateQueries({ queryKey: ["debts"] });
-      setShowNoUrlModal(false);
-      window.open(tempPaymentUrl, '_blank');
+      setNoUrlModalOpen(false);
+      window.open(newPaymentUrl, '_blank', 'noopener,noreferrer');
       toast.success("Payment URL saved!");
     } catch {
       toast.error("Failed to save URL");
@@ -306,7 +371,7 @@ export default function DebtTab() {
         status: "current",
       };
       if (editingDebt) {
-        await (supabase as any).from("debts").update(payload).eq("id", editingDebt.id);
+        await supabase.from("debts").update(payload).eq("id", editingDebt.id);
         qc.invalidateQueries({ queryKey: ["debts"] });
       } else {
         await addDebt.mutateAsync(payload);
@@ -371,6 +436,10 @@ export default function DebtTab() {
                     <span style={{ fontSize: 11, fontWeight: 600, background: 'hsl(var(--muted))', borderRadius: 4, padding: '1px 6px' }} className="text-muted-foreground">{t.label}</span>
                   </div>
                   <div style={{ fontSize: 13 }} className="text-muted-foreground">{t.desc}</div>
+                  {/* FIX #4: Credit score suggestion */}
+                  <div style={{ fontSize: 11, color: scoreSuggestion.color, fontStyle: 'italic', marginTop: 2 }}>
+                    Suggested for your score: {scoreSuggestion.rate}
+                  </div>
                 </div>
               </div>
             );
@@ -407,7 +476,9 @@ export default function DebtTab() {
                 Cancel
               </button>
               <button
-                onClick={() => activeDebts.length > 0 && setShowPaymentConfirm(true)}
+                onClick={() => {
+                  if (activeDebts.length > 0) setRecordModalOpen(true);
+                }}
                 disabled={activeDebts.length === 0}
                 className="flex-1 rounded-xl text-white transition disabled:opacity-50"
                 style={{ height: 48, fontSize: 15, fontWeight: 600, background: '#7B5EA7', border: 'none' }}
@@ -418,34 +489,47 @@ export default function DebtTab() {
               </button>
             </div>
             {highestRateDebt && (
-              <>
-                <div style={{ fontSize: 11, textAlign: 'center' }} className="text-muted-foreground">
-                  Targeting: {highestRateDebt.creditor} (highest rate at {highestRateDebt.interest_rate}%)
-                </div>
-                <button
-                  onClick={handleMakePayment}
-                  title="Opens your lender's payment portal in a new tab"
-                  className="rounded-xl text-white transition flex items-center justify-center gap-2"
-                  style={{ width: '100%', height: 48, background: '#10B981', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#059669')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#10B981')}
-                >
-                  <ExternalLink size={16} /> Make Payment →
-                </button>
-              </>
+              <div style={{ fontSize: 11, textAlign: 'center' }} className="text-muted-foreground">
+                Targeting: {highestRateDebt.creditor} (highest rate at {highestRateDebt.interest_rate}%)
+              </div>
             )}
+            <button
+              onClick={handleMakePayment}
+              title="Opens your lender's payment portal in a new tab"
+              className="rounded-xl text-white transition flex items-center justify-center gap-2"
+              style={{ width: '100%', height: 48, background: '#10B981', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#059669')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#10B981')}
+            >
+              <ExternalLink size={16} /> Make Payment →
+            </button>
           </div>
         </div>
 
         {/* RIGHT column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Total Loan Balance */}
+          {/* FIX #1: Total Loan Balance — full detail card */}
           <div className={cardStyle} style={{ padding: 24, borderRadius: 16 }}>
             <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }} className="text-foreground">Total Loan Balance</h3>
+            <p style={{ fontSize: 13, marginTop: -12, marginBottom: 16 }} className="text-muted-foreground">Everything you currently owe</p>
             {activeDebts.length === 0 ? (
               <div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#9CA3AF' }}>$0.00</div>
-                <p style={{ fontSize: 13 }} className="text-muted-foreground mt-2">Add debts below to see your total</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Total Owed</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#9CA3AF' }}>$0.00</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Loan Period</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">— to —</div>
+                  </div>
+                </div>
+                <div className="flex justify-between" style={{ margin: '12px 0', fontSize: 13 }}>
+                  <span className="text-muted-foreground">Loan fee: $0</span>
+                  <span className="text-muted-foreground">Interest rate: 0%</span>
+                </div>
+                <div style={{ width: '100%', height: 10, borderRadius: 999, background: '#E5E7EB', margin: '16px 0 8px' }} />
+                <p style={{ fontSize: 12, textAlign: 'center' }} className="text-muted-foreground">Add debts below to see breakdown</p>
               </div>
             ) : (
               <>
@@ -457,13 +541,15 @@ export default function DebtTab() {
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Active Debts</div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">{activeDebts.length} debt{activeDebts.length !== 1 ? 's' : ''}</div>
+                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Loan Period</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">
+                      {loanPeriod.start} - {loanPeriod.end}
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-between" style={{ margin: '12px 0', fontSize: 13 }}>
-                  <span className="text-muted-foreground">Highest: {highestDebt?.creditor} (${highestDebt?.balance.toLocaleString()})</span>
-                  <span className="text-muted-foreground">Avg Interest: {avgRate.toFixed(1)}%</span>
+                  <span className="text-muted-foreground">Loan fee: ${estimatedFee.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                  <span className="text-muted-foreground" style={{ textAlign: 'right' }}>Interest rate: {avgRate.toFixed(1)}%</span>
                 </div>
                 {/* Segmented bar */}
                 {typeBreakdown.length > 0 && (
@@ -664,25 +750,67 @@ export default function DebtTab() {
         )}
       </div>
 
-      {/* Record Payment Confirm */}
-      <AlertDialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Record payment of ${currentTier.amount.toLocaleString()}?</AlertDialogTitle>
-            <AlertDialogDescription>This will be logged and your balances updated using the debt avalanche method.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <input
-            value={paymentNote}
-            onChange={e => setPaymentNote(e.target.value)}
-            placeholder="Note (optional)"
-            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm mb-2"
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRecordPayment} style={{ background: '#7B5EA7' }}>Confirm</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* FIX #2: Record Payment Modal */}
+      {recordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { if (!isRecording) setRecordModalOpen(false); }}>
+          <div className="bg-card rounded-2xl border border-border w-full max-w-[420px] shadow-xl" style={{ padding: 28 }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: 20, fontWeight: 700 }} className="text-foreground">Record Payment</h3>
+            <p style={{ fontSize: 14, marginBottom: 20 }} className="text-muted-foreground">
+              Recording ${currentTier.amount.toLocaleString()} payment
+            </p>
+
+            {/* Summary box */}
+            <div className="bg-muted/40 rounded-xl" style={{ padding: 16, marginBottom: 16 }}>
+              {[
+                { label: "Payment Amount", value: `$${currentTier.amount.toLocaleString()}` },
+                { label: "Payment Date", value: format(new Date(), "MMMM d, yyyy") },
+                { label: "Method", value: "Debt Avalanche (highest rate first)" },
+              ].map(row => (
+                <div key={row.label} className="flex justify-between" style={{ padding: '6px 0', fontSize: 14 }}>
+                  <span className="text-muted-foreground">{row.label}</span>
+                  <span className="text-foreground font-medium">{row.value}</span>
+                </div>
+              ))}
+            </div>
+
+            <label style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground block mb-1.5">Note (optional)</label>
+            <textarea
+              value={paymentNote}
+              onChange={e => setPaymentNote(e.target.value)}
+              placeholder="e.g. Extra payment this month"
+              rows={3}
+              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm resize-none"
+              style={{ marginBottom: 20 }}
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { if (!isRecording) { setRecordModalOpen(false); setPaymentNote(""); } }}
+                disabled={isRecording}
+                className="flex-1 border border-border rounded-xl text-foreground hover:bg-muted transition disabled:opacity-50"
+                style={{ height: 48, fontSize: 15, fontWeight: 500, background: 'transparent' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRecord}
+                disabled={isRecording}
+                className="flex-1 rounded-xl text-white transition disabled:opacity-70 flex items-center justify-center gap-2"
+                style={{ height: 48, fontSize: 15, fontWeight: 600, background: '#7B5EA7', border: 'none' }}
+              >
+                {isRecording ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Recording...
+                  </>
+                ) : (
+                  "Confirm & Record"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Debt Confirm */}
       <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
@@ -698,25 +826,26 @@ export default function DebtTab() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* No URL Modal */}
-      {showNoUrlModal && noUrlDebt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowNoUrlModal(false)}>
+      {/* FIX #3: No URL Modal */}
+      {noUrlModalOpen && noUrlDebt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setNoUrlModalOpen(false)}>
           <div className="bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-lg font-bold text-foreground mb-2">No payment link saved</h3>
+            <h3 className="text-lg font-bold text-foreground mb-2">Add payment link</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Add a payment URL for <strong>{noUrlDebt.creditor}</strong> so we can take you directly to your lender.
+              Where do you pay <strong className="text-foreground">{noUrlDebt.creditor}</strong>?
             </p>
+            <label style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground block mb-1.5">Payment website URL</label>
             <input
-              value={tempPaymentUrl}
-              onChange={e => setTempPaymentUrl(e.target.value)}
-              placeholder="https://your-lender.com/pay"
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm mb-1"
+              value={newPaymentUrl}
+              onChange={e => setNewPaymentUrl(e.target.value)}
+              placeholder="https://chase.com/pay"
+              type="url"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm mb-4"
             />
-            <p style={{ fontSize: 11, marginBottom: 12 }} className="text-muted-foreground">Payment Website URL</p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowNoUrlModal(false)} className="px-4 py-2 text-sm font-semibold rounded-lg border border-border text-foreground">Skip for now</button>
-              <button onClick={handleSaveAndOpenUrl} disabled={!tempPaymentUrl} className="px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-50" style={{ background: '#10B981' }}>
-                Save & Open
+              <button onClick={() => setNoUrlModalOpen(false)} className="px-4 py-2 text-sm font-semibold rounded-lg border border-border text-foreground">Skip for now</button>
+              <button onClick={handleSaveAndOpenUrl} disabled={!newPaymentUrl} className="px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-50" style={{ background: '#10B981' }}>
+                Save & Open →
               </button>
             </div>
           </div>
