@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -18,11 +18,12 @@ import { format, isToday } from "date-fns";
 import {
   Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown, ExternalLink,
   Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon, Search,
+  Smile, CloudRain, Heart, Sun, Trash2,
 } from "lucide-react";
 import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
 import { TradingPair } from "@/hooks/useTradingPairs";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
@@ -31,6 +32,12 @@ import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
 import AdminReminderWidget from "@/components/AdminReminderWidget";
+import JournalEntryModal from "@/components/journal/JournalEntryModal";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /* ── Helpers ── */
 function getGreeting() {
