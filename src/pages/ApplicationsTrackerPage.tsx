@@ -973,20 +973,34 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
-            {/* File uploaded — Preview state */}
-            {template.file_url && uploadingId !== template.id && (
+            {/* Card thumbnail — always show if preview_image_url exists, or file_url exists */}
+            {(template.preview_image_url || template.file_url) && uploadingId !== template.id && (
               <div style={{ position: "relative", margin: "0 16px 16px", borderRadius: 10, overflow: "hidden" }}>
-                <div style={{
-                  aspectRatio: "4/3",
-                  background: isDark ? "#252528" : "#F5F3FF",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {template.preview_image_url ? (
-                    <img src={template.preview_image_url} alt={template.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
+                {template.preview_image_url ? (
+                  <img
+                    src={template.preview_image_url}
+                    alt={template.title}
+                    style={{
+                      width: "100%",
+                      aspectRatio: "3/4",
+                      objectFit: "cover",
+                      objectPosition: "top",
+                      borderRadius: 8,
+                      border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                      display: "block",
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    aspectRatio: "3/4",
+                    background: isDark ? "#252528" : "#F5F3FF",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    borderRadius: 8, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                  }}>
                     <FileText size={40} style={{ color: "#7B5EA7", opacity: 0.4 }} />
-                  )}
-                </div>
+                    <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 8 }}>No preview yet</p>
+                  </div>
+                )
 
                 {/* Hover overlay */}
                 <div
