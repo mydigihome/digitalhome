@@ -307,7 +307,11 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 
       {/* TAB CONTENT */}
       {activeTab === "Emails" ? (
-        <EmailView onReply={(to, name, subject, threadId) => openCompose(to, name, subject, threadId, true)} />
+        <EmailsTabContent
+          contacts={contacts}
+          isDark={isDark}
+          user={user}
+        />
       ) : (
         <div>
           {/* TOOLBAR */}
@@ -821,6 +825,307 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
             fontSize: "14px", fontWeight: 600, color: "white", cursor: "pointer", opacity: name.trim() ? 1 : 0.5,
           }}>{editContact ? "Save Changes" : "Add Contact"}</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* EMAILS TAB CONTENT */
+function EmailsTabContent({ contacts, isDark, user }: {
+  contacts: Contact[]; isDark: boolean; user: any;
+}) {
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [contactSearch, setContactSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [emailTone, setEmailTone] = useState("cold");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [generatedEmail, setGeneratedEmail] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [emailHistory, setEmailHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch email history
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      setHistoryLoading(true);
+      const { data } = await supabase
+        .from("contact_emails")
+        .select("*, contact:contacts(name, photo_url)")
+        .order("sent_at", { ascending: false })
+        .limit(20);
+      setEmailHistory(data || []);
+      setHistoryLoading(false);
+    })();
+  }, [user]);
+
+  const filteredContacts = contacts.filter(c => {
+    if (!contactSearch) return true;
+    const q = contactSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q);
+  });
+
+  const generateDraft = async () => {
+    if (!selectedContact) return;
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-trading-plan", {
+        body: {
+          prompt: `Write a short ${emailTone} email to ${selectedContact.name} who is ${selectedContact.title || "a professional"} at ${selectedContact.company || "their company"}. ${emailSubject ? "Topic: " + emailSubject : ""} Max 3 sentences. Sound human not AI. End with one clear call to action. Write ONLY the email body.`,
+        },
+      });
+      if (error) throw error;
+      setGeneratedEmail(data.plan || data.content || "");
+    } catch {
+      toast.error("Could not generate email. Try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const saveToDrafts = async () => {
+    if (!user || !selectedContact || !generatedEmail) return;
+    await supabase.from("email_drafts").insert({
+      user_id: user.id,
+      contact_id: selectedContact.id,
+      content: generatedEmail,
+      tone: emailTone,
+    } as any);
+    toast.success("Saved to drafts");
+  };
+
+  const openInEmail = () => {
+    if (!selectedContact?.email || !generatedEmail) return;
+    const subject = emailSubject || `Reaching out to ${selectedContact.name}`;
+    window.open(`mailto:${selectedContact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(generatedEmail)}`, "_blank");
+  };
+
+  const tones = [
+    { key: "cold", label: "Cold" },
+    { key: "warm", label: "Warm" },
+    { key: "checkin", label: "Check In" },
+    { key: "followup", label: "Follow Up" },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "24px" }}>
+      {/* LEFT — AI Email Composer */}
+      <div style={{
+        background: isDark ? "#1C1C1E" : "white", borderRadius: "12px",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, padding: "20px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+          <Sparkles size={18} color="#7B5EA7" />
+          <h2 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>AI Email Composer</h2>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          {/* TO field */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>To</p>
+            <div style={{ position: "relative" }} ref={dropdownRef}>
+              {selectedContact ? (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", borderRadius: "8px",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  background: isDark ? "#252528" : "#F9FAFB",
+                }}>
+                  <div>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827" }}>{selectedContact.name}</span>
+                    {selectedContact.email && (
+                      <span style={{ fontSize: "12px", color: "#9CA3AF", marginLeft: "8px" }}>{selectedContact.email}</span>
+                    )}
+                  </div>
+                  <button onClick={() => { setSelectedContact(null); setGeneratedEmail(""); }} style={{
+                    background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "2px",
+                  }}>
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <input
+                  placeholder="Search contacts..."
+                  value={contactSearch}
+                  onChange={e => { setContactSearch(e.target.value); setShowDropdown(true); }}
+                  onFocus={() => setShowDropdown(true)}
+                  style={{
+                    width: "100%", padding: "10px 14px", borderRadius: "8px", fontSize: "14px",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    background: isDark ? "#252528" : "#F9FAFB", color: isDark ? "#F2F2F2" : "#111827",
+                    outline: "none", boxSizing: "border-box",
+                  }}
+                />
+              )}
+              {showDropdown && !selectedContact && (
+                <div style={{
+                  position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20,
+                  background: isDark ? "#252528" : "white", borderRadius: "8px",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)", maxHeight: "200px", overflowY: "auto", marginTop: "4px",
+                }}>
+                  {filteredContacts.length === 0 ? (
+                    <p style={{ padding: "12px", fontSize: "13px", color: "#9CA3AF", margin: 0 }}>No contacts found</p>
+                  ) : filteredContacts.slice(0, 8).map(c => (
+                    <div key={c.id} onClick={() => { setSelectedContact(c); setShowDropdown(false); setContactSearch(""); }}
+                      style={{
+                        padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px",
+                        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#1C1C1E" : "#F9FAFB")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{
+                        width: "28px", height: "28px", borderRadius: "50%",
+                        background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0,
+                      }}>
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>{c.name}</p>
+                        <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0 }}>{c.email || "No email"}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* TONE */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Tone</p>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {tones.map(t => (
+                <button key={t.key} onClick={() => setEmailTone(t.key)} style={{
+                  padding: "6px 14px", borderRadius: "999px", fontSize: "13px", fontWeight: 500, cursor: "pointer",
+                  background: emailTone === t.key ? "#7B5EA7" : "transparent",
+                  color: emailTone === t.key ? "white" : (isDark ? "rgba(255,255,255,0.6)" : "#374151"),
+                  border: emailTone === t.key ? "1px solid #7B5EA7" : `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ABOUT */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>About (optional)</p>
+            <input
+              placeholder="e.g. Investment property..."
+              value={emailSubject}
+              onChange={e => setEmailSubject(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: "8px", fontSize: "14px",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                background: isDark ? "#252528" : "#F9FAFB", color: isDark ? "#F2F2F2" : "#111827",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Generate button */}
+          <button onClick={generateDraft} disabled={!selectedContact || generating} style={{
+            width: "100%", height: "44px", background: selectedContact ? "#7B5EA7" : (isDark ? "#333" : "#D1D5DB"),
+            color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600,
+            cursor: selectedContact ? "pointer" : "not-allowed", display: "flex", alignItems: "center",
+            justifyContent: "center", gap: "8px", opacity: generating ? 0.7 : 1,
+          }}>
+            {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            {generating ? "Generating..." : "Generate Draft"}
+          </button>
+
+          {/* Generated draft */}
+          {generatedEmail && (
+            <div style={{
+              background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              borderRadius: "10px", padding: "14px",
+            }}>
+              <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>AI Draft</p>
+              <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.6, margin: "0 0 14px", whiteSpace: "pre-wrap" }}>{generatedEmail}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <button onClick={openInEmail} style={{
+                  width: "100%", padding: "10px", background: isDark ? "#F2F2F2" : "#111827",
+                  color: isDark ? "#111827" : "white", border: "none", borderRadius: "8px",
+                  fontSize: "13px", fontWeight: 600, cursor: "pointer",
+                }}>
+                  Open in Email App
+                </button>
+                <button onClick={saveToDrafts} style={{
+                  width: "100%", padding: "10px", background: "transparent",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                  color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+                }}>
+                  Save to Drafts
+                </button>
+                <button onClick={() => { setGeneratedEmail(""); generateDraft(); }} style={{
+                  background: "none", border: "none", fontSize: "12px", color: "#7B5EA7",
+                  cursor: "pointer", padding: "4px 0", fontWeight: 500,
+                }}>
+                  ↻ Regenerate
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT — Email History */}
+      <div style={{
+        background: isDark ? "#1C1C1E" : "white", borderRadius: "12px",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, padding: "20px",
+      }}>
+        <h3 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 16px" }}>Sent Emails</h3>
+        {historyLoading ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+            <Loader2 size={20} className="animate-spin" style={{ color: "#9CA3AF" }} />
+          </div>
+        ) : emailHistory.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <Mail size={36} color="#D1D5DB" style={{ margin: "0 auto 10px" }} />
+            <p style={{ fontSize: "14px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 4px" }}>No emails sent yet</p>
+            <p style={{ fontSize: "13px", color: "#9CA3AF", margin: 0 }}>Compose your first one ←</p>
+          </div>
+        ) : (
+          <div>
+            {emailHistory.map((email: any) => (
+              <div key={email.id} style={{
+                display: "flex", alignItems: "center", gap: "12px", padding: "12px 0",
+                borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+              }}>
+                <div style={{
+                  width: "32px", height: "32px", borderRadius: "50%",
+                  background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0,
+                }}>
+                  {email.contact?.name?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>
+                    {email.contact?.name || "Unknown"}
+                  </p>
+                </div>
+                {email.tone && (
+                  <span style={{
+                    padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600,
+                    background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", color: "#7B5EA7",
+                  }}>
+                    {email.tone}
+                  </span>
+                )}
+                <span style={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0 }}>
+                  {email.sent_at ? formatRelativeDate(email.sent_at) : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
