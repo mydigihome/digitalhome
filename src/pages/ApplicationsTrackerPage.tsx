@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -29,15 +29,9 @@ const categoryLabels: Record<string, string> = {
 };
 
 const statusMap: Record<string, string> = {
-  applied: "applied",
-  interview_scheduled: "interview",
-  interviewed: "interview",
-  offer: "completed",
-  rejected: "closed",
-  withdrawn: "closed",
-  interview: "interview",
-  completed: "completed",
-  closed: "closed",
+  applied: "applied", interview_scheduled: "interview", interviewed: "interview",
+  offer: "completed", rejected: "closed", withdrawn: "closed",
+  interview: "interview", completed: "completed", closed: "closed",
 };
 
 const gradientPresets = [
@@ -49,6 +43,15 @@ const gradientPresets = [
   "linear-gradient(135deg, #CFFAFE 0%, #67E8F9 50%, #22D3EE 100%)",
   "linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 50%, #F87171 100%)",
   "linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 50%, #9CA3AF 100%)",
+];
+
+const BUNDLE_STRIPE_URL = "https://buy.stripe.com/PLACEHOLDER_BUNDLE";
+
+const defaultTemplateData = [
+  { name: "Corporate Resume", description: "Professional format for traditional industries. Clean, ATS-friendly layout that gets callbacks." },
+  { name: "General Portfolio", description: "Showcase your work beautifully with this versatile template. Perfect for creatives and professionals." },
+  { name: "Cold Outreach Basics", description: "Get responses with proven cold email templates. Built for networking and landing opportunities." },
+  { name: "Creative Resume", description: "Stand out with this modern design. Perfect for designers, marketers, and creative roles." },
 ];
 
 export default function ApplicationsTrackerPage() {
@@ -75,6 +78,14 @@ export default function ApplicationsTrackerPage() {
   const [showStudentPrompt, setShowStudentPrompt] = useState(false);
   const isStudent = (prefs as any)?.user_type === "student";
 
+  const [view, setView] = useState<"list" | "kanban">(() => {
+    return (localStorage.getItem("dh_applications_view") as "list" | "kanban") || "list";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("dh_applications_view", view);
+  }, [view]);
+
   const [form, setForm] = useState({
     company_name: "", position_title: "", category: "job", status: "applied",
     application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "",
@@ -82,7 +93,6 @@ export default function ApplicationsTrackerPage() {
 
   const bannerUrl = (prefs as any)?.app_banner_url;
 
-  // Map existing statuses to kanban columns
   const getColumnId = (status: string) => statusMap[status] || "applied";
 
   const filteredApps = applications.filter(a => {
@@ -97,7 +107,6 @@ export default function ApplicationsTrackerPage() {
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", applicationId)
       .eq("user_id", user!.id);
-
     if (error) {
       toast.error("Failed to update");
       refetchApplications();
@@ -145,13 +154,9 @@ export default function ApplicationsTrackerPage() {
         label: "Undo",
         onClick: async () => {
           await createApp.mutateAsync({
-            company_name: appCopy.company_name,
-            position_title: appCopy.position_title,
-            category: appCopy.category,
-            status: appCopy.status,
-            application_date: appCopy.application_date,
-            application_url: appCopy.application_url || "",
-            notes: appCopy.notes || "",
+            company_name: appCopy.company_name, position_title: appCopy.position_title,
+            category: appCopy.category, status: appCopy.status,
+            application_date: appCopy.application_date, application_url: appCopy.application_url || "", notes: appCopy.notes || "",
           } as any);
           toast.success("Application restored");
         },
@@ -189,7 +194,6 @@ export default function ApplicationsTrackerPage() {
     toast.success("Banner updated");
   };
 
-  // Close card menus on outside click
   useEffect(() => {
     const handler = () => setCardMenuOpen(null);
     if (cardMenuOpen) document.addEventListener("click", handler);
@@ -197,6 +201,17 @@ export default function ApplicationsTrackerPage() {
   }, [cardMenuOpen]);
 
   const isDark = document.documentElement.classList.contains("dark");
+
+  const getStatusLabel = (status: string) => {
+    const colId = getColumnId(status);
+    return columns.find(c => c.id === colId)?.label || status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const colId = getColumnId(status);
+    const col = columns.find(c => c.id === colId);
+    return col || columns[0];
+  };
 
   return (
     <AppShell>
@@ -262,22 +277,57 @@ export default function ApplicationsTrackerPage() {
         {/* Main Content */}
         <div className="max-w-xl lg:max-w-6xl mx-auto px-5 py-8 space-y-10">
 
-          {/* SECTION 1: Featured Templates */}
-          <FeaturedTemplatesSection userId={user?.id} />
+          {/* SECTION 1: Career Templates */}
+          <ResourceStudioSection userId={user?.id} userEmail={user?.email} />
 
-          {/* SECTION 2: Applications Tracker — Kanban */}
+          {/* SECTION 2: Applications Tracker */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <div>
                 <h2 style={{ fontSize: 20, fontWeight: 700 }} className="text-foreground">Applications Tracker</h2>
-                <p style={{ fontSize: 13 }} className="text-muted-foreground">Track every opportunity in one place</p>
+                <p style={{ fontSize: 13 }} className="text-muted-foreground">{applications.length} applications tracked</p>
               </div>
-              <button
-                onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
-              >
-                <Plus size={16} /> Add Application
-              </button>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                {/* View toggle */}
+                <div style={{
+                  display: "flex",
+                  background: isDark ? "#252528" : "#F3F4F6",
+                  borderRadius: 8, padding: 4, gap: 4,
+                }}>
+                  <button
+                    onClick={() => setView("list")}
+                    style={{
+                      padding: "7px 12px", borderRadius: 6, border: "none",
+                      background: view === "list" ? (isDark ? "#1C1C1E" : "white") : "transparent",
+                      cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                      fontSize: 13, fontWeight: view === "list" ? 600 : 400,
+                      boxShadow: view === "list" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                      color: isDark ? "#F2F2F2" : "#374151",
+                    }}
+                  >
+                    <List size={14} /> List
+                  </button>
+                  <button
+                    onClick={() => setView("kanban")}
+                    style={{
+                      padding: "7px 12px", borderRadius: 6, border: "none",
+                      background: view === "kanban" ? (isDark ? "#1C1C1E" : "white") : "transparent",
+                      cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                      fontSize: 13, fontWeight: view === "kanban" ? 600 : 400,
+                      boxShadow: view === "kanban" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                      color: isDark ? "#F2F2F2" : "#374151",
+                    }}
+                  >
+                    <LayoutGrid size={14} /> Kanban
+                  </button>
+                </div>
+                <button
+                  onClick={() => { setEditingApp(null); setForm({ company_name: "", position_title: "", category: "job", status: "applied", application_date: format(new Date(), "yyyy-MM-dd"), application_url: "", notes: "" }); setShowForm(true); }}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
+                >
+                  <Plus size={15} /> Add Application
+                </button>
+              </div>
             </div>
 
             {/* Filter Row */}
@@ -323,8 +373,94 @@ export default function ApplicationsTrackerPage() {
             {/* College Tab */}
             {activeFilter === "College" && isStudent ? (
               <CollegeApplicationsTab />
+            ) : view === "list" ? (
+              /* LIST VIEW */
+              <div style={{
+                background: isDark ? "#1C1C1E" : "white",
+                borderRadius: 12,
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                overflow: "hidden",
+              }}>
+                {/* Table header */}
+                <div style={{
+                  display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr auto",
+                  padding: "12px 16px",
+                  background: isDark ? "#252528" : "#F9FAFB",
+                  borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                  fontSize: 12, fontWeight: 600, color: "#6B7280",
+                  textTransform: "uppercase", letterSpacing: "0.5px",
+                }}>
+                  <span>Company</span>
+                  <span>Role</span>
+                  <span>Type</span>
+                  <span>Status</span>
+                  <span>Applied</span>
+                  <span></span>
+                </div>
+
+                {filteredApps.map(app => {
+                  const sc = getStatusColor(app.status);
+                  return (
+                    <div
+                      key={app.id}
+                      style={{
+                        display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 1fr auto",
+                        padding: "14px 16px",
+                        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+                        alignItems: "center", cursor: "pointer",
+                      }}
+                      className="hover:bg-secondary/50 transition-colors"
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 13, fontWeight: 800, color: "#7B5EA7", flexShrink: 0,
+                        }}>
+                          {app.company_name.charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: 14, fontWeight: 600 }} className="text-foreground">{app.company_name}</span>
+                      </div>
+                      <span style={{ fontSize: 14 }} className="text-muted-foreground">{app.position_title}</span>
+                      <span style={{
+                        display: "inline-flex", padding: "3px 10px", borderRadius: 999,
+                        fontSize: 11, fontWeight: 600, background: "#F5F3FF", color: "#7B5EA7", width: "fit-content",
+                      }}>
+                        {categoryLabels[app.category] || app.category}
+                      </span>
+                      <span style={{
+                        display: "inline-flex", padding: "3px 10px", borderRadius: 999,
+                        fontSize: 11, fontWeight: 600, width: "fit-content",
+                        background: isDark ? sc.darkBg : sc.bg,
+                        color: sc.color,
+                      }}>
+                        {getStatusLabel(app.status)}
+                      </span>
+                      <span style={{ fontSize: 13 }} className="text-muted-foreground">
+                        {new Date(app.application_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button onClick={() => handleEdit(app)} style={{ padding: 6, border: "none", background: "transparent", cursor: "pointer", borderRadius: 6 }} className="text-muted-foreground hover:text-foreground">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => setDeleteConfirm(app)} style={{ padding: 6, border: "none", background: "transparent", cursor: "pointer", borderRadius: 6 }} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredApps.length === 0 && (
+                  <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                    <Inbox size={40} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
+                    <p style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }} className="text-foreground">No applications yet</p>
+                    <p style={{ fontSize: 13 }} className="text-muted-foreground">Add your first application to start tracking</p>
+                  </div>
+                )}
+              </div>
             ) : (
-              /* Kanban Board */
+              /* KANBAN VIEW */
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, alignItems: "start" }} className="kanban-board">
                 {columns.map(col => {
                   const cards = filteredApps.filter(a => getColumnId(a.status) === col.id);
@@ -338,7 +474,6 @@ export default function ApplicationsTrackerPage() {
                         padding: 16, minHeight: 400,
                       }}
                     >
-                      {/* Column header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 10, height: 10, borderRadius: "50%", background: col.color }} />
@@ -353,7 +488,6 @@ export default function ApplicationsTrackerPage() {
                         </span>
                       </div>
 
-                      {/* Drop zone */}
                       <div
                         onDragOver={e => e.preventDefault()}
                         onDrop={e => { e.preventDefault(); const appId = e.dataTransfer.getData("applicationId"); if (appId) handleDrop(appId, col.id); }}
@@ -369,12 +503,9 @@ export default function ApplicationsTrackerPage() {
                               background: isDark ? "#1C1C1E" : "white",
                               borderRadius: 10,
                               border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-                              padding: 14, cursor: "grab",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                              position: "relative",
+                              padding: 14, cursor: "grab", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", position: "relative",
                             }}
                           >
-                            {/* Card header */}
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                               <div style={{
                                 width: 36, height: 36, borderRadius: 8,
@@ -416,12 +547,8 @@ export default function ApplicationsTrackerPage() {
                                 )}
                               </div>
                             </div>
-
-                            {/* Company + Role */}
                             <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }} className="text-foreground">{card.company_name}</p>
                             <p style={{ fontSize: 12, marginBottom: 10 }} className="text-muted-foreground">{card.position_title}</p>
-
-                            {/* Tags */}
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
                               <span style={{
                                 background: col.color + "15", color: col.color,
@@ -430,8 +557,6 @@ export default function ApplicationsTrackerPage() {
                                 {categoryLabels[card.category] || card.category}
                               </span>
                             </div>
-
-                            {/* Applied date */}
                             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                               <Clock size={11} className="text-muted-foreground" />
                               <span style={{ fontSize: 11 }} className="text-muted-foreground">
@@ -440,13 +565,10 @@ export default function ApplicationsTrackerPage() {
                             </div>
                           </div>
                         ))}
-
                         {cards.length === 0 && (
                           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, opacity: 0.5 }}>
                             <Inbox size={28} color={col.color} />
-                            <p style={{ fontSize: 13, marginTop: 8, textAlign: "center" }} className="text-muted-foreground">
-                              No applications here yet
-                            </p>
+                            <p style={{ fontSize: 13, marginTop: 8, textAlign: "center" }} className="text-muted-foreground">No applications here yet</p>
                           </div>
                         )}
                       </div>
@@ -521,47 +643,25 @@ export default function ApplicationsTrackerPage() {
                 <button onClick={() => { setShowForm(false); setEditingApp(null); }} className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition"><X className="h-5 w-5" /></button>
               </div>
               <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label>Company Name *</Label>
-                  <Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} className={cn("rounded-xl", !form.company_name && form.company_name !== undefined ? "" : "")} placeholder="e.g. Google" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Role/Position *</Label>
-                  <Input value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} className="rounded-xl" placeholder="e.g. Software Engineer" />
-                </div>
+                <div className="space-y-1"><Label>Company Name *</Label><Input value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} placeholder="e.g. Google" className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Role/Position *</Label><Input value={form.position_title} onChange={e => setForm(p => ({ ...p, position_title: e.target.value }))} className="rounded-xl" placeholder="e.g. Software Engineer" /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label>Application Type *</Label>
                     <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
-                      <option value="job">Job</option>
-                      <option value="internship">Internship</option>
-                      <option value="fellowship">Fellowship</option>
-                      <option value="brand_collab">Brand Collab</option>
-                      <option value="college">College</option>
+                      <option value="job">Job</option><option value="internship">Internship</option><option value="fellowship">Fellowship</option><option value="brand_collab">Brand Collab</option><option value="college">College</option>
                     </select>
                   </div>
                   <div className="space-y-1">
                     <Label>Status</Label>
                     <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
-                      <option value="applied">Applied</option>
-                      <option value="interview">In Interview</option>
-                      <option value="completed">Completed</option>
-                      <option value="closed">Didn't Work Out</option>
+                      <option value="applied">Applied</option><option value="interview">In Interview</option><option value="completed">Completed</option><option value="closed">Didn't Work Out</option>
                     </select>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <Label>Applied Date</Label>
-                  <Input type="date" value={form.application_date} onChange={e => setForm(p => ({ ...p, application_date: e.target.value }))} className="rounded-xl" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Application URL (optional)</Label>
-                  <Input value={form.application_url} onChange={e => setForm(p => ({ ...p, application_url: e.target.value }))} placeholder="Link to job posting" className="rounded-xl" />
-                </div>
-                <div className="space-y-1">
-                  <Label>Notes (optional)</Label>
-                  <Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Interview notes, contacts..." rows={3} className="rounded-xl" />
-                </div>
+                <div className="space-y-1"><Label>Applied Date</Label><Input type="date" value={form.application_date} onChange={e => setForm(p => ({ ...p, application_date: e.target.value }))} className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Application URL (optional)</Label><Input value={form.application_url} onChange={e => setForm(p => ({ ...p, application_url: e.target.value }))} placeholder="Link to job posting" className="rounded-xl" /></div>
+                <div className="space-y-1"><Label>Notes (optional)</Label><Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Interview notes, contacts..." rows={3} className="rounded-xl" /></div>
               </div>
               <button
                 onClick={handleSubmit}
@@ -583,12 +683,7 @@ export default function ApplicationsTrackerPage() {
               <p style={{ fontSize: 13 }} className="text-muted-foreground mb-6">This cannot be undone.</p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1 rounded-xl">Cancel</Button>
-                <button
-                  onClick={handleDeleteConfirm}
-                  style={{ flex: 1, padding: "10px 20px", background: "#DC2626", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
-                >
-                  Delete
-                </button>
+                <button onClick={handleDeleteConfirm} style={{ flex: 1, padding: "10px 20px", background: "#DC2626", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Delete</button>
               </div>
             </div>
           </div>
@@ -609,42 +704,56 @@ export default function ApplicationsTrackerPage() {
         )}
       </motion.div>
 
-      {/* Responsive: stack kanban on mobile */}
       <style>{`
         @media (max-width: 768px) {
-          .kanban-board {
-            grid-template-columns: 1fr !important;
-            overflow-x: auto;
-          }
+          .kanban-board { grid-template-columns: 1fr !important; overflow-x: auto; }
         }
       `}</style>
     </AppShell>
   );
 }
 
-/* ─── Featured Templates Section ─── */
+/* ─── Resource Studio Section (Templates) ─── */
 
-function FeaturedTemplatesSection({ userId }: { userId?: string }) {
-  const navigate = useNavigate();
+function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEmail?: string }) {
+  const isAdmin = userEmail === "myslimher@gmail.com";
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [cardMenuId, setCardMenuId] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const isDark = document.documentElement.classList.contains("dark");
 
   useEffect(() => {
-    supabase
+    (supabase as any)
       .from("shop_templates")
       .select("*")
       .eq("is_active", true)
       .order("created_at", { ascending: true })
       .limit(4)
-      .then(({ data }) => {
-        setTemplates(data || []);
+      .then(({ data }: any) => {
+        if (data && data.length > 0) {
+          setTemplates(data);
+        } else {
+          // Seed with defaults if none exist
+          setTemplates(defaultTemplateData.map((t, i) => ({
+            id: `default-${i}`,
+            title: t.name,
+            description: t.description,
+            file_url: null,
+            preview_image_url: null,
+            price_cents: 800,
+            template_type: "resume",
+            is_active: true,
+          })));
+        }
         setLoading(false);
       });
   }, []);
 
-  // Check if user has purchased bundle
   useEffect(() => {
     if (!userId) return;
     (supabase as any)
@@ -657,151 +766,359 @@ function FeaturedTemplatesSection({ userId }: { userId?: string }) {
       });
   }, [userId]);
 
-  const handleDownload = async (template: any) => {
-    if (!template.file_url) { toast.error("File not available yet"); return; }
-    if (!hasPurchased && template.price_cents > 0) {
-      toast("Redirecting to secure checkout...");
-      window.open("https://buy.stripe.com/PLACEHOLDER", "_blank");
-      return;
+  const handleFileUpload = async (templateId: string, file: File) => {
+    if (!userId) return;
+    setUploadingId(templateId);
+    const path = `templates/${templateId}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("template-files").upload(path, file);
+    if (error) { toast.error("Upload failed"); setUploadingId(null); return; }
+
+    // Update the shop_templates row with file_url
+    await (supabase as any).from("shop_templates").update({ file_url: path }).eq("id", templateId);
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, file_url: path } : t));
+    setUploadingId(null);
+    toast.success("File uploaded successfully!");
+  };
+
+  const handlePreview = async (template: any) => {
+    if (!template.file_url) { toast.error("No file uploaded yet"); return; }
+    const { data } = await supabase.storage.from("template-files").createSignedUrl(template.file_url, 600);
+    if (data?.signedUrl) {
+      setPreviewTemplate({ ...template, signedUrl: data.signedUrl });
+    } else {
+      toast.error("Could not generate preview");
     }
+  };
+
+  const handleDownload = async (template: any) => {
+    if (!template.file_url) { toast.error("File not available"); return; }
     if (userId) {
       await (supabase as any).from("template_downloads").insert({ template_id: template.id, user_id: userId });
-      (supabase as any).rpc("increment_download_count_if_exists", { tid: template.id });
     }
     const { data } = await supabase.storage.from("template-files").createSignedUrl(template.file_url, 300);
     if (data?.signedUrl) {
       window.open(data.signedUrl, "_blank");
       toast.success("Download started!");
-    } else {
-      toast.error("Could not generate download link");
     }
   };
 
-  const handleBundleClick = () => {
-    toast("Redirecting to secure checkout...");
-    window.open("https://buy.stripe.com/PLACEHOLDER", "_blank");
+  const openStripeForSingle = (template: any) => {
+    const url = template.stripe_single_url || "https://buy.stripe.com/PLACEHOLDER_SINGLE";
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast("Redirecting to checkout...", { description: `$8 for ${template.title}` });
   };
 
-  const templateGradients = [
-    "linear-gradient(135deg, hsl(262 80% 60% / 0.15), hsl(280 65% 60% / 0.2))",
-    "linear-gradient(135deg, hsl(330 80% 70% / 0.15), hsl(350 70% 65% / 0.2))",
-    "linear-gradient(135deg, hsl(200 70% 55% / 0.15), hsl(220 65% 60% / 0.2))",
-    "linear-gradient(135deg, hsl(160 60% 50% / 0.15), hsl(180 60% 55% / 0.2))",
-  ];
+  const openStripeForBundle = () => {
+    window.open(BUNDLE_STRIPE_URL, "_blank", "noopener,noreferrer");
+    toast("Redirecting to checkout...", { description: "All 4 templates for $25" });
+  };
 
-  const fallbackTemplates = [
-    { id: "f1", title: "Creative Resume", description: "Modern & Minimalist", price_cents: 0, icon: <FileText className="h-10 w-10 text-primary/40" /> },
-    { id: "f2", title: "Portfolio Kit", description: "Designer Edition", price_cents: 100, icon: <FileText className="h-10 w-10 text-primary/40" /> },
-    { id: "f3", title: "Email Templates", description: "Professional Outreach", price_cents: 0, icon: <FileText className="h-10 w-10 text-primary/40" /> },
-    { id: "f4", title: "Cover Letters", description: "Standout Intros", price_cents: 100, icon: <FileText className="h-10 w-10 text-primary/40" /> },
-  ];
+  const handleDeleteFile = async (templateId: string, fileUrl: string) => {
+    await supabase.storage.from("template-files").remove([fileUrl]);
+    await (supabase as any).from("shop_templates").update({ file_url: null }).eq("id", templateId);
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, file_url: null } : t));
+    setCardMenuId(null);
+    toast.success("File removed");
+  };
 
-  const displayTemplates = templates.length > 0 ? templates.slice(0, 4) : fallbackTemplates;
+  if (loading) {
+    return (
+      <div>
+        <div className="flex items-center gap-2.5 mb-5">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
+          <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />Loading templates...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-            <span className="text-primary text-sm">✨</span>
+      <div className="flex items-center gap-2.5 mb-5">
+        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
+        <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
+      </div>
+
+      {/* Pricing Banner */}
+      <div style={{
+        background: isDark ? "rgba(123,94,167,0.1)" : "linear-gradient(135deg, #F5F3FF, #EDE9FE)",
+        border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`,
+        borderRadius: 14, padding: "20px 24px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        marginBottom: 24, flexWrap: "wrap", gap: 16,
+      }}>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: isDark ? "#E9D5FF" : "#4C1D95", marginBottom: 4 }}>Career Templates</h3>
+          <p style={{ fontSize: 13, color: "#6B7280" }}>Preview any template free. Download individually or get all 4.</p>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>Single template</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: "#7B5EA7" }}>$8</p>
           </div>
-          <h2 className="text-xl font-bold text-foreground">Featured Templates</h2>
+          <div style={{ width: 1, height: 40, background: isDark ? "rgba(255,255,255,0.1)" : "#DDD6FE" }} />
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>All 4 templates</p>
+            <p style={{ fontSize: 20, fontWeight: 800, color: "#10B981" }}>$25</p>
+          </div>
+          <button
+            onClick={openStripeForBundle}
+            style={{
+              padding: "10px 20px", background: "#10B981", color: "white",
+              border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
+              cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            Get All 4 — $25
+          </button>
         </div>
-        <button onClick={() => navigate('/templates')} className="text-primary font-semibold text-sm hover:underline flex items-center gap-1">
-          See All <ArrowRight className="h-4 w-4" />
-        </button>
       </div>
 
-      {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          Loading templates...
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {displayTemplates.map((template: any, idx: number) => (
-            <button
-              key={template.id}
-              onClick={() => {
-                if (!hasPurchased && template.price_cents > 0) {
-                  handleBundleClick();
-                } else if (templates.length > 0) {
-                  setSelectedTemplate(template);
-                } else {
-                  navigate('/templates');
-                }
-              }}
-              className="rounded-3xl border border-border bg-card p-4 text-left hover:shadow-md hover:-translate-y-0.5 transition-all group relative"
-            >
-              {/* Lock overlay for non-purchased paid templates */}
-              {!hasPurchased && template.price_cents > 0 && (
-                <div className="absolute inset-0 rounded-3xl bg-card/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-foreground bg-card/90 px-3 py-1.5 rounded-full border border-border">🔒 Bundle Only</span>
-                </div>
-              )}
-              <div
-                className="aspect-[3/4] rounded-2xl mb-3 overflow-hidden relative flex items-center justify-center"
-                style={{ background: templateGradients[idx % templateGradients.length] }}
-              >
-                {template.preview_image_url ? (
-                  <img src={template.preview_image_url} alt={template.title} className="w-full h-full object-cover" />
-                ) : (
-                  <FileText className="h-10 w-10 text-primary/40" />
-                )}
-                <span className="absolute top-2 right-2 bg-card/90 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-foreground">
-                  {template.price_cents === 0 ? "FREE" : `$${(template.price_cents / 100).toFixed(0)}`}
-                </span>
-              </div>
-              <p className="text-sm font-bold text-foreground truncate">{template.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 mb-3 truncate">{template.description || "Professional template"}</p>
-              <div className="w-full py-2 bg-secondary rounded-xl text-primary font-bold text-xs flex items-center justify-center gap-1 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                {hasPurchased || template.price_cents === 0 ? (
-                  <><Download className="h-3 w-3" /> Download</>
-                ) : (
-                  <>🔒 Unlock — $25 Bundle</>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Bundle button */}
-      <div className="mt-5">
-        <button
-          onClick={handleBundleClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-        >
-          💎 Get All Templates — $25
-        </button>
-      </div>
-
-      {/* Template Detail Modal */}
-      {selectedTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4" onClick={() => setSelectedTemplate(null)}>
-          <div className="w-full max-w-[500px] rounded-3xl bg-card p-6 shadow-xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-foreground">{selectedTemplate.title}</h3>
-              <button onClick={() => setSelectedTemplate(null)} className="p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary transition"><X className="h-5 w-5" /></button>
+      {/* 2x2 Template Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {templates.slice(0, 4).map((template, idx) => (
+          <div
+            key={template.id}
+            className="template-card"
+            style={{
+              background: isDark ? "#1C1C1E" : "white",
+              borderRadius: 16,
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              overflow: "hidden",
+            }}
+          >
+            {/* Card header */}
+            <div style={{ padding: "16px 16px 12px" }}>
+              <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }} className="text-foreground">{template.title || defaultTemplateData[idx]?.name}</p>
+              <p style={{ fontSize: 12, lineHeight: 1.4 }} className="text-muted-foreground">{template.description || defaultTemplateData[idx]?.description}</p>
             </div>
-            {selectedTemplate.preview_image_url && (
-              <div className="aspect-[3/2] rounded-2xl overflow-hidden bg-muted mb-4">
-                <img src={selectedTemplate.preview_image_url} alt={selectedTemplate.title} className="w-full h-full object-cover" />
+
+            {/* Admin Upload/Generate tabs */}
+            {isAdmin && !template.file_url && (
+              <div style={{ padding: "0 16px 12px" }}>
+                <div
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFileUpload(template.id, f); }}
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = ".pdf,.docx,.doc";
+                    input.onchange = (ev: any) => { const f = ev.target.files?.[0]; if (f) handleFileUpload(template.id, f); };
+                    input.click();
+                  }}
+                  style={{
+                    border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    borderRadius: 10, padding: "32px 16px", textAlign: "center",
+                    background: isDark ? "#252528" : "#F9FAFB", cursor: "pointer",
+                  }}
+                >
+                  <Upload size={24} style={{ margin: "0 auto 8px", color: "#9CA3AF" }} />
+                  <p style={{ fontSize: 13 }} className="text-muted-foreground">
+                    <span style={{ fontWeight: 600 }} className="text-foreground">Click to upload</span> or drop file here
+                  </p>
+                  <p style={{ fontSize: 11, marginTop: 4, color: "#9CA3AF" }}>PDF, DOCX up to 10MB</p>
+                </div>
               </div>
             )}
-            {selectedTemplate.description && <p className="text-sm text-muted-foreground mb-4">{selectedTemplate.description}</p>}
-            <div className="text-sm text-muted-foreground mb-4 space-y-1">
-              <p className="font-bold text-foreground">What's included:</p>
-              <p>• Editable template file</p>
-              <p>• PDF version</p>
-              <p>• Customization guide</p>
+
+            {/* Uploading state */}
+            {uploadingId === template.id && (
+              <div style={{ padding: "0 16px 16px", textAlign: "center" }}>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto mb-2" />
+                <p style={{ fontSize: 13 }} className="text-muted-foreground">Uploading file...</p>
+              </div>
+            )}
+
+            {/* File uploaded — Preview state */}
+            {template.file_url && uploadingId !== template.id && (
+              <div style={{ position: "relative", margin: "0 16px 16px", borderRadius: 10, overflow: "hidden" }}>
+                <div style={{
+                  aspectRatio: "4/3",
+                  background: isDark ? "#252528" : "#F5F3FF",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {template.preview_image_url ? (
+                    <img src={template.preview_image_url} alt={template.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <FileText size={40} style={{ color: "#7B5EA7", opacity: 0.4 }} />
+                  )}
+                </div>
+
+                {/* Hover overlay */}
+                <div
+                  className="preview-overlay"
+                  style={{
+                    position: "absolute", inset: 0,
+                    background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    opacity: 0, transition: "opacity 200ms",
+                  }}
+                >
+                  <button
+                    onClick={() => handlePreview(template)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "8px 16px", background: "#10B981", color: "white",
+                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    <Eye size={14} /> Preview
+                  </button>
+                  {isAdmin && (
+                    <div style={{ position: "relative" }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setCardMenuId(cardMenuId === template.id ? null : template.id); }}
+                        style={{ padding: 8, background: "white", border: "none", borderRadius: 8, cursor: "pointer" }}
+                      >
+                        <MoreHorizontal size={14} />
+                      </button>
+                      {cardMenuId === template.id && (
+                        <div style={{
+                          position: "absolute", right: 0, top: "100%", marginTop: 4,
+                          background: isDark ? "#1C1C1E" : "white",
+                          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                          borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", zIndex: 50,
+                          minWidth: 140, overflow: "hidden",
+                        }}>
+                          <button
+                            onClick={() => handleDeleteFile(template.id, template.file_url)}
+                            style={{ width: "100%", padding: "10px 14px", textAlign: "left", border: "none", background: "transparent", fontSize: 13, color: "#DC2626", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+                          >
+                            <Trash2 size={13} /> Remove File
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Admin synced info */}
+            {isAdmin && template.file_url && uploadingId !== template.id && (
+              <div style={{
+                margin: "0 16px 16px",
+                padding: "10px 14px", borderRadius: 10,
+                background: isDark ? "rgba(59,130,246,0.1)" : "#EFF6FF",
+                border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`,
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <Info size={14} style={{ color: "#3B82F6", flexShrink: 0 }} />
+                <p style={{ fontSize: 12, color: isDark ? "#93C5FD" : "#1E40AF" }}>File uploaded. Users can preview and purchase to download.</p>
+              </div>
+            )}
+
+            {/* Download / Buy button for non-admin */}
+            {!isAdmin && template.file_url && (
+              <div style={{ padding: "0 16px 16px" }}>
+                {hasPurchased ? (
+                  <button
+                    onClick={() => handleDownload(template)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, justifyContent: "center",
+                      padding: "10px 20px", background: "#10B981", color: "white",
+                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      cursor: "pointer", width: "100%",
+                    }}
+                  >
+                    <Download size={14} /> Download
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => openStripeForSingle(template)}
+                      style={{
+                        flex: 1, padding: "10px 12px", background: "#7B5EA7", color: "white",
+                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      }}
+                    >
+                      Buy — $8
+                    </button>
+                    <button
+                      onClick={openStripeForBundle}
+                      style={{
+                        flex: 1, padding: "10px 12px", background: "#10B981", color: "white",
+                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      }}
+                    >
+                      All 4 — $25
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Preview Modal (fullscreen PDF) */}
+      {previewTemplate && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
+          zIndex: 9999, display: "flex", flexDirection: "column",
+        }}>
+          {/* Header */}
+          <div style={{
+            background: isDark ? "#1C1C1E" : "white",
+            padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
+            borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+          }}>
+            <p style={{ fontWeight: 700, fontSize: 15 }} className="text-foreground">{previewTemplate.title}</p>
+            <button onClick={() => setPreviewTemplate(null)} style={{ padding: 6, border: "none", background: "transparent", cursor: "pointer" }} className="text-muted-foreground hover:text-foreground">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* PDF iframe */}
+          <div style={{ flex: 1 }}>
+            <iframe src={previewTemplate.signedUrl} style={{ width: "100%", height: "100%", border: "none" }} />
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            background: isDark ? "#1C1C1E" : "white",
+            padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
+            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+          }}>
+            <p style={{ fontSize: 14 }} className="text-muted-foreground">
+              {hasPurchased ? "You own this template" : "Download this template: $8 · Get all 4: $25"}
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              {hasPurchased ? (
+                <button
+                  onClick={() => { handleDownload(previewTemplate); setPreviewTemplate(null); }}
+                  style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                >
+                  <Download size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} /> Download
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => openStripeForSingle(previewTemplate)}
+                    style={{ padding: "10px 20px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Buy This — $8
+                  </button>
+                  <button
+                    onClick={openStripeForBundle}
+                    style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Get All 4 — $25
+                  </button>
+                </>
+              )}
             </div>
-            <Button onClick={() => { handleDownload(selectedTemplate); setSelectedTemplate(null); }} className="w-full rounded-xl" size="lg">
-              {hasPurchased || selectedTemplate.price_cents === 0 ? "Download Now" : "Unlock — $25 Bundle"}
-            </Button>
           </div>
         </div>
       )}
+
+      {/* Hover style for preview overlay */}
+      <style>{`
+        .template-card:hover .preview-overlay { opacity: 1 !important; }
+      `}</style>
     </div>
   );
 }
