@@ -7,21 +7,31 @@ import CreditScoreGaugeCard from "./CreditScoreGaugeCard";
 export default function MoneyOverview() {
   return (
     <div className="space-y-6">
-      {/* Top section: 3-column grid */}
-      <div className="flex flex-col xl:flex-row gap-6">
-        {/* Left: Transaction History */}
-        <div className="w-full xl:w-[380px] xl:flex-shrink-0">
-          <TransactionHistoryPanel />
-        </div>
-        {/* Right: Spendings + Earnings stacked */}
-        <div className="flex-1 flex flex-col gap-6">
+      {/* Top: Transaction History (left 380px) + Spendings/Earnings (right) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '380px 1fr',
+          gap: '24px',
+          alignItems: 'start',
+          width: '100%',
+        }}
+      >
+        <TransactionHistoryPanel />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <TotalSpendingsCard />
           <TotalEarningsCard />
         </div>
       </div>
 
-      {/* Bottom row: Bills + Credit Score side by side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Bottom: Bills + Credit Score side by side */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '24px',
+        }}
+      >
         <BillsRecurringCard />
         <CreditScoreGaugeCard />
       </div>
