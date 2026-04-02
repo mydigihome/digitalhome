@@ -795,19 +795,33 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* LEFT COLUMN */}
             <div className="flex-1 min-w-0 space-y-4">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLeftDragEnd}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <SortableContext items={leftOrder} strategy={verticalListSortingStrategy}>
                   {leftOrder.map((id) => renderLeftCard(id))}
                 </SortableContext>
+                <DragOverlay>
+                  {activeId && leftOrder.includes(activeId) ? (
+                    <div className="opacity-95 scale-[1.005]" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+                      {renderLeftCard(activeId)}
+                    </div>
+                  ) : null}
+                </DragOverlay>
               </DndContext>
             </div>
 
             {/* RIGHT COLUMN — fixed 320px */}
             <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRightDragEnd}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <SortableContext items={rightOrder} strategy={verticalListSortingStrategy}>
                   {rightOrder.map((id) => renderRightCard(id))}
                 </SortableContext>
+                <DragOverlay>
+                  {activeId && rightOrder.includes(activeId) ? (
+                    <div className="opacity-95 scale-[1.005]" style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+                      {renderRightCard(activeId)}
+                    </div>
+                  ) : null}
+                </DragOverlay>
               </DndContext>
             </div>
           </div>
