@@ -41,14 +41,10 @@ interface Idea {
 }
 
 const STAGES = [
-  { id: "idea", label: "Idea", color: "#9CA3AF", bg: "#F9FAFB", border: "#E5E7EB" },
-  { id: "script", label: "Script", color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE" },
-  { id: "filming", label: "Filming", color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-  { id: "editing", label: "Editing", color: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE" },
-  { id: "review", label: "Review", color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
-  { id: "approved", label: "Approved", color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0" },
-  { id: "scheduled", label: "Scheduled", color: "#06B6D4", bg: "#ECFEFF", border: "#A5F3FC" },
-  { id: "posted", label: "Posted", color: "#374151", bg: "#F3F4F6", border: "#E5E7EB" },
+  { id: "idea", label: "Ideas", color: "#9CA3AF" },
+  { id: "in_progress", label: "In Progress", color: "#F59E0B" },
+  { id: "scheduled", label: "Scheduled", color: "#3B82F6" },
+  { id: "posted", label: "Published", color: "#10B981" },
 ];
 
 const PLATFORMS = ["Instagram", "YouTube", "TikTok", "Twitter", "LinkedIn", "Multiple"];
