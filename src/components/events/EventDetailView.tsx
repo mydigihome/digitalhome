@@ -4,9 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, type Task } from "@/hooks/useTasks";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
