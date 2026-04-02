@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
+import CreateGoalModal from "@/components/goals/CreateGoalModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
@@ -196,6 +197,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [createGoalOpen, setCreateGoalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
   const [newTodoText, setNewTodoText] = useState("");
@@ -367,7 +369,7 @@ export default function Dashboard() {
 
   /* ── Quick action circles for hero ── */
   const heroActions = [
-    { key: "goal", label: "Goal", icon: Target, onClick: () => setProjectModalOpen(true) },
+    { key: "goal", label: "Goal", icon: Target, onClick: () => setCreateGoalOpen(true) },
     { key: "contact", label: "Contact", icon: UserPlus, onClick: () => navigate("/relationships") },
     { key: "bill", label: "Bill", icon: Receipt, onClick: () => navigate("/finance/wealth") },
     { key: "todo", label: "Todo", icon: CheckCircle, onClick: scrollToTodos },
@@ -861,7 +863,7 @@ export default function Dashboard() {
       <QuickAddModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
-        onNewGoal={() => setProjectModalOpen(true)}
+        onNewGoal={() => setCreateGoalOpen(true)}
         onNewTask={scrollToTodos}
         onNewJournal={() => setJournalModalOpen(true)}
         onNewContact={() => navigate("/relationships")}
@@ -891,6 +893,7 @@ export default function Dashboard() {
       </AlertDialog>
 
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
+      <CreateGoalModal open={createGoalOpen} onClose={() => setCreateGoalOpen(false)} />
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
