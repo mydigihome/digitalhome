@@ -145,6 +145,14 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     return () => clearInterval(interval);
   }, [studioImages.length]);
 
+  // Close three-dots menu on outside click
+  useEffect(() => {
+    if (!studioMenuOpen) return;
+    const handler = () => setStudioMenuOpen(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [studioMenuOpen]);
+
   const handleDocAction = async (doc: typeof DOC_ITEMS[number]) => {
     if (!user) return;
     const val = studioDocs[doc.key as keyof StudioDoc];
