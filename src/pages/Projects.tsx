@@ -107,11 +107,11 @@ export default function Projects() {
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
 
-      await queryClient.resetQueries();
-      await queryClient.refetchQueries({ type: "active" });
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
+      // Force UI update by removing deleted items from the cache, then refetch
+      queryClient.setQueryData(projectsQueryKey, (old: any[]) =>
+        old ? old.filter((p: any) => !idsToDelete.includes(p.id)) : []
+      );
+      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
 
       if (failed > 0) {
         toast.error(`${succeeded} deleted, ${failed} failed`);
@@ -120,11 +120,7 @@ export default function Projects() {
       }
     } catch (err) {
       console.error("Bulk delete error:", err);
-      await queryClient.resetQueries();
-      await queryClient.refetchQueries({ type: "active" });
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
+      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
       toast.error("Delete failed. Please try again.");
     }
   };
@@ -147,7 +143,11 @@ export default function Projects() {
   // AI host stages generator
   const generateAIEventStages = async (event: any) => {
     const eventDate = event.event_date || event.end_date || event.start_date;
-    if (!eventDate) return;
+    console.log("generateAIEventStages called for:", event.id, event.name, "eventDate:", eventDate);
+    if (!eventDate) {
+      console.warn("No event date found, skipping AI stages");
+      return;
+    }
     const date = new Date(eventDate);
     const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
 
@@ -182,8 +182,14 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
         ai_generated: true,
       }));
 
-      await supabase.from("tasks").insert(newTasks);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      console.log("Inserting AI tasks:", newTasks);
+      const { data: inserted, error: insertError } = await supabase.from("tasks").insert(newTasks).select();
+      console.log("Insert result:", inserted, insertError);
+      if (insertError) {
+        console.error("Task insert error:", insertError);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["tasks"], refetchType: "all" });
       toast.success(`${newTasks.length} AI prep tasks created!`);
     } catch (error) {
       console.error("Failed to generate stages:", error);

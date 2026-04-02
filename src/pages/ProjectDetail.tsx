@@ -372,17 +372,19 @@ export default function ProjectDetail() {
           </>
         )}
 
-        {/* Delete / Archive Project */}
-        <div className="mt-12 border-t border-border pt-8 pb-4">
-          <div className="flex justify-center">
-            <Button
-              variant="destructive"
-              onClick={() => { setShowDeleteModal(true); setConfirmChecked(false); }}
-            >
-              <Trash2 className="mr-1.5 h-4 w-4" /> Delete Project
-            </Button>
+        {/* Delete / Archive Project — hidden for events (EventDetailView has its own Delete Event link) */}
+        {!isEvent && (
+          <div className="mt-12 border-t border-border pt-8 pb-4">
+            <div className="flex justify-center">
+              <Button
+                variant="destructive"
+                onClick={() => { setShowDeleteModal(true); setConfirmChecked(false); }}
+              >
+                <Trash2 className="mr-1.5 h-4 w-4" /> Delete Project
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </motion.div>
 
       <AnimatePresence>
