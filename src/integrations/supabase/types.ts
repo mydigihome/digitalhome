@@ -1945,6 +1945,45 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          broker: string | null
+          created_at: string | null
+          estimated_total: number | null
+          id: string
+          order_type: string
+          price_type: string | null
+          quantity: number
+          status: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          broker?: string | null
+          created_at?: string | null
+          estimated_total?: number | null
+          id?: string
+          order_type: string
+          price_type?: string | null
+          quantity: number
+          status?: string | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          broker?: string | null
+          created_at?: string | null
+          estimated_total?: number | null
+          id?: string
+          order_type?: string
+          price_type?: string | null
+          quantity?: number
+          status?: string | null
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plaid_accounts: {
         Row: {
           account_id: string | null
@@ -3521,6 +3560,33 @@ export type Database = {
           name?: string
           thumbnail?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          exchange: string | null
+          id: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          exchange?: string | null
+          id?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          exchange?: string | null
+          id?: string
+          symbol?: string
           user_id?: string
         }
         Relationships: []
