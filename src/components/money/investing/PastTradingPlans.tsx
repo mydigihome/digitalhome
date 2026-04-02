@@ -1,0 +1,108 @@
+import { useState, useEffect } from "react";
+import { History, Eye, Trash2, X, Copy } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+
+interface Plan {
+  id: string;
+  symbol: string;
+  asset_name: string;
+  time_frame: string;
+  risk_tolerance: string | null;
+  plan_content: string | null;
+  created_at: string;
+}
+
+export default function PastTradingPlans() {
+  const { user } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [viewPlan, setViewPlan] = useState<Plan | null>(null);
+
+  const fetchPlans = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any)
+      .from("trading_plans")
+      .select("id, symbol, asset_name, time_frame, risk_tolerance, plan_content, created_at")
+      .eq("user_id", user.id)
+      .not("plan_content", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    if (data) setPlans(data);
+  };
+
+  useEffect(() => { fetchPlans(); }, [user]);
+
+  const deletePlan = async (id: string) => {
+    await (supabase as any).from("trading_plans").delete().eq("id", id).eq("user_id", user!.id);
+    setPlans((p) => p.filter((x) => x.id !== id));
+    toast.success("Plan deleted");
+  };
+
+  if (plans.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border bg-card" style={{ padding: 24, marginTop: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <History size={16} className="text-muted-foreground" />
+          <span className="text-foreground" style={{ fontWeight: 700, fontSize: 15 }}>Past Trading Plans</span>
+        </div>
+        <p className="text-muted-foreground" style={{ fontSize: 13 }}>No plans yet. Create your first one above.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="rounded-2xl border border-border bg-card" style={{ padding: 24, marginTop: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <History size={16} className="text-muted-foreground" />
+          <span className="text-foreground" style={{ fontWeight: 700, fontSize: 15 }}>Past Trading Plans</span>
+        </div>
+        {plans.map((p) => (
+          <div key={p.id} className="border-b border-border last:border-0" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600, background: "#F5F3FF", color: "#7B5EA7" }}>{p.asset_name || p.symbol}</span>
+              <span className="text-muted-foreground" style={{ fontSize: 13 }}>{p.time_frame}</span>
+              <span className="text-muted-foreground" style={{ fontSize: 12 }}>·</span>
+              <span className="text-muted-foreground" style={{ fontSize: 12 }}>{new Date(p.created_at).toLocaleDateString()}</span>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => setViewPlan(p)} className="text-muted-foreground hover:text-foreground hover:bg-muted" style={{ padding: 6, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer" }}>
+                <Eye size={15} />
+              </button>
+              <button onClick={() => deletePlan(p.id)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" style={{ padding: 6, borderRadius: 6, border: "none", background: "transparent", cursor: "pointer" }}>
+                <Trash2 size={15} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* View plan modal */}
+      {viewPlan && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setViewPlan(null)}>
+          <div className="bg-card" style={{ borderRadius: 20, maxWidth: 680, width: "90vw", maxHeight: "85vh", overflowY: "auto", padding: 32 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 className="text-foreground" style={{ fontSize: 20, fontWeight: 700 }}>Trading Plan</h2>
+                <p className="text-muted-foreground" style={{ fontSize: 13 }}>{viewPlan.asset_name} · {viewPlan.time_frame} · {new Date(viewPlan.created_at).toLocaleDateString()}</p>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => { navigator.clipboard.writeText(viewPlan.plan_content || ""); toast.success("Copied!"); }} className="border border-border text-foreground hover:bg-muted" style={{ padding: "8px 14px", borderRadius: 8, background: "transparent", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Copy size={14} />Copy
+                </button>
+                <button onClick={() => setViewPlan(null)} className="text-muted-foreground hover:text-foreground" style={{ background: "none", border: "none", cursor: "pointer" }}>
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="bg-muted/50 text-foreground prose prose-sm max-w-none" style={{ borderRadius: 12, padding: 24, fontSize: 14, lineHeight: 1.7 }}>
+              <ReactMarkdown>{viewPlan.plan_content || ""}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

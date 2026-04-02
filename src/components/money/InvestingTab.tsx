@@ -4,6 +4,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import TradingTerminal from "./investing/TradingTerminal";
+import TradingPlanModal from "./investing/TradingPlanModal";
+import PastTradingPlans from "./investing/PastTradingPlans";
 
 /* ──────────────────────── types ──────────────────────── */
 interface WatchlistStock {
@@ -61,6 +64,7 @@ export default function InvestingTab() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [planModalOpen, setPlanModalOpen] = useState(false);
 
   // Fetch watchlist
   useEffect(() => {
@@ -835,6 +839,15 @@ export default function InvestingTab() {
           </div>
         </div>
       )}
+
+      {/* Live Trading Terminal */}
+      <TradingTerminal onOpenPlanModal={() => setPlanModalOpen(true)} />
+
+      {/* Past Trading Plans */}
+      <PastTradingPlans />
+
+      {/* Trading Plan Modal */}
+      <TradingPlanModal open={planModalOpen} onClose={() => setPlanModalOpen(false)} />
 
       <style>{`
         @media (max-width: 1024px) {
