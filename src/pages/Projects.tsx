@@ -235,7 +235,18 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
         } as any).eq("id", newEvent.id);
       }
 
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      // Create event_details row so EventDetailView works
+      await (supabase as any).from("event_details").upsert({
+        project_id: newEvent.id,
+        event_date: eventData.date || eventData.event_date || null,
+        location: eventData.location || null,
+        description: eventData.description || null,
+        event_type: "party",
+        privacy: "private",
+        location_type: "in_person",
+      }, { onConflict: "project_id" });
+
+      await queryClient.refetchQueries({ queryKey: ["projects"] });
       setPartifulModalOpen(false);
       setPartifulUrl("");
       setPartifulPreview(null);
@@ -243,10 +254,10 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
       setShowManualEntry(false);
       toast.success(`${eventData.name} imported!`);
 
-      if (newEvent && eventData.date) {
+      if (newEvent) {
         generateAIEventStages({
           ...newEvent,
-          event_date: eventData.date,
+          event_date: eventData.date || eventData.event_date,
           location: eventData.location,
           description: eventData.description,
         });
