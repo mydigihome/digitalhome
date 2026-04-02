@@ -583,13 +583,19 @@ export default function StudioHQView() {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <button onClick={() => setWeekOffset(p => p - 1)} style={{ background: "transparent", border: "none", cursor: "pointer", color: isDark ? "#F2F2F2" : "#374151", padding: "4px" }}>
+                <button onClick={() => {
+                  if (calMode === "week") setWeekOffset(p => p - 1);
+                  else { const d = new Date(calMonthDate); d.setMonth(d.getMonth() - 1); setCalMonthDate(d); }
+                }} style={{ background: "transparent", border: "none", cursor: "pointer", color: isDark ? "#F2F2F2" : "#374151", padding: "4px" }}>
                   <ChevronLeft size={16} />
                 </button>
                 <span style={{ fontSize: "14px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
-                  {weekLabel}
+                  {calMode === "week" ? weekLabel : calMonthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                 </span>
-                <button onClick={() => setWeekOffset(p => p + 1)} style={{ background: "transparent", border: "none", cursor: "pointer", color: isDark ? "#F2F2F2" : "#374151", padding: "4px" }}>
+                <button onClick={() => {
+                  if (calMode === "week") setWeekOffset(p => p + 1);
+                  else { const d = new Date(calMonthDate); d.setMonth(d.getMonth() + 1); setCalMonthDate(d); }
+                }} style={{ background: "transparent", border: "none", cursor: "pointer", color: isDark ? "#F2F2F2" : "#374151", padding: "4px" }}>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -606,56 +612,127 @@ export default function StudioHQView() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px", minHeight: "400px" }}>
-              {weekDates.map((date, i) => {
-                const dateStr = date.toISOString().split("T")[0];
-                const dayItems = contentItems.filter(c => c.due_date && new Date(c.due_date).toDateString() === date.toDateString());
-                const isToday = new Date().toDateString() === date.toDateString();
-                return (
-                  <div key={i} style={{
-                    background: isDark ? (isToday ? "rgba(16,185,129,0.08)" : "#252528") : (isToday ? "#F0FDF4" : "#F9FAFB"),
-                    border: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
-                    borderRadius: "10px", padding: "10px", minHeight: "300px",
-                  }}>
-                    <div style={{
-                      textAlign: "center", marginBottom: "10px", paddingBottom: "8px",
-                      borderBottom: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
+            {calMode === "week" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px", minHeight: "400px" }}>
+                {weekDates.map((date, i) => {
+                  const dateStr = date.toISOString().split("T")[0];
+                  const dayItems = contentItems.filter(c => c.due_date && new Date(c.due_date).toDateString() === date.toDateString());
+                  const isToday = new Date().toDateString() === date.toDateString();
+                  return (
+                    <div key={i} style={{
+                      background: isDark ? (isToday ? "rgba(16,185,129,0.08)" : "#252528") : (isToday ? "#F0FDF4" : "#F9FAFB"),
+                      border: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
+                      borderRadius: "10px", padding: "10px", minHeight: "300px",
                     }}>
-                      <p style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "Inter, sans-serif", margin: 0 }}>
-                        {date.toLocaleDateString("en-US", { weekday: "short" })}
-                      </p>
-                      <p style={{ fontSize: "18px", fontWeight: isToday ? 800 : 500, color: isToday ? "#10B981" : (isDark ? "#F2F2F2" : "#111827"), fontFamily: "Inter, sans-serif", margin: "2px 0 0" }}>
-                        {date.getDate()}
-                      </p>
-                    </div>
-                    {dayItems.map(item => (
-                      <div key={item.id} onClick={() => setDetailCard(item)} style={{
-                        padding: "6px 8px", borderRadius: "6px", marginBottom: "5px", cursor: "pointer",
-                        background: item.platform === "Instagram" ? "#FDF2F8" : item.platform === "YouTube" ? "#FEF2F2" : item.platform === "TikTok" ? "#F0FDF4" : item.platform === "Twitter" ? "#EFF6FF" : "#F5F3FF",
-                        borderLeft: "3px solid",
-                        borderColor: item.platform === "Instagram" ? "#BE185D" : item.platform === "YouTube" ? "#DC2626" : item.platform === "TikTok" ? "#065F46" : item.platform === "Twitter" ? "#1D4ED8" : "#7B5EA7",
-                      }}>
-                        <p style={{ fontSize: "11px", fontWeight: 600, color: "#111827", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "0 0 2px" }}>
-                          {item.title}
+                      <div style={{ textAlign: "center", marginBottom: "10px", paddingBottom: "8px", borderBottom: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}` }}>
+                        <p style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "Inter, sans-serif", margin: 0 }}>
+                          {date.toLocaleDateString("en-US", { weekday: "short" })}
                         </p>
-                        {item.platform && (
-                          <p style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>
-                            {item.platform}{item.content_type ? ` · ${item.content_type}` : ""}
-                          </p>
-                        )}
+                        <p style={{ fontSize: "18px", fontWeight: isToday ? 800 : 500, color: isToday ? "#10B981" : (isDark ? "#F2F2F2" : "#111827"), fontFamily: "Inter, sans-serif", margin: "2px 0 0" }}>
+                          {date.getDate()}
+                        </p>
                       </div>
-                    ))}
-                    <button onClick={() => { setFormDueDate(dateStr); setFormStage("idea"); setNewContentOpen(true); }}
-                      style={{
-                        width: "100%", padding: "5px", background: "transparent",
-                        border: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                        borderRadius: "6px", fontSize: "11px", color: "#D1D5DB",
-                        cursor: "pointer", fontFamily: "Inter, sans-serif", marginTop: "4px",
-                      }}>+ Add</button>
+                      {dayItems.map(item => (
+                        <div key={item.id} onClick={() => setDetailCard(item)} style={{
+                          padding: "6px 8px", borderRadius: "6px", marginBottom: "5px", cursor: "pointer",
+                          background: item.platform === "Instagram" ? "#FDF2F8" : item.platform === "YouTube" ? "#FEF2F2" : item.platform === "TikTok" ? "#F0FDF4" : item.platform === "Twitter" ? "#EFF6FF" : "#F5F3FF",
+                          borderLeft: "3px solid",
+                          borderColor: item.platform === "Instagram" ? "#BE185D" : item.platform === "YouTube" ? "#DC2626" : item.platform === "TikTok" ? "#065F46" : item.platform === "Twitter" ? "#1D4ED8" : "#7B5EA7",
+                        }}>
+                          <p style={{ fontSize: "11px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "0 0 2px" }}>
+                            {item.title}
+                          </p>
+                          {item.platform && (
+                            <p style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>
+                              {item.platform}{item.content_type ? ` · ${item.content_type}` : ""}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      <button onClick={() => { setFormDueDate(dateStr); setFormStage("idea"); setNewContentOpen(true); }}
+                        style={{
+                          width: "100%", padding: "5px", background: "transparent",
+                          border: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                          borderRadius: "6px", fontSize: "11px", color: "#D1D5DB",
+                          cursor: "pointer", fontFamily: "Inter, sans-serif", marginTop: "4px",
+                        }}>+ Add</button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* MONTH VIEW */
+              (() => {
+                const firstDay = new Date(calMonthDate.getFullYear(), calMonthDate.getMonth(), 1);
+                const lastDay = new Date(calMonthDate.getFullYear(), calMonthDate.getMonth() + 1, 0);
+                const startOffset = firstDay.getDay();
+                const totalCells = startOffset + lastDay.getDate();
+                const rows = Math.ceil(totalCells / 7);
+                const calDays = Array.from({ length: rows * 7 }, (_, i) => {
+                  const dayNum = i - startOffset + 1;
+                  if (dayNum < 1 || dayNum > lastDay.getDate()) return null;
+                  return new Date(calMonthDate.getFullYear(), calMonthDate.getMonth(), dayNum);
+                });
+
+                return (
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: "4px" }}>
+                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                        <div key={d} style={{ textAlign: "center", fontSize: "11px", fontWeight: 600, color: "#9CA3AF", padding: "4px 0", textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "Inter, sans-serif" }}>
+                          {d}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" }}>
+                      {calDays.map((day, i) => {
+                        if (!day) return (
+                          <div key={i} style={{ minHeight: "80px", background: isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA", borderRadius: "6px", opacity: 0.3 }} />
+                        );
+                        const isToday = day.toDateString() === new Date().toDateString();
+                        const dayItems = contentItems.filter(item => item.due_date && new Date(item.due_date).toDateString() === day.toDateString());
+                        const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+                        return (
+                          <div key={i} style={{
+                            minHeight: "80px",
+                            background: isDark ? (isToday ? "rgba(16,185,129,0.08)" : "#1C1C1E") : (isToday ? "#F0FDF4" : "white"),
+                            border: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
+                            borderRadius: "6px", padding: "6px",
+                          }}>
+                            <div style={{ textAlign: "right", marginBottom: "4px" }}>
+                              <span style={{
+                                fontSize: "12px", fontWeight: isToday ? 800 : 400,
+                                color: isToday ? "#10B981" : (isDark ? "#F2F2F2" : "#374151"),
+                                fontFamily: "Inter, sans-serif",
+                                width: "22px", height: "22px", display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                borderRadius: "50%", background: isToday ? "rgba(16,185,129,0.15)" : "transparent",
+                              }}>
+                                {day.getDate()}
+                              </span>
+                            </div>
+                            {dayItems.slice(0, 2).map(item => (
+                              <div key={item.id} onClick={() => setDetailCard(item)} style={{
+                                padding: "2px 5px", borderRadius: "4px", marginBottom: "2px", cursor: "pointer",
+                                fontSize: "10px", fontWeight: 500, fontFamily: "Inter, sans-serif",
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                background: item.platform === "Instagram" ? "#FDF2F8" : item.platform === "YouTube" ? "#FEF2F2" : item.platform === "TikTok" ? "#F0FDF4" : item.platform === "Twitter" ? "#EFF6FF" : "#F5F3FF",
+                                color: item.platform === "Instagram" ? "#BE185D" : item.platform === "YouTube" ? "#DC2626" : item.platform === "TikTok" ? "#065F46" : item.platform === "Twitter" ? "#1D4ED8" : "#7B5EA7",
+                              }}>
+                                {item.title}
+                              </div>
+                            ))}
+                            {dayItems.length > 2 && (
+                              <div style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "Inter, sans-serif", paddingLeft: "4px" }}>
+                                +{dayItems.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
-              })}
-            </div>
+              })()
+            )}
           </div>
         )}
       </div>
