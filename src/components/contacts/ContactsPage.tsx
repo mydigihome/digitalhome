@@ -823,17 +823,17 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
         {/* Edit + Delete */}
         <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px", zIndex: 2 }}>
           <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
-            padding: "5px 12px", background: "rgba(255,255,255,0.12)",
-            border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px",
-            color: "rgba(255,255,255,0.85)", fontSize: "11px", fontWeight: 500, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif", backdropFilter: "blur(4px)",
+            padding: "5px 12px", background: isDark ? "rgba(123,94,167,0.15)" : "white",
+            border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: "6px",
+            color: isDark ? "#C4B5FD" : "#7B5EA7", fontSize: "11px", fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif",
           }}>
             <Pencil size={10} /> Edit
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
-            padding: "5px 12px", background: "rgba(239,68,68,0.15)",
-            border: "1px solid rgba(239,68,68,0.25)", borderRadius: "6px",
-            color: "#FCA5A5", fontSize: "11px", fontWeight: 500, cursor: "pointer",
+            padding: "5px 12px", background: isDark ? "rgba(220,38,38,0.1)" : "white",
+            border: `1px solid ${isDark ? "rgba(220,38,38,0.2)" : "#FECACA"}`, borderRadius: "6px",
+            color: isDark ? "#FCA5A5" : "#DC2626", fontSize: "11px", fontWeight: 500, cursor: "pointer",
             display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif",
           }}>
             <Trash2 size={10} /> Delete
