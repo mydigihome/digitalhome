@@ -556,54 +556,6 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
           ))}
         </div>
 
-        {/* TABS */}
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
-        }}>
-          {TABS.map(tab => {
-            const tabId = tab.toLowerCase();
-            const isActive = activeTab === tabId;
-            return (
-              <button
-                key={tab}
-                onClick={() => onTabChange(tabId)}
-                style={{
-                  padding: "14px 24px",
-                  border: "none",
-                  background: "transparent",
-                  fontSize: "14px",
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive
-                    ? (isDark ? "#F2F2F2" : "#111827")
-                    : (isDark ? "rgba(255,255,255,0.4)" : "#6B7280"),
-                  borderBottom: `2px solid ${isActive
-                    ? (isDark ? "#F2F2F2" : "#111827")
-                    : "transparent"}`,
-                  cursor: "pointer",
-                  fontFamily: "Inter, sans-serif",
-                  transition: "all 150ms",
-                  marginBottom: "-1px",
-                  position: "relative",
-                }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.color = isDark ? "#F2F2F2" : "#111827";
-                    (e.currentTarget as HTMLButtonElement).style.borderBottomColor = isDark ? "rgba(255,255,255,0.2)" : "#E5E7EB";
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";
-                    (e.currentTarget as HTMLButtonElement).style.borderBottomColor = "transparent";
-                  }
-                }}>
-                {tab}
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* SETTINGS MODAL */}

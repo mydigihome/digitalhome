@@ -92,6 +92,7 @@ export default function StudioHQView() {
   const [calView, setCalView] = useState<"pipeline" | "calendar">("pipeline");
   const [calMode, setCalMode] = useState<"week" | "month">("week");
   const [weekOffset, setWeekOffset] = useState(0);
+  const [calMonthDate, setCalMonthDate] = useState(() => new Date());
 
   // Detail modal
   const [detailComments, setDetailComments] = useState<any[]>([]);
