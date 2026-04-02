@@ -6,6 +6,7 @@ import {
   Shield, Hash, FileText, Award, Check,
   Plus, Target, X, Trash2, Pencil,
   ChevronRight, Upload, Maximize2, MoreHorizontal,
+  ImagePlus, Share2, Eye,
 } from "lucide-react";
 
 interface StudioDoc {
