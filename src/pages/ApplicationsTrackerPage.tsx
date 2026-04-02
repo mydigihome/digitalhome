@@ -854,9 +854,9 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
   if (loading) {
     return (
       <div>
-        <div className="flex items-center gap-2.5 mb-5">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
-          <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <Sparkles size={16} color="#10B981" />
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }} className="text-foreground">Career Templates</h2>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />Loading templates...
