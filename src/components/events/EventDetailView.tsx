@@ -641,7 +641,7 @@ Make them specific to this event.
             </div>
           ) : (
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
-              {[...projectTasks]
+              {[...prepTasks]
                 .sort((a, b) => {
                   if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
                   return a.position - b.position;
