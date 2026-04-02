@@ -77,6 +77,8 @@ export default function ApplicationsTrackerPage() {
   const [cardMenuOpen, setCardMenuOpen] = useState<string | null>(null);
   const [showBannerMenu, setShowBannerMenu] = useState(false);
   const [showStudentPrompt, setShowStudentPrompt] = useState(false);
+  const [bannerColorPickerOpen, setBannerColorPickerOpen] = useState(false);
+  const isStudent = (prefs as any)?.user_type === "student";
   const isStudent = (prefs as any)?.user_type === "student";
 
   const [view, setView] = useState<"list" | "kanban">(() => {
