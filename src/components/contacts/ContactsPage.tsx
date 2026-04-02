@@ -802,24 +802,10 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
     <div style={{ borderBottom: `2px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#1C1C1E" : "white" }}>
       {/* ─── BANNER + IDENTITY ─── */}
       <div style={{
-        height: "80px",
+        height: "56px",
         background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
         position: "relative", overflow: "hidden",
       }}>
-        {/* Avatar */}
-        <div style={{
-          position: "absolute", bottom: "-20px", left: "28px",
-          width: "48px", height: "48px", borderRadius: "50%",
-          border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
-          background: "#F5F3FF", overflow: "hidden",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "18px", fontWeight: 800, color: "#7B5EA7",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.2)", zIndex: 2,
-        }}>
-          {contact.photo_url ? (
-            <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-          ) : contact.name?.charAt(0).toUpperCase()}
-        </div>
         {/* Edit + Delete */}
         <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px", zIndex: 2 }}>
           <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
@@ -842,7 +828,7 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
       </div>
 
       {/* ─── IDENTITY ROW ─── */}
-      <div style={{ padding: "32px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+      <div style={{ padding: "20px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h3 style={{ fontSize: "20px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px" }}>
