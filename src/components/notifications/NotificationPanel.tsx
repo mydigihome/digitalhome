@@ -80,6 +80,52 @@ export default function NotificationPanel({ onClose, onUnreadCountChange, userId
   const [activeTab, setActiveTab] = useState("all");
   const [loading, setLoading] = useState(true);
   const isDark = document.documentElement.classList.contains("dark");
+  const [notifSettingsOpen, setNotifSettingsOpen] = useState(false);
+  const [notifSettings, setNotifSettings] = useState<Record<string, any>>({
+    bills: true, followups: true, projects: true, content: true, studio: true, money: true,
+    quiet_mode: false, quiet_from: "22:00", quiet_to: "08:00",
+  });
+  const [pushPermission, setPushPermission] = useState<string>("default");
+
+  useEffect(() => {
+    if ("Notification" in window) setPushPermission(Notification.permission);
+  }, []);
+
+  // Load notification settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await (supabase as any).from("user_preferences").select("notification_settings").eq("user_id", userId).maybeSingle();
+      if (data?.notification_settings && Object.keys(data.notification_settings).length > 0) {
+        setNotifSettings(prev => ({ ...prev, ...data.notification_settings }));
+      }
+    };
+    loadSettings();
+  }, [userId]);
+
+  const handleRequestPush = async () => {
+    if (!("Notification" in window)) { toast("Your browser doesn't support push notifications."); return; }
+    if (Notification.permission === "denied") { toast("Notifications blocked — enable in browser settings."); return; }
+    const permission = await Notification.requestPermission();
+    setPushPermission(permission);
+    if (permission === "granted") {
+      toast("Notifications enabled! 🔔");
+      setTimeout(() => { new Notification("Digital Home", { body: "You're all set! Notifications are working.", icon: "/favicon.ico" }); }, 1000);
+    }
+  };
+
+  const toggleNotifType = (key: string) => setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const updateNotifSetting = (key: string, value: any) => setNotifSettings(prev => ({ ...prev, [key]: value }));
+
+  const saveNotifSettings = async () => {
+    const { data: existing } = await (supabase as any).from("user_preferences").select("id").eq("user_id", userId).maybeSingle();
+    if (existing) {
+      await (supabase as any).from("user_preferences").update({ notification_settings: notifSettings, updated_at: new Date().toISOString() }).eq("user_id", userId);
+    } else {
+      await (supabase as any).from("user_preferences").insert({ user_id: userId, notification_settings: notifSettings });
+    }
+    setNotifSettingsOpen(false);
+    toast("Settings saved!");
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
