@@ -73,15 +73,42 @@ export default function Projects() {
 
   const handleBulkDelete = async () => {
     setBulkDeleteConfirmOpen(false);
-    const count = selectedIds.length;
+    if (selectedIds.length === 0) return;
+
+    const idsToDelete = [...selectedIds];
+    const count = idsToDelete.length;
+    setSelectedIds([]);
+    setSelectMode(false);
+
     try {
-      for (const id of selectedIds) {
-        await deleteProject.mutateAsync(id);
+      // Delete tasks first, then projects one by one
+      await supabase.from("tasks").delete().in("project_id", idsToDelete);
+
+      const results = await Promise.all(
+        idsToDelete.map(async id => {
+          const { error } = await supabase.from("projects").delete().eq("id", id);
+          if (error) {
+            console.error("Failed to delete", id, error);
+            return { id, success: false };
+          }
+          return { id, success: true };
+        })
+      );
+
+      const succeeded = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+
+      if (failed > 0) {
+        toast.error(`${succeeded} deleted, ${failed} failed`);
+      } else {
+        toast.success(`${succeeded} item${succeeded > 1 ? "s" : ""} deleted`);
       }
-      setSelectedIds([]);
-      setSelectMode(false);
-      toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
-    } catch {
+    } catch (err) {
+      console.error("Bulk delete error:", err);
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast.error("Delete failed. Please try again.");
     }
   };
