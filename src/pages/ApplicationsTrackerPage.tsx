@@ -1000,7 +1000,7 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
                     <FileText size={40} style={{ color: "#7B5EA7", opacity: 0.4 }} />
                     <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 8 }}>No preview yet</p>
                   </div>
-                )
+                )}
 
                 {/* Hover overlay */}
                 <div
