@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, ChevronDown, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -73,8 +73,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
   const isFinanceActive = location.pathname.startsWith("/finance");
 
-  const [financeOpen, setFinanceOpen] = useState(isFinanceActive);
-
   const go = (path: string) => {
     navigate(path);
     onNavigate?.();
@@ -83,6 +81,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
     { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Wallet, label: "Money", path: "/finance/wealth", active: location.pathname === "/finance/wealth" || location.pathname === "/finance" },
+    { icon: LayoutGrid, label: "Applications", path: "/finance/applications", active: location.pathname === "/finance/applications" },
   ];
 
   const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
@@ -197,90 +197,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             );
           })}
 
-          {/* Money - Expandable */}
-          <li>
-            <NavTooltip label="Money">
-              <button
-                onClick={() => {
-                  if (collapsed) {
-                    go("/finance/wealth");
-                    return;
-                  }
-                  if (isFinanceActive) {
-                    setFinanceOpen(!financeOpen);
-                  } else {
-                    go("/finance/wealth");
-                    setFinanceOpen(true);
-                  }
-                }}
-                className={navItemClass(isFinanceActive)}
-                style={navItemStyle(isFinanceActive)}
-                {...navItemHoverHandlers(isFinanceActive)}
-              >
-                <Wallet className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(isFinanceActive)} strokeWidth={1.5} />
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 text-left text-[14px]">Money</span>
-                    <ChevronDown
-                      className="shrink-0 transition-transform duration-200"
-                      style={{
-                        width: 14, height: 14,
-                        color: 'rgba(255,255,255,0.7)',
-                        transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                      }}
-                    />
-                  </>
-                )}
-              </button>
-            </NavTooltip>
-
-            {!collapsed && (
-              <AnimatePresence initial={false}>
-                {financeOpen && (
-                  <motion.ul
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <li>
-                      <button
-                        onClick={() => go("/finance/applications")}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg py-2 pr-3 text-[13px] transition-all duration-200",
-                          "border-l-[3px]",
-                          location.pathname === "/finance/applications"
-                            ? "font-medium border-[#10B981]"
-                            : "border-transparent hover:border-[#10B981]"
-                        )}
-                        style={{
-                          paddingLeft: '40px',
-                          color: location.pathname === "/finance/applications" ? '#10B981' : 'rgba(255,255,255,0.75)',
-                          backgroundColor: location.pathname === "/finance/applications" ? 'rgba(16,185,129,0.12)' : undefined,
-                        }}
-                        onMouseEnter={(e) => {
-                          if (location.pathname !== "/finance/applications") {
-                            e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.08)';
-                            e.currentTarget.style.color = '#FFFFFF';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (location.pathname !== "/finance/applications") {
-                            e.currentTarget.style.backgroundColor = '';
-                            e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
-                          }
-                        }}
-                      >
-                        <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.5} />
-                        Applications
-                      </button>
-                    </li>
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            )}
-          </li>
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
