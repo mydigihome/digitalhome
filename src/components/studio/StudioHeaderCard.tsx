@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Camera, Shield, Hash, Presentation, FileCheck,
-  Eye, Plus, Target, X, Trash2, Pencil,
+  Shield, Hash, FileText, Award, Check,
+  Plus, Target, X, Trash2, Pencil,
 } from "lucide-react";
 
 interface StudioDoc {
