@@ -247,7 +247,7 @@ export default function MoneyTabWithSubTabs() {
             {TABS.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
                   activeTab === tab.id
                     ? "border-success text-foreground"
