@@ -307,7 +307,7 @@ export default function JournalEntryPage() {
                 width: "100%", fontSize: 28, fontWeight: 800, color: textPrimary,
                 border: "none", outline: "none", background: "transparent", textAlign: "center",
                 fontFamily: "Inter, sans-serif", marginBottom: 16, letterSpacing: "-0.5px",
-                boxSizing: "border-box", "::placeholder": { color: textSecondary } as any,
+                boxSizing: "border-box", 
               }}
             />
           ) : (
