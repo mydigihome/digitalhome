@@ -3711,6 +3711,7 @@ export type Database = {
           location: string | null
           money_header_type: string | null
           money_header_value: string | null
+          notification_settings: Json | null
           onboarding_completed: boolean | null
           onboarding_focus: string | null
           onboarding_skipped_steps: string[] | null
@@ -3769,6 +3770,7 @@ export type Database = {
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null
+          notification_settings?: Json | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
@@ -3827,6 +3829,7 @@ export type Database = {
           location?: string | null
           money_header_type?: string | null
           money_header_value?: string | null
+          notification_settings?: Json | null
           onboarding_completed?: boolean | null
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
