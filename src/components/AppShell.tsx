@@ -657,8 +657,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </AnimatePresence>
 
-        <FloatingCloud onClick={() => setJournalOpen(true)} />
-        <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
+        <FloatingCloud onClick={() => navigate("/journal")} />
 
         {/* Desktop Bell Icon — fixed top-right */}
         {user && (
