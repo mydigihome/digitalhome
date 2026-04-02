@@ -746,7 +746,7 @@ Make them specific to this event.
                           due_date: newStageDueDate || null,
                           status: "backlog",
                           priority: "medium",
-                          position: projectTasks.length,
+                          position: prepTasks.length,
                         });
                         setAddingStage(false);
                         if (error) { toast.error("Failed to add stage"); return; }
