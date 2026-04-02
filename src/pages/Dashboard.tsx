@@ -142,6 +142,16 @@ function ScriptureContent({ religion }: { religion?: string }) {
   );
 }
 
+// Mood emoji to Lucide icon mapper
+function MoodIcon({ mood }: { mood?: string }) {
+  if (!mood) return <Heart className="w-4 h-4 text-muted-foreground/40" />;
+  const m = mood.toLowerCase();
+  if (m.includes('happy') || m.includes('great') || m === '😊' || m === '❤️' || m === '😄') return <Smile className="w-4 h-4 text-success" />;
+  if (m.includes('sad') || m.includes('down') || m === '😢' || m === '🌧') return <CloudRain className="w-4 h-4 text-info" />;
+  if (m.includes('calm') || m.includes('peace') || m === '☀️') return <Sun className="w-4 h-4 text-warning" />;
+  return <Heart className="w-4 h-4 text-muted-foreground/40" />;
+}
+
 export default function Dashboard() {
   const { profile, user } = useAuth();
   const { data: projects = [] } = useProjects();
@@ -155,6 +165,7 @@ export default function Dashboard() {
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
@@ -165,6 +176,9 @@ export default function Dashboard() {
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [journalModalOpen, setJournalModalOpen] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const quickTodosRef = useRef<HTMLDivElement>(null);
 
   // Stock
   const [selectedStock, setSelectedStock] = useState("AAPL");
