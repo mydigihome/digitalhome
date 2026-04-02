@@ -85,16 +85,19 @@ export default function Projects() {
     setSelectedIds([]);
     setSelectMode(false);
 
+    console.log("Bulk deleting:", idsToDelete);
+
     try {
-      // Delete tasks first, then projects one by one
+      // Delete associated tasks first
       await supabase.from("tasks").delete().in("project_id", idsToDelete);
 
+      // Delete projects one by one for reliability
       const results = await Promise.all(
         idsToDelete.map(async id => {
           const { error } = await supabase.from("projects").delete().eq("id", id);
           if (error) {
             console.error("Failed to delete", id, error);
-            return { id, success: false };
+            return { id, success: false, error };
           }
           return { id, success: true };
         })
@@ -103,6 +106,7 @@ export default function Projects() {
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
 
+      // Force refetch
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
