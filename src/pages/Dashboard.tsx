@@ -343,11 +343,25 @@ export default function Dashboard() {
         .from("journal_entries")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(5);
+        .limit(20);
       return data || [];
     },
     enabled: !!user,
   });
+
+  // Emotion stats for journal card
+  const journalEmotionStats = (() => {
+    const counts: Record<string, number> = {};
+    let total = 0;
+    journalEntries.forEach((e: any) => {
+      if (e.mood) { counts[e.mood] = (counts[e.mood] || 0) + 1; total++; }
+    });
+    return Object.entries(counts)
+      .map(([label, count]) => ({ label, count, percentage: total ? Math.round((count / total) * 100) : 0 }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+  })();
+  const EMOTION_COLORS_DASH: Record<string, string> = { Happy: "#F59E0B", Sad: "#7C3A2D", Calm: "#6B8F3A", Anxious: "#7B7464", Inspired: "#7B5EA7", Focused: "#10B981" };
 
   const hasCover = prefs?.dashboard_cover_type === "image" && prefs.dashboard_cover;
   const heroBg = hasCover ? prefs!.dashboard_cover! : HERO_BG;
