@@ -4,6 +4,7 @@ import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-ki
 import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark } from "lucide-react";
 import MoneyCard from "./MoneyCard";
 import MoneyOverview from "./overview/MoneyOverview";
+import DebtTab from "./DebtTab";
 import { PlaidBannerFront, PlaidBannerBack } from "./cards/PlaidBanner";
 import { NetWorthFront, NetWorthBack } from "./cards/NetWorthCard";
 import { SpendingFront, SpendingBack } from "./cards/SpendingCard";
@@ -262,6 +263,8 @@ export default function MoneyTabWithSubTabs() {
         {/* Overview tab → new layout */}
         {activeTab === "overview" ? (
           <MoneyOverview />
+        ) : activeTab === "debt" ? (
+          <DebtTab />
         ) : (
           <>
             {/* Hidden cards restore drawer */}
