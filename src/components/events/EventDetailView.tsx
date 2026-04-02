@@ -626,7 +626,7 @@ Make them specific to this event.
           <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
             Preparation Timeline
           </p>
-          {projectTasks.length === 0 && !showAddStage ? (
+          {prepTasks.length === 0 && !showAddStage ? (
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
               <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
@@ -641,7 +641,7 @@ Make them specific to this event.
             </div>
           ) : (
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
-              {[...projectTasks]
+              {[...prepTasks]
                 .sort((a, b) => {
                   if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
                   return a.position - b.position;
@@ -652,7 +652,7 @@ Make them specific to this event.
                     <div
                       key={task.id}
                       className="flex items-start gap-3 transition-colors"
-                      style={{ padding: "14px 20px", borderBottom: i < projectTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
+                      style={{ padding: "14px 20px", borderBottom: i < prepTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >
@@ -705,7 +705,7 @@ Make them specific to this event.
                 })}
 
               {/* + Add Stage button */}
-              <div style={{ padding: "10px 20px", borderTop: projectTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
+              <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
                 {!showAddStage ? (
                   <button
                     onClick={() => setShowAddStage(true)}
@@ -746,7 +746,7 @@ Make them specific to this event.
                           due_date: newStageDueDate || null,
                           status: "backlog",
                           priority: "medium",
-                          position: projectTasks.length,
+                          position: prepTasks.length,
                         });
                         setAddingStage(false);
                         if (error) { toast.error("Failed to add stage"); return; }
