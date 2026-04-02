@@ -903,6 +903,74 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
           </div>
         </div>
       )}
+
+      {/* PREVIEW MODAL */}
+      {studioPreviewOpen && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 100,
+          background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }} onClick={() => setStudioPreviewOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: "100%", maxWidth: "480px", margin: "0 16px",
+            background: isDark ? "#1C1C1E" : "white", borderRadius: "14px",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+            overflow: "hidden",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "16px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+            }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+                Studio Preview
+              </h3>
+              <button onClick={() => setStudioPreviewOpen(false)} style={{
+                background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "4px",
+              }}><X size={16} /></button>
+            </div>
+            <div style={{ padding: "24px 20px" }}>
+              {studioImages[0] && (
+                <img src={studioImages[0]} alt="Studio" style={{
+                  width: "100%", height: "180px", objectFit: "cover", borderRadius: "10px", marginBottom: "16px",
+                }} />
+              )}
+              <h2 style={{
+                fontSize: "22px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827",
+                margin: "0 0 4px", fontFamily: "Inter, sans-serif",
+              }}>{studioName || "Your Studio"}</h2>
+              {studioHandle && (
+                <p style={{ fontSize: "13px", color: "#9CA3AF", margin: "0 0 20px", fontFamily: "Inter, sans-serif" }}>
+                  @{studioHandle}
+                </p>
+              )}
+              {studioGoals.length > 0 && (
+                <div>
+                  <p style={{ fontSize: "12px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
+                    Studio Goals
+                  </p>
+                  {studioGoals.map(goal => (
+                    <div key={goal.id} style={{ marginBottom: "10px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>{goal.title}</span>
+                        <span style={{ fontSize: "12px", color: "#10B981", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>{goal.progress}%</span>
+                      </div>
+                      <div style={{ height: "6px", borderRadius: "999px", background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }}>
+                        <div style={{ height: "100%", borderRadius: "999px", background: "#10B981", width: `${goal.progress}%`, transition: "width 300ms" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, display: "flex", justifyContent: "center" }}>
+              <button onClick={() => setStudioPreviewOpen(false)} style={{
+                padding: "8px 20px", background: "#111827", color: "white", border: "none",
+                borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
