@@ -267,7 +267,7 @@ export default function JournalPage() {
               </div>
             )}
             <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: 0, lineHeight: 1.5, fontFamily: "Inter, sans-serif" }}>
-              {(entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 120)}
+              {String(entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 120)}
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
               {entry.audio_url && (
