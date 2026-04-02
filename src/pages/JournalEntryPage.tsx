@@ -283,12 +283,20 @@ export default function JournalEntryPage() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "16px 0", position: "sticky", top: 0, zIndex: 50, background: bg,
           }}>
-            <button onClick={() => navigate("/journal")} title="My Entries" style={{
-              width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
-              background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <BookOpen size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={() => navigate("/journal")} title="My Entries" style={{
+                width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
+                background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <BookOpen size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+              </button>
+              <button onClick={() => navigate(-1 as any)} title="Close" style={{
+                width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
+                background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <X size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+              </button>
+            </div>
             <span style={{ fontSize: 15, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif" }}>
               {isEditing ? (isNew ? "New Entry" : "Edit Entry") : "Journal Entry"}
             </span>
@@ -301,7 +309,7 @@ export default function JournalEntryPage() {
                 {saving ? "Saving..." : "Save"}
               </button>
             ) : (
-              <div style={{ width: 36 }} />
+              <div style={{ width: 80 }} />
             )}
           </div>
 
