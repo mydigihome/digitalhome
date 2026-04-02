@@ -1010,42 +1010,44 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
-            {/* Download / Buy button for non-admin */}
-            {!isAdmin && template.file_url && (
+            {/* Preview / Download button */}
+            {template.file_url && uploadingId !== template.id && (
               <div style={{ padding: "0 16px 16px" }}>
                 {hasPurchased ? (
                   <button
                     onClick={() => handleDownload(template)}
+                    className="template-download-btn"
                     style={{
-                      display: "flex", alignItems: "center", gap: 6, justifyContent: "center",
-                      padding: "10px 20px", background: "#10B981", color: "white",
-                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      cursor: "pointer", width: "100%",
+                      width: "100%", padding: 10, marginTop: 0,
+                      background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
+                      border: `1.5px solid ${isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"}`,
+                      borderRadius: 999, fontSize: 13, fontWeight: 600,
+                      color: isDark ? "#10B981" : "#065F46",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 150ms",
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#10B981"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "#10B981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"; e.currentTarget.style.color = isDark ? "#10B981" : "#065F46"; e.currentTarget.style.borderColor = isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"; }}
                   >
-                    <Download size={14} /> Download
+                    <Download size={14} /> Download Now
                   </button>
                 ) : (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => openStripeForSingle(template)}
-                      style={{
-                        flex: 1, padding: "10px 12px", background: "#7B5EA7", color: "white",
-                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                      }}
-                    >
-                      Buy — $8
-                    </button>
-                    <button
-                      onClick={openStripeForBundle}
-                      style={{
-                        flex: 1, padding: "10px 12px", background: "#10B981", color: "white",
-                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                      }}
-                    >
-                      All 4 — $25
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handlePreview(template)}
+                    style={{
+                      width: "100%", padding: 10, marginTop: 0,
+                      background: "transparent",
+                      border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`,
+                      borderRadius: 999, fontSize: 13, fontWeight: 500,
+                      color: isDark ? "rgba(255,255,255,0.7)" : "#374151",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.7)" : "#374151"; }}
+                  >
+                    <Eye size={14} /> Preview
+                  </button>
                 )}
               </div>
             )}
