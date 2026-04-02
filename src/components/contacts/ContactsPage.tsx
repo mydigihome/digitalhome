@@ -12,7 +12,7 @@ import {
   Search, Plus, Mail, Phone, MapPin, Briefcase, Pencil, Trash2,
   Sparkles, Loader2, RotateCw, BookOpen, FolderPlus, CheckSquare,
   Linkedin, Users, ChevronDown, ChevronUp, X, Check, Filter,
-  ArrowUpDown, MessageSquare
+  ArrowUpDown, MessageSquare, Upload, FileSpreadsheet, UserPlus, Calendar
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
@@ -58,6 +58,47 @@ function getCompanyColor(company: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+/* VCF Parser */
+function parseVCF(text: string, userId: string) {
+  const contacts: any[] = [];
+  const cards = text.split("BEGIN:VCARD");
+  cards.forEach(card => {
+    if (!card.includes("END:VCARD")) return;
+    const lines = card.split("\n");
+    const contact: any = {};
+    lines.forEach(line => {
+      if (!contact.name) { const m = line.match(/^FN:(.+)/); if (m) contact.name = m[1].trim(); }
+      if (!contact.email) { const m = line.match(/EMAIL.*:(.+)/); if (m) contact.email = m[1].trim(); }
+      if (!contact.phone) { const m = line.match(/TEL.*:(.+)/); if (m) contact.phone = m[1].trim(); }
+      if (!contact.company) { const m = line.match(/^ORG:(.+)/); if (m) contact.company = m[1].split(";")[0].trim(); }
+    });
+    if (contact.name) {
+      contacts.push({ ...contact, relationship_type: "professional", user_id: userId });
+    }
+  });
+  return contacts;
+}
+
+/* CSV Parser */
+function parseCSV(text: string, userId: string) {
+  const lines = text.split("\n");
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/"/g, ""));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const values = line.split(",").map(v => v.trim().replace(/"/g, ""));
+    const obj: any = {};
+    headers.forEach((h, i) => { obj[h] = values[i] || ""; });
+    return {
+      name: obj["name"] || (obj["first name"] ? `${obj["first name"] || ""} ${obj["last name"] || ""}`.trim() : obj["full name"] || ""),
+      email: obj["email"] || obj["e-mail address"] || null,
+      phone: obj["phone"] || obj["mobile phone"] || obj["phone number"] || null,
+      company: obj["company"] || obj["organization"] || null,
+      title: obj["title"] || obj["job title"] || null,
+      relationship_type: "professional",
+      user_id: userId,
+    };
+  }).filter(c => c.name);
+}
+
 export default function ContactsPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -90,6 +131,22 @@ export default function ContactsPage() {
   // LinkedIn panel
   const [linkedInPanel, setLinkedInPanel] = useState<{ open: boolean; connections: LinkedInConnection[] }>({ open: false, connections: [] });
 
+  // Tag modal
+  const [tagModalOpen, setTagModalOpen] = useState(false);
+  const [tagModalContact, setTagModalContact] = useState<any>(null);
+
+  // Import
+  const [importDropdownOpen, setImportDropdownOpen] = useState(false);
+  const [importPreviewOpen, setImportPreviewOpen] = useState(false);
+  const [importPreviewContacts, setImportPreviewContacts] = useState<any[]>([]);
+  const [importSelected, setImportSelected] = useState<Set<number>>(new Set());
+  const vcfInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+
+  // Local contacts state for optimistic updates
+  const [localContacts, setLocalContacts] = useState<any[]>([]);
+  useEffect(() => { setLocalContacts(contacts as any[]); }, [contacts]);
+
   // LinkedIn OAuth callback
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -121,7 +178,7 @@ export default function ContactsPage() {
   }, [queryClient]);
 
   // Filtering & sorting
-  const filteredContacts = contacts
+  const filteredContacts = localContacts
     .filter(c => {
       if (filterValue !== "All") {
         const cat = getCategoryFromType(c.relationship_type);
@@ -173,16 +230,53 @@ export default function ContactsPage() {
   };
 
   const handleBulkEmail = () => {
-    const emails = contacts.filter(c => selectedIds.includes(c.id) && c.email).map(c => c.email);
+    const emails = localContacts.filter(c => selectedIds.includes(c.id) && c.email).map(c => c.email);
     if (emails.length === 0) { toast.error("No email addresses found"); return; }
     window.open(`mailto:${emails.join(",")}`, "_blank");
   };
 
-  const openCompose = (to: string, name: string, subject?: string, threadId?: string, isReply?: boolean) => {
-    setCompose({ open: true, to, name, subject, threadId, isReply });
+  const handleVCFImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const text = await file.text();
+    const parsed = parseVCF(text, user.id);
+    if (parsed.length === 0) { toast.error("No contacts found in VCF file"); return; }
+    setImportPreviewContacts(parsed);
+    setImportSelected(new Set(parsed.map((_, i) => i)));
+    setImportPreviewOpen(true);
+    e.target.value = "";
+  };
+
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const text = await file.text();
+    const parsed = parseCSV(text, user.id);
+    if (parsed.length === 0) { toast.error("No contacts found in CSV file"); return; }
+    setImportPreviewContacts(parsed);
+    setImportSelected(new Set(parsed.map((_, i) => i)));
+    setImportPreviewOpen(true);
+    e.target.value = "";
+  };
+
+  const handleImportConfirm = async () => {
+    if (!user) return;
+    const selected = importPreviewContacts.filter((_, i) => importSelected.has(i));
+    if (selected.length === 0) return;
+    const { error } = await supabase.from("contacts").insert(selected.map(c => ({ ...c, user_id: user.id })) as any);
+    if (error) { toast.error("Import failed"); return; }
+    toast.success(`${selected.length} contacts imported!`);
+    setImportPreviewOpen(false);
+    setImportPreviewContacts([]);
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
   };
 
   const isDark = document.documentElement.classList.contains("dark");
+
+  const handleEditContact = (contact: Contact) => {
+    setEditContact(contact);
+    setAddContactOpen(true);
+  };
 
   return (
     <div style={{ padding: "0" }}>
@@ -206,7 +300,7 @@ export default function ContactsPage() {
 
       {/* TAB CONTENT */}
       {activeTab === "Emails" ? (
-        <EmailsTabContent contacts={contacts} isDark={isDark} user={user} />
+        <EmailsTabContent contacts={localContacts} isDark={isDark} user={user} />
       ) : (
         <div>
           {/* TOOLBAR */}
@@ -243,7 +337,7 @@ export default function ContactsPage() {
                 <span style={{
                   background: "#3B82F6", color: "white", borderRadius: "999px",
                   padding: "1px 7px", fontSize: "11px",
-                }}>{contacts.length}</span>
+                }}>{localContacts.length}</span>
               </div>
               {/* Filter */}
               <div style={{ position: "relative" }}>
@@ -288,6 +382,68 @@ export default function ContactsPage() {
               }}>
                 <ArrowUpDown size={14} /> Sort
               </button>
+              {/* Import dropdown */}
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setImportDropdownOpen(!importDropdownOpen)} style={{
+                  display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px",
+                  background: isDark ? "#1C1C1E" : "white",
+                  border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  borderRadius: "8px", fontSize: "13px", fontWeight: 600,
+                  color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+                }}>
+                  <Upload size={14} /> Import <ChevronDown size={12} />
+                </button>
+                {importDropdownOpen && (
+                  <div style={{
+                    position: "absolute", top: "110%", right: 0,
+                    background: isDark ? "#1C1C1E" : "white", borderRadius: "12px",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.12)", minWidth: "240px", zIndex: 100, overflow: "hidden",
+                  }}>
+                    <button onClick={() => { setImportDropdownOpen(false); vcfInputRef.current?.click(); }} style={{
+                      width: "100%", padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: "12px",
+                      border: "none", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                      background: "transparent", cursor: "pointer", textAlign: "left",
+                    }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: isDark ? "rgba(59,130,246,0.15)" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <Phone size={16} color="#3B82F6" />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px" }}>From Phone / Device</p>
+                        <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0 }}>Import a .vcf contacts file</p>
+                      </div>
+                    </button>
+                    <button onClick={() => { setImportDropdownOpen(false); csvInputRef.current?.click(); }} style={{
+                      width: "100%", padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: "12px",
+                      border: "none", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                      background: "transparent", cursor: "pointer", textAlign: "left",
+                    }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <FileSpreadsheet size={16} color="#10B981" />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px" }}>From CSV / Spreadsheet</p>
+                        <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0 }}>Google Contacts, Outlook, Excel</p>
+                      </div>
+                    </button>
+                    <button onClick={() => { setImportDropdownOpen(false); setAddContactOpen(true); }} style={{
+                      width: "100%", padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: "12px",
+                      border: "none", background: "transparent", cursor: "pointer", textAlign: "left",
+                    }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <UserPlus size={16} color="#7B5EA7" />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px" }}>Add Manually</p>
+                        <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0 }}>Enter contact details by hand</p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+              {/* Hidden file inputs */}
+              <input ref={vcfInputRef} type="file" accept=".vcf" style={{ display: "none" }} onChange={handleVCFImport} />
+              <input ref={csvInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={handleCSVImport} />
               {/* Add contact */}
               <button onClick={() => { setEditContact(null); setAddContactOpen(true); }} style={{
                 display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
@@ -356,6 +512,14 @@ export default function ContactsPage() {
                 const isExpanded = expandedId === contact.id;
                 const isSelected = selectedIds.includes(contact.id);
                 const status = (contact as any).status || null;
+                // Follow-up indicator
+                const daysSinceContact = contact.last_contacted_date
+                  ? Math.floor((Date.now() - new Date(contact.last_contacted_date).getTime()) / 86400000)
+                  : 999;
+                const cadence = (contact as any).followup_cadence;
+                const isOverdue = cadence && daysSinceContact > cadence;
+                const isDueSoon = cadence && !isOverdue && (cadence - daysSinceContact) <= 7;
+
                 return (
                   <div key={contact.id}>
                     <div
@@ -381,7 +545,7 @@ export default function ContactsPage() {
                         style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#3B82F6" }}
                       />
 
-                      {/* Name + Avatar */}
+                      {/* Name + Avatar + follow-up dot */}
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <div style={{
                           width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", flexShrink: 0,
@@ -396,6 +560,12 @@ export default function ContactsPage() {
                         <span style={{ fontSize: "14px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827" }}>
                           {contact.name}
                         </span>
+                        {isOverdue && (
+                          <span title="Follow-up overdue" style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#EF4444", display: "inline-block", flexShrink: 0 }} />
+                        )}
+                        {isDueSoon && !isOverdue && (
+                          <span title="Follow-up due soon" style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#F59E0B", display: "inline-block", flexShrink: 0 }} />
+                        )}
                       </div>
 
                       {/* Status badge */}
@@ -479,7 +649,7 @@ export default function ContactsPage() {
                       <ExpandedContactRow
                         contact={contact}
                         isDark={isDark}
-                        onEdit={() => { setEditContact(contact); setAddContactOpen(true); }}
+                        onEdit={() => handleEditContact(contact)}
                         onDelete={() => handleDeleteContact(contact.id)}
                         onEmail={() => { setActiveTab("Emails"); }}
                         noteValues={noteValues}
@@ -487,6 +657,9 @@ export default function ContactsPage() {
                         noteTimers={noteTimers}
                         user={user}
                         navigate={navigate}
+                        setLocalContacts={setLocalContacts}
+                        setTagModalContact={setTagModalContact}
+                        setTagModalOpen={setTagModalOpen}
                       />
                     )}
                   </div>
@@ -561,18 +734,42 @@ export default function ContactsPage() {
         onClose={() => setLinkedInPanel({ open: false, connections: [] })}
         connections={linkedInPanel.connections}
       />
+
+      {/* TAG MODAL */}
+      <TagModal
+        isOpen={tagModalOpen}
+        onClose={() => setTagModalOpen(false)}
+        contact={tagModalContact}
+        isDark={isDark}
+        user={user}
+        setLocalContacts={setLocalContacts}
+      />
+
+      {/* IMPORT PREVIEW MODAL */}
+      <ImportPreviewModal
+        isOpen={importPreviewOpen}
+        onClose={() => setImportPreviewOpen(false)}
+        contacts={importPreviewContacts}
+        selected={importSelected}
+        setSelected={setImportSelected}
+        onConfirm={handleImportConfirm}
+        isDark={isDark}
+      />
     </div>
   );
 }
 
-/* EXPANDED CONTACT ROW */
-function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteValues, setNoteValues, noteTimers, user, navigate }: {
-  contact: Contact; isDark: boolean;
+/* ===== EXPANDED CONTACT ROW — REDESIGNED ===== */
+function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteValues, setNoteValues, noteTimers, user, navigate, setLocalContacts, setTagModalContact, setTagModalOpen }: {
+  contact: any; isDark: boolean;
   onEdit: () => void; onDelete: () => void; onEmail: () => void;
   noteValues: Record<string, string>;
   setNoteValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   noteTimers: React.MutableRefObject<Record<string, any>>;
   user: any; navigate: any;
+  setLocalContacts: React.Dispatch<React.SetStateAction<any[]>>;
+  setTagModalContact: (c: any) => void;
+  setTagModalOpen: (v: boolean) => void;
 }) {
   const { data: interactions = [] } = useContactInteractions(contact.id);
   const { data: quickTodos = [] } = useQuickTodos();
@@ -591,136 +788,263 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
     });
   };
 
+  const daysSince = contact.last_contacted_date
+    ? Math.floor((Date.now() - new Date(contact.last_contacted_date).getTime()) / 86400000)
+    : 999;
+  const strength = daysSince < 14
+    ? { label: "Hot", color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0", dot: "#10B981" }
+    : daysSince < 45
+    ? { label: "Warm", color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", dot: "#F59E0B" }
+    : { label: "Cold", color: "#9CA3AF", bg: "#F9FAFB", border: "#E5E7EB", dot: "#D1D5DB" };
+
+  const contactInfoItems = [
+    { Icon: Mail, val: contact.email, href: contact.email ? `mailto:${contact.email}` : undefined, color: "#10B981" },
+    { Icon: Phone, val: contact.phone, href: contact.phone ? `tel:${contact.phone}` : undefined, color: "#3B82F6" },
+    { Icon: MapPin, val: contact.location, color: "#F59E0B" },
+    { Icon: Briefcase, val: contact.company, color: "#7B5EA7" },
+    { Icon: Calendar, val: contact.birthday ? `Birthday: ${new Date(contact.birthday).toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : null, color: "#EF4444" },
+  ].filter(i => i.val);
+
   return (
-    <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#F9FAFB" }}>
-      {/* BANNER */}
-      <div style={{ height: "72px", background: "linear-gradient(135deg, #7B5EA7, #10B981)", position: "relative" }}>
+    <div style={{ background: isDark ? "#1C1C1E" : "white", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` }}>
+      {/* TOP BANNER */}
+      <div style={{
+        height: "90px",
+        background: "linear-gradient(135deg, #1C1C1E 0%, #2D2B3D 60%, #1B2E1B 100%)",
+        position: "relative",
+      }}>
         <div style={{
-          position: "absolute", bottom: "-20px", left: "20px", width: "48px", height: "48px",
-          borderRadius: "50%", border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
-          background: isDark ? "rgba(123,94,167,0.3)" : "#F5F3FF",
+          position: "absolute", inset: 0,
+          backgroundImage: "radial-gradient(circle at 30% 50%, rgba(16,185,129,0.12) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(123,94,167,0.12) 0%, transparent 60%)",
+        }} />
+        {/* Avatar */}
+        <div style={{
+          position: "absolute", bottom: "-28px", left: "24px",
+          width: "56px", height: "56px", borderRadius: "50%",
+          border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
+          background: "#F5F3FF", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "18px", fontWeight: 800, color: "#7B5EA7", overflow: "hidden",
+          fontSize: "20px", fontWeight: 800, color: "#7B5EA7",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         }}>
-          {contact.photo_url
-            ? <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-            : contact.name.charAt(0).toUpperCase()
-          }
+          {contact.photo_url ? (
+            <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+          ) : contact.name?.charAt(0).toUpperCase()}
         </div>
-        <div style={{ position: "absolute", top: "10px", right: "14px", display: "flex", gap: "6px" }}>
-          <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
-            padding: "5px 10px", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
-            borderRadius: "6px", color: "white", fontSize: "11px", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px",
+        {/* Tags on banner */}
+        <div style={{
+          position: "absolute", bottom: "10px", left: "96px",
+          display: "flex", gap: "6px", flexWrap: "wrap",
+        }}>
+          {(contact.tags || []).map((tag: string, i: number) => (
+            <span key={i} style={{
+              padding: "2px 10px", background: "rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.25)", borderRadius: "999px",
+              fontSize: "11px", fontWeight: 500, color: "white", backdropFilter: "blur(4px)",
+            }}>
+              {tag}
+            </span>
+          ))}
+          <button onClick={e => { e.stopPropagation(); setTagModalContact(contact); setTagModalOpen(true); }} style={{
+            padding: "2px 10px", background: "rgba(255,255,255,0.1)",
+            border: "1px dashed rgba(255,255,255,0.3)", borderRadius: "999px",
+            fontSize: "11px", color: "rgba(255,255,255,0.7)", cursor: "pointer",
           }}>
-            <Pencil size={10} /> Edit
+            + Tag
+          </button>
+        </div>
+        {/* Edit + Delete */}
+        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px" }}>
+          <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
+            padding: "5px 12px", background: "rgba(255,255,255,0.15)",
+            border: "1px solid rgba(255,255,255,0.25)", borderRadius: "6px",
+            color: "white", fontSize: "12px", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px", backdropFilter: "blur(4px)",
+          }}>
+            <Pencil size={11} /> Edit
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
-            padding: "5px 10px", background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.3)",
-            borderRadius: "6px", color: "#FCA5A5", fontSize: "11px", cursor: "pointer",
+            padding: "5px 12px", background: "rgba(220,38,38,0.2)",
+            border: "1px solid rgba(220,38,38,0.3)", borderRadius: "6px",
+            color: "#FCA5A5", fontSize: "12px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "4px",
           }}>
-            <Trash2 size={10} /> Delete
+            <Trash2 size={11} /> Delete
           </button>
         </div>
       </div>
 
-      {/* CONTENT - 4 columns */}
-      <div style={{ padding: "32px 20px 20px", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr", gap: "20px" }}>
-        {/* COL 1 — Identity */}
+      {/* MAIN CONTENT — 5 columns */}
+      <div style={{
+        padding: "40px 24px 24px",
+        display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1fr 1.2fr", gap: "20px",
+      }}>
+        {/* COL 1 — Identity + Contact Info */}
         <div>
-          <h3 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 2px" }}>{contact.name}</h3>
-          <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: "0 0 12px" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px" }}>{contact.name}</h3>
+          <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "14px" }}>
             {[contact.title, contact.company].filter(Boolean).join(" · ")}
           </p>
-          {[
-            { Icon: Mail, value: contact.email, href: contact.email ? `mailto:${contact.email}` : undefined },
-            { Icon: Phone, value: contact.phone, href: contact.phone ? `tel:${contact.phone}` : undefined },
-            { Icon: MapPin, value: (contact as any).location },
-            { Icon: Briefcase, value: contact.company },
-          ].filter(i => i.value).map(({ Icon, value, href }, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "7px" }}>
-              <Icon size={12} color="#9CA3AF" />
-              {href ? (
-                <a href={href} onClick={e => e.stopPropagation()} style={{ fontSize: "13px", color: "#10B981", textDecoration: "none" }}>{value}</a>
-              ) : (
-                <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.7)" : "#374151" }}>{value}</span>
-              )}
-            </div>
-          ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {contactInfoItems.map(({ Icon, val, href, color }, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "6px 10px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: "7px",
+              }}>
+                <div style={{
+                  width: "26px", height: "26px", borderRadius: "6px",
+                  background: color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <Icon size={13} color={color} />
+                </div>
+                {href ? (
+                  <a href={href} onClick={e => e.stopPropagation()} style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none" }}>{val}</a>
+                ) : (
+                  <span style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151" }}>{val}</span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* COL 2 — Quick Actions */}
         <div>
-          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Quick Actions</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Actions</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
             <button onClick={e => { e.stopPropagation(); onEmail(); }} style={{
-              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
-              background: "#10B981", color: "white", border: "none", borderRadius: "7px",
-              fontSize: "12px", fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: "#10B981", color: "white", border: "none", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer", width: "100%",
             }}>
-              <Mail size={12} /> Send Email
+              <Mail size={13} /> Send Email
             </button>
             <button onClick={e => { e.stopPropagation(); navigate("/projects"); }} style={{
-              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
-              background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF",
+              color: isDark ? "#C4B5FD" : "#7B5EA7",
+              border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
+              borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", width: "100%",
             }}>
-              <FolderPlus size={12} color="#7B5EA7" /> Create Project
+              <FolderPlus size={13} /> New Project
             </button>
             <button onClick={e => { e.stopPropagation(); setShowTodoInput(!showTodoInput); }} style={{
-              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
-              background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
+              color: isDark ? "#6EE7B7" : "#065F46",
+              border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`,
+              borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", width: "100%",
             }}>
-              <CheckSquare size={12} color="#10B981" /> Create To-Do
+              <CheckSquare size={13} /> Add Task
             </button>
             {showTodoInput && (
-              <div onClick={e => e.stopPropagation()} style={{
-                display: "flex", gap: "6px", marginTop: "4px",
-              }}>
-                <input
-                  type="text"
-                  value={todoText}
-                  onChange={e => setTodoText(e.target.value)}
+              <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: "6px" }}>
+                <input type="text" value={todoText} onChange={e => setTodoText(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") handleSaveTodo(); }}
-                  placeholder="Type a to-do..."
-                  autoFocus
+                  placeholder="Type a to-do..." autoFocus
                   style={{
                     flex: 1, padding: "7px 10px", fontSize: "12px",
                     border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
                     borderRadius: "6px", outline: "none",
-                    background: isDark ? "#252528" : "white",
-                    color: isDark ? "#F2F2F2" : "#374151",
+                    background: isDark ? "#252528" : "white", color: isDark ? "#F2F2F2" : "#374151",
                   }}
                 />
-                <button onClick={handleSaveTodo} disabled={!todoText.trim() || addTodo.isPending} style={{
+                <button onClick={handleSaveTodo} disabled={!todoText.trim()} style={{
                   padding: "7px 12px", background: "#10B981", color: "white",
-                  border: "none", borderRadius: "6px", fontSize: "11px",
-                  fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                  border: "none", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "pointer",
                 }}>
                   {addTodo.isPending ? "..." : "Save"}
                 </button>
               </div>
             )}
           </div>
-          <div style={{ marginTop: "12px" }}>
-            <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px" }}>Last Contacted</p>
-            <p style={{
-              fontSize: "12px", margin: 0,
-              color: contact.last_contacted_date ? (isDark ? "#F2F2F2" : "#111827") : "#9CA3AF",
-              fontStyle: contact.last_contacted_date ? "normal" : "italic",
+          {/* Relationship strength */}
+          <div style={{ marginTop: "16px" }}>
+            <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>Relationship</p>
+            <div style={{
+              display: "flex", alignItems: "center", gap: "6px", padding: "6px 10px",
+              background: isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.1)" : strength.label === "Warm" ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)") : strength.bg,
+              border: `1px solid ${isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.2)" : strength.label === "Warm" ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)") : strength.border}`,
+              borderRadius: "7px",
             }}>
-              {contact.last_contacted_date
-                ? new Date(contact.last_contacted_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                : "Never"}
-            </p>
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: strength.dot }} />
+              <span style={{ fontSize: "13px", fontWeight: 600, color: strength.color }}>{strength.label}</span>
+              <span style={{ fontSize: "11px", color: "#9CA3AF", marginLeft: "auto" }}>
+                {daysSince === 999 ? "Never contacted" : `${daysSince}d ago`}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* COL 3 — Notes */}
+        {/* COL 3 — Follow-up Reminder */}
         <div>
-          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Notes</p>
+          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Follow-up</p>
+          <div style={{ marginBottom: "10px" }}>
+            <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "6px" }}>Check in every</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+              {[
+                { label: "2 weeks", days: 14 },
+                { label: "1 month", days: 30 },
+                { label: "3 months", days: 90 },
+                { label: "6 months", days: 180 },
+              ].map(option => (
+                <button key={option.days} onClick={async e => {
+                  e.stopPropagation();
+                  await supabase.from("contacts").update({ followup_cadence: option.days } as any).eq("id", contact.id);
+                  setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, followup_cadence: option.days } : c));
+                }} style={{
+                  padding: "7px 6px", borderRadius: "7px", border: "1.5px solid",
+                  borderColor: contact.followup_cadence === option.days ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"),
+                  background: contact.followup_cadence === option.days ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : (isDark ? "#252528" : "white"),
+                  color: contact.followup_cadence === option.days ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"),
+                  fontSize: "11px", fontWeight: contact.followup_cadence === option.days ? 600 : 400, cursor: "pointer",
+                }}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Next follow-up */}
+          {contact.followup_cadence && contact.last_contacted_date && (() => {
+            const nextDate = new Date(contact.last_contacted_date);
+            nextDate.setDate(nextDate.getDate() + contact.followup_cadence);
+            const daysUntil = Math.floor((nextDate.getTime() - Date.now()) / 86400000);
+            const isOverdue = daysUntil < 0;
+            return (
+              <div style={{
+                padding: "10px 12px", marginBottom: "8px",
+                background: isOverdue ? (isDark ? "rgba(220,38,38,0.1)" : "#FEF2F2") : (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"),
+                border: `1px solid ${isOverdue ? (isDark ? "rgba(220,38,38,0.2)" : "#FECACA") : (isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0")}`,
+                borderRadius: "8px",
+              }}>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: isOverdue ? "#DC2626" : "#065F46", marginBottom: "2px" }}>
+                  {isOverdue ? `Overdue by ${Math.abs(daysUntil)} days` : `Due in ${daysUntil} days`}
+                </p>
+                <p style={{ fontSize: "11px", color: "#6B7280" }}>
+                  {nextDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
+            );
+          })()}
+          <button onClick={async e => {
+            e.stopPropagation();
+            const now = new Date().toISOString();
+            await supabase.from("contacts").update({ last_contacted_date: now } as any).eq("id", contact.id);
+            setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, last_contacted_date: now } : c));
+            toast.success("Marked as contacted!");
+          }} style={{
+            width: "100%", padding: "8px", background: isDark ? "#252528" : "white",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+            borderRadius: "8px", fontSize: "12px", fontWeight: 500,
+            color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+          }}>
+            <Check size={12} color="#10B981" /> Mark as Contacted Today
+          </button>
+        </div>
+
+        {/* COL 4 — Notes */}
+        <div>
+          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Notes</p>
           <textarea
             value={noteValues[contact.id] ?? contact.notes ?? ""}
             onChange={e => {
@@ -732,43 +1056,252 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
               }, 1000);
             }}
             onClick={e => e.stopPropagation()}
-            placeholder="Notes... autosaves."
+            placeholder="Notes about this person... autosaves as you type."
             style={{
-              width: "100%", minHeight: "110px", padding: "8px 10px",
+              width: "100%", minHeight: "130px", padding: "10px 12px",
               border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151",
-              lineHeight: 1.6, resize: "vertical", outline: "none",
-              background: isDark ? "#252528" : "white", boxSizing: "border-box", fontFamily: "inherit",
+              borderRadius: "8px", fontSize: "13px",
+              color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.6,
+              resize: "vertical", outline: "none",
+              background: isDark ? "#252528" : "white",
+              boxSizing: "border-box", fontFamily: "inherit",
             }}
-            onFocus={e => { e.target.style.borderColor = "#10B981"; }}
-            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; }}
+            onFocus={e => { e.target.style.borderColor = "#10B981"; e.target.style.boxShadow = "0 0 0 2px rgba(16,185,129,0.08)"; }}
+            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; e.target.style.boxShadow = "none"; }}
           />
-          <p style={{ fontSize: "10px", color: "#9CA3AF", margin: "3px 0 0" }}>✓ Autosaves</p>
+          <p style={{ fontSize: "10px", color: "#9CA3AF", marginTop: "4px", display: "flex", alignItems: "center", gap: "3px" }}>
+            <Check size={9} /> Autosaves
+          </p>
         </div>
 
-        {/* COL 4 — Interactions */}
+        {/* COL 5 — Interactions / History */}
         <div>
-          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Interactions</p>
+          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>History</p>
           {interactions.length > 0
-            ? interactions.slice(0, 3).map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#10B981", flexShrink: 0, marginTop: "5px" }} />
+            ? interactions.slice(0, 4).map((item: any, i: number) => (
+              <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "10px", alignItems: "flex-start" }}>
+                <div style={{
+                  width: "24px", height: "24px", borderRadius: "6px",
+                  background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px",
+                }}>
+                  <MessageSquare size={11} color="#10B981" />
+                </div>
                 <div>
-                  <p style={{ fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4, margin: 0 }}>{item.title || item.description || "Interaction"}</p>
-                  <p style={{ fontSize: "10px", color: "#9CA3AF", margin: "2px 0 0" }}>{formatRelativeDate(item.interaction_date)}</p>
+                  <p style={{ fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4 }}>
+                    {item.title || item.description || "Interaction"}
+                  </p>
+                  <p style={{ fontSize: "10px", color: "#9CA3AF", marginTop: "1px" }}>
+                    {item.interaction_date ? formatRelativeDate(item.interaction_date) : ""}
+                  </p>
                 </div>
               </div>
             ))
-            : <p style={{ fontSize: "12px", color: "#9CA3AF", fontStyle: "italic", margin: 0 }}>No interactions yet.</p>
+            : <p style={{ fontSize: "12px", color: "#9CA3AF", fontStyle: "italic" }}>No history yet.</p>
           }
           <button onClick={e => e.stopPropagation()} style={{
-            display: "flex", alignItems: "center", gap: "5px", marginTop: "6px",
-            padding: "6px 10px", background: "transparent",
-            border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
-            borderRadius: "6px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
-            cursor: "pointer", width: "100%", justifyContent: "center",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+            width: "100%", padding: "7px",
+            background: "transparent", border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
+            borderRadius: "7px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
+            cursor: "pointer", marginTop: "4px",
           }}>
             <Plus size={11} /> Log interaction
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== TAG MODAL ===== */
+function TagModal({ isOpen, onClose, contact, isDark, user, setLocalContacts }: {
+  isOpen: boolean; onClose: () => void; contact: any; isDark: boolean; user: any;
+  setLocalContacts: React.Dispatch<React.SetStateAction<any[]>>;
+}) {
+  if (!isOpen || !contact) return null;
+
+  const suggestedTags = ["Investor", "Mentor", "Collaborator", "Client", "Podcast Guest", "Friend", "Real Estate", "Creator"];
+
+  const addTag = async (tag: string) => {
+    const updated = [...(contact.tags || []), tag];
+    await supabase.from("contacts").update({ tags: updated } as any).eq("id", contact.id);
+    setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, tags: updated } : c));
+    contact.tags = updated; // update ref for modal
+  };
+
+  const removeTag = async (tag: string) => {
+    const updated = (contact.tags || []).filter((t: string) => t !== tag);
+    await supabase.from("contacts").update({ tags: updated } as any).eq("id", contact.id);
+    setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, tags: updated } : c));
+    contact.tags = updated;
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)",
+      zIndex: 50, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "15vh",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: isDark ? "#1C1C1E" : "white", borderRadius: "16px", padding: "24px",
+        maxWidth: "360px", width: "100%", boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>
+            Tags for {contact.name}
+          </h3>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF" }}>
+            <X size={16} />
+          </button>
+        </div>
+        {/* Current tags */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+          {(contact.tags || []).map((tag: string, i: number) => (
+            <span key={i} style={{
+              display: "inline-flex", alignItems: "center", gap: "4px",
+              padding: "4px 10px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF",
+              border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
+              borderRadius: "999px", fontSize: "12px", color: isDark ? "#C4B5FD" : "#7B5EA7", fontWeight: 500,
+            }}>
+              {tag}
+              <button onClick={() => removeTag(tag)} style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                color: "#9CA3AF", padding: "0 0 0 2px", lineHeight: 1,
+              }}>
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+          {(!contact.tags || contact.tags.length === 0) && (
+            <p style={{ fontSize: "12px", color: "#9CA3AF", fontStyle: "italic" }}>No tags yet</p>
+          )}
+        </div>
+        {/* Add tag input */}
+        <input
+          placeholder="Type a tag and press Enter"
+          onKeyDown={async e => {
+            if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+              const newTag = (e.target as HTMLInputElement).value.trim();
+              if (!(contact.tags || []).includes(newTag)) {
+                await addTag(newTag);
+              }
+              (e.target as HTMLInputElement).value = "";
+            }
+          }}
+          style={{
+            width: "100%", padding: "10px 14px", borderRadius: "8px", fontSize: "13px",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+            background: isDark ? "#252528" : "#F9FAFB", color: isDark ? "#F2F2F2" : "#111827",
+            outline: "none", boxSizing: "border-box", marginBottom: "12px",
+          }}
+        />
+        {/* Suggested */}
+        <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>Suggestions</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {suggestedTags.filter(t => !(contact.tags || []).includes(t)).map(tag => (
+            <button key={tag} onClick={() => addTag(tag)} style={{
+              padding: "4px 12px", borderRadius: "999px", fontSize: "12px",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              background: "transparent", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
+              cursor: "pointer",
+            }}>
+              + {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== IMPORT PREVIEW MODAL ===== */
+function ImportPreviewModal({ isOpen, onClose, contacts, selected, setSelected, onConfirm, isDark }: {
+  isOpen: boolean; onClose: () => void; contacts: any[]; selected: Set<number>;
+  setSelected: React.Dispatch<React.SetStateAction<Set<number>>>; onConfirm: () => void; isDark: boolean;
+}) {
+  if (!isOpen) return null;
+
+  const toggleAll = () => {
+    if (selected.size === contacts.length) setSelected(new Set());
+    else setSelected(new Set(contacts.map((_, i) => i)));
+  };
+
+  const toggle = (i: number) => {
+    const next = new Set(selected);
+    if (next.has(i)) next.delete(i);
+    else next.add(i);
+    setSelected(next);
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)",
+      zIndex: 50, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: "8vh",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: isDark ? "#1C1C1E" : "white", borderRadius: "20px", padding: "28px",
+        maxWidth: "600px", width: "100%", maxHeight: "70vh", display: "flex", flexDirection: "column",
+        boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+          <h2 style={{ fontSize: "18px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>
+            Import {contacts.length} Contacts
+          </h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF" }}>
+            <X size={18} />
+          </button>
+        </div>
+        <p style={{ fontSize: "13px", color: "#9CA3AF", marginBottom: "16px" }}>Review before importing</p>
+        {/* Select all */}
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px", padding: "10px 0",
+          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, marginBottom: "4px",
+        }}>
+          <input type="checkbox" checked={selected.size === contacts.length} onChange={toggleAll}
+            style={{ width: "16px", height: "16px", accentColor: "#10B981", cursor: "pointer" }}
+          />
+          <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151" }}>Select all</span>
+        </div>
+        {/* List */}
+        <div style={{ flex: 1, overflowY: "auto", marginBottom: "16px" }}>
+          {contacts.map((c, i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", gap: "10px", padding: "10px 0",
+              borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}`,
+            }}>
+              <input type="checkbox" checked={selected.has(i)} onChange={() => toggle(i)}
+                style={{ width: "16px", height: "16px", accentColor: "#10B981", cursor: "pointer" }}
+              />
+              <div style={{
+                width: "32px", height: "32px", borderRadius: "50%",
+                background: isDark ? "#252528" : "#F3F4F6",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "13px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", flexShrink: 0,
+              }}>
+                {c.name?.charAt(0).toUpperCase() || "?"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>{c.name}</p>
+                <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {[c.email, c.company].filter(Boolean).join(" · ") || "No details"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Buttons */}
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{
+            padding: "10px 20px", background: isDark ? "#252528" : "#F3F4F6", border: "none",
+            borderRadius: "10px", fontSize: "14px", fontWeight: 600,
+            color: isDark ? "rgba(255,255,255,0.6)" : "#374151", cursor: "pointer",
+          }}>Cancel</button>
+          <button onClick={onConfirm} disabled={selected.size === 0} style={{
+            padding: "10px 20px", background: "#10B981", border: "none", borderRadius: "10px",
+            fontSize: "14px", fontWeight: 600, color: "white", cursor: "pointer",
+            opacity: selected.size > 0 ? 1 : 0.5,
+          }}>
+            Import Selected ({selected.size})
           </button>
         </div>
       </div>
@@ -850,7 +1383,6 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
             <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company" style={inputStyle} />
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Job Title" style={inputStyle} />
           </div>
-          {/* Category */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Category</p>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -867,15 +1399,9 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
               ))}
             </div>
           </div>
-          {/* Status */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Status</p>
-            <select
-              value={status} onChange={e => setStatus(e.target.value)}
-              style={{
-                ...inputStyle, cursor: "pointer",
-              }}
-            >
+            <select value={status} onChange={e => setStatus(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
               {statuses.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
@@ -899,7 +1425,7 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
 
 /* EMAILS TAB CONTENT */
 function EmailsTabContent({ contacts, isDark, user }: {
-  contacts: Contact[]; isDark: boolean; user: any;
+  contacts: any[]; isDark: boolean; user: any;
 }) {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [contactSearch, setContactSearch] = useState("");
@@ -982,7 +1508,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
           <h2 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>AI Email Composer</h2>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {/* TO */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>To</p>
             <div style={{ position: "relative" }} ref={dropdownRef}>
@@ -1023,7 +1548,7 @@ function EmailsTabContent({ contacts, isDark, user }: {
                   {filteredContacts.length === 0 ? (
                     <p style={{ padding: "12px", fontSize: "13px", color: "#9CA3AF", margin: 0 }}>No contacts found</p>
                   ) : filteredContacts.slice(0, 8).map(c => (
-                    <div key={c.id} onClick={() => { setSelectedContact(c); setShowDropdown(false); setContactSearch(""); }}
+                    <div key={c.id} onClick={() => { setSelectedContact(c as any); setShowDropdown(false); setContactSearch(""); }}
                       style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}` }}
                       onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#1C1C1E" : "#F9FAFB")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
@@ -1041,7 +1566,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
               )}
             </div>
           </div>
-          {/* TONE */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Tone</p>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -1055,7 +1579,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
               ))}
             </div>
           </div>
-          {/* ABOUT */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>About (optional)</p>
             <input placeholder="e.g. Investment property..." value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
@@ -1067,7 +1590,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
               }}
             />
           </div>
-          {/* Generate */}
           <button onClick={generateDraft} disabled={!selectedContact || generating} style={{
             width: "100%", height: "44px", background: selectedContact ? "#7B5EA7" : (isDark ? "#333" : "#D1D5DB"),
             color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600,
@@ -1077,7 +1599,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
             {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {generating ? "Generating..." : "Generate Draft"}
           </button>
-          {/* Draft */}
           {generatedEmail && (
             <div style={{
               background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
