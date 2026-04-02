@@ -64,6 +64,7 @@ export default function InvestingTab() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [planModalOpen, setPlanModalOpen] = useState(false);
 
   // Fetch watchlist
   useEffect(() => {
