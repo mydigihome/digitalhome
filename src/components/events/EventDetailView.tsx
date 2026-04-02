@@ -626,7 +626,7 @@ Make them specific to this event.
           <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
             Preparation Timeline
           </p>
-          {projectTasks.length === 0 && !showAddStage ? (
+          {prepTasks.length === 0 && !showAddStage ? (
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
               <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
