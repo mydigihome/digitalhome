@@ -176,21 +176,28 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
     }
   };
 
+  const handleFetchPartiful = async () => {
+    setPartifulFetching(true);
+    setPartifulPreview(null);
+    setPartifulError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-partiful-event", { body: { url: partifulUrl } });
+      if (error || !data?.event?.name) {
+        setPartifulError("Could not fetch event details");
+        return;
+      }
+      setPartifulPreview(data.event);
+    } catch {
+      setPartifulError("Network error — check your connection");
+    } finally {
+      setPartifulFetching(false);
+    }
+  };
+
   const handlePartifulImport = async () => {
     setPartifulImporting(true);
     try {
-      let eventData = { ...partifulData };
-
-      if (partifulUrl.includes("partiful")) {
-        try {
-          const { data } = await supabase.functions.invoke("fetch-partiful-event", { body: { url: partifulUrl } });
-          if (data?.event) {
-            if (data.event.name) eventData.name = eventData.name || data.event.name;
-            if (data.event.description) eventData.description = eventData.description || data.event.description;
-          }
-        } catch { /* fallback to manual */ }
-      }
-
+      const eventData = partifulPreview || manualEventData;
       if (!eventData.name?.trim()) {
         toast.error("Event name is required");
         setPartifulImporting(false);
@@ -208,17 +215,20 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
 
       if (error) throw error;
 
-      if (newEvent && eventData.date) {
-        await generateHostStages(newEvent);
-      }
-
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       setPartifulModalOpen(false);
       setPartifulUrl("");
-      setPartifulData({});
+      setPartifulPreview(null);
+      setManualEventData({});
+      setShowManualEntry(false);
       toast.success(`${eventData.name} imported!`);
-    } catch {
-      toast.error("Import failed. Try adding manually.");
+
+      if (newEvent && eventData.date) {
+        generateHostStages(newEvent);
+      }
+    } catch (err: any) {
+      console.error("Import error:", err);
+      toast.error("Import failed. Try again.");
     } finally {
       setPartifulImporting(false);
     }
