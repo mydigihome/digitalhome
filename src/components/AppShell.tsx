@@ -83,6 +83,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
     { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
+    { icon: Wallet, label: "Money", path: "/finance/wealth", active: location.pathname === "/finance/wealth" || location.pathname === "/finance" },
+    { icon: LayoutGrid, label: "Applications", path: "/finance/applications", active: location.pathname === "/finance/applications" },
   ];
 
   const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
