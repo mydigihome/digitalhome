@@ -466,12 +466,32 @@ export default function Dashboard() {
                     <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" /> Live
                   </span>
                 </div>
-                <button onClick={() => setShowBrokerModal(true)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90">
-                  Trade
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 border-r border-border pr-2">
+                    <button
+                      onClick={() => { setChartSize("compact"); localStorage.setItem("dh_market_watch_size", "compact"); }}
+                      title="Compact"
+                      className={`w-7 h-7 flex items-center justify-center rounded-md transition ${chartSize === "compact" ? "bg-success/10 text-success" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <Minimize2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => { const next = chartSize === "expanded" ? "default" : "expanded"; setChartSize(next); localStorage.setItem("dh_market_watch_size", next); }}
+                      title="Expanded"
+                      className={`w-7 h-7 flex items-center justify-center rounded-md transition ${chartSize === "expanded" ? "bg-success/10 text-success" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <button onClick={() => setShowBrokerModal(true)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90">
+                    Trade
+                  </button>
+                </div>
               </div>
-              <TradingViewWidget />
+              <div style={{ height: chartHeightMap[chartSize] }}>
+                <TradingViewWidget />
+              </div>
             </div>
           </SortableCard>
         );
