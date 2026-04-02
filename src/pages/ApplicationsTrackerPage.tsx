@@ -867,44 +867,13 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
 
   return (
     <div>
-      <div className="flex items-center gap-2.5 mb-5">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
-        <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
-      </div>
-
-      {/* Pricing Banner */}
-      <div style={{
-        background: isDark ? "rgba(123,94,167,0.1)" : "linear-gradient(135deg, #F5F3FF, #EDE9FE)",
-        border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`,
-        borderRadius: 14, padding: "20px 24px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        marginBottom: 24, flexWrap: "wrap", gap: 16,
-      }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: isDark ? "#E9D5FF" : "#4C1D95", marginBottom: 4 }}>Career Templates</h3>
-          <p style={{ fontSize: 13, color: "#6B7280" }}>Preview any template free. Download individually or get all 4.</p>
+      {/* Section title */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Sparkles size={16} color="#10B981" />
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }} className="text-foreground">Career Templates</h2>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>Single template</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: "#7B5EA7" }}>$8</p>
-          </div>
-          <div style={{ width: 1, height: 40, background: isDark ? "rgba(255,255,255,0.1)" : "#DDD6FE" }} />
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>All 4 templates</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: "#10B981" }}>$25</p>
-          </div>
-          <button
-            onClick={openStripeForBundle}
-            style={{
-              padding: "10px 20px", background: "#10B981", color: "white",
-              border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
-              cursor: "pointer", whiteSpace: "nowrap",
-            }}
-          >
-            Get All 4 — $25
-          </button>
-        </div>
+        <p style={{ fontSize: 13 }} className="text-muted-foreground">Preview free · Purchase to download</p>
       </div>
 
       {/* 2x2 Template Grid */}
