@@ -256,15 +256,27 @@ export default function Dashboard() {
     }
   };
 
-  // Stock dropdown close
-  useEffect(() => {
-    if (!stockDropdownOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (!(e.target as HTMLElement).closest("[data-stock-dropdown]")) setStockDropdownOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [stockDropdownOpen]);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over || active.id === over.id) return;
+    if (leftOrder.includes(active.id as string)) {
+      setLeftOrder((prev) => {
+        const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
+        saveStoredJson("dh_left_column_order", next);
+        return next;
+      });
+    } else if (rightOrder.includes(active.id as string)) {
+      setRightOrder((prev) => {
+        const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
+        saveStoredJson("dh_right_column_order", next);
+        return next;
+      });
+    }
+  };
 
   const addTodo = useAddQuickTodo();
   const updateTodo = useUpdateQuickTodo();
