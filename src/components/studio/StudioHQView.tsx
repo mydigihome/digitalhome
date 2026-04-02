@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Calendar, LayoutGrid, Plus, UserPlus, X, ChevronLeft, ChevronRight,
   Clock, MessageSquare, Send, Trash2, ArrowRight, Lightbulb,
+  MoreHorizontal, Maximize2, MoveRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,14 +41,10 @@ interface Idea {
 }
 
 const STAGES = [
-  { id: "idea", label: "Idea", color: "#9CA3AF", bg: "#F9FAFB", border: "#E5E7EB" },
-  { id: "script", label: "Script", color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE" },
-  { id: "filming", label: "Filming", color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A" },
-  { id: "editing", label: "Editing", color: "#3B82F6", bg: "#EFF6FF", border: "#BFDBFE" },
-  { id: "review", label: "Review", color: "#EF4444", bg: "#FEF2F2", border: "#FECACA" },
-  { id: "approved", label: "Approved", color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0" },
-  { id: "scheduled", label: "Scheduled", color: "#06B6D4", bg: "#ECFEFF", border: "#A5F3FC" },
-  { id: "posted", label: "Posted", color: "#374151", bg: "#F3F4F6", border: "#E5E7EB" },
+  { id: "idea", label: "Ideas", color: "#9CA3AF" },
+  { id: "in_progress", label: "In Progress", color: "#F59E0B" },
+  { id: "scheduled", label: "Scheduled", color: "#3B82F6" },
+  { id: "posted", label: "Published", color: "#10B981" },
 ];
 
 const PLATFORMS = ["Instagram", "YouTube", "TikTok", "Twitter", "LinkedIn", "Multiple"];
@@ -72,6 +69,7 @@ export default function StudioHQView() {
   const [ideas, setIdeas] = useState<Idea[]>(MOCK_IDEAS);
   const [newIdea, setNewIdea] = useState("");
   const [invites, setInvites] = useState<StudioInvite[]>([]);
+  const [collaborators] = useState<any[]>([]);
 
   // Modals
   const [newContentOpen, setNewContentOpen] = useState(false);
@@ -80,6 +78,7 @@ export default function StudioHQView() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
+  const [cardMenuOpen, setCardMenuOpen] = useState<string | null>(null);
 
   // New content form
   const [formTitle, setFormTitle] = useState("");
@@ -364,24 +363,24 @@ export default function StudioHQView() {
 
         {calView === "pipeline" ? (
           /* KANBAN */
-          <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "8px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
             {STAGES.map(stage => {
               const cards = contentItems.filter(c => c.stage === stage.id);
               return (
                 <div key={stage.id} style={{
-                  minWidth: "200px", width: "200px", flexShrink: 0,
-                  background: isDark ? `${stage.color}14` : stage.bg,
-                  borderRadius: "10px",
-                  border: `1px solid ${isDark ? `${stage.color}33` : stage.border}`,
-                  padding: "12px",
+                  background: isDark ? "#1C1C1E" : "white",
+                  borderRadius: "12px",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                  padding: "16px",
+                  minHeight: "400px",
                 }}>
                   {/* Column header */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: stage.color }} />
-                    <span style={{ fontSize: "12px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
                       {stage.label}
                     </span>
-                    <span style={{ fontSize: "10px", color: "#9CA3AF", marginLeft: "auto" }}>{cards.length}</span>
+                    <span style={{ fontSize: "11px", color: "#9CA3AF", marginLeft: "auto", fontWeight: 500 }}>{cards.length}</span>
                   </div>
 
                   {/* Drop zone */}
@@ -391,65 +390,174 @@ export default function StudioHQView() {
                       const id = e.dataTransfer.getData("contentId");
                       if (id) handleStageDrop(id, stage.id);
                     }}
-                    style={{ minHeight: "200px", display: "flex", flexDirection: "column", gap: "8px" }}
+                    style={{ minHeight: "300px", display: "flex", flexDirection: "column", gap: "8px" }}
                   >
                     {cards.map(card => (
                       <div
                         key={card.id}
                         draggable
                         onDragStart={e => e.dataTransfer.setData("contentId", card.id)}
-                        onClick={() => setDetailCard(card)}
                         style={{
-                          background: isDark ? "#1C1C1E" : "white",
+                          background: isDark ? "#252528" : "white",
                           borderRadius: "10px",
-                          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-                          padding: "12px", cursor: "pointer",
+                          border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
+                          padding: "14px",
+                          cursor: "grab",
                           boxShadow: isDark ? "none" : "0 1px 3px rgba(0,0,0,0.06)",
                           transition: "all 150ms",
+                          position: "relative",
                         }}
                         onMouseEnter={e => {
                           (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "0 4px 12px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.1)";
-                          (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)";
+                          (e.currentTarget as HTMLDivElement).style.borderColor = isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB";
                         }}
                         onMouseLeave={e => {
                           (e.currentTarget as HTMLDivElement).style.boxShadow = isDark ? "none" : "0 1px 3px rgba(0,0,0,0.06)";
-                          (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
+                          (e.currentTarget as HTMLDivElement).style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6";
                         }}
                       >
-                        {/* Badges */}
-                        <div style={{ display: "flex", gap: "4px", marginBottom: "6px", flexWrap: "wrap" }}>
+                        {/* Platform + type tags */}
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
                           {card.platform && (
                             <span style={{
-                              padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 500,
-                              background: `${PLATFORM_COLORS[card.platform] || "#6366F1"}20`,
-                              color: PLATFORM_COLORS[card.platform] || "#6366F1",
+                              padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600,
+                              background: card.platform === "Instagram" ? "#FDF2F8" : card.platform === "YouTube" ? "#FEF2F2" : card.platform === "TikTok" ? "#F0FDF4" : card.platform === "Twitter" ? "#EFF6FF" : card.platform === "LinkedIn" ? "#EFF6FF" : "#F3F4F6",
+                              color: card.platform === "Instagram" ? "#BE185D" : card.platform === "YouTube" ? "#DC2626" : card.platform === "TikTok" ? "#065F46" : card.platform === "Twitter" ? "#1D4ED8" : card.platform === "LinkedIn" ? "#1D4ED8" : "#6B7280",
+                              border: "1px solid",
+                              borderColor: card.platform === "Instagram" ? "#FBCFE8" : card.platform === "YouTube" ? "#FECACA" : card.platform === "TikTok" ? "#BBF7D0" : "#BFDBFE",
                             }}>{card.platform}</span>
                           )}
                           {card.content_type && (
                             <span style={{
                               padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 500,
-                              background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
-                              color: "#9CA3AF",
+                              background: isDark ? "rgba(255,255,255,0.06)" : "#F9FAFB",
+                              color: "#6B7280", border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
                             }}>{card.content_type}</span>
                           )}
                         </div>
-                        <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 4px", lineHeight: "1.3", fontFamily: "Inter, sans-serif" }}>
+
+                        {/* Title — editable inline */}
+                        <p
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={async e => {
+                            const newTitle = e.currentTarget.textContent || "";
+                            if (newTitle && newTitle !== card.title) {
+                              await supabase.from("content_items").update({ title: newTitle }).eq("id", card.id);
+                              setContentItems(prev => prev.map(c => c.id === card.id ? { ...c, title: newTitle } : c));
+                            }
+                          }}
+                          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); (e.target as HTMLElement).blur(); } }}
+                          style={{
+                            fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827",
+                            lineHeight: "1.4", marginBottom: "10px", fontFamily: "Inter, sans-serif",
+                            outline: "none", cursor: "text", borderRadius: "4px", padding: "2px 4px",
+                            margin: "0 -4px 10px", transition: "background 150ms",
+                          }}
+                          onFocus={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB"; e.currentTarget.style.outline = "2px solid #10B981"; }}
+                          onBlurCapture={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.outline = "none"; }}
+                        >
                           {card.title}
                         </p>
+
+                        {/* Due date */}
                         {card.due_date && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "6px" }}>
-                            <Clock size={10} color="#9CA3AF" />
-                            <span style={{ fontSize: "11px", color: "#9CA3AF" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px" }}>
+                            <Calendar size={11} color={new Date(card.due_date) < new Date() ? "#EF4444" : "#9CA3AF"} />
+                            <span style={{
+                              fontSize: "11px", fontFamily: "Inter, sans-serif",
+                              color: new Date(card.due_date) < new Date() ? "#EF4444" : "#6B7280",
+                            }}>
                               {new Date(card.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </span>
+                            {new Date(card.due_date) < new Date() && (
+                              <span style={{ fontSize: "10px", color: "#EF4444", fontWeight: 600 }}>Overdue</span>
+                            )}
                           </div>
                         )}
-                        {(card.comment_count || 0) > 0 && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "3px", marginTop: "6px" }}>
-                            <MessageSquare size={10} color="#9CA3AF" />
-                            <span style={{ fontSize: "10px", color: "#9CA3AF" }}>{card.comment_count}</span>
-                          </div>
+
+                        {/* Caption preview */}
+                        {card.caption_notes && (
+                          <p style={{
+                            fontSize: "11px", color: "#9CA3AF", lineHeight: "1.4", marginBottom: "10px",
+                            fontFamily: "Inter, sans-serif", overflow: "hidden",
+                            display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                          }}>{card.caption_notes}</p>
                         )}
+
+                        {/* Divider */}
+                        <div style={{ height: "1px", background: isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB", margin: "10px -14px" }} />
+
+                        {/* Footer */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            {[card.assigned_to, card.created_by].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).map((userId, i) => {
+                              const person = userId === user?.id ? user : collaborators?.find((c: any) => c.id === userId);
+                              return (
+                                <div key={i} title={(person as any)?.full_name || (person as any)?.email || "Unknown"} style={{
+                                  width: "24px", height: "24px", borderRadius: "50%",
+                                  border: "2px solid white", background: i === 0 ? "#F5F3FF" : "#F0FDF4",
+                                  overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: "9px", fontWeight: 700, color: i === 0 ? "#7B5EA7" : "#065F46",
+                                  marginLeft: i > 0 ? "-6px" : "0", boxShadow: "0 0 0 2px white",
+                                }}>
+                                  {((person as any)?.full_name || (person as any)?.email || "?").charAt(0).toUpperCase()}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            {(card.comment_count || 0) > 0 && (
+                              <div style={{ display: "flex", alignItems: "center", gap: "3px", color: "#9CA3AF" }}>
+                                <MessageSquare size={11} />
+                                <span style={{ fontSize: "11px" }}>{card.comment_count}</span>
+                              </div>
+                            )}
+                            <div style={{ position: "relative" }}>
+                              <button
+                                onClick={e => { e.stopPropagation(); setCardMenuOpen(cardMenuOpen === card.id ? null : card.id); }}
+                                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "2px", borderRadius: "4px", display: "flex", alignItems: "center" }}>
+                                <MoreHorizontal size={13} />
+                              </button>
+                              {cardMenuOpen === card.id && (
+                                <div style={{
+                                  position: "absolute", right: 0, top: "100%", zIndex: 50,
+                                  background: isDark ? "#1C1C1E" : "white", borderRadius: "10px",
+                                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)", minWidth: "160px", overflow: "hidden",
+                                }}>
+                                  {[
+                                    { label: "Open details", Icon: Maximize2, action: () => setDetailCard(card) },
+                                    { label: "Move to...", Icon: MoveRight, action: () => {} },
+                                  ].map(item => (
+                                    <button key={item.label} onClick={() => { item.action(); setCardMenuOpen(null); }}
+                                      style={{
+                                        width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px",
+                                        border: "none", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+                                        background: "transparent", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151",
+                                        cursor: "pointer", textAlign: "left", fontFamily: "Inter, sans-serif",
+                                      }}>
+                                      <item.Icon size={13} color="#9CA3AF" /> {item.label}
+                                    </button>
+                                  ))}
+                                  <button onClick={async () => {
+                                    if (window.confirm("Delete this content?")) {
+                                      await supabase.from("content_items").delete().eq("id", card.id);
+                                      setContentItems(prev => prev.filter(c => c.id !== card.id));
+                                    }
+                                    setCardMenuOpen(null);
+                                  }} style={{
+                                    width: "100%", padding: "10px 14px", display: "flex", alignItems: "center", gap: "8px",
+                                    border: "none", background: "transparent", fontSize: "13px", color: "#DC2626",
+                                    cursor: "pointer", textAlign: "left", fontFamily: "Inter, sans-serif",
+                                  }}>
+                                    <Trash2 size={13} color="#DC2626" /> Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
 
@@ -497,46 +605,52 @@ export default function StudioHQView() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px", background: isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB", borderRadius: "8px", overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px", minHeight: "400px" }}>
               {weekDates.map((date, i) => {
                 const dateStr = date.toISOString().split("T")[0];
-                const dayItems = contentItems.filter(c => c.due_date === dateStr);
+                const dayItems = contentItems.filter(c => c.due_date && new Date(c.due_date).toDateString() === date.toDateString());
                 const isToday = new Date().toDateString() === date.toDateString();
                 return (
-                  <div key={i}
-                    onClick={() => {
-                      setFormDueDate(dateStr);
-                      setFormStage("idea");
-                      setNewContentOpen(true);
-                    }}
-                    style={{
-                      background: isDark ? "#1C1C1E" : "white",
-                      minHeight: "140px", padding: "8px", cursor: "pointer",
-                    }}>
+                  <div key={i} style={{
+                    background: isDark ? (isToday ? "rgba(16,185,129,0.08)" : "#252528") : (isToday ? "#F0FDF4" : "#F9FAFB"),
+                    border: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
+                    borderRadius: "10px", padding: "10px", minHeight: "300px",
+                  }}>
                     <div style={{
-                      fontSize: "10px", fontWeight: 600, color: isToday ? "#10B981" : "#9CA3AF",
-                      textTransform: "uppercase", marginBottom: "6px", fontFamily: "Inter, sans-serif",
+                      textAlign: "center", marginBottom: "10px", paddingBottom: "8px",
+                      borderBottom: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
                     }}>
-                      {date.toLocaleDateString("en-US", { weekday: "short" })} {date.getDate()}
+                      <p style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "Inter, sans-serif", margin: 0 }}>
+                        {date.toLocaleDateString("en-US", { weekday: "short" })}
+                      </p>
+                      <p style={{ fontSize: "18px", fontWeight: isToday ? 800 : 500, color: isToday ? "#10B981" : (isDark ? "#F2F2F2" : "#111827"), fontFamily: "Inter, sans-serif", margin: "2px 0 0" }}>
+                        {date.getDate()}
+                      </p>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      {dayItems.map(item => (
-                        <div key={item.id}
-                          onClick={e => { e.stopPropagation(); setDetailCard(item); }}
-                          style={{
-                            padding: "4px 8px", borderRadius: "6px", cursor: "pointer",
-                            borderLeft: `3px solid ${PLATFORM_COLORS[item.platform || ""] || "#9CA3AF"}`,
-                            background: isDark ? "#252528" : "#F9FAFB",
-                          }}>
-                          <p style={{ fontSize: "11px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {item.title.substring(0, 30)}
-                          </p>
-                          <p style={{ fontSize: "9px", color: "#9CA3AF", margin: 0 }}>
+                    {dayItems.map(item => (
+                      <div key={item.id} onClick={() => setDetailCard(item)} style={{
+                        padding: "6px 8px", borderRadius: "6px", marginBottom: "5px", cursor: "pointer",
+                        background: item.platform === "Instagram" ? "#FDF2F8" : item.platform === "YouTube" ? "#FEF2F2" : item.platform === "TikTok" ? "#F0FDF4" : item.platform === "Twitter" ? "#EFF6FF" : "#F5F3FF",
+                        borderLeft: "3px solid",
+                        borderColor: item.platform === "Instagram" ? "#BE185D" : item.platform === "YouTube" ? "#DC2626" : item.platform === "TikTok" ? "#065F46" : item.platform === "Twitter" ? "#1D4ED8" : "#7B5EA7",
+                      }}>
+                        <p style={{ fontSize: "11px", fontWeight: 600, color: "#111827", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "0 0 2px" }}>
+                          {item.title}
+                        </p>
+                        {item.platform && (
+                          <p style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>
                             {item.platform}{item.content_type ? ` · ${item.content_type}` : ""}
                           </p>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    ))}
+                    <button onClick={() => { setFormDueDate(dateStr); setFormStage("idea"); setNewContentOpen(true); }}
+                      style={{
+                        width: "100%", padding: "5px", background: "transparent",
+                        border: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                        borderRadius: "6px", fontSize: "11px", color: "#D1D5DB",
+                        cursor: "pointer", fontFamily: "Inter, sans-serif", marginTop: "4px",
+                      }}>+ Add</button>
                   </div>
                 );
               })}
