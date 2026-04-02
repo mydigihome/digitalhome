@@ -43,10 +43,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
-  useSensor, useSensors, DragEndEvent,
+  useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay,
 } from "@dnd-kit/core";
 import {
-  arrayMove, SortableContext, useSortable, verticalListSortingStrategy,
+  arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
