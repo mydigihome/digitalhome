@@ -135,7 +135,7 @@ export default function JournalPage() {
       }
       doc.setFontSize(12);
       doc.setTextColor(55, 65, 81);
-      const text = (entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 2000);
+      const text = String(entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 2000);
       const lines = doc.splitTextToSize(text, 170);
       doc.text(lines, 20, y);
       if (entry.audio_url) {
