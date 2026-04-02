@@ -79,13 +79,15 @@ interface Props {
   projectId: string;
   projectName: string;
   coverImage?: string | null;
+  projectData?: any;
 }
 
-export default function EventDetailView({ projectId, projectName, coverImage }: Props) {
+export default function EventDetailView({ projectId, projectName, coverImage, projectData }: Props) {
   const navigate = useNavigate();
   const { data: event } = useEventDetails(projectId);
   const { data: guests = [] } = useEventGuests(event?.id);
   const { data: questions = [] } = useRsvpQuestions(event?.id);
+  const { data: projectTasks = [] } = useTasks(projectId);
   const addGuests = useAddEventGuests();
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
@@ -103,8 +105,30 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   const [emailBody, setEmailBody] = useState("");
   const [showCoHostInvite, setShowCoHostInvite] = useState(false);
   const [coHostEmail, setCoHostEmail] = useState("");
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  if (!event) return null;
+  // Use event_details data, falling back to project-level data for imported events
+  const effectiveEvent = event || (projectData ? {
+    id: projectId,
+    project_id: projectId,
+    event_date: projectData.event_date || projectData.end_date,
+    location: projectData.location,
+    description: projectData.description || projectData.goal,
+    event_type: "event",
+    privacy: "private",
+    share_token: "",
+    location_type: "in_person",
+    shared_album_enabled: false,
+    external_link_url: null,
+    external_link_label: null,
+    playlist_url: null,
+    background_style: "default",
+    rsvp_deadline: null,
+    created_at: projectData.created_at,
+    updated_at: projectData.updated_at,
+  } as any : null);
+
+  if (!effectiveEvent) return null;
 
   const counts = {
     total: guests.length,
