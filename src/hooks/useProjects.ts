@@ -68,11 +68,19 @@ export function useUpdateProject() {
 
 export function useDeleteProject() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("projects").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+    onSuccess: async () => {
+      const projectsQueryKey = ["projects", user?.id] as const;
+      await qc.resetQueries();
+      await qc.refetchQueries({ type: "active" });
+      await qc.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
+      await qc.refetchQueries({ queryKey: projectsQueryKey });
+      window.dispatchEvent(new Event("focus"));
+    },
   });
 }

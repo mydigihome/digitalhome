@@ -107,21 +107,17 @@ export default function Projects() {
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
 
-      // Force refetch — await to ensure UI updates
-      await queryClient.refetchQueries({ queryKey: ["projects"] });
-      await queryClient.refetchQueries({ queryKey: ["tasks"] });
+      await queryClient.resetQueries();
+      await queryClient.refetchQueries({ type: "active" });
+      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
+      window.dispatchEvent(new Event("focus"));
 
       if (failed > 0) {
         toast.error(`${succeeded} deleted, ${failed} failed`);
       } else {
         toast.success(`${succeeded} item${succeeded > 1 ? "s" : ""} deleted`);
       }
-
-      await queryClient.resetQueries();
-      await queryClient.refetchQueries({ type: "active" });
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
     } catch (err) {
       console.error("Bulk delete error:", err);
       await queryClient.resetQueries();
