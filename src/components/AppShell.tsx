@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard, Bell } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
 import { WaitlistModal } from "@/components/content-planner/WaitlistModal";
+import NotificationPanel from "@/components/notifications/NotificationPanel";
 
 // Context for sidebar collapsed state
 const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
