@@ -879,7 +879,7 @@ export default function Dashboard() {
       )}
       {showBrokerModal && (
         <BrokerSelectionModal
-          pair={{ id: selectedStock, user_id: "", symbol: selectedStock, display_name: selectedStockName, category: "Stocks", is_active: true, sort_order: 0, created_at: "" } as TradingPair}
+          pair={{ id: "AAPL", user_id: "", symbol: "AAPL", display_name: "Apple Inc.", category: "Stocks", is_active: true, sort_order: 0, created_at: "" } as TradingPair}
           onClose={() => setShowBrokerModal(false)}
         />
       )}
