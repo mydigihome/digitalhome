@@ -56,7 +56,7 @@ export default function StudioPage() {
                     cursor: "pointer",
                     fontFamily: "Inter, sans-serif",
                     transition: "all 150ms ease",
-                    boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                    boxShadow: isActive ? "0 2px 8px rgba(16,185,129,0.3)" : "none",
                   }}
                   onMouseEnter={e => {
                     if (!isActive) {
