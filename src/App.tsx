@@ -73,6 +73,9 @@ const App = () => (
             {/* Old onboarding route disabled */}
             <Route path="/welcome" element={<ProtectedRoute><NewOnboarding /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
+            <Route path="/journal/new" element={<ProtectedRoute><JournalEntryPage /></ProtectedRoute>} />
+            <Route path="/journal/:id" element={<ProtectedRoute><JournalEntryPage /></ProtectedRoute>} />
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
