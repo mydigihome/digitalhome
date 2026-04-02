@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, useContactInteractions, useCreateInteraction, type Contact } from "@/hooks/useContacts";
 import { useGmailConnection, useConnectGmail } from "@/hooks/useGmail";
@@ -10,8 +10,9 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Search, Plus, Mail, Phone, MapPin, Briefcase, Pencil, Trash2,
   Sparkles, Loader2, RotateCw, BookOpen, FolderPlus, CheckSquare,
-  Linkedin, Users, ChevronDown, X
+  Linkedin, Users, ChevronDown, X, Check
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
 import EmailView from "./views/EmailView";
 import ComposeModal from "./modals/ComposeModal";
@@ -46,6 +47,7 @@ function getCategoryFromType(type: string | null): string {
 
 export default function ContactsPage() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { data: contacts = [], isLoading } = useContacts();
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
@@ -53,6 +55,8 @@ export default function ContactsPage() {
   const { data: gmailConnection } = useGmailConnection();
   const { connect: connectGmail, connecting } = useConnectGmail();
   const queryClient = useQueryClient();
+  const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const noteTimers = useRef<Record<string, any>>({});
 
   const [activeTab, setActiveTab] = useState("Overview");
   const [filter, setFilter] = useState("All");
@@ -498,7 +502,12 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
                         isDark={isDark}
                         onEdit={() => { setEditContact(contact); setAddContactOpen(true); }}
                         onDelete={() => handleDeleteContact(contact.id)}
-                        onEmail={() => { setSelectedContact(contact); setEmailTone("cold"); setGeneratedEmail(""); }}
+                        onEmail={() => { setSelectedContact(contact); setActiveTab("Emails"); }}
+                        noteValues={noteValues}
+                        setNoteValues={setNoteValues}
+                        noteTimers={noteTimers}
+                        user={user}
+                        navigate={navigate}
                       />
                     )}
                   </div>
@@ -545,107 +554,172 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 }
 
 /* EXPANDED CONTACT ROW */
-function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEmail }: {
+function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEmail, noteValues, setNoteValues, noteTimers, user, navigate }: {
   contact: Contact; category: string; isDark: boolean;
   onEdit: () => void; onDelete: () => void; onEmail: () => void;
+  noteValues: Record<string, string>;
+  setNoteValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  noteTimers: React.MutableRefObject<Record<string, any>>;
+  user: any; navigate: any;
 }) {
   const { data: interactions = [] } = useContactInteractions(contact.id);
 
   return (
-    <div style={{
-      border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
-      borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.03)" : "#F3F4F6"}`,
-      background: isDark ? "#111112" : "#FAFAFA", padding: "20px 24px",
-      display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px",
-    }}>
-      {/* COLUMN 1: Last interactions */}
-      <div>
-        <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", margin: "0 0 12px" }}>Last Interactions</h4>
-        {interactions.length > 0 ? interactions.slice(0, 3).map((interaction, i) => (
-          <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "flex-start" }}>
-            <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", flexShrink: 0, marginTop: "6px" }} />
-            <div>
-              <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4, margin: 0 }}>{interaction.title || interaction.description || "Interaction"}</p>
-              <p style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px", margin: "2px 0 0" }}>{formatRelativeDate(interaction.interaction_date)}</p>
-            </div>
-          </div>
-        )) : (
-          <p style={{ fontSize: "13px", color: "#9CA3AF", fontStyle: "italic", margin: 0 }}>No interactions yet</p>
-        )}
-      </div>
-
-      {/* COLUMN 2: Quick actions */}
-      <div>
-        <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px", margin: "0 0 12px" }}>Quick Actions</h4>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <button onClick={(e) => { e.stopPropagation(); }} style={{
-            display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
-            background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-            borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151",
-            cursor: "pointer", textAlign: "left", width: "100%",
+    <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#FAFAFA" }}>
+      {/* BANNER */}
+      <div style={{ height: "80px", background: "linear-gradient(135deg, #7B5EA7, #10B981)", position: "relative" }}>
+        {/* Avatar over banner */}
+        <div style={{
+          position: "absolute", bottom: "-24px", left: "24px", width: "56px", height: "56px",
+          borderRadius: "50%", border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
+          background: isDark ? "rgba(123,94,167,0.3)" : "#F5F3FF",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "20px", fontWeight: 800, color: "#7B5EA7", overflow: "hidden",
+        }}>
+          {contact.photo_url
+            ? <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+            : contact.name.charAt(0).toUpperCase()
+          }
+        </div>
+        {/* Edit + Delete buttons */}
+        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "8px" }}>
+          <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
+            padding: "6px 12px", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: "6px", color: "white", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px",
           }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <FolderPlus size={14} color="#7B5EA7" />
-            </div>
-            Create Project
+            <Pencil size={11} /> Edit
           </button>
-          <button onClick={(e) => { e.stopPropagation(); }} style={{
-            display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
-            background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-            borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151",
-            cursor: "pointer", textAlign: "left", width: "100%",
+          <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
+            padding: "6px 12px", background: "rgba(220,38,38,0.2)", border: "1px solid rgba(220,38,38,0.3)",
+            borderRadius: "6px", color: "#FCA5A5", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px",
           }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CheckSquare size={14} color="#10B981" />
-            </div>
-            Create Task
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onEmail(); }} style={{
-            display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
-            background: "#10B981", border: "none", borderRadius: "8px", fontSize: "13px",
-            fontWeight: 600, color: "white", cursor: "pointer", textAlign: "left", width: "100%",
-          }}>
-            <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Mail size={14} color="white" />
-            </div>
-            Send Email
+            <Trash2 size={11} /> Delete
           </button>
         </div>
       </div>
 
-      {/* COLUMN 3: Details */}
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-          <h4 style={{ fontSize: "12px", fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.5px", margin: 0 }}>Details</h4>
-          <div style={{ display: "flex", gap: "4px" }}>
-            <button onClick={(e) => { e.stopPropagation(); onEdit(); }} style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", borderRadius: "4px", color: "#9CA3AF" }}>
-              <Pencil size={13} />
+      {/* CONTENT - 4 columns */}
+      <div style={{ padding: "36px 24px 24px", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr", gap: "24px" }}>
+        {/* COL 1 — Identity */}
+        <div>
+          <h3 style={{ fontSize: "18px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "4px", margin: "0 0 4px" }}>{contact.name}</h3>
+          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", marginBottom: "14px", margin: "0 0 14px" }}>
+            {[contact.title, contact.company].filter(Boolean).join(" · ")}
+          </p>
+          {[
+            { Icon: Mail, value: contact.email, href: contact.email ? `mailto:${contact.email}` : undefined },
+            { Icon: Phone, value: contact.phone, href: contact.phone ? `tel:${contact.phone}` : undefined },
+            { Icon: MapPin, value: (contact as any).location },
+            { Icon: Briefcase, value: contact.company },
+          ].filter(i => i.value).map(({ Icon, value, href }, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <Icon size={13} color="#9CA3AF" />
+              {href ? (
+                <a href={href} onClick={e => e.stopPropagation()} style={{ fontSize: "13px", color: "#10B981", textDecoration: "none" }}>{value}</a>
+              ) : (
+                <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.7)" : "#374151" }}>{value}</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* COL 2 — Quick Actions */}
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Quick Actions</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <button onClick={e => { e.stopPropagation(); onEmail(); }} style={{
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: "#10B981", color: "white", border: "none", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+            }}>
+              <Mail size={13} /> Send Email
             </button>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} style={{ padding: "4px", border: "none", background: "transparent", cursor: "pointer", borderRadius: "4px", color: "#9CA3AF" }}>
-              <Trash2 size={13} />
+            <button onClick={e => { e.stopPropagation(); navigate("/projects"); }} style={{
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+            }}>
+              <FolderPlus size={13} color="#7B5EA7" /> Create Project
             </button>
+            <button onClick={e => e.stopPropagation()} style={{
+              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+            }}>
+              <CheckSquare size={13} color="#10B981" /> Create Task
+            </button>
+          </div>
+          <div style={{ marginTop: "16px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px", margin: "0 0 6px" }}>Last Contacted</p>
+            <p style={{
+              fontSize: "13px", margin: 0,
+              color: contact.last_contacted_date ? (isDark ? "#F2F2F2" : "#111827") : "#9CA3AF",
+              fontStyle: contact.last_contacted_date ? "normal" : "italic",
+            }}>
+              {contact.last_contacted_date
+                ? new Date(contact.last_contacted_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : "Never contacted"}
+            </p>
           </div>
         </div>
-        {[
-          { icon: Mail, label: contact.email || "—" },
-          { icon: Phone, label: contact.phone || "—" },
-          { icon: Briefcase, label: contact.company || "—" },
-          { icon: MapPin, label: (contact as any).location || "—" },
-        ].map(({ icon: Icon, label }, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-            <Icon size={13} color="#9CA3AF" />
-            <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.7)" : "#374151" }}>{label}</span>
-          </div>
-        ))}
-        {contact.notes && (
-          <div style={{
-            marginTop: "10px", padding: "10px",
-            background: isDark ? "#1C1C1E" : "#F9FAFB", borderRadius: "8px",
-            fontSize: "12px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", lineHeight: 1.5,
+
+        {/* COL 3 — Notes inline editable */}
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Notes</p>
+          <textarea
+            value={noteValues[contact.id] ?? contact.notes ?? ""}
+            onChange={e => {
+              const val = e.target.value;
+              setNoteValues(prev => ({ ...prev, [contact.id]: val }));
+              clearTimeout(noteTimers.current[contact.id]);
+              noteTimers.current[contact.id] = setTimeout(async () => {
+                await supabase.from("contacts").update({ notes: val } as any).eq("id", contact.id);
+              }, 1000);
+            }}
+            onClick={e => e.stopPropagation()}
+            placeholder="Add notes... autosaves as you type."
+            style={{
+              width: "100%", minHeight: "120px", padding: "10px 12px",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              borderRadius: "8px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151",
+              lineHeight: 1.6, resize: "vertical", outline: "none",
+              background: isDark ? "#1C1C1E" : "white", boxSizing: "border-box", fontFamily: "inherit",
+            }}
+            onFocus={e => { e.target.style.borderColor = "#10B981"; e.target.style.boxShadow = "0 0 0 2px rgba(16,185,129,0.1)"; }}
+            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; e.target.style.boxShadow = "none"; }}
+          />
+          <p style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px", margin: "4px 0 0" }}>
+            <Check size={10} /> Autosaves as you type
+          </p>
+        </div>
+
+        {/* COL 4 — Interactions */}
+        <div>
+          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Interactions</p>
+          {interactions.length > 0
+            ? interactions.slice(0, 3).map((item, i) => (
+              <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", flexShrink: 0, marginTop: "5px" }} />
+                <div>
+                  <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4, margin: 0 }}>{item.title || item.description || "Interaction"}</p>
+                  <p style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px", margin: "2px 0 0" }}>{formatRelativeDate(item.interaction_date)}</p>
+                </div>
+              </div>
+            ))
+            : <p style={{ fontSize: "13px", color: "#9CA3AF", fontStyle: "italic", margin: 0 }}>No interactions yet.</p>
+          }
+          <button onClick={e => e.stopPropagation()} style={{
+            display: "flex", alignItems: "center", gap: "6px", marginTop: "8px",
+            padding: "7px 12px", background: "transparent",
+            border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
+            borderRadius: "6px", fontSize: "12px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
+            cursor: "pointer", width: "100%", justifyContent: "center",
           }}>
-            {contact.notes}
-          </div>
-        )}
+            <Plus size={12} /> Log interaction
+          </button>
+        </div>
       </div>
     </div>
   );
