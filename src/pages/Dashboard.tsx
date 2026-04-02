@@ -7,6 +7,8 @@ import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo 
 import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useUserFinances } from "@/hooks/useUserFinances";
+import { useLoans } from "@/hooks/useLoans";
 import { useContacts } from "@/hooks/useContacts";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
