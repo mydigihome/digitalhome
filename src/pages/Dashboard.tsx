@@ -885,7 +885,7 @@ export default function Dashboard() {
       </div>
 
       {/* ═══ MODALS ═══ */}
-      <JournalEntryModal open={journalModalOpen} onClose={() => setJournalModalOpen(false)} />
+      {/* JournalEntryModal removed — now uses /journal route */}
       <QuickAddModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
