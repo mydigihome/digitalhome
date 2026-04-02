@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useProjects, useDeleteProject, useUpdateProject } from "@/hooks/useProjects";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -34,14 +34,17 @@ export default function Projects() {
   const { data: projects = [], isLoading } = useProjects();
   const { data: tasks = [] } = useAllTasks();
   const queryClient = useQueryClient();
-  const projectsQueryKey = ["projects", user?.id] as const;
-  const deleteProject = useDeleteProject();
+  const location = useLocation();
+  const deletedProjectIdsFromRoute = ((location.state as { deletedProjectIds?: string[] } | null)?.deletedProjectIds) ?? [];
+  const deletedProjectIdsKey = deletedProjectIdsFromRoute.join("|");
 
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
+  const [projectCards, setProjectCards] = useState<typeof projects>([]);
+  const [removedProjectIds, setRemovedProjectIds] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Bulk selection
@@ -62,7 +65,17 @@ export default function Projects() {
 
   const isDark = document.documentElement.classList.contains("dark");
 
-  const filtered = projects
+  useEffect(() => {
+    if (deletedProjectIdsFromRoute.length === 0) return;
+    setRemovedProjectIds((prev) => [...new Set([...prev, ...deletedProjectIdsFromRoute])]);
+  }, [deletedProjectIdsKey]);
+
+  useEffect(() => {
+    const hiddenIds = new Set(removedProjectIds);
+    setProjectCards(projects.filter((project) => !hiddenIds.has(project.id)));
+  }, [projects, removedProjectIds]);
+
+  const filtered = projectCards
     .filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()))
     .filter(p => statusFilter === "all" || !p.archived);
 
@@ -83,44 +96,28 @@ export default function Projects() {
 
     const idsToDelete = [...selectedIds];
     const count = idsToDelete.length;
+
+    setRemovedProjectIds((prev) => [...new Set([...prev, ...idsToDelete])]);
+    setProjectCards((prev) => prev.filter((item) => !idsToDelete.includes(item.id)));
     setSelectedIds([]);
     setSelectMode(false);
 
     console.log("Bulk deleting:", idsToDelete);
 
     try {
-      // Delete associated tasks first
-      await supabase.from("tasks").delete().in("project_id", idsToDelete);
-
-      // Delete projects one by one for reliability
-      const results = await Promise.all(
-        idsToDelete.map(async id => {
-          const { error } = await supabase.from("projects").delete().eq("id", id);
-          if (error) {
-            console.error("Failed to delete", id, error);
-            return { id, success: false, error };
-          }
-          return { id, success: true };
-        })
-      );
-
-      const succeeded = results.filter(r => r.success).length;
-      const failed = results.filter(r => !r.success).length;
-
-      // Force UI update by removing deleted items from the cache, then refetch
-      queryClient.setQueryData(projectsQueryKey, (old: any[]) =>
-        old ? old.filter((p: any) => !idsToDelete.includes(p.id)) : []
-      );
-      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
-
-      if (failed > 0) {
-        toast.error(`${succeeded} deleted, ${failed} failed`);
-      } else {
-        toast.success(`${succeeded} item${succeeded > 1 ? "s" : ""} deleted`);
+      const { error: tasksError } = await supabase.from("tasks").delete().in("project_id", idsToDelete);
+      if (tasksError) {
+        console.error("Delete from tasks:", tasksError);
       }
+
+      const { error } = await supabase.from("projects").delete().in("id", idsToDelete);
+      if (error) {
+        console.error("Delete from projects:", error);
+      }
+
+      toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
     } catch (err) {
       console.error("Bulk delete error:", err);
-      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
       toast.error("Delete failed. Please try again.");
     }
   };
@@ -137,62 +134,6 @@ export default function Projects() {
       toast.success(`${count} item${count > 1 ? "s" : ""} archived`);
     } catch {
       toast.error("Archive failed.");
-    }
-  };
-
-  // AI host stages generator
-  const generateAIEventStages = async (event: any) => {
-    const eventDate = event.event_date || event.end_date || event.start_date;
-    console.log("generateAIEventStages called for:", event.id, event.name, "eventDate:", eventDate);
-    if (!eventDate) {
-      console.warn("No event date found, skipping AI stages");
-      return;
-    }
-    const date = new Date(eventDate);
-    const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
-
-    const prompt = `You are an event planning expert. Create exactly 5 simple preparation tasks for this event:
-Event: ${event.name}
-Date: ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-Days until event: ${daysUntil}
-${event.location ? `Location: ${event.location}` : ""}
-${event.description ? `Details: ${event.description}` : ""}
-
-Return ONLY valid JSON array, nothing else:
-[{"title":"Task name","days_before":14,"category":"Category"}]
-Keep tasks simple and practical. 5 tasks maximum.
-Categories: Planning / Guests / Venue / Food / Day-of`;
-
-    try {
-      const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
-      const text = data?.plan || "";
-      const start = text.indexOf("[");
-      const end = text.lastIndexOf("]");
-      if (start === -1 || end === -1) return;
-      const stages = JSON.parse(text.substring(start, end + 1));
-      if (!Array.isArray(stages)) return;
-
-      const newTasks = stages.slice(0, 5).map((s: any, i: number) => ({
-        project_id: event.id,
-        user_id: user!.id,
-        title: s.title,
-        status: "backlog",
-        priority: "medium",
-        position: i,
-        ai_generated: true,
-      }));
-
-      console.log("Inserting AI tasks:", newTasks);
-      const { data: inserted, error: insertError } = await supabase.from("tasks").insert(newTasks).select();
-      console.log("Insert result:", inserted, insertError);
-      if (insertError) {
-        console.error("Task insert error:", insertError);
-        return;
-      }
-      queryClient.invalidateQueries({ queryKey: ["tasks"], refetchType: "all" });
-      toast.success(`${newTasks.length} AI prep tasks created!`);
-    } catch (error) {
-      console.error("Failed to generate stages:", error);
     }
   };
 
@@ -259,22 +200,24 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
         location_type: "in_person",
       }, { onConflict: "project_id" });
 
-      await queryClient.refetchQueries({ queryKey: ["projects"] });
+      const importedProject = {
+        ...newEvent,
+        event_date: eventData.date || eventData.event_date || null,
+        end_date: eventData.date || null,
+        location: eventData.location || null,
+        description: eventData.description || null,
+        host_name: eventData.host || null,
+        image_url: eventData.image_url || null,
+        cover_image: eventData.image_url || null,
+      };
+
+      setProjectCards((prev) => [importedProject as (typeof projects)[number], ...prev.filter((item) => item.id !== newEvent.id)]);
       setPartifulModalOpen(false);
       setPartifulUrl("");
       setPartifulPreview(null);
       setManualEventData({});
       setShowManualEntry(false);
       toast.success(`${eventData.name} imported!`);
-
-      if (newEvent) {
-        generateAIEventStages({
-          ...newEvent,
-          event_date: eventData.date || eventData.event_date,
-          location: eventData.location,
-          description: eventData.description,
-        });
-      }
     } catch (err: any) {
       console.error("Import error:", err);
       toast.error("Import failed. Try again.");
@@ -345,11 +288,8 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
     }
 
     return (
-      <motion.div
+      <div
         key={project.id}
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
         className="group relative cursor-pointer rounded-3xl bg-card overflow-hidden shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
         style={{ position: "relative" }}
         onClick={() => selectMode ? toggleSelected(project.id) : navigate(`/project/${project.id}`)}
@@ -487,7 +427,7 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
           financialGoal={(project as any).financial_goal}
           financialGoalSetBy={(project as any).financial_goal_set_by}
         />
-      </motion.div>
+      </div>
     );
   };
 
@@ -922,7 +862,7 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
                     marginTop: "10px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
                   }}>
                     <Sparkles size={12} />
-                    AI prep stages will be generated automatically after import
+                    AI prep stages will generate when you open the event
                   </div>
                 </div>
               </div>
@@ -998,7 +938,7 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
                 }}
               >
                 {partifulImporting ? (
-                  <><Loader2 size={16} className="animate-spin" /> Importing + generating AI stages...</>
+                  <><Loader2 size={16} className="animate-spin" /> Importing event...</>
                 ) : (
                   <><Sparkles size={16} /> Import Event</>
                 )}
