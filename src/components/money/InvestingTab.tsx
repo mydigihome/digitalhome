@@ -4,6 +4,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import TradingTerminal from "./investing/TradingTerminal";
+import TradingPlanModal from "./investing/TradingPlanModal";
+import PastTradingPlans from "./investing/PastTradingPlans";
 
 /* ──────────────────────── types ──────────────────────── */
 interface WatchlistStock {
