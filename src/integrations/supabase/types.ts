@@ -631,6 +631,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          birthday: string | null
           company: string | null
           contact_frequency_days: number | null
           created_at: string | null
@@ -638,22 +639,26 @@ export type Database = {
           digihome_user_id: string | null
           email: string | null
           email_count: number | null
+          followup_cadence: number | null
           id: string
           imported_from: string | null
           job_title: string | null
           last_contacted_date: string | null
           last_email_date: string | null
           linkedin_url: string | null
+          location: string | null
           name: string
           notes: string | null
           phone: string | null
           photo_url: string | null
           relationship_type: string | null
           status: string | null
+          tags: string[] | null
           title: string | null
           user_id: string
         }
         Insert: {
+          birthday?: string | null
           company?: string | null
           contact_frequency_days?: number | null
           created_at?: string | null
@@ -661,22 +666,26 @@ export type Database = {
           digihome_user_id?: string | null
           email?: string | null
           email_count?: number | null
+          followup_cadence?: number | null
           id?: string
           imported_from?: string | null
           job_title?: string | null
           last_contacted_date?: string | null
           last_email_date?: string | null
           linkedin_url?: string | null
+          location?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
           relationship_type?: string | null
           status?: string | null
+          tags?: string[] | null
           title?: string | null
           user_id: string
         }
         Update: {
+          birthday?: string | null
           company?: string | null
           contact_frequency_days?: number | null
           created_at?: string | null
@@ -684,18 +693,21 @@ export type Database = {
           digihome_user_id?: string | null
           email?: string | null
           email_count?: number | null
+          followup_cadence?: number | null
           id?: string
           imported_from?: string | null
           job_title?: string | null
           last_contacted_date?: string | null
           last_email_date?: string | null
           linkedin_url?: string | null
+          location?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
           relationship_type?: string | null
           status?: string | null
+          tags?: string[] | null
           title?: string | null
           user_id?: string
         }
