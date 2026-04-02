@@ -1095,6 +1095,35 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Journal Modal */}
+      <JournalEntryModal open={journalModalOpen} onClose={() => setJournalModalOpen(false)} />
+
+      {/* Delete Journal Entry Confirmation */}
+      <AlertDialog open={!!deleteEntryId} onOpenChange={() => setDeleteEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this journal entry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const id = deleteEntryId;
+                setDeleteEntryId(null);
+                await supabase.from("journal_entries").delete().eq("id", id!);
+                queryClient.invalidateQueries({ queryKey: ["recent_journal"] });
+                toast("Entry deleted", {
+                  action: { label: "Undo", onClick: () => toast.info("Undo not available for this action") },
+                  duration: 5000,
+                });
+              }}
+            >Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Modals */}
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
