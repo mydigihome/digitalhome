@@ -229,7 +229,7 @@ export default function NotificationPanel({ onClose, onUnreadCountChange, userId
       <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${headerBorder}`, flexShrink: 0 }}>
         <h3 style={{ fontSize: "17px", fontWeight: "700", color: titleColor, fontFamily: "Inter, sans-serif", margin: 0 }}>Notifications</h3>
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <Settings size={16} color={mutedIcon} style={{ cursor: "pointer" }} />
+          <Settings size={16} color={mutedIcon} style={{ cursor: "pointer" }} onClick={() => setNotifSettingsOpen(true)} />
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center" }}>
             <X size={18} color={mutedIcon} />
           </button>
