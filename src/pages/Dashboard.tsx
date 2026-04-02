@@ -7,6 +7,8 @@ import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo 
 import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useUserFinances } from "@/hooks/useUserFinances";
+import { useLoans } from "@/hooks/useLoans";
 import { useContacts } from "@/hooks/useContacts";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useMarketQuote, useTimeseries, useSymbolSearch } from "@/hooks/useMarketData";
@@ -30,7 +32,6 @@ import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
-import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import AdminReminderWidget from "@/components/AdminReminderWidget";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
 import StudioSnapshotCard from "@/components/dashboard/StudioSnapshotCard";
@@ -180,7 +181,8 @@ const stockOptions = [
   { symbol: "SPY", name: "S&P 500 ETF" },
 ];
 
-const DEFAULT_CARD_ORDER = ["networth", "market", "momentum", "links", "projects", "studio", "reflections"];
+const DEFAULT_LEFT_ORDER = ["networth-projects", "market", "momentum", "links", "studio", "reflections"];
+const DEFAULT_RIGHT_ORDER = ["scripture", "reminders", "agenda", "todos", "network"];
 const HERO_BG = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80";
 
 /* ═══════════════════════════════════════════════════ */
@@ -193,6 +195,8 @@ export default function Dashboard() {
   const { data: habitLogs = [] } = useHabitLogs();
   const { data: todayEvents = [] } = useTodayEvents();
   const { data: expenses = [] } = useExpenses();
+  const { data: finances } = useUserFinances();
+  const { data: loans } = useLoans();
   const { data: contacts = [] } = useContacts();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
@@ -225,22 +229,38 @@ export default function Dashboard() {
   const { data: tsData } = useTimeseries(selectedStock, selectedTimeframe.interval, selectedTimeframe.outputsize);
   const { data: searchResults } = useSymbolSearch(stockSearchQuery);
 
-  // Drag-and-drop card order
-  const [cardOrder, setCardOrder] = useState<string[]>(() =>
-    loadStoredJson<string[]>("dh_dashboard_card_order", DEFAULT_CARD_ORDER)
+  // Drag-and-drop card order — left column
+  const [leftOrder, setLeftOrder] = useState<string[]>(() =>
+    loadStoredJson<string[]>("dh_left_column_order", DEFAULT_LEFT_ORDER)
+  );
+  // Drag-and-drop card order — right column
+  const [rightOrder, setRightOrder] = useState<string[]>(() =>
+    loadStoredJson<string[]>("dh_right_column_order", DEFAULT_RIGHT_ORDER)
   );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleLeftDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setCardOrder((prev) => {
+      setLeftOrder((prev) => {
         const oldIdx = prev.indexOf(active.id as string);
         const newIdx = prev.indexOf(over.id as string);
         const next = arrayMove(prev, oldIdx, newIdx);
-        saveStoredJson("dh_dashboard_card_order", next);
+        saveStoredJson("dh_left_column_order", next);
+        return next;
+      });
+    }
+  };
+  const handleRightDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setRightOrder((prev) => {
+        const oldIdx = prev.indexOf(active.id as string);
+        const newIdx = prev.indexOf(over.id as string);
+        const next = arrayMove(prev, oldIdx, newIdx);
+        saveStoredJson("dh_right_column_order", next);
         return next;
       });
     }
@@ -391,10 +411,77 @@ export default function Dashboard() {
   };
 
   /* ── Render each draggable card by ID ── */
-  const renderCard = (id: string) => {
+  /* ── Compact Net Worth (inline) ── */
+  const compactNetWorth = (() => {
+    const savings = Number(finances?.current_savings || 0);
+    const totalDebtCalc = Number(finances?.total_debt || 0) + (loans || []).reduce((s: number, l: any) => s + Number(l.amount), 0);
+    const nw = savings - totalDebtCalc;
+    const inc = Number(finances?.monthly_income || 0);
+    const fmt = (n: number) => { const abs = Math.abs(n); const p = n < 0 ? "-" : ""; return abs >= 1000 ? `${p}$${(abs / 1000).toFixed(1)}K` : `${p}$${abs.toLocaleString()}`; };
+    return (
+      <button onClick={() => navigate("/finance/wealth")}
+        className="h-full p-4 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-primary/30 hover:shadow-md transition-all text-left group flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-success" />
+            <span className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Net Worth</span>
+          </div>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+        <p className={`text-[28px] font-bold tracking-tight ${nw >= 0 ? "text-success" : "text-destructive"}`}>{fmt(nw)}</p>
+        <div className="flex items-center gap-3 mt-1 text-[12px] text-muted-foreground">
+          <span>Income: <span className="font-semibold text-success">${inc.toLocaleString()}/mo</span></span>
+          {totalDebtCalc > 0 && <span>Debt: <span className="font-semibold text-destructive">{fmt(totalDebtCalc)}</span></span>}
+        </div>
+      </button>
+    );
+  })();
+
+  /* ── Compact Active Projects (inline) ── */
+  const compactProjects = (
+    <div className="h-full p-4 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] flex flex-col">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Active Projects</h2>
+        <button onClick={() => navigate("/projects")} className="text-xs font-medium text-success hover:underline">View All</button>
+      </div>
+      {activeProjects.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <p className="text-sm text-muted-foreground">No active projects yet</p>
+          <Button variant="outline" size="sm" className="mt-2" onClick={() => setProjectModalOpen(true)}><Plus className="mr-1 h-3 w-3" /> Create</Button>
+        </div>
+      ) : (
+        <div className="flex gap-2 flex-1 overflow-hidden">
+          {activeProjects.map((project) => (
+            <button key={project.id} onClick={() => navigate(`/project/${project.id}`)}
+              className="flex-1 min-w-0 p-3 bg-muted/40 rounded-lg border border-border hover:border-primary/30 transition text-left flex flex-col justify-between">
+              <p className="text-sm font-semibold truncate text-foreground" title={project.name}>
+                {project.name.length > 24 ? project.name.slice(0, 24) + "…" : project.name}
+              </p>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">{project.done}/{project.total}</span>
+                <span className="text-xs font-bold text-primary">{project.percentage}%</span>
+              </div>
+              <div className="mt-1.5 h-1 rounded-full bg-border overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${project.percentage}%` }} />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderLeftCard = (id: string) => {
     switch (id) {
-      case "networth":
-        return <SortableCard key={id} id={id}><NetWorthCard /></SortableCard>;
+      case "networth-projects":
+        return (
+          <SortableCard key={id} id={id}>
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="w-full lg:w-[40%]">{compactNetWorth}</div>
+              <div className="w-full lg:w-[60%]">{compactProjects}</div>
+            </div>
+          </SortableCard>
+        );
 
       case "market":
         return (
@@ -546,39 +633,6 @@ export default function Dashboard() {
           </SortableCard>
         );
 
-      case "projects":
-        return (
-          <SortableCard key={id} id={id}>
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-foreground">Active Projects</h2>
-                <button onClick={() => navigate("/projects")} className="text-sm font-medium text-success hover:underline">View All</button>
-              </div>
-              {activeProjects.length === 0 ? (
-                <div className="flex flex-col items-center py-6 text-center bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                  <p className="text-sm text-muted-foreground">No active projects</p>
-                  <Button variant="outline" size="sm" className="mt-3" onClick={() => setProjectModalOpen(true)}><Plus className="mr-1.5 h-3.5 w-3.5" /> Create one</Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {activeProjects.map((project) => (
-                    <button key={project.id} onClick={() => navigate(`/project/${project.id}`)}
-                      className="p-5 bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition text-left">
-                      <div className="h-10 w-10 rounded-xl flex items-center justify-center text-lg mb-3"
-                        style={{ background: project.color ? `${project.color}20` : "hsl(var(--primary) / 0.1)" }}>
-                        {project.icon || <FileText className="w-5 h-5 text-primary" />}
-                      </div>
-                      <p className="text-sm font-bold truncate mb-1 text-foreground">{project.name}</p>
-                      <p className="text-xs text-muted-foreground">{project.done}/{project.total} tasks</p>
-                      <span className="text-sm font-bold text-primary mt-1 inline-block">{project.percentage}%</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </SortableCard>
-        );
-
       case "studio":
         return <SortableCard key={id} id={id}><StudioSnapshotCard /></SortableCard>;
 
@@ -616,6 +670,141 @@ export default function Dashboard() {
                   );
                 })}
               </div>
+            </div>
+          </SortableCard>
+        );
+
+      default: return null;
+    }
+  };
+
+  /* ── Render right column card by ID ── */
+  const renderRightCard = (id: string) => {
+    switch (id) {
+      case "scripture":
+        if (!(prefs as any)?.show_scripture_card) return null;
+        return (
+          <SortableCard key={id} id={id}>
+            <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <h3 className="font-semibold text-sm mb-3 text-foreground">Daily Scripture</h3>
+              <ScriptureContent religion={(prefs as any)?.religion} />
+            </div>
+          </SortableCard>
+        );
+
+      case "reminders":
+        return (
+          <SortableCard key={id} id={id}>
+            <div className="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Receipt className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-base font-semibold text-white">Money Reminders</h2>
+              </div>
+              {moneyReminders.length > 0 ? (
+                <div className="space-y-0">
+                  {moneyReminders.map((bill, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
+                      <div>
+                        <p className="text-sm font-medium text-white">{bill.name}</p>
+                        <p className="text-xs text-white/50">Due soon</p>
+                      </div>
+                      <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  <div className="flex items-center justify-between py-3 border-b border-white/10">
+                    <div><p className="text-sm font-medium text-white">Credit Card Due</p><p className="text-xs text-white/50">March 5th</p></div>
+                    <span className="text-base font-bold text-red-400">$1,240.00</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <div><p className="text-sm font-medium text-white">Rent Payment</p><p className="text-xs text-white/50">March 1st</p></div>
+                    <span className="text-base font-bold text-red-400">$2,800.00</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </SortableCard>
+        );
+
+      case "agenda":
+        return (
+          <SortableCard key={id} id={id}>
+            <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-foreground">Today's Agenda</h2>
+                <button onClick={() => navigate("/calendar")} className="text-sm font-medium text-success hover:underline">View All</button>
+              </div>
+              {agendaItems.length > 0 ? (
+                <div className="space-y-0">
+                  {agendaItems.map((item, idx) => {
+                    const colors = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))"];
+                    return (
+                      <div key={idx} className="flex gap-4 py-3 border-b border-border last:border-b-0">
+                        <div className="w-1 rounded-sm flex-shrink-0" style={{ background: colors[idx % 3] }} />
+                        <div>
+                          <p className="text-xs font-semibold" style={{ color: colors[idx % 3] }}>{item.time}</p>
+                          <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                          {item.subtitle && <p className="text-xs text-muted-foreground">{item.subtitle}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-center py-6 text-muted-foreground">No events today</p>
+              )}
+            </div>
+          </SortableCard>
+        );
+
+      case "todos":
+        return (
+          <SortableCard key={id} id={id}>
+            <div ref={quickTodosRef} className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-foreground">Quick To-Dos</h2>
+              </div>
+              <div className="space-y-0">
+                {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
+                  <div key={todo.id} className="flex items-center gap-3 py-2.5">
+                    <button onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
+                      className="w-5 h-5 rounded-full border-2 border-border flex-shrink-0 flex items-center justify-center transition hover:border-primary" />
+                    <span className="text-sm text-foreground">{todo.text}</span>
+                  </div>
+                ))}
+                {todos.filter(t => t.completed).slice(0, 2).map(todo => (
+                  <div key={todo.id} className="flex items-center gap-3 py-2.5">
+                    <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-primary">
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </div>
+                    <span className="text-sm line-through text-muted-foreground">{todo.text}</span>
+                  </div>
+                ))}
+                <input value={newTodoText} onChange={(e) => setNewTodoText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
+                  placeholder="Add a quick note..."
+                  className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg border border-dashed border-border text-foreground placeholder:text-muted-foreground" />
+              </div>
+            </div>
+          </SortableCard>
+        );
+
+      case "network":
+        return (
+          <SortableCard key={id} id={id}>
+            <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ maxHeight: 180, overflow: "hidden" }}>
+              <h2 className="text-base font-semibold text-foreground mb-3">Network</h2>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{contacts.length}</p>
+              <p className="text-xs text-muted-foreground mb-3">Total contacts</p>
+              {contacts.length > 0 && contacts[0] && (
+                <p className="text-xs text-muted-foreground truncate">Last contacted: <span className="text-foreground font-medium">{contacts[0].name}</span></p>
+              )}
+              <button onClick={() => navigate("/relationships")}
+                className="mt-2 text-xs font-medium text-success hover:underline">+ Add Contact</button>
             </div>
           </SortableCard>
         );
@@ -704,123 +893,20 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* LEFT COLUMN */}
             <div className="flex-1 min-w-0 space-y-4">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
-                  {cardOrder.map((id) => renderCard(id))}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLeftDragEnd}>
+                <SortableContext items={leftOrder} strategy={verticalListSortingStrategy}>
+                  {leftOrder.map((id) => renderLeftCard(id))}
                 </SortableContext>
               </DndContext>
             </div>
 
             {/* RIGHT COLUMN — fixed 320px */}
             <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
-              {/* Daily Scripture */}
-              {(prefs as any)?.show_scripture_card && (
-                <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                  <h3 className="font-semibold text-sm mb-3 text-foreground">Daily Scripture</h3>
-                  <ScriptureContent religion={(prefs as any)?.religion} />
-                </div>
-              )}
-
-              {/* Money Reminders */}
-              <div className="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-white" />
-                  </div>
-                  <h2 className="text-base font-semibold text-white">Money Reminders</h2>
-                </div>
-                {moneyReminders.length > 0 ? (
-                  <div className="space-y-0">
-                    {moneyReminders.map((bill, idx) => (
-                      <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
-                        <div>
-                          <p className="text-sm font-medium text-white">{bill.name}</p>
-                          <p className="text-xs text-white/50">Due soon</p>
-                        </div>
-                        <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div><p className="text-sm font-medium text-white">Credit Card Due</p><p className="text-xs text-white/50">March 5th</p></div>
-                      <span className="text-base font-bold text-red-400">$1,240.00</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <div><p className="text-sm font-medium text-white">Rent Payment</p><p className="text-xs text-white/50">March 1st</p></div>
-                      <span className="text-base font-bold text-red-400">$2,800.00</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Today's Agenda */}
-              <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-foreground">Today's Agenda</h2>
-                  <button onClick={() => navigate("/calendar")} className="text-sm font-medium text-success hover:underline">View All</button>
-                </div>
-                {agendaItems.length > 0 ? (
-                  <div className="space-y-0">
-                    {agendaItems.map((item, idx) => {
-                      const colors = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))"];
-                      return (
-                        <div key={idx} className="flex gap-4 py-3 border-b border-border last:border-b-0">
-                          <div className="w-1 rounded-sm flex-shrink-0" style={{ background: colors[idx % 3] }} />
-                          <div>
-                            <p className="text-xs font-semibold" style={{ color: colors[idx % 3] }}>{item.time}</p>
-                            <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                            {item.subtitle && <p className="text-xs text-muted-foreground">{item.subtitle}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-center py-6 text-muted-foreground">No events today</p>
-                )}
-              </div>
-
-              {/* Quick To-Dos */}
-              <div ref={quickTodosRef} className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-foreground">Quick To-Dos</h2>
-                </div>
-                <div className="space-y-0">
-                  {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
-                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                      <button onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                        className="w-5 h-5 rounded-full border-2 border-border flex-shrink-0 flex items-center justify-center transition hover:border-primary" />
-                      <span className="text-sm text-foreground">{todo.text}</span>
-                    </div>
-                  ))}
-                  {todos.filter(t => t.completed).slice(0, 2).map(todo => (
-                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                      <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-primary">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </div>
-                      <span className="text-sm line-through text-muted-foreground">{todo.text}</span>
-                    </div>
-                  ))}
-                  <input value={newTodoText} onChange={(e) => setNewTodoText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
-                    placeholder="Add a quick note..."
-                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg border border-dashed border-border text-foreground placeholder:text-muted-foreground" />
-                </div>
-              </div>
-
-              {/* Network Summary — smaller */}
-              <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ maxHeight: 180, overflow: "hidden" }}>
-                <h2 className="text-base font-semibold text-foreground mb-3">Network</h2>
-                <p className="text-2xl font-bold text-foreground tabular-nums">{contacts.length}</p>
-                <p className="text-xs text-muted-foreground mb-3">Total contacts</p>
-                {contacts.length > 0 && contacts[0] && (
-                  <p className="text-xs text-muted-foreground truncate">Last contacted: <span className="text-foreground font-medium">{contacts[0].name}</span></p>
-                )}
-                <button onClick={() => navigate("/relationships")}
-                  className="mt-2 text-xs font-medium text-success hover:underline">+ Add Contact</button>
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRightDragEnd}>
+                <SortableContext items={rightOrder} strategy={verticalListSortingStrategy}>
+                  {rightOrder.map((id) => renderRightCard(id))}
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
         </div>
