@@ -909,7 +909,7 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               <p style={{ fontSize: 12, lineHeight: 1.4 }} className="text-muted-foreground">{template.description || defaultTemplateData[idx]?.description}</p>
             </div>
 
-            {/* Admin Upload/Generate tabs */}
+            {/* Admin Upload zones */}
             {isAdmin && !template.file_url && (
               <div style={{ padding: "0 16px 12px" }}>
                 <div
@@ -933,6 +933,34 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
                     <span style={{ fontWeight: 600 }} className="text-foreground">Click to upload</span> or drop file here
                   </p>
                   <p style={{ fontSize: 11, marginTop: 4, color: "#9CA3AF" }}>PDF, DOCX up to 10MB</p>
+                </div>
+              </div>
+            )}
+
+            {/* Admin Preview Image Upload */}
+            {isAdmin && !template.preview_image_url && (
+              <div style={{ padding: "0 16px 12px" }}>
+                <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 6 }}>Preview Image (thumbnail)</p>
+                <div
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handlePreviewImageUpload(template.id, f); }}
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/png,image/jpg,image/jpeg,image/webp";
+                    input.onchange = (ev: any) => { const f = ev.target.files?.[0]; if (f) handlePreviewImageUpload(template.id, f); };
+                    input.click();
+                  }}
+                  style={{
+                    border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    borderRadius: 10, padding: "20px 16px", textAlign: "center",
+                    background: isDark ? "#252528" : "#F9FAFB", cursor: "pointer",
+                  }}
+                >
+                  <Upload size={18} style={{ margin: "0 auto 6px", color: "#9CA3AF" }} />
+                  <p style={{ fontSize: 12 }} className="text-muted-foreground">
+                    <span style={{ fontWeight: 600 }} className="text-foreground">Upload preview</span> PNG, JPG, WEBP
+                  </p>
                 </div>
               </div>
             )}
