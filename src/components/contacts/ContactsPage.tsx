@@ -828,7 +828,7 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
       </div>
 
       {/* ─── IDENTITY ROW ─── */}
-      <div style={{ padding: "32px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+      <div style={{ padding: "20px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h3 style={{ fontSize: "20px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px" }}>
