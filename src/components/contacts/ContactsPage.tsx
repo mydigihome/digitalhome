@@ -799,104 +799,97 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
     : { label: "Cold", color: "#374151", bg: "#F9FAFB", border: "#E5E7EB" };
 
   return (
-    <div style={{ borderBottom: `2px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#1C1C1E" : "white" }}>
-      {/* ─── BANNER + IDENTITY ─── */}
-      <div style={{
-        height: "56px",
-        background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
-        position: "relative", overflow: "hidden",
-      }}>
-        {/* Edit + Delete */}
-        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px", zIndex: 2 }}>
-          <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
-            padding: "5px 12px", background: isDark ? "rgba(123,94,167,0.15)" : "white",
-            border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: "6px",
-            color: isDark ? "#C4B5FD" : "#7B5EA7", fontSize: "11px", fontWeight: 500, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif",
-          }}>
-            <Pencil size={10} /> Edit
-          </button>
-          <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
-            padding: "5px 12px", background: isDark ? "rgba(220,38,38,0.1)" : "white",
-            border: `1px solid ${isDark ? "rgba(220,38,38,0.2)" : "#FECACA"}`, borderRadius: "6px",
-            color: isDark ? "#FCA5A5" : "#DC2626", fontSize: "11px", fontWeight: 500, cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif",
-          }}>
-            <Trash2 size={10} /> Delete
-          </button>
-        </div>
-      </div>
+    <div style={{ borderBottom: `2px solid ${isDark ? "rgba(123,94,167,0.15)" : "#EDE9FE"}`, borderLeft: "3px solid #7B5EA7", background: isDark ? "rgba(123,94,167,0.04)" : "#FDFCFF", position: "relative" }}>
 
       {/* ─── IDENTITY ROW ─── */}
-      <div style={{ padding: "20px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 28px 16px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+        {/* LEFT — Avatar + Identity */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+          <div style={{
+            width: "48px", height: "48px", borderRadius: "50%",
+            background: "#F5F3FF", border: `2px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
+            overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "18px", fontWeight: 800, color: "#7B5EA7", flexShrink: 0,
+          }}>
+            {contact.photo_url ? (
+              <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+            ) : contact.name?.charAt(0).toUpperCase()}
+          </div>
           <div>
-            <h3 style={{ fontSize: "20px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px" }}>
+            <h3 style={{ fontSize: "17px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", fontFamily: "Inter, sans-serif", letterSpacing: "-0.2px" }}>
               {contact.name}
             </h3>
             {(contact.title || contact.company) && (
-              <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "#6B7280", marginBottom: "14px", fontFamily: "Inter, sans-serif" }}>
+              <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "#6B7280", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
                 {[contact.title, contact.company].filter(Boolean).join(" · ")}
               </p>
             )}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "center" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center" }}>
               {contact.email && (
                 <a href={`mailto:${contact.email}`} onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none", fontFamily: "Inter, sans-serif" }}>
-                  <Mail size={13} color="#9CA3AF" /> {contact.email}
+                  <Mail size={12} color="#9CA3AF" /> {contact.email}
                 </a>
               )}
               {contact.phone && (
                 <a href={`tel:${contact.phone}`} onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none", fontFamily: "Inter, sans-serif" }}>
-                  <Phone size={13} color="#9CA3AF" /> {contact.phone}
+                  <Phone size={12} color="#9CA3AF" /> {contact.phone}
                 </a>
               )}
               {contact.location && (
                 <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>
-                  <MapPin size={13} color="#9CA3AF" /> {contact.location}
-                </span>
-              )}
-              {contact.birthday && (
-                <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>
-                  <Gift size={13} color="#EF4444" /> {new Date(contact.birthday).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                  <MapPin size={12} color="#9CA3AF" /> {contact.location}
                 </span>
               )}
             </div>
           </div>
-          {/* Right side: relationship + tags */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
-            <span style={{
-              padding: "4px 12px",
-              background: isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.1)" : strength.label === "Warm" ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)") : strength.bg,
-              border: `1px solid ${isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.2)" : strength.label === "Warm" ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)") : strength.border}`,
-              borderRadius: "999px", fontSize: "12px", fontWeight: 600, color: strength.color, fontFamily: "Inter, sans-serif",
-            }}>
-              {strength.label}
-              {contact.last_contacted_date && (
-                <span style={{ fontWeight: 400, marginLeft: "4px", opacity: 0.7 }}>
-                  · {daysSince}d ago
-                </span>
-              )}
-            </span>
-            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "280px" }}>
-              {(contact.tags || []).map((tag: string, i: number) => (
-                <span key={i} style={{
-                  padding: "2px 10px",
-                  background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF",
-                  border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
-                  borderRadius: "999px", fontSize: "11px", fontWeight: 500,
-                  color: isDark ? "#C4B5FD" : "#7B5EA7", fontFamily: "Inter, sans-serif",
-                }}>
-                  {tag}
-                </span>
-              ))}
-              <button onClick={e => { e.stopPropagation(); setTagModalContact(contact); setTagModalOpen(true); }} style={{
-                padding: "2px 8px", background: "transparent",
-                border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
-                borderRadius: "999px", fontSize: "11px", color: "#9CA3AF", cursor: "pointer", fontFamily: "Inter, sans-serif",
+        </div>
+
+        {/* RIGHT — Actions + Relationship + Tags */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={e => { e.stopPropagation(); onEdit(); }}
+              style={{ padding: "5px 12px", background: "transparent", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "6px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontSize: "12px", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif", transition: "all 150ms" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? "rgba(123,94,167,0.5)" : "#7B5EA7"; (e.currentTarget as HTMLButtonElement).style.color = isDark ? "#C4B5FD" : "#7B5EA7"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#6B7280"; }}>
+              <Pencil size={11} /> Edit
+            </button>
+            <button onClick={e => { e.stopPropagation(); onDelete(); }}
+              style={{ padding: "5px 12px", background: "transparent", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "6px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF", fontSize: "12px", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif", transition: "all 150ms" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? "rgba(220,38,38,0.3)" : "#FECACA"; (e.currentTarget as HTMLButtonElement).style.color = isDark ? "#FCA5A5" : "#DC2626"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"; }}>
+              <Trash2 size={11} /> Delete
+            </button>
+          </div>
+          <span style={{
+            padding: "3px 10px",
+            background: isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.1)" : strength.label === "Warm" ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)") : strength.bg,
+            border: `1px solid ${isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.2)" : strength.label === "Warm" ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)") : strength.border}`,
+            borderRadius: "999px", fontSize: "12px", fontWeight: 600, color: strength.color, fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: "4px",
+          }}>
+            {strength.label}
+            {contact.last_contacted_date && (
+              <span style={{ fontWeight: 400, opacity: 0.7, fontSize: "11px" }}>· {daysSince}d ago</span>
+            )}
+          </span>
+          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "260px" }}>
+            {(contact.tags || []).map((tag: string, i: number) => (
+              <span key={i} style={{
+                padding: "2px 8px",
+                background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
+                border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`,
+                borderRadius: "999px", fontSize: "11px", fontWeight: 500,
+                color: isDark ? "#C4B5FD" : "#7B5EA7", fontFamily: "Inter, sans-serif",
               }}>
-                + Tag
-              </button>
-            </div>
+                {tag}
+              </span>
+            ))}
+            <button onClick={e => { e.stopPropagation(); setTagModalContact(contact); setTagModalOpen(true); }} style={{
+              padding: "2px 8px", background: "transparent",
+              border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
+              borderRadius: "999px", fontSize: "11px", color: "#9CA3AF", cursor: "pointer", fontFamily: "Inter, sans-serif",
+            }}>
+              + Tag
+            </button>
           </div>
         </div>
       </div>
