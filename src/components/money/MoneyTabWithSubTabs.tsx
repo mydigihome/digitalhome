@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark } from "lucide-react";
+import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark, TrendingUp } from "lucide-react";
 import MoneyCard from "./MoneyCard";
 import MoneyOverview from "./overview/MoneyOverview";
 import DebtTab from "./DebtTab";
+import InvestingTab from "./InvestingTab";
 import { PlaidBannerFront, PlaidBannerBack } from "./cards/PlaidBanner";
 import { NetWorthFront, NetWorthBack } from "./cards/NetWorthCard";
 import { SpendingFront, SpendingBack } from "./cards/SpendingCard";
@@ -38,6 +39,7 @@ const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
   { id: "spending", label: "Spending", icon: CreditCard },
   { id: "debt", label: "Debt", icon: TrendingDown },
+  { id: "investing", label: "Investing", icon: TrendingUp },
   { id: "markets", label: "Markets", icon: LineChart },
 ] as const;
 
@@ -48,6 +50,7 @@ const TAB_CARDS: Record<TabId, string[]> = {
   overview: ["plaid", "net-worth", "savings-rate", "moneyflow", "emergency", "salary"],
   spending: ["spending", "bills", "cashflow", "subscriptions", "merchant-spending", "category-trends", "cashflow-calendar", "large-transactions", "savings-opportunities"],
   debt: ["debt", "credit-score", "net-worth-history", "refund-tracker"],
+  investing: [],
   markets: ["tradingview", "investment-portfolio", "tax-estimate"],
 };
 
@@ -265,6 +268,8 @@ export default function MoneyTabWithSubTabs() {
           <MoneyOverview />
         ) : activeTab === "debt" ? (
           <DebtTab />
+        ) : activeTab === "investing" ? (
+          <InvestingTab />
         ) : (
           <>
             {/* Hidden cards restore drawer */}
