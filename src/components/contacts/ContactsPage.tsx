@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, useContactInteractions, useCreateInteraction, type Contact } from "@/hooks/useContacts";
 import { useGmailConnection, useConnectGmail } from "@/hooks/useGmail";
