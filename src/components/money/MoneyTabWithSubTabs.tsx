@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark } from "lucide-react";
+import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark, TrendingUp } from "lucide-react";
 import MoneyCard from "./MoneyCard";
 import MoneyOverview from "./overview/MoneyOverview";
 import DebtTab from "./DebtTab";
