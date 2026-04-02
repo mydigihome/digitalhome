@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useAddQuickTodo, useQuickTodos } from "@/hooks/useQuickTodos";
 import { AnimatePresence, motion } from "framer-motion";
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, useContactInteractions, useCreateInteraction, type Contact } from "@/hooks/useContacts";
 import { useGmailConnection, useConnectGmail } from "@/hooks/useGmail";
@@ -574,6 +575,21 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
   user: any; navigate: any;
 }) {
   const { data: interactions = [] } = useContactInteractions(contact.id);
+  const { data: quickTodos = [] } = useQuickTodos();
+  const addTodo = useAddQuickTodo();
+  const [showTodoInput, setShowTodoInput] = useState(false);
+  const [todoText, setTodoText] = useState("");
+
+  const handleSaveTodo = () => {
+    if (!todoText.trim()) return;
+    addTodo.mutate({ text: todoText.trim(), order: quickTodos.length }, {
+      onSuccess: () => {
+        toast.success("To-do added to dashboard!");
+        setTodoText("");
+        setShowTodoInput(false);
+      },
+    });
+  };
 
   return (
     <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#F9FAFB" }}>
@@ -652,13 +668,41 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
             }}>
               <FolderPlus size={12} color="#7B5EA7" /> Create Project
             </button>
-            <button onClick={e => e.stopPropagation()} style={{
+            <button onClick={e => { e.stopPropagation(); setShowTodoInput(!showTodoInput); }} style={{
               display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
               background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
               borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
             }}>
-              <CheckSquare size={12} color="#10B981" /> Create Task
+              <CheckSquare size={12} color="#10B981" /> Create To-Do
             </button>
+            {showTodoInput && (
+              <div onClick={e => e.stopPropagation()} style={{
+                display: "flex", gap: "6px", marginTop: "4px",
+              }}>
+                <input
+                  type="text"
+                  value={todoText}
+                  onChange={e => setTodoText(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") handleSaveTodo(); }}
+                  placeholder="Type a to-do..."
+                  autoFocus
+                  style={{
+                    flex: 1, padding: "7px 10px", fontSize: "12px",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    borderRadius: "6px", outline: "none",
+                    background: isDark ? "#252528" : "white",
+                    color: isDark ? "#F2F2F2" : "#374151",
+                  }}
+                />
+                <button onClick={handleSaveTodo} disabled={!todoText.trim() || addTodo.isPending} style={{
+                  padding: "7px 12px", background: "#10B981", color: "white",
+                  border: "none", borderRadius: "6px", fontSize: "11px",
+                  fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                }}>
+                  {addTodo.isPending ? "..." : "Save"}
+                </button>
+              </div>
+            )}
           </div>
           <div style={{ marginTop: "12px" }}>
             <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px" }}>Last Contacted</p>
