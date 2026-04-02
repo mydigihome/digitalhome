@@ -1080,34 +1080,50 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
 
           {/* Footer */}
           <div style={{
-            background: isDark ? "#1C1C1E" : "white",
-            padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
-            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+            padding: "16px 24px",
+            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
+            background: isDark ? "#111112" : "#F9FAFB",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            flexShrink: 0,
           }}>
-            <p style={{ fontSize: 14 }} className="text-muted-foreground">
-              {hasPurchased ? "You own this template" : "Download this template: $8 · Get all 4: $25"}
-            </p>
+            <div>
+              <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280", marginBottom: 2 }}>Like what you see?</p>
+              <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF" }}>This template or get all 4</p>
+            </div>
             <div style={{ display: "flex", gap: 10 }}>
               {hasPurchased ? (
                 <button
                   onClick={() => { handleDownload(previewTemplate); setPreviewTemplate(null); }}
-                  style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "10px 24px", background: "#10B981", color: "white",
+                    border: "none", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                  }}
                 >
-                  <Download size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} /> Download
+                  <Download size={14} /> Download Now
                 </button>
               ) : (
                 <>
                   <button
                     onClick={() => openStripeForSingle(previewTemplate)}
-                    style={{ padding: "10px 20px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "10px 20px", background: isDark ? "#1C1C1E" : "white",
+                      border: "1.5px solid #7B5EA7", borderRadius: 999,
+                      fontSize: 13, fontWeight: 600, color: "#7B5EA7", cursor: "pointer",
+                    }}
                   >
-                    Buy This — $8
+                    This one — $8
                   </button>
                   <button
                     onClick={openStripeForBundle}
-                    style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "10px 20px", background: "#10B981", color: "white",
+                      border: "none", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}
                   >
-                    Get All 4 — $25
+                    All 4 — $25
                   </button>
                 </>
               )}
