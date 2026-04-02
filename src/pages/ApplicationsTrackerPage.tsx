@@ -232,61 +232,76 @@ export default function ApplicationsTrackerPage() {
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="min-h-screen bg-background">
 
-        {/* Gradient Header */}
-        <div
-          className="relative w-full overflow-hidden group"
-          style={{
-            background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? `linear-gradient(135deg, ${(prefs as any)?.banner_color || '#6366F1'}15, ${(prefs as any)?.banner_color || '#6366F1'}05)` : undefined,
-            backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
-            backgroundSize: "cover", backgroundPosition: "center",
-            borderRadius: "0 0 40px 40px", paddingTop: 48, paddingBottom: 40,
-          }}
-        >
-          <div className="max-w-xl lg:max-w-6xl mx-auto px-5">
-            <div className="flex items-center justify-between mb-8">
-              <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
-                <ChevronLeft className="h-5 w-5 text-foreground" />
-              </button>
-              <div className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
-                  <Search className="h-4 w-4 text-foreground" />
+        {/* Slim Banner Header */}
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-5 pt-6">
+          <div
+            style={{
+              background: bannerGradient,
+              borderRadius: 14,
+              padding: "16px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 28,
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: "white", letterSpacing: "-0.3px", margin: 0 }}>
+                <em style={{ fontStyle: "italic" }}>Resource</em> Studio
+              </h1>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: "2px 0 0" }}>
+                Career templates and application tracker
+              </p>
+            </div>
+            <Popover open={bannerColorPickerOpen} onOpenChange={setBannerColorPickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 14px",
+                    background: "rgba(255,255,255,0.2)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    borderRadius: 8, color: "white", fontSize: 12, fontWeight: 500,
+                    cursor: "pointer", backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <Pencil size={12} /> Customize
                 </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-3">
+                <p className="text-xs font-semibold text-foreground mb-2">Banner Color</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                  {bannerColorPresets.map(p => (
+                    <button
+                      key={p.color}
+                      onClick={async () => {
+                        await upsertPrefs.mutateAsync({ applications_header_value: p.color } as any);
+                        setBannerColorPickerOpen(false);
+                        toast.success("Banner updated");
+                      }}
+                      title={p.label}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%", background: p.color,
+                        border: savedBannerColor === p.color ? "2px solid white" : "2px solid transparent",
+                        boxShadow: savedBannerColor === p.color ? "0 0 0 2px #10B981" : "0 0 0 1px rgba(0,0,0,0.1)",
+                        cursor: "pointer",
+                      }}
+                    />
+                  ))}
+                </div>
                 <button
                   onClick={async () => {
-                    const current = (prefs as any)?.template_notifications ?? false;
-                    await upsertPrefs.mutateAsync({ template_notifications: !current } as any);
-                    toast.success(!current ? "You'll be notified of new templates!" : "Notifications turned off");
+                    await upsertPrefs.mutateAsync({ applications_header_value: null } as any);
+                    setBannerColorPickerOpen(false);
+                    toast.success("Reset to default");
                   }}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition"
+                  className="text-xs text-muted-foreground hover:text-foreground transition"
                 >
-                  <Bell className={`h-4 w-4 ${(prefs as any)?.template_notifications ? 'text-primary fill-primary' : 'text-foreground'}`} />
+                  Reset to default
                 </button>
-              </div>
-            </div>
-            <h1 className="text-5xl font-semibold tracking-tight text-foreground">Resource Studio</h1>
-            <p className="text-sm font-medium text-muted-foreground mt-2">
-              {(prefs as any)?.app_banner_text || "Download free career resources and premium templates."}
-            </p>
+              </PopoverContent>
+            </Popover>
           </div>
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="relative">
-              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)} className="rounded-full backdrop-blur-md bg-card/50">Change cover</Button>
-              {showBannerMenu && (
-                <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-border bg-card p-2 shadow-lg">
-                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Gradients</div>
-                  <div className="grid grid-cols-4 gap-1 px-3 pb-2">
-                    {gradientPresets.map((g, i) => (
-                      <button key={i} onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: g } as any); setShowBannerMenu(false); toast.success("Banner updated"); }} className="h-8 w-full rounded-lg" style={{ background: g }} />
-                    ))}
-                  </div>
-                  <button onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: null } as any); setShowBannerMenu(false); toast.success("Banner reset"); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
-                </div>
-              )}
-            </div>
-          </div>
-          <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
         </div>
 
         {/* Main Content */}
