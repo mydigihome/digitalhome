@@ -601,6 +601,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
             <span className="text-sm font-semibold text-foreground">Digital Home</span>
           </div>
+          {/* Mobile Bell */}
+          {user && (
+            <div style={{ position: "relative" }}>
+              <button
+                className="notif-bell"
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  position: "relative", width: "34px", height: "34px", borderRadius: "50%",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  background: isDark ? "#252528" : "white", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <Bell size={16} color={isDark ? "rgba(255,255,255,0.7)" : "#374151"} />
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: "absolute", top: "-2px", right: "-2px",
+                    width: unreadCount > 9 ? "20px" : "16px", height: "16px",
+                    borderRadius: "999px", background: "#EF4444",
+                    border: `2px solid ${isDark ? "#252528" : "white"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", fontWeight: "700", color: "white",
+                  }}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Sidebar Overlay */}
