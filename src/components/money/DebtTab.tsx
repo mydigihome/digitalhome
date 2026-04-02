@@ -1,20 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Plus, Pencil, Trash2, FileX, ChevronDown } from "lucide-react";
-import { useDebts, useAddDebt, useDeleteDebt, useAddLoanApplication, type Debt } from "@/hooks/useDebts";
+import { Plus, Pencil, Trash2, FileX, ChevronDown, ExternalLink, Lightbulb } from "lucide-react";
+import { useDebts, useAddDebt, useDeleteDebt, useUpdateDebt, type Debt } from "@/hooks/useDebts";
+import { useTransactions } from "@/hooks/useTransactions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-const TIERS = [
-  { id: "15k" as const, amount: 15000, fee: 1500, rate: 8 },
-  { id: "20k" as const, amount: 20000, fee: 2000, rate: 12 },
-  { id: "30k" as const, amount: 30000, fee: 2800, rate: 15 },
-];
 
 const PAYMENT_DATA = [
   { month: "Jan", amount: 860, label: "$860" },
@@ -26,6 +24,34 @@ const PAYMENT_DATA = [
 
 const DEBT_TYPES = ["Credit Card", "Student Loan", "Auto Loan", "Medical", "Personal", "Other"];
 const DEBT_TABS = ["All", "Credit Cards", "Student Loans", "Auto Loans", "Medical", "Other"];
+
+const TYPE_COLORS: Record<string, string> = {
+  "Credit Card": "#7B5EA7",
+  "Student Loan": "#10B981",
+  "Auto Loan": "#F59E0B",
+  "Medical": "#EF4444",
+  "Personal": "#3B82F6",
+  "Other": "#9CA3AF",
+};
+
+function calcPayment(balance: number, monthlyRate: number, months: number) {
+  if (balance <= 0) return 0;
+  if (monthlyRate === 0) return balance / months;
+  const factor = Math.pow(1 + monthlyRate, months);
+  return balance * (monthlyRate * factor) / (factor - 1);
+}
+
+function calcPayoffMonths(balance: number, monthlyRate: number, payment: number) {
+  if (balance <= 0 || payment <= 0) return 0;
+  if (monthlyRate === 0) return Math.ceil(balance / payment);
+  const interestOnly = balance * monthlyRate;
+  if (payment <= interestOnly) return Infinity;
+  return Math.ceil(-Math.log(1 - (balance * monthlyRate) / payment) / Math.log(1 + monthlyRate));
+}
+
+function roundUp50(n: number) {
+  return Math.ceil(n / 50) * 50;
+}
 
 function CustomPaymentTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
@@ -52,24 +78,122 @@ function CustomPaymentTooltip({ active, payload }: any) {
 
 export default function DebtTab() {
   const { data: debts = [] } = useDebts();
+  const { data: transactions = [] } = useTransactions();
   const addDebt = useAddDebt();
   const deleteDebt = useDeleteDebt();
-  const applyLoan = useAddLoanApplication();
+  const updateDebt = useUpdateDebt();
+  const { user } = useAuth();
+  const qc = useQueryClient();
 
-  const [selectedTier, setSelectedTier] = useState<'15k' | '20k' | '30k'>('20k');
-  const [showApplyConfirm, setShowApplyConfirm] = useState(false);
+  const loanCalcRef = useRef<HTMLDivElement>(null);
+
+  const [selectedTier, setSelectedTier] = useState<'minimum' | 'recommended' | 'aggressive'>('recommended');
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [paymentNote, setPaymentNote] = useState("");
   const [chartPeriod, setChartPeriod] = useState("5 Months");
   const [showChartDropdown, setShowChartDropdown] = useState(false);
   const [debtTab, setDebtTab] = useState("All");
   const [showAddDebt, setShowAddDebt] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showNoUrlModal, setShowNoUrlModal] = useState(false);
+  const [noUrlDebt, setNoUrlDebt] = useState<Debt | null>(null);
+  const [tempPaymentUrl, setTempPaymentUrl] = useState("");
   const [debtForm, setDebtForm] = useState({
     creditor: "", type: "Credit Card", balance: "", interest_rate: "",
-    monthly_payment: "", due_date: "", notes: "",
+    monthly_payment: "", due_date: "", notes: "", payment_url: "",
   });
 
-  const tier = TIERS.find(t => t.id === selectedTier)!;
+  const activeDebts = useMemo(() => debts.filter(d => d.status !== 'paid_off'), [debts]);
+  const totalDebt = activeDebts.reduce((s, d) => s + d.balance, 0);
+  const totalMonthly = activeDebts.reduce((s, d) => s + d.monthly_payment, 0);
+  const avgRate = activeDebts.length > 0
+    ? activeDebts.reduce((s, d) => s + d.interest_rate * d.balance, 0) / (totalDebt || 1)
+    : 0;
+  const monthlyRate = avgRate / 100 / 12;
+  const highestDebt = activeDebts.length > 0
+    ? activeDebts.reduce((max, d) => d.balance > max.balance ? d : max, activeDebts[0])
+    : null;
+
+  // Debt type breakdown for segmented bar
+  const typeBreakdown = useMemo(() => {
+    if (totalDebt === 0) return [];
+    const groups: Record<string, number> = {};
+    activeDebts.forEach(d => { groups[d.type] = (groups[d.type] || 0) + d.balance; });
+    return Object.entries(groups).map(([type, amount]) => ({
+      type,
+      pct: amount / totalDebt * 100,
+      color: TYPE_COLORS[type] || "#9CA3AF",
+    })).sort((a, b) => b.pct - a.pct);
+  }, [activeDebts, totalDebt]);
+
+  // Smart payment tiers
+  const tiers = useMemo(() => {
+    const hasDebts = activeDebts.length > 0 && totalDebt > 0;
+    if (!hasDebts) {
+      return [
+        { id: 'minimum' as const, amount: 1000, months: 0, label: "Minimum", desc: "Add your debts below to see personalized payment tiers" },
+        { id: 'recommended' as const, amount: 2500, months: 0, label: "Recommended", desc: "Add your debts below to see personalized payment tiers" },
+        { id: 'aggressive' as const, amount: 5000, months: 0, label: "Aggressive", desc: "Add your debts below to see personalized payment tiers" },
+      ];
+    }
+    const minPayment = totalMonthly > 0 ? totalMonthly : (totalDebt * monthlyRate) + (totalDebt * 0.01);
+    const minRounded = roundUp50(minPayment);
+    const minMonths = calcPayoffMonths(totalDebt, monthlyRate, minRounded);
+
+    const recPayment = roundUp50(calcPayment(totalDebt, monthlyRate, 36));
+    const recMonths = 36;
+
+    const aggPayment = roundUp50(calcPayment(totalDebt, monthlyRate, 12));
+    const aggMonths = 12;
+
+    const fmtTime = (m: number) => {
+      if (m === Infinity) return "Never (interest only)";
+      if (m >= 24) return `~${Math.round(m / 12)} years`;
+      return `~${m} months`;
+    };
+
+    return [
+      { id: 'minimum' as const, amount: minRounded, months: minMonths, label: "Minimum", desc: `Payoff in ${fmtTime(minMonths)}   Interest: ${avgRate.toFixed(1)}%` },
+      { id: 'recommended' as const, amount: recPayment, months: recMonths, label: "Recommended", desc: `Payoff in ${fmtTime(recMonths)}   Interest: ${avgRate.toFixed(1)}%` },
+      { id: 'aggressive' as const, amount: aggPayment, months: aggMonths, label: "Aggressive", desc: `Payoff in ${fmtTime(aggMonths)}   Interest: ${avgRate.toFixed(1)}%` },
+    ];
+  }, [activeDebts, totalDebt, totalMonthly, monthlyRate, avgRate]);
+
+  const currentTier = tiers.find(t => t.id === selectedTier)!;
+  const totalInterest = currentTier.months > 0 && currentTier.months !== Infinity
+    ? (currentTier.amount * currentTier.months) - totalDebt
+    : 0;
+  const totalCost = totalDebt + Math.max(0, totalInterest);
+
+  // Monthly income from transactions
+  const monthlyIncome = useMemo(() => {
+    const monthStart = startOfMonth(new Date()).toISOString();
+    return transactions
+      .filter(t => t.category === 'Income' && t.date >= monthStart)
+      .reduce((s, t) => s + Math.abs(t.amount), 0);
+  }, [transactions]);
+
+  // Suggested payment
+  const suggestedPayment = useMemo(() => {
+    if (totalDebt <= 0) return { amount: 0, months: 0, date: "" };
+    const aggTier = tiers.find(t => t.id === 'aggressive')!;
+    const amount = monthlyIncome > 0 ? Math.min(monthlyIncome * 0.20, aggTier.amount) : 0;
+    if (amount <= 0) return { amount: 0, months: 0, date: "" };
+    const months = calcPayoffMonths(totalDebt, monthlyRate, amount);
+    const payoffDate = new Date();
+    payoffDate.setMonth(payoffDate.getMonth() + months);
+    return { amount, months, date: format(payoffDate, "MMMM yyyy") };
+  }, [totalDebt, monthlyRate, monthlyIncome, tiers]);
+
+  // Highest rate debt for avalanche
+  const highestRateDebt = useMemo(() =>
+    activeDebts.length > 0
+      ? [...activeDebts].sort((a, b) => b.interest_rate - a.interest_rate)[0]
+      : null
+  , [activeDebts]);
+
+  const debtsWithUrls = useMemo(() => activeDebts.filter(d => d.payment_url), [activeDebts]);
 
   const filteredDebts = useMemo(() => {
     if (debtTab === "All") return debts;
@@ -80,18 +204,79 @@ export default function DebtTab() {
     return debts.filter(d => d.type === (typeMap[debtTab] || debtTab));
   }, [debts, debtTab]);
 
-  const totalDebt = debts.reduce((s, d) => s + d.balance, 0);
-  const totalMonthly = debts.reduce((s, d) => s + d.monthly_payment, 0);
-  const avgRate = debts.length > 0
-    ? debts.reduce((s, d) => s + d.interest_rate * d.balance, 0) / (totalDebt || 1)
-    : 0;
-
-  const handleApplyLoan = async () => {
+  const handleRecordPayment = async () => {
+    if (!user || activeDebts.length === 0) return;
     try {
-      await applyLoan.mutateAsync({ amount: tier.amount, fee: tier.fee, interest_rate: tier.rate });
-      setShowApplyConfirm(false);
-      toast.success("Application submitted!");
-    } catch { toast.error("Failed to submit application"); }
+      // 1. Record payment
+      await (supabase as any).from("loan_payments").insert({
+        user_id: user.id,
+        amount: currentTier.amount,
+        payment_date: new Date().toISOString().split('T')[0],
+        tier_used: selectedTier,
+        note: paymentNote || null,
+      });
+
+      // 2. Debt avalanche distribution
+      let remaining = currentTier.amount;
+      const sorted = [...activeDebts].sort((a, b) => b.interest_rate - a.interest_rate);
+
+      // Pay minimums first
+      for (const debt of sorted) {
+        const minPay = Math.min(debt.monthly_payment, debt.balance, remaining);
+        if (minPay > 0) {
+          remaining -= minPay;
+          const newBal = Math.max(0, debt.balance - minPay);
+          await (supabase as any).from("debts").update({
+            balance: newBal,
+            ...(newBal === 0 ? { status: 'paid_off' } : {}),
+          }).eq("id", debt.id);
+        }
+      }
+
+      // Apply remainder to highest rate
+      if (remaining > 0 && sorted.length > 0) {
+        const target = sorted[0];
+        const newBal = Math.max(0, target.balance - remaining);
+        await (supabase as any).from("debts").update({
+          balance: newBal,
+          ...(newBal === 0 ? { status: 'paid_off' } : {}),
+        }).eq("id", target.id);
+      }
+
+      qc.invalidateQueries({ queryKey: ["debts"] });
+      setShowPaymentConfirm(false);
+      setPaymentNote("");
+      toast.success(`Payment of $${currentTier.amount.toLocaleString()} recorded!`);
+    } catch {
+      toast.error("Failed to record payment");
+    }
+  };
+
+  const handleMakePayment = () => {
+    if (debtsWithUrls.length > 1) {
+      // Multiple debts with URLs - could show a selector, for now open highest rate one
+      const target = debtsWithUrls.sort((a, b) => b.interest_rate - a.interest_rate)[0];
+      window.open(target.payment_url!, '_blank');
+    } else if (highestRateDebt?.payment_url) {
+      window.open(highestRateDebt.payment_url, '_blank');
+    } else if (highestRateDebt) {
+      setNoUrlDebt(highestRateDebt);
+      setTempPaymentUrl("");
+      setShowNoUrlModal(true);
+    }
+  };
+
+  const handleSaveAndOpenUrl = async () => {
+    if (!noUrlDebt || !tempPaymentUrl) return;
+    try {
+      await (supabase as any).from("debts").update({ payment_url: tempPaymentUrl }).eq("id", noUrlDebt.id);
+      qc.invalidateQueries({ queryKey: ["debts"] });
+      setShowNoUrlModal(false);
+      window.open(tempPaymentUrl, '_blank');
+      toast.success("Payment URL saved!");
+    } catch {
+      toast.error("Failed to save URL");
+    }
   };
 
   const openAddDebt = (debt?: Debt) => {
@@ -100,11 +285,11 @@ export default function DebtTab() {
       setDebtForm({
         creditor: debt.creditor, type: debt.type, balance: String(debt.balance),
         interest_rate: String(debt.interest_rate), monthly_payment: String(debt.monthly_payment),
-        due_date: debt.due_date || "", notes: debt.notes || "",
+        due_date: debt.due_date || "", notes: debt.notes || "", payment_url: debt.payment_url || "",
       });
     } else {
       setEditingDebt(null);
-      setDebtForm({ creditor: "", type: "Credit Card", balance: "", interest_rate: "", monthly_payment: "", due_date: "", notes: "" });
+      setDebtForm({ creditor: "", type: "Credit Card", balance: "", interest_rate: "", monthly_payment: "", due_date: "", notes: "", payment_url: "" });
     }
     setShowAddDebt(true);
   };
@@ -117,12 +302,12 @@ export default function DebtTab() {
         balance: parseFloat(debtForm.balance), interest_rate: parseFloat(debtForm.interest_rate) || 0,
         monthly_payment: parseFloat(debtForm.monthly_payment) || 0,
         due_date: debtForm.due_date || null, notes: debtForm.notes || null,
+        payment_url: debtForm.payment_url || null,
         status: "current",
       };
       if (editingDebt) {
-        const { error } = await (await import("@/integrations/supabase/client")).supabase
-          .from("debts" as any).update(payload).eq("id", editingDebt.id) as any;
-        if (error) throw error;
+        await (supabase as any).from("debts").update(payload).eq("id", editingDebt.id);
+        qc.invalidateQueries({ queryKey: ["debts"] });
       } else {
         await addDebt.mutateAsync(payload);
       }
@@ -139,7 +324,7 @@ export default function DebtTab() {
       setDeleteTarget(null);
       toast.success("Debt deleted", {
         action: { label: "Undo", onClick: () => {
-          if (debt) addDebt.mutate({ creditor: debt.creditor, type: debt.type, balance: debt.balance, interest_rate: debt.interest_rate, monthly_payment: debt.monthly_payment, due_date: debt.due_date, notes: debt.notes, status: debt.status });
+          if (debt) addDebt.mutate({ creditor: debt.creditor, type: debt.type, balance: debt.balance, interest_rate: debt.interest_rate, monthly_payment: debt.monthly_payment, due_date: debt.due_date, notes: debt.notes, payment_url: debt.payment_url, status: debt.status });
         }},
         duration: 5000,
       });
@@ -154,12 +339,14 @@ export default function DebtTab() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start', width: '100%' }}
         className="max-lg:grid-cols-1"
       >
-        {/* LEFT: Loan Offer */}
-        <div className={cardStyle} style={{ padding: 28, borderRadius: 16 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 700 }} className="text-foreground">Loan Offer</h2>
-          <p style={{ fontSize: 13, marginTop: 4, marginBottom: 24 }} className="text-muted-foreground">Based on your strong financial history.</p>
+        {/* LEFT: Smart Payment Calculator */}
+        <div ref={loanCalcRef} className={cardStyle} style={{ padding: 28, borderRadius: 16 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 700 }} className="text-foreground">Payment Calculator</h2>
+          <p style={{ fontSize: 13, marginTop: 4, marginBottom: 24 }} className="text-muted-foreground">
+            {activeDebts.length > 0 ? "Based on your actual debt data." : "Add debts below to see personalized tiers."}
+          </p>
 
-          {TIERS.map(t => {
+          {tiers.map(t => {
             const selected = selectedTier === t.id;
             return (
               <div key={t.id} onClick={() => setSelectedTier(t.id)}
@@ -179,21 +366,22 @@ export default function DebtTab() {
                   {selected && <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#7B5EA7' }} />}
                 </div>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 700 }} className="text-foreground">${t.amount.toLocaleString()}</div>
-                  <div style={{ fontSize: 13 }} className="text-muted-foreground">
-                    Loan fee: ${t.fee.toLocaleString()}   Interest rate: {t.rate}%
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 22, fontWeight: 700 }} className="text-foreground">${t.amount.toLocaleString()}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, background: 'hsl(var(--muted))', borderRadius: 4, padding: '1px 6px' }} className="text-muted-foreground">{t.label}</span>
                   </div>
+                  <div style={{ fontSize: 13 }} className="text-muted-foreground">{t.desc}</div>
                 </div>
               </div>
             );
           })}
 
-          {/* Loan details */}
+          {/* Payment details */}
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid hsl(var(--border))' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }} className="text-foreground">Loan details</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }} className="text-foreground">Payment details</h3>
             {[
-              { label: "Selected loan amount", value: tier.amount.toLocaleString() },
-              { label: "Loan fee", value: tier.fee.toLocaleString() },
+              { label: "Selected Payment", value: `$${currentTier.amount.toLocaleString()}` },
+              { label: "Est. Total Interest", value: `$${Math.max(0, totalInterest).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
             ].map(row => (
               <div key={row.label} className="flex items-center justify-between" style={{ padding: '8px 0', borderBottom: '1px solid hsl(var(--border) / 0.3)' }}>
                 <span style={{ fontSize: 14 }} className="text-muted-foreground">{row.label}</span>
@@ -204,61 +392,99 @@ export default function DebtTab() {
               </div>
             ))}
             <div className="flex items-center justify-between" style={{ marginTop: 8, paddingTop: 12, borderTop: '1.5px solid hsl(var(--border))' }}>
-              <span style={{ fontSize: 14 }} className="text-muted-foreground">Total amount</span>
+              <span style={{ fontSize: 14 }} className="text-muted-foreground">Total Cost</span>
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground" style={{ fontSize: 11, background: 'hsl(var(--muted))', borderRadius: 4, padding: '2px 8px', fontWeight: 500 }}>USD</span>
-                <span style={{ fontSize: 20, fontWeight: 800 }} className="text-foreground">{(tier.amount + tier.fee).toLocaleString()}</span>
+                <span style={{ fontSize: 20, fontWeight: 800 }} className="text-foreground">${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
 
           {/* Buttons */}
-          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-            <button className="flex-1 border border-border rounded-xl text-foreground hover:bg-muted transition" style={{ height: 48, fontSize: 15, fontWeight: 500, background: 'transparent' }}>
-              Cancel
-            </button>
-            <button onClick={() => setShowApplyConfirm(true)} className="flex-1 rounded-xl text-white transition" style={{ height: 48, fontSize: 15, fontWeight: 600, background: '#7B5EA7', border: 'none' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#6D4F9A')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#7B5EA7')}
-            >
-              Apply Loan
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button className="flex-1 border border-border rounded-xl text-foreground hover:bg-muted transition" style={{ height: 48, fontSize: 15, fontWeight: 500, background: 'transparent' }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => activeDebts.length > 0 && setShowPaymentConfirm(true)}
+                disabled={activeDebts.length === 0}
+                className="flex-1 rounded-xl text-white transition disabled:opacity-50"
+                style={{ height: 48, fontSize: 15, fontWeight: 600, background: '#7B5EA7', border: 'none' }}
+                onMouseEnter={e => { if (activeDebts.length > 0) e.currentTarget.style.background = '#6D4F9A'; }}
+                onMouseLeave={e => (e.currentTarget.style.background = '#7B5EA7')}
+              >
+                Record Payment
+              </button>
+            </div>
+            {highestRateDebt && (
+              <>
+                <div style={{ fontSize: 11, textAlign: 'center' }} className="text-muted-foreground">
+                  Targeting: {highestRateDebt.creditor} (highest rate at {highestRateDebt.interest_rate}%)
+                </div>
+                <button
+                  onClick={handleMakePayment}
+                  title="Opens your lender's payment portal in a new tab"
+                  className="rounded-xl text-white transition flex items-center justify-center gap-2"
+                  style={{ width: '100%', height: 48, background: '#10B981', borderRadius: 12, fontSize: 15, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#059669')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#10B981')}
+                >
+                  <ExternalLink size={16} /> Make Payment →
+                </button>
+              </>
+            )}
           </div>
         </div>
 
         {/* RIGHT column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Top Available Loan */}
+          {/* Total Loan Balance */}
           <div className={cardStyle} style={{ padding: 24, borderRadius: 16 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }} className="text-foreground">Top Available Loan</h3>
-            <div className="flex justify-between items-start">
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16 }} className="text-foreground">Total Loan Balance</h3>
+            {activeDebts.length === 0 ? (
               <div>
-                <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Loan amount</div>
-                <div style={{ fontSize: 28, fontWeight: 700 }} className="text-foreground">$30,000.00</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#9CA3AF' }}>$0.00</div>
+                <p style={{ fontSize: 13 }} className="text-muted-foreground mt-2">Add debts below to see your total</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Loan period</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">Sep 01 - Aug 31, 2025</div>
-              </div>
-            </div>
-            <div className="flex justify-between" style={{ margin: '12px 0', fontSize: 13 }}>
-              <span className="text-muted-foreground">Loan fee: $2,800</span>
-              <span className="text-muted-foreground">Interest rate: 15%</span>
-            </div>
-            {/* Segmented bar */}
-            <div style={{ display: 'flex', width: '100%', height: 10, borderRadius: 999, overflow: 'hidden', margin: '16px 0 8px' }}>
-              <div style={{ width: '60%', background: '#7B5EA7' }} />
-              <div style={{ width: '28%', background: '#10B981' }} />
-              <div style={{ width: '12%', background: 'hsl(var(--border))' }} />
-            </div>
-            <div className="flex gap-4" style={{ marginTop: 8 }}>
-              {[{ label: "Principal", color: "#7B5EA7" }, { label: "Interest", color: "#10B981" }, { label: "Tax", color: "hsl(var(--border))" }].map(l => (
-                <div key={l.label} className="flex items-center gap-1.5" style={{ fontSize: 12 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
-                  <span className="text-muted-foreground">{l.label}</span>
+            ) : (
+              <>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Total Owed</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#DC2626' }}>
+                      ${totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 12 }} className="text-muted-foreground mb-1">Active Debts</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">{activeDebts.length} debt{activeDebts.length !== 1 ? 's' : ''}</div>
+                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="flex justify-between" style={{ margin: '12px 0', fontSize: 13 }}>
+                  <span className="text-muted-foreground">Highest: {highestDebt?.creditor} (${highestDebt?.balance.toLocaleString()})</span>
+                  <span className="text-muted-foreground">Avg Interest: {avgRate.toFixed(1)}%</span>
+                </div>
+                {/* Segmented bar */}
+                {typeBreakdown.length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', width: '100%', height: 10, borderRadius: 999, overflow: 'hidden', margin: '16px 0 8px' }}>
+                      {typeBreakdown.map(seg => (
+                        <div key={seg.type} style={{ width: `${seg.pct}%`, background: seg.color }} />
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-4" style={{ marginTop: 8 }}>
+                      {typeBreakdown.map(seg => (
+                        <div key={seg.type} className="flex items-center gap-1.5" style={{ fontSize: 12 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: seg.color }} />
+                          <span className="text-muted-foreground">{seg.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {/* Payments Chart */}
@@ -298,6 +524,53 @@ export default function DebtTab() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+
+            {/* Suggested Payment */}
+            <div style={{ borderTop: '1px solid hsl(var(--border))', margin: '16px 0', paddingTop: 16 }}>
+              <div className="flex items-center gap-2 mb-3">
+                <Lightbulb size={16} style={{ color: '#7B5EA7' }} />
+                <span style={{ fontSize: 14, fontWeight: 600 }} className="text-foreground">Suggested Monthly Payment</span>
+              </div>
+              {suggestedPayment.amount > 0 ? (
+                <>
+                  <div className="dark:bg-[#052e16] dark:border-[#166534]" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: '#F0FDF4', border: '1px solid #BBF7D0',
+                    borderRadius: 10, padding: '14px 16px',
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 13 }} className="text-muted-foreground">Pay this monthly</div>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: '#10B981' }}>
+                        ${suggestedPayment.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 13 }} className="text-muted-foreground">Debt-free by</div>
+                      <div style={{ fontSize: 16, fontWeight: 700 }} className="text-foreground">{suggestedPayment.date}</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 11, textAlign: 'center', marginTop: 8 }} className="text-muted-foreground">
+                    Based on 20% of your monthly income using the debt avalanche method
+                  </p>
+                  <button
+                    onClick={() => {
+                      const closest = tiers.reduce((prev, curr) =>
+                        Math.abs(curr.amount - suggestedPayment.amount) < Math.abs(prev.amount - suggestedPayment.amount) ? curr : prev
+                      );
+                      setSelectedTier(closest.id);
+                      loanCalcRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    style={{ fontSize: 12, color: '#7B5EA7', display: 'block', textAlign: 'center', marginTop: 4, background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    Use this amount →
+                  </button>
+                </>
+              ) : (
+                <p style={{ fontSize: 13 }} className="text-muted-foreground">
+                  {totalDebt > 0 ? "Add income transactions to get a suggestion" : "Add debts to see a suggested payment"}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -391,16 +664,22 @@ export default function DebtTab() {
         )}
       </div>
 
-      {/* Apply Loan Confirm */}
-      <AlertDialog open={showApplyConfirm} onOpenChange={setShowApplyConfirm}>
+      {/* Record Payment Confirm */}
+      <AlertDialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Apply for ${tier.amount.toLocaleString()} loan?</AlertDialogTitle>
-            <AlertDialogDescription>This will submit your loan application.</AlertDialogDescription>
+            <AlertDialogTitle>Record payment of ${currentTier.amount.toLocaleString()}?</AlertDialogTitle>
+            <AlertDialogDescription>This will be logged and your balances updated using the debt avalanche method.</AlertDialogDescription>
           </AlertDialogHeader>
+          <input
+            value={paymentNote}
+            onChange={e => setPaymentNote(e.target.value)}
+            placeholder="Note (optional)"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm mb-2"
+          />
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApplyLoan} style={{ background: '#7B5EA7' }}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={handleRecordPayment} style={{ background: '#7B5EA7' }}>Confirm</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -419,6 +698,31 @@ export default function DebtTab() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* No URL Modal */}
+      {showNoUrlModal && noUrlDebt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowNoUrlModal(false)}>
+          <div className="bg-card rounded-xl border border-border p-6 w-full max-w-sm shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-foreground mb-2">No payment link saved</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add a payment URL for <strong>{noUrlDebt.creditor}</strong> so we can take you directly to your lender.
+            </p>
+            <input
+              value={tempPaymentUrl}
+              onChange={e => setTempPaymentUrl(e.target.value)}
+              placeholder="https://your-lender.com/pay"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm mb-1"
+            />
+            <p style={{ fontSize: 11, marginBottom: 12 }} className="text-muted-foreground">Payment Website URL</p>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowNoUrlModal(false)} className="px-4 py-2 text-sm font-semibold rounded-lg border border-border text-foreground">Skip for now</button>
+              <button onClick={handleSaveAndOpenUrl} disabled={!tempPaymentUrl} className="px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-50" style={{ background: '#10B981' }}>
+                Save & Open
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Debt Modal */}
       {showAddDebt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddDebt(false)}>
@@ -433,6 +737,10 @@ export default function DebtTab() {
               <input value={debtForm.interest_rate} onChange={e => setDebtForm(f => ({ ...f, interest_rate: e.target.value }))} placeholder="Interest Rate %" type="number" step="0.1" className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm" />
               <input value={debtForm.monthly_payment} onChange={e => setDebtForm(f => ({ ...f, monthly_payment: e.target.value }))} placeholder="Monthly Minimum Payment" type="number" step="0.01" className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm" />
               <input value={debtForm.due_date} onChange={e => setDebtForm(f => ({ ...f, due_date: e.target.value }))} type="date" className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm" />
+              <div>
+                <input value={debtForm.payment_url} onChange={e => setDebtForm(f => ({ ...f, payment_url: e.target.value }))} placeholder="https://your-lender.com/pay" className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm" />
+                <p style={{ fontSize: 11, marginTop: 2 }} className="text-muted-foreground">Payment Website (optional) — Where you go to make your actual payment</p>
+              </div>
               <textarea value={debtForm.notes} onChange={e => setDebtForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes (optional)" rows={2} className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm resize-none" />
             </div>
             <div className="flex gap-2 mt-4 justify-end">
