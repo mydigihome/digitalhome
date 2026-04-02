@@ -529,7 +529,7 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           >
             {renderSection("Goals & Projects", goalProjects, <Target className="h-4 w-4 text-primary" />)}
-            {renderSection("Events", eventProjects, <Calendar className="h-4 w-4 text-success" />)}
+            {renderSection("Events", eventProjects, <Calendar className="h-4 w-4" style={{ color: "#7B5EA7" }} />)}
           </motion.div>
         </AnimatePresence>
 
