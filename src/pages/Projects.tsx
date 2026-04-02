@@ -34,6 +34,7 @@ export default function Projects() {
   const { data: projects = [], isLoading } = useProjects();
   const { data: tasks = [] } = useAllTasks();
   const queryClient = useQueryClient();
+  const projectsQueryKey = ["projects", user?.id] as const;
   const deleteProject = useDeleteProject();
 
   const [showCreateEvent, setShowCreateEvent] = useState(false);
@@ -115,9 +116,19 @@ export default function Projects() {
       } else {
         toast.success(`${succeeded} item${succeeded > 1 ? "s" : ""} deleted`);
       }
+
+      await queryClient.resetQueries();
+      await queryClient.refetchQueries({ type: "active" });
+      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
+      window.dispatchEvent(new Event("focus"));
     } catch (err) {
       console.error("Bulk delete error:", err);
-      await queryClient.refetchQueries({ queryKey: ["projects"] });
+      await queryClient.resetQueries();
+      await queryClient.refetchQueries({ type: "active" });
+      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
+      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
+      window.dispatchEvent(new Event("focus"));
       toast.error("Delete failed. Please try again.");
     }
   };
