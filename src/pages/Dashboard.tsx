@@ -226,22 +226,38 @@ export default function Dashboard() {
   const { data: tsData } = useTimeseries(selectedStock, selectedTimeframe.interval, selectedTimeframe.outputsize);
   const { data: searchResults } = useSymbolSearch(stockSearchQuery);
 
-  // Drag-and-drop card order
-  const [cardOrder, setCardOrder] = useState<string[]>(() =>
-    loadStoredJson<string[]>("dh_dashboard_card_order", DEFAULT_CARD_ORDER)
+  // Drag-and-drop card order — left column
+  const [leftOrder, setLeftOrder] = useState<string[]>(() =>
+    loadStoredJson<string[]>("dh_left_column_order", DEFAULT_LEFT_ORDER)
+  );
+  // Drag-and-drop card order — right column
+  const [rightOrder, setRightOrder] = useState<string[]>(() =>
+    loadStoredJson<string[]>("dh_right_column_order", DEFAULT_RIGHT_ORDER)
   );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleLeftDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setCardOrder((prev) => {
+      setLeftOrder((prev) => {
         const oldIdx = prev.indexOf(active.id as string);
         const newIdx = prev.indexOf(over.id as string);
         const next = arrayMove(prev, oldIdx, newIdx);
-        saveStoredJson("dh_dashboard_card_order", next);
+        saveStoredJson("dh_left_column_order", next);
+        return next;
+      });
+    }
+  };
+  const handleRightDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setRightOrder((prev) => {
+        const oldIdx = prev.indexOf(active.id as string);
+        const newIdx = prev.indexOf(over.id as string);
+        const next = arrayMove(prev, oldIdx, newIdx);
+        saveStoredJson("dh_right_column_order", next);
         return next;
       });
     }
