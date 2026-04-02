@@ -37,10 +37,8 @@ import "../../styles/money-tab.css";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
-  { id: "spending", label: "Spending", icon: CreditCard },
   { id: "debt", label: "Debt", icon: TrendingDown },
   { id: "investing", label: "Investing", icon: TrendingUp },
-  { id: "markets", label: "Markets", icon: LineChart },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -48,10 +46,8 @@ type TabId = typeof TABS[number]["id"];
 // Which cards belong to which tab
 const TAB_CARDS: Record<TabId, string[]> = {
   overview: ["plaid", "net-worth", "savings-rate", "moneyflow", "emergency", "salary"],
-  spending: ["spending", "bills", "cashflow", "subscriptions", "merchant-spending", "category-trends", "cashflow-calendar", "large-transactions", "savings-opportunities"],
   debt: ["debt", "credit-score", "net-worth-history", "refund-tracker"],
   investing: [],
-  markets: ["tradingview", "investment-portfolio", "tax-estimate"],
 };
 
 const FULL_WIDTH = new Set(["plaid", "moneyflow", "tradingview", "subscriptions", "net-worth-history", "category-trends", "cashflow-calendar"]);
