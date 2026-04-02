@@ -502,7 +502,12 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
                         isDark={isDark}
                         onEdit={() => { setEditContact(contact); setAddContactOpen(true); }}
                         onDelete={() => handleDeleteContact(contact.id)}
-                        onEmail={() => { setSelectedContact(contact); setEmailTone("cold"); setGeneratedEmail(""); }}
+                        onEmail={() => { setSelectedContact(contact); setActiveTab("Emails"); }}
+                        noteValues={noteValues}
+                        setNoteValues={setNoteValues}
+                        noteTimers={noteTimers}
+                        user={user}
+                        navigate={navigate}
                       />
                     )}
                   </div>
