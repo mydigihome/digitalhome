@@ -545,13 +545,13 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [journalOpen, setJournalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
   const location = useLocation();
+  const navigate = useNavigate();
 
   const sidebarWidth = collapsed ? 72 : 280;
 
