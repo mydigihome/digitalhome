@@ -1709,43 +1709,55 @@ export type Database = {
       }
       journal_entries: {
         Row: {
+          audio_url: string | null
           content: Json | null
           content_preview: string | null
           created_at: string
           entry_date: string
           id: string
+          image_url: string | null
           is_locked: boolean
+          mood: string | null
           mood_emoji: string | null
           mood_text: string | null
           pin_hash: string | null
+          tags: string[] | null
           title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          audio_url?: string | null
           content?: Json | null
           content_preview?: string | null
           created_at?: string
           entry_date?: string
           id?: string
+          image_url?: string | null
           is_locked?: boolean
+          mood?: string | null
           mood_emoji?: string | null
           mood_text?: string | null
           pin_hash?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          audio_url?: string | null
           content?: Json | null
           content_preview?: string | null
           created_at?: string
           entry_date?: string
           id?: string
+          image_url?: string | null
           is_locked?: boolean
+          mood?: string | null
           mood_emoji?: string | null
           mood_text?: string | null
           pin_hash?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id?: string
