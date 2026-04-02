@@ -840,6 +840,15 @@ export default function InvestingTab() {
         </div>
       )}
 
+      {/* Live Trading Terminal */}
+      <TradingTerminal onOpenPlanModal={() => setPlanModalOpen(true)} />
+
+      {/* Past Trading Plans */}
+      <PastTradingPlans />
+
+      {/* Trading Plan Modal */}
+      <TradingPlanModal open={planModalOpen} onClose={() => setPlanModalOpen(false)} />
+
       <style>{`
         @media (max-width: 1024px) {
           .investing-grid {
