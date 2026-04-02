@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown } from "lucide-react";
+import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark } from "lucide-react";
 import MoneyCard from "./MoneyCard";
+import MoneyOverview from "./overview/MoneyOverview";
 import { PlaidBannerFront, PlaidBannerBack } from "./cards/PlaidBanner";
 import { NetWorthFront, NetWorthBack } from "./cards/NetWorthCard";
 import { SpendingFront, SpendingBack } from "./cards/SpendingCard";
@@ -197,156 +198,139 @@ export default function MoneyTabWithSubTabs() {
   return (
     <div className="money-tab-root">
       <div className="money-tab-stack">
-        {/* Header - Matches Projects page */}
+        {/* Header */}
         <div className="mb-2">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground tracking-tight">Money & Wealth</h1>
-              <p className="text-sm text-muted-foreground mt-1">Track your finances, investments, and financial goals</p>
+              <h1 className="text-[28px] font-bold text-foreground tracking-tight">Money</h1>
+              <p className="text-sm text-muted-foreground mt-1">Your complete financial picture</p>
             </div>
-            <button
-              onClick={() => setTrackFinanceOpen(true)}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200"
-            >
-              <Plus className="w-4 h-4" />
-              Add Card
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Navigation - Matches Projects list/card view switcher */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1">
-            {TABS.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Search */}
-          <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 ml-2">
-            <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search cards..."
-              className="bg-transparent border-none outline-none text-sm text-foreground w-full placeholder:text-muted-foreground"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery("")} className="bg-transparent border-none cursor-pointer">
-                <X className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-2 border border-border text-foreground rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-muted">
+                <Landmark className="w-4 h-4" />
+                Connect Bank
               </button>
-            )}
+              {activeTab !== "overview" && (
+                <button
+                  onClick={() => setTrackFinanceOpen(true)}
+                  className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Card
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Hidden cards restore drawer */}
-        {tabHiddenCards.length > 0 && (
-          <div className="money-card" style={{ padding: 0 }}>
-            <button
-              onClick={() => setDrawerOpen(!drawerOpen)}
-              className="w-full flex items-center justify-between"
-              style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer" }}
-            >
-              <div className="flex items-center gap-2">
-                <EyeOff className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">{tabHiddenCards.length} hidden card{tabHiddenCards.length > 1 ? "s" : ""}</span>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center border-b border-border">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
+                  activeTab === tab.id
+                    ? "border-success text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab !== "overview" && (
+            <div className="flex-1 flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 ml-2">
+              <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search cards..."
+                className="bg-transparent border-none outline-none text-sm text-foreground w-full placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="bg-transparent border-none cursor-pointer">
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Overview tab → new layout */}
+        {activeTab === "overview" ? (
+          <MoneyOverview />
+        ) : (
+          <>
+            {/* Hidden cards restore drawer */}
+            {tabHiddenCards.length > 0 && (
+              <div className="money-card" style={{ padding: 0 }}>
+                <button
+                  onClick={() => setDrawerOpen(!drawerOpen)}
+                  className="w-full flex items-center justify-between"
+                  style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">{tabHiddenCards.length} hidden card{tabHiddenCards.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <span className="text-sm font-semibold flex items-center gap-1 text-primary">
+                    Manage <ChevronDown className={`w-3.5 h-3.5 transition-transform ${drawerOpen ? "rotate-180" : ""}`} />
+                  </span>
+                </button>
+                <div className="overflow-hidden transition-all duration-300 ease-in-out" style={{ maxHeight: drawerOpen ? 200 : 0 }}>
+                  <div className="flex flex-wrap gap-2" style={{ padding: "0 20px 12px" }}>
+                    {tabHiddenCards.map(id => (
+                      <button key={id} onClick={() => restoreCard(id)} className="flex items-center gap-2 rounded-full text-sm font-semibold border-none cursor-pointer bg-muted text-foreground" style={{ padding: "6px 16px" }}>
+                        {CARD_LABELS[id] || id}
+                        <Eye className="w-3.5 h-3.5 text-primary" />
+                      </button>
+                    ))}
+                    <button onClick={restoreAll} className="text-sm font-semibold underline text-primary bg-transparent border-none cursor-pointer">Restore All</button>
+                  </div>
+                </div>
               </div>
-              <span className="text-sm font-semibold flex items-center gap-1 text-primary">
-                Manage <ChevronDown className={`w-3.5 h-3.5 transition-transform ${drawerOpen ? "rotate-180" : ""}`} />
-              </span>
-            </button>
-            <div
-              className="overflow-hidden transition-all duration-300 ease-in-out"
-              style={{ maxHeight: drawerOpen ? 200 : 0 }}
-            >
-              <div className="flex flex-wrap gap-2" style={{ padding: "0 20px 12px" }}>
-                {tabHiddenCards.map(id => (
-                  <button
-                    key={id}
-                    onClick={() => restoreCard(id)}
-                    className="flex items-center gap-2 rounded-full text-sm font-semibold border-none cursor-pointer bg-muted text-foreground"
-                    style={{ padding: "6px 16px" }}
-                  >
-                    {CARD_LABELS[id] || id}
-                    <Eye className="w-3.5 h-3.5 text-primary" />
-                  </button>
+            )}
+
+            {/* Cards Grid */}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={allVisible} strategy={verticalListSortingStrategy}>
+                {rows.map((row, ri) => (
+                  <div key={ri} className={`money-tab-row${row.length === 1 ? " full-width" : ""}`}>
+                    {row.map((id) => {
+                      const c = cardMap[id];
+                      if (!c) return null;
+                      const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
+                      const needsGate = !isPremium && PREMIUM_CARD_IDS.has(id);
+                      return (
+                        <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, pointerEvents: isSearchDimmed ? "none" : "auto", transition: "opacity 200ms" }}>
+                          {needsGate ? (
+                            <PremiumGate feature={CARD_LABELS[id] || "This card"} blur>
+                              <MoneyCard id={id} front={c.front} back={c.back} fullWidth={FULL_WIDTH.has(id)} onHide={() => hideCard(id)} cardLabel={CARD_LABELS[id] || id} />
+                            </PremiumGate>
+                          ) : (
+                            <MoneyCard id={id} front={c.front} back={c.back} fullWidth={FULL_WIDTH.has(id)} onHide={() => hideCard(id)} cardLabel={CARD_LABELS[id] || id} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 ))}
-                <button onClick={restoreAll} className="text-sm font-semibold underline text-primary bg-transparent border-none cursor-pointer">
-                  Restore All
+              </SortableContext>
+            </DndContext>
+
+            {allVisible.length === 0 && (
+              <div className="money-card flex flex-col items-center justify-center py-12 text-center">
+                <p className="text-lg font-semibold text-foreground mb-1">No cards in this tab</p>
+                <p className="text-sm text-muted-foreground mb-4">Add cards or restore hidden ones to see your data here</p>
+                <button onClick={() => setTrackFinanceOpen(true)} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-semibold transition-all">
+                  <Plus className="w-4 h-4" /> Add Card
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Cards Grid */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={allVisible} strategy={verticalListSortingStrategy}>
-            {rows.map((row, ri) => (
-              <div key={ri} className={`money-tab-row${row.length === 1 ? " full-width" : ""}`}>
-                {row.map((id) => {
-                  const c = cardMap[id];
-                  if (!c) return null;
-                  const isSearchDimmed = searchQuery && !(CARD_LABELS[id] || id).toLowerCase().includes(searchQuery.toLowerCase());
-                  const needsGate = !isPremium && PREMIUM_CARD_IDS.has(id);
-                  return (
-                    <div key={id} style={{ opacity: isSearchDimmed ? 0.3 : 1, pointerEvents: isSearchDimmed ? "none" : "auto", transition: "opacity 200ms" }}>
-                      {needsGate ? (
-                        <PremiumGate feature={CARD_LABELS[id] || "This card"} blur>
-                          <MoneyCard
-                            id={id}
-                            front={c.front}
-                            back={c.back}
-                            fullWidth={FULL_WIDTH.has(id)}
-                            onHide={() => hideCard(id)}
-                            cardLabel={CARD_LABELS[id] || id}
-                          />
-                        </PremiumGate>
-                      ) : (
-                        <MoneyCard
-                          id={id}
-                          front={c.front}
-                          back={c.back}
-                          fullWidth={FULL_WIDTH.has(id)}
-                          onHide={() => hideCard(id)}
-                          cardLabel={CARD_LABELS[id] || id}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </SortableContext>
-        </DndContext>
-
-        {/* Empty state for tab */}
-        {allVisible.length === 0 && (
-          <div className="money-card flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg font-semibold text-foreground mb-1">No cards in this tab</p>
-            <p className="text-sm text-muted-foreground mb-4">Add cards or restore hidden ones to see your data here</p>
-            <button
-              onClick={() => setTrackFinanceOpen(true)}
-              className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-semibold transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              Add Card
-            </button>
-          </div>
+            )}
+          </>
         )}
       </div>
 

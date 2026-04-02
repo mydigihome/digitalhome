@@ -140,6 +140,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bills: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          due_date: string
+          frequency: string
+          id: string
+          merchant: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          due_date: string
+          frequency?: string
+          id?: string
+          merchant: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          due_date?: string
+          frequency?: string
+          id?: string
+          merchant?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       brain_dumps: {
         Row: {
           ai_title: string | null
@@ -3077,6 +3113,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          id: string
+          name: string
+          notes: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          name: string
+          notes?: string | null
+          source?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_finances: {
         Row: {
