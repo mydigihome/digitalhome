@@ -116,14 +116,14 @@ Pre-session routine, entry windows, review checklist.
 
 Be specific with numbers. No fluff.`;
 
-      const response = await supabase.functions.invoke("brain-dump-chat", {
-        body: {
-          messages: [{ role: "user", content: prompt }],
-          model: "google/gemini-2.5-flash",
-        },
+      const response = await supabase.functions.invoke("generate-trading-plan", {
+        body: { prompt },
       });
 
-      const planText = response.data?.reply || response.data?.content?.[0]?.text || "Plan generation failed. Please try again.";
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+
+      const planText = response.data?.plan || "Plan generation failed. Please try again.";
       setGeneratedPlan(planText);
 
       // Save to DB

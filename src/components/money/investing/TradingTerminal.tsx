@@ -16,19 +16,22 @@ const BROKERS = [
   { name: "Charles Schwab", url: "https://schwab.com" },
 ];
 
-function AdvancedChart({ theme }: { theme: "dark" | "light" }) {
+function AdvancedChart({ theme, userId = "anonymous", widgetId = "investing-terminal" }: { theme: "dark" | "light"; userId?: string; widgetId?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!ref.current) return;
     ref.current.innerHTML = "";
+
+    const savedSymbol = localStorage.getItem(`dh_tv_symbol_${widgetId}`) || "NASDAQ:AAPL";
+
     const script = document.createElement("script");
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
     script.type = "text/javascript";
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: "NASDAQ:AAPL",
+      symbol: savedSymbol,
       interval: "D",
       timezone: "America/New_York",
       theme,
@@ -51,10 +54,25 @@ function AdvancedChart({ theme }: { theme: "dark" | "light" }) {
       show_popup_button: true,
       popup_width: "1200",
       popup_height: "700",
+      save_image: true,
+      auto_save_delay: 2,
+      charts_storage_url: "https://saveload.tradingview.com",
+      charts_storage_api_version: "1.1",
+      client_id: "digitalhome.app",
+      user_id: userId,
+      load_last_chart: true,
+      enabled_features: [
+        "study_templates",
+        "save_chart_properties_to_local_storage",
+        "use_localstorage_for_settings",
+        "save_shortcut",
+        "create_volume_indicator_by_default",
+      ],
+      disabled_features: ["header_saveload"],
     });
     ref.current.appendChild(script);
     return () => { if (ref.current) ref.current.innerHTML = ""; };
-  }, [theme]);
+  }, [theme, userId, widgetId]);
 
   return (
     <div className="tradingview-widget-container w-full h-full">
