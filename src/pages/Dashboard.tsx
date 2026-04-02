@@ -387,7 +387,7 @@ export default function Dashboard() {
     { key: "contact", label: "Contact", icon: UserPlus, onClick: () => navigate("/relationships") },
     { key: "bill", label: "Bill", icon: Receipt, onClick: () => navigate("/finance/wealth") },
     { key: "todo", label: "Todo", icon: CheckCircle, onClick: scrollToTodos },
-    { key: "journal", label: "Journal", icon: BookOpen, onClick: () => navigate("/journal") },
+    { key: "journal", label: "Journal", icon: BookOpen, onClick: () => navigate("/journal/new") },
   ];
 
   /* ── Link handlers ── */
