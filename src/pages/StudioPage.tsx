@@ -5,6 +5,8 @@ import StudioHQView from "@/components/studio/StudioHQView";
 import StudioPlatformsView from "@/components/studio/StudioPlatformsView";
 import StudioDealsView from "@/components/studio/StudioDealsView";
 import StudioRevenueView from "@/components/studio/StudioRevenueView";
+import StudioHeaderCard from "@/components/studio/StudioHeaderCard";
+import StudioRevenueView from "@/components/studio/StudioRevenueView";
 
 const TABS = [
   { id: "overview", label: "Overview" },
