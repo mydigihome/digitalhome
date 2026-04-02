@@ -241,8 +241,13 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
     const progress = total > 0 ? Math.round((done / total) * 100) : 0;
     const isComplete = progress === 100 && total > 0;
     const typeCat = getProjectTypeCategory(project.type);
-    const colors = TYPE_COLORS[typeCat];
+    const isEvent = typeCat === "event";
+    const accentColor = isEvent ? "#7B5EA7" : "#10B981";
+    const accentBg = isEvent ? (isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF") : (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4");
+    const accentBorder = isEvent ? "#DDD6FE" : "#BBF7D0";
+    const accentText = isEvent ? (isDark ? "#C4B5FD" : "#7B5EA7") : (isDark ? "#6EE7B7" : "#10B981");
     const isSelected = selectedIds.includes(project.id);
+    const proj = project as any;
 
     if (viewMode === "list") {
       return (
@@ -265,20 +270,22 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
               {isSelected && <Check size={12} color="white" strokeWidth={3} />}
             </button>
           )}
-          <div className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl", colors.border)} />
-          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", colors.bg)}>
-            {project.type === "event" ? <Calendar className={cn("h-5 w-5", colors.text)} /> : <FolderOpen className={cn("h-5 w-5", colors.text)} />}
+          <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: accentColor }} />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ background: accentBg }}>
+            {isEvent ? <Calendar className="h-5 w-5" style={{ color: accentColor }} /> : <FolderOpen className="h-5 w-5" style={{ color: accentColor }} />}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-[15px] font-semibold text-foreground truncate">{project.name}</h3>
             <p className="text-xs text-muted-foreground">
-              {project.end_date ? `Due ${format(new Date(project.end_date), "MMM d, yyyy")}` : project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "No date"}
+              {proj.event_date ? format(new Date(proj.event_date), "MMM d, yyyy")
+                : project.end_date ? `Due ${format(new Date(project.end_date), "MMM d, yyyy")}`
+                : project.start_date ? format(new Date(project.start_date), "MMM d, yyyy") : "No date"}
             </p>
           </div>
           {total > 0 && (
             <div className="w-20 shrink-0">
               <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70" style={{ width: `${progress}%` }} />
+                <div className="h-full rounded-full" style={{ width: `${progress}%`, background: accentColor }} />
               </div>
               <p className="mt-1 text-right text-[11px] font-medium text-muted-foreground">{progress}%</p>
             </div>
@@ -315,27 +322,87 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
           </button>
         )}
 
-        <div className={cn("h-1 w-full", colors.border)} />
-        {project.cover_image && (
+        <div className="h-1 w-full" style={{ background: accentColor }} />
+
+        {/* Event cover image */}
+        {(proj.image_url || proj.cover_image) && (
+          <div style={{ height: "120px", overflow: "hidden", position: "relative" }}>
+            <img
+              src={proj.image_url || proj.cover_image}
+              alt={project.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            {isDark && <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40px", background: "linear-gradient(transparent, rgba(0,0,0,0.3))" }} />}
+          </div>
+        )}
+        {!proj.image_url && !proj.cover_image && project.cover_image && (
           <div className="h-60 w-full bg-muted" style={{ background: `url(${project.cover_image}) center/cover` }} />
         )}
+
         <div className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <span className={cn("text-[11px] font-bold uppercase tracking-[0.05em] px-3 py-1.5 rounded-lg", colors.text, colors.bg)}>
-              {typeCat === "event" ? "Event" : "Goal"}
+            <span style={{
+              fontSize: "11px", fontWeight: "700", textTransform: "uppercase",
+              letterSpacing: "0.05em", padding: "4px 10px", borderRadius: "8px",
+              background: accentBg, color: accentText,
+              border: `1px solid ${isEvent ? (isDark ? "rgba(123,94,167,0.3)" : accentBorder) : (isDark ? "rgba(16,185,129,0.2)" : accentBorder)}`,
+            }}>
+              {isEvent ? "Event" : "Goal"}
             </span>
-            {total > 0 && (
-              <span className={cn(
-                "flex items-center gap-1 text-[13px] font-semibold px-3 py-1.5 rounded-xl",
-                isComplete ? "bg-success/15 text-success" : "bg-primary/10 text-primary"
-              )}>
+            {isEvent && proj.event_date ? (
+              <span style={{
+                display: "flex", alignItems: "center", gap: "4px",
+                fontSize: "12px", fontWeight: "500", color: accentText,
+                background: accentBg, padding: "4px 10px", borderRadius: "8px",
+              }}>
+                <Calendar size={12} />
+                {format(new Date(proj.event_date), "MMM d")}
+              </span>
+            ) : total > 0 ? (
+              <span style={{
+                display: "flex", alignItems: "center", gap: "4px",
+                fontSize: "13px", fontWeight: "600", padding: "4px 10px", borderRadius: "12px",
+                background: isComplete ? (isDark ? "rgba(16,185,129,0.15)" : "rgba(16,185,129,0.1)") : accentBg,
+                color: isComplete ? (isDark ? "#6EE7B7" : "#10B981") : accentText,
+              }}>
                 {isComplete && <Check className="h-3.5 w-3.5" />}
                 {done}/{total} tasks
               </span>
-            )}
+            ) : null}
           </div>
+
           <h3 className="text-2xl sm:text-[28px] font-bold text-foreground leading-[1.3] tracking-[-0.01em] mb-2">{project.name}</h3>
-          {(project.end_date || project.start_date) && (
+
+          {/* Event-specific details */}
+          {isEvent && proj.location && (
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "4px" }}>
+              <MapPin size={11} color="#7B5EA7" />
+              <span style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {proj.location}
+              </span>
+            </div>
+          )}
+          {isEvent && proj.description && (
+            <p style={{
+              fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+              lineHeight: "1.4", fontFamily: "Inter, sans-serif",
+              overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
+              marginTop: "4px", marginBottom: "4px",
+            }}>
+              {proj.description}
+            </p>
+          )}
+          {isEvent && proj.host_name && (
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "6px", marginBottom: "8px" }}>
+              <User size={11} color="#9CA3AF" />
+              <span style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
+                Hosted by {proj.host_name}
+              </span>
+            </div>
+          )}
+
+          {/* Goal date / progress */}
+          {!isEvent && (project.end_date || project.start_date) && (
             <div className="flex items-center gap-1.5 mb-4">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium text-muted-foreground">
@@ -343,17 +410,24 @@ Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budge
               </span>
             </div>
           )}
+
           {total > 0 && (
             <div className="mb-5">
               <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                <div
-                  className={cn("h-full rounded-full transition-all duration-500", isComplete ? "bg-success" : "bg-gradient-to-r from-primary to-primary/70")}
-                  style={{ width: `${progress}%` }}
-                />
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: accentColor }} />
               </div>
             </div>
           )}
-          <button className="w-full py-3.5 rounded-[14px] bg-primary/[0.06] text-[16px] font-semibold text-primary transition-all duration-200 hover:bg-primary/[0.12] hover:scale-[1.01] active:scale-[0.98]">
+
+          <button style={{
+            width: "100%", padding: "14px", borderRadius: "14px",
+            background: isEvent ? (isDark ? "rgba(123,94,167,0.08)" : "rgba(123,94,167,0.06)") : undefined,
+            fontSize: "16px", fontWeight: "600", color: accentText,
+            border: "none", cursor: "pointer",
+            transition: "all 200ms",
+          }}
+          className={!isEvent ? "bg-primary/[0.06] hover:bg-primary/[0.12]" : ""}
+          >
             View Details
           </button>
         </div>
