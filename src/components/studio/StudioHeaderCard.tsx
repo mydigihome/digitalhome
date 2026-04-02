@@ -39,8 +39,8 @@ interface StudioProfile {
 const DOC_ITEMS: { key: string; label: string; Icon: typeof Shield; color: string; isText?: boolean }[] = [
   { key: "llc_document", label: "LLC Document", Icon: Shield, color: "#7B5EA7" },
   { key: "ein_number", label: "EIN Number", Icon: Hash, color: "#10B981", isText: true },
-  { key: "pitch_deck", label: "Pitch Deck", Icon: Presentation, color: "#F59E0B" },
-  { key: "business_license", label: "Business License", Icon: FileCheck, color: "#3B82F6" },
+  { key: "pitch_deck", label: "Pitch Deck", Icon: FileText, color: "#F59E0B" },
+  { key: "business_license", label: "Business License", Icon: Award, color: "#3B82F6" },
 ];
 
 const GOAL_CATEGORIES = ["Followers", "Revenue", "Content", "Brand Deal", "Other"];
