@@ -660,6 +660,48 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <FloatingCloud onClick={() => setJournalOpen(true)} />
         <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
 
+        {/* Desktop Bell Icon — fixed top-right */}
+        {user && (
+          <div className="hidden lg:block fixed top-4 z-40" style={{ right: "24px" }}>
+            <div style={{ position: "relative" }}>
+              <button
+                className="notif-bell"
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  position: "relative", width: "38px", height: "38px", borderRadius: "50%",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  background: isDark ? "#252528" : "white", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 150ms",
+                }}
+              >
+                <Bell size={18} color={isDark ? "rgba(255,255,255,0.7)" : "#374151"} />
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: "absolute", top: "-2px", right: "-2px",
+                    width: unreadCount > 9 ? "20px" : "16px", height: "16px",
+                    borderRadius: "999px", background: "#EF4444",
+                    border: `2px solid ${isDark ? "#252528" : "white"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", fontWeight: "700", color: "white", fontFamily: "Inter, sans-serif",
+                  }}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Panel */}
+        {notifOpen && user && (
+          <NotificationPanel
+            onClose={() => setNotifOpen(false)}
+            onUnreadCountChange={setUnreadCount}
+            userId={user.id}
+          />
+        )}
+
         {/* Main Content */}
         <main className="transition-all duration-300 min-h-screen bg-background" style={{ paddingLeft: `${sidebarWidth}px` }}>
           <div className="lg:block hidden" />
