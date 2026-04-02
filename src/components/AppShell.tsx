@@ -567,6 +567,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, []); // only on mount
 
+  // Generate notifications on load
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.functions.invoke("generate-notifications", { body: { user_id: user.id } }).catch(() => {});
+  }, [user?.id]);
+
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
       <div className="min-h-screen bg-background">
