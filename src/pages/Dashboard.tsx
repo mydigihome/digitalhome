@@ -447,9 +447,9 @@ export default function Dashboard() {
       case "networth-projects":
         return (
            <SortableCard key={id} id={id}>
-            <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
-              <div className="w-full lg:w-[280px] lg:flex-shrink-0">{compactNetWorth}</div>
-              <div className="w-full lg:flex-1">{compactProjects}</div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
+              <div style={{ width: '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
+              <div style={{ flex: 1, flexGrow: 1, minWidth: 0 }}>{compactProjects}</div>
             </div>
           </SortableCard>
         );
