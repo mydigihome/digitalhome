@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info, RotateCcw, BarChart3, TrendingDown, TrendingUp, CreditCard, Wallet } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info, RotateCcw } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -232,43 +232,8 @@ export default function ApplicationsTrackerPage() {
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="min-h-screen bg-background">
 
+        {/* Slim Banner Header */}
         <div className="max-w-xl lg:max-w-6xl mx-auto px-5 pt-6">
-          {/* Money Header + Tab Navigation */}
-          <div className="mb-2">
-            <div className="flex items-start justify-between flex-wrap gap-4">
-              <div>
-                <h1 className="text-[28px] font-bold text-foreground tracking-tight">Money</h1>
-                <p className="text-sm text-muted-foreground mt-1">Your complete financial picture</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex items-center border-b border-border">
-              {[
-                { id: "overview", label: "Overview" },
-                { id: "applications", label: "Applications" },
-                { id: "debt", label: "Debt" },
-                { id: "investing", label: "Investing" },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (tab.id !== "applications") {
-                      localStorage.setItem("dh_money_tab", tab.id);
-                      navigate("/finance/wealth");
-                    }
-                  }}
-                  className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
-                    tab.id === "applications"
-                      ? "border-success text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
           <div
             style={{
               background: bannerGradient,
