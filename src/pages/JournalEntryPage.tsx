@@ -868,7 +868,13 @@ export default function JournalEntryPage() {
               <button onClick={() => {
                 if (!churchZip) { toast.error("Enter your zip code"); return; }
                 const searchTerms = [churchPreference, churchDenomination, "near", churchZip].filter(Boolean).join(" ");
-                window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchTerms)}`, "_blank");
+                const link = document.createElement("a");
+                link.href = `https://www.google.com/maps/search/${encodeURIComponent(searchTerms)}`;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 setChurchModalOpen(false);
               }} style={{
                 flex: 1, padding: 11, background: "#7B5EA7", color: "white", border: "none",

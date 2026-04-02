@@ -266,49 +266,52 @@ export default function JournalPage() {
             <p style={{ fontSize: 14, fontFamily: "Inter, sans-serif" }}>No entries found. Start writing!</p>
           </div>
         )}
-        {filtered.map(entry => (
-          <div key={entry.id} onClick={() => navigate(`/journal/${entry.id}`)} style={{ margin: "0 12px 12px", padding: 16, background: isDark ? "#1C1C1E" : "white", borderRadius: 12, border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, cursor: "pointer", transition: "all 150ms" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 500, color: "#10B981", margin: "0 0 4px", fontFamily: "Inter, sans-serif" }}>
-                  {new Date(entry.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+        {/* ENTRIES LIST VIEW */}
+        <div style={{ margin: "0 12px" }}>
+          {filtered.map((entry, idx) => (
+            <div key={entry.id} onClick={() => navigate(`/journal/${entry.id}`)}
+              style={{
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "14px 0",
+                borderBottom: idx < filtered.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` : "none",
+                cursor: "pointer", transition: "background 150ms",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.01)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              {/* Date column */}
+              <div style={{ width: 48, flexShrink: 0, textAlign: "center" }}>
+                <p style={{ fontSize: 20, fontWeight: 700, color: "#10B981", margin: 0, fontFamily: "Inter, sans-serif", lineHeight: 1 }}>
+                  {new Date(entry.created_at).getDate()}
                 </p>
-                <p style={{ fontSize: 15, fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0, fontFamily: "Inter, sans-serif" }}>
-                  {entry.title || "Untitled Entry"}
+                <p style={{ fontSize: 10, fontWeight: 500, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF", margin: "2px 0 0", fontFamily: "Inter, sans-serif", textTransform: "uppercase" }}>
+                  {new Date(entry.created_at).toLocaleDateString("en-US", { month: "short" })}
                 </p>
               </div>
-              {entry.mood && (
-                <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 500, background: `${EMOTION_COLORS[entry.mood] || "#9CA3AF"}20`, color: EMOTION_COLORS[entry.mood] || "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
-                  {entry.mood}
-                </span>
-              )}
-            </div>
-            {entry.tags?.length > 0 && (
-              <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-                {entry.tags.slice(0, 3).map((tag: string, i: number) => (
-                  <span key={i} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 500, background: isDark ? "#252528" : "#F3F4F6", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>{tag}</span>
-                ))}
+              {/* Content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0, fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {entry.title || "Untitled Entry"}
+                  </p>
+                  {entry.mood && (
+                    <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 500, background: `${EMOTION_COLORS[entry.mood] || "#9CA3AF"}20`, color: EMOTION_COLORS[entry.mood] || "#9CA3AF", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                      {entry.mood}
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#6B7280", margin: "3px 0 0", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {String(entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 100)}
+                </p>
               </div>
-            )}
-            <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: 0, lineHeight: 1.5, fontFamily: "Inter, sans-serif" }}>
-              {String(entry.content_preview || entry.content || "").replace(/<[^>]*>/g, "").substring(0, 120)}
-            </p>
-            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-              {entry.audio_url && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
-                  <Mic size={12} /> Voice note
-                </span>
-              )}
-              {entry.image_url && (
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
-                  <ImageIcon size={12} /> Photo
-                </span>
-              )}
+              {/* Indicators */}
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                {entry.audio_url && <Mic size={13} color={isDark ? "rgba(255,255,255,0.25)" : "#9CA3AF"} />}
+                {entry.image_url && <ImageIcon size={13} color={isDark ? "rgba(255,255,255,0.25)" : "#9CA3AF"} />}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </AppShell>
   );
