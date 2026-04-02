@@ -50,6 +50,7 @@ const TAB_CARDS: Record<TabId, string[]> = {
   overview: ["plaid", "net-worth", "savings-rate", "moneyflow", "emergency", "salary"],
   spending: ["spending", "bills", "cashflow", "subscriptions", "merchant-spending", "category-trends", "cashflow-calendar", "large-transactions", "savings-opportunities"],
   debt: ["debt", "credit-score", "net-worth-history", "refund-tracker"],
+  investing: [],
   markets: ["tradingview", "investment-portfolio", "tax-estimate"],
 };
 
