@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown } from "lucide-react";
+import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark } from "lucide-react";
 import MoneyCard from "./MoneyCard";
+import MoneyOverview from "./overview/MoneyOverview";
 import { PlaidBannerFront, PlaidBannerBack } from "./cards/PlaidBanner";
 import { NetWorthFront, NetWorthBack } from "./cards/NetWorthCard";
 import { SpendingFront, SpendingBack } from "./cards/SpendingCard";
