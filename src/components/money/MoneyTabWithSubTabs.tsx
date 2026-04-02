@@ -48,6 +48,7 @@ type TabId = typeof TABS[number]["id"];
 // Which cards belong to which tab
 const TAB_CARDS: Record<TabId, string[]> = {
   overview: ["plaid", "net-worth", "savings-rate", "moneyflow", "emergency", "salary"],
+  applications: [],
   debt: ["debt", "credit-score", "net-worth-history", "refund-tracker"],
   investing: [],
 };
