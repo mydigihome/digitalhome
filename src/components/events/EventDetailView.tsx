@@ -652,7 +652,7 @@ Make them specific to this event.
                     <div
                       key={task.id}
                       className="flex items-start gap-3 transition-colors"
-                      style={{ padding: "14px 20px", borderBottom: i < projectTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
+                      style={{ padding: "14px 20px", borderBottom: i < prepTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
                       onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >
