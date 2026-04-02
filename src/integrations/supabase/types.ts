@@ -3146,6 +3146,7 @@ export type Database = {
           ein_number: string | null
           handle: string | null
           id: string
+          images: string[] | null
           instagram_handle: string | null
           llc_document: string | null
           pitch_deck: string | null
@@ -3164,6 +3165,7 @@ export type Database = {
           ein_number?: string | null
           handle?: string | null
           id?: string
+          images?: string[] | null
           instagram_handle?: string | null
           llc_document?: string | null
           pitch_deck?: string | null
@@ -3182,6 +3184,7 @@ export type Database = {
           ein_number?: string | null
           handle?: string | null
           id?: string
+          images?: string[] | null
           instagram_handle?: string | null
           llc_document?: string | null
           pitch_deck?: string | null

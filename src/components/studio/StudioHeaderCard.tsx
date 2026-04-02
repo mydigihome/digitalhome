@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   Shield, Hash, FileText, Award, Check,
   Plus, Target, X, Trash2, Pencil,
+  ChevronRight, Upload, Maximize2, MoreHorizontal,
 } from "lucide-react";
 
 interface StudioDoc {
@@ -36,16 +37,32 @@ interface StudioProfile {
   business_license?: string | null;
 }
 
+interface StudioStats {
+  combined_followers?: number;
+  followers_change?: number;
+  reach_30d?: number;
+  reach_change?: number;
+  interactions_30d?: number;
+  interactions_change?: number;
+  avg_engagement?: number;
+  engagement_change?: number;
+}
+
 const DOC_ITEMS: { key: string; label: string; Icon: typeof Shield; color: string; isText?: boolean }[] = [
+  { key: "ein_number", label: "EIN", Icon: Hash, color: "#10B981", isText: true },
   { key: "llc_document", label: "LLC Document", Icon: Shield, color: "#7B5EA7" },
-  { key: "ein_number", label: "EIN Number", Icon: Hash, color: "#10B981", isText: true },
   { key: "pitch_deck", label: "Pitch Deck", Icon: FileText, color: "#F59E0B" },
   { key: "business_license", label: "Business License", Icon: Award, color: "#3B82F6" },
 ];
 
 const GOAL_CATEGORIES = ["Followers", "Revenue", "Content", "Brand Deal", "Other"];
 
-export default function StudioHeaderCard() {
+interface Props {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const { user } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
 
@@ -54,6 +71,10 @@ export default function StudioHeaderCard() {
   const [studioDocs, setStudioDocs] = useState<StudioDoc>({});
   const [studioGoals, setStudioGoals] = useState<StudioGoal[]>([]);
   const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
+  const [studioImages, setStudioImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const studioImageInputRef = useRef<HTMLInputElement>(null);
+  const [studioStats] = useState<StudioStats>({});
 
   // Modals
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -89,6 +110,9 @@ export default function StudioHeaderCard() {
           business_license: profile.business_license,
         });
         setFormProfile(profile);
+        if ((profile as any).images) {
+          setStudioImages((profile as any).images);
+        }
       }
 
       const { data: goals } = await supabase
@@ -108,6 +132,15 @@ export default function StudioHeaderCard() {
     }, 5000);
     return () => clearInterval(interval);
   }, [studioGoals.length]);
+
+  // Auto-rotate images
+  useEffect(() => {
+    if (studioImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prev => (prev + 1) % studioImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [studioImages.length]);
 
   const handleDocAction = async (doc: typeof DOC_ITEMS[number]) => {
     if (!user) return;
@@ -197,7 +230,51 @@ export default function StudioHeaderCard() {
     toast.success("Goal removed");
   };
 
-  const currentGoal = studioGoals[currentGoalIndex];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+    const files = Array.from(e.target.files || []);
+    const urls: string[] = [];
+    for (const file of files) {
+      const path = `studio-images/${user.id}/${Date.now()}-${file.name}`;
+      const { data } = await supabase.storage.from("studio-documents").upload(path, file);
+      if (data) {
+        const { data: url } = supabase.storage.from("studio-documents").getPublicUrl(path);
+        urls.push(url.publicUrl);
+      }
+    }
+    const updated = [...studioImages, ...urls];
+    setStudioImages(updated);
+    await supabase.from("studio_profile").upsert({
+      user_id: user.id,
+      images: updated as any,
+    } as any, { onConflict: "user_id" });
+    toast.success("Photos uploaded!");
+  };
+
+  const TABS = ["Overview", "HQ", "Platforms", "Deals", "Revenue"];
+
+  const statItems = [
+    {
+      label: "Combined Followers",
+      value: studioStats?.combined_followers?.toLocaleString() || "—",
+      change: studioStats?.followers_change ? `+${studioStats.followers_change} YTD` : null,
+    },
+    {
+      label: "30D Reach",
+      value: studioStats?.reach_30d?.toLocaleString() || "—",
+      change: studioStats?.reach_change ? `+${studioStats.reach_change}%` : null,
+    },
+    {
+      label: "30D Interactions",
+      value: studioStats?.interactions_30d?.toLocaleString() || "—",
+      change: studioStats?.interactions_change ? `+${studioStats.interactions_change}%` : null,
+    },
+    {
+      label: "Avg Engagement",
+      value: studioStats?.avg_engagement ? `${studioStats.avg_engagement}%` : "—",
+      change: studioStats?.engagement_change ? `+${studioStats.engagement_change}%` : null,
+    },
+  ];
 
   return (
     <>
@@ -208,270 +285,324 @@ export default function StudioHeaderCard() {
         overflow: "hidden",
         marginBottom: "24px",
       }}>
-        {/* BANNER */}
+        {/* TOP SECTION */}
         <div style={{
-          height: "100px",
-          background: "linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 40%, #16213e 70%, #0d3b2e 100%)",
-          position: "relative",
-          overflow: "hidden",
+          display: "grid",
+          gridTemplateColumns: "1fr 380px",
+          minHeight: "260px",
         }}>
-          <div style={{
-            position: "absolute", inset: 0,
-            backgroundImage: "radial-gradient(ellipse at 15% 50%, rgba(16,185,129,0.2) 0%, transparent 55%), radial-gradient(ellipse at 85% 30%, rgba(123,94,167,0.2) 0%, transparent 55%)",
-          }} />
-          {studioName ? (
+          {/* LEFT — Identity + docs */}
+          <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column" }}>
+            {/* Breadcrumb */}
             <div style={{
-              position: "absolute", inset: 0,
-              display: "flex", alignItems: "center", justifyContent: "center",
+              display: "flex", alignItems: "center", gap: "6px",
+              marginBottom: "8px",
             }}>
+              <Target size={13} color="#10B981" />
+              <span style={{
+                fontSize: "12px", fontWeight: 500,
+                color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280",
+                fontFamily: "Inter, sans-serif",
+              }}>Studio</span>
+              {studioHandle && (
+                <>
+                  <ChevronRight size={11} color={isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB"} />
+                  <span style={{
+                    fontSize: "12px", fontWeight: 500,
+                    color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
+                    fontFamily: "Inter, sans-serif",
+                  }}>@{studioHandle}</span>
+                </>
+              )}
+            </div>
+
+            {/* Studio name */}
+            {studioName ? (
               <h1 style={{
-                fontSize: "28px", fontWeight: 800, color: "white",
-                letterSpacing: "-0.5px", fontFamily: "Inter, sans-serif",
-                textShadow: "0 2px 20px rgba(0,0,0,0.5)", margin: 0,
+                fontSize: "26px", fontWeight: 800,
+                color: isDark ? "#F2F2F2" : "#111827",
+                letterSpacing: "-0.5px",
+                fontFamily: "Inter, sans-serif",
+                margin: "0 0 16px",
               }}>
                 {studioName}
               </h1>
-            </div>
-          ) : (
-            <button
-              onClick={() => setSettingsOpen(true)}
-              style={{
-                position: "absolute", inset: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: "transparent", border: "none", cursor: "pointer",
-                gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "15px",
-                fontWeight: 500, fontFamily: "Inter, sans-serif",
-              }}>
-              <Plus size={18} color="rgba(255,255,255,0.5)" />
-              Add your studio name
-            </button>
-          )}
-          <button
-            onClick={() => { setFormProfile({ studio_name: studioName, handle: studioHandle, ...formProfile }); setSettingsOpen(true); }}
-            style={{
-              position: "absolute", top: "14px", right: "16px",
-              display: "flex", alignItems: "center", gap: "5px",
-              padding: "6px 12px", background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px",
-              color: "rgba(255,255,255,0.8)", fontSize: "12px", fontWeight: 500,
-              cursor: "pointer", backdropFilter: "blur(8px)",
-              fontFamily: "Inter, sans-serif", zIndex: 2,
-            }}>
-            <Pencil size={11} />
-            Edit Studio
-          </button>
-        </div>
+            ) : (
+              <button
+                onClick={() => setSettingsOpen(true)}
+                style={{
+                  fontSize: "22px", fontWeight: 600,
+                  color: "#D1D5DB", background: "transparent",
+                  border: "none", cursor: "pointer",
+                  fontFamily: "Inter, sans-serif", padding: 0,
+                  marginBottom: "16px", display: "flex",
+                  alignItems: "center", gap: "8px", textAlign: "left",
+                }}>
+                <Plus size={18} />
+                Add studio name
+              </button>
+            )}
 
-        {/* BOTTOM — clean horizontal */}
-        <div style={{
-          display: "grid", gridTemplateColumns: "1fr auto 1fr",
-          padding: "20px 28px", alignItems: "start",
-        }}>
-          {/* LEFT — Business Docs */}
-          <div>
-            <p style={{
-              fontSize: "11px", fontWeight: 600, color: "#9CA3AF",
-              textTransform: "uppercase", letterSpacing: "0.8px",
-              marginBottom: "14px", fontFamily: "Inter, sans-serif",
+            {/* Business docs — plain text */}
+            <div style={{
+              display: "flex", flexDirection: "column", gap: "6px",
+              marginBottom: "20px",
             }}>
-              Business Documents
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               {DOC_ITEMS.map(doc => {
                 const val = studioDocs[doc.key as keyof StudioDoc];
                 return (
                   <div key={doc.key} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    display: "flex", alignItems: "center", gap: "8px",
                   }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <doc.Icon size={14} color={val ? doc.color : "#D1D5DB"} />
-                      <span style={{
-                        fontSize: "13px", fontFamily: "Inter, sans-serif",
-                        color: val
-                          ? (isDark ? "#F2F2F2" : "#111827")
-                          : (isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF"),
-                        fontWeight: val ? 500 : 400,
-                      }}>
-                        {doc.label}
-                      </span>
-                      {val && (
-                        <span style={{
-                          fontSize: "11px", color: "#10B981",
-                          display: "flex", alignItems: "center", gap: "3px",
+                    <doc.Icon size={12} color={val ? doc.color : (isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB")} />
+                    {val ? (
+                      <button
+                        onClick={() => handleDocAction(doc)}
+                        style={{
+                          background: "transparent", border: "none", padding: 0,
+                          fontSize: "13px",
+                          color: isDark ? "rgba(255,255,255,0.5)" : "#374151",
+                          cursor: "pointer", fontFamily: "Inter, sans-serif",
+                          textAlign: "left",
                         }}>
-                          <Check size={10} />
-                          {doc.isText ? val : "Added"}
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleDocAction(doc)}
-                      style={{
-                        background: "transparent", border: "none",
-                        fontSize: "12px",
-                        color: val ? "#6B7280" : "#10B981",
-                        cursor: "pointer", fontWeight: 500,
-                        fontFamily: "Inter, sans-serif",
-                      }}>
-                      {val ? "View →" : "+ Add"}
-                    </button>
+                        {doc.isText ? val : `${doc.label} →`}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleDocAction(doc)}
+                        style={{
+                          background: "transparent", border: "none", padding: 0,
+                          fontSize: "13px",
+                          color: isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB",
+                          cursor: "pointer", fontFamily: "Inter, sans-serif",
+                          textAlign: "left",
+                        }}>
+                        + Add {doc.label}
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
-          </div>
 
-          {/* CENTER DIVIDER */}
-          <div style={{
-            width: "1px",
-            background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
-            alignSelf: "stretch", margin: "0 32px",
-          }} />
-
-          {/* RIGHT — Goals */}
-          <div>
+            {/* Action buttons */}
             <div style={{
-              display: "flex", justifyContent: "space-between",
-              alignItems: "center", marginBottom: "14px",
+              display: "flex", alignItems: "center", gap: "8px",
+              marginTop: "auto",
             }}>
-              <p style={{
-                fontSize: "11px", fontWeight: 600, color: "#9CA3AF",
-                textTransform: "uppercase", letterSpacing: "0.8px",
-                fontFamily: "Inter, sans-serif", margin: 0,
-              }}>
-                Studio Goals
-              </p>
               <button
-                onClick={() => setAddGoalOpen(true)}
+                onClick={() => { setFormProfile({ studio_name: studioName, handle: studioHandle, ...formProfile }); setSettingsOpen(true); }}
                 style={{
-                  background: "transparent", border: "none",
-                  fontSize: "12px", color: "#10B981", cursor: "pointer",
-                  fontWeight: 500, display: "flex", alignItems: "center",
-                  gap: "4px", fontFamily: "Inter, sans-serif",
+                  display: "flex", alignItems: "center", gap: "6px",
+                  padding: "9px 18px",
+                  background: isDark ? "#F2F2F2" : "#111827",
+                  color: isDark ? "#111827" : "white",
+                  border: "none", borderRadius: "8px",
+                  fontSize: "14px", fontWeight: 600, cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
                 }}>
-                <Plus size={12} />
-                Add
+                <Pencil size={13} />
+                Edit Studio
+              </button>
+              <button style={{
+                padding: "9px 16px",
+                background: "transparent",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                color: isDark ? "#F2F2F2" : "#374151",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Preview</button>
+              <button style={{
+                padding: "9px 16px",
+                background: "transparent",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                color: isDark ? "#F2F2F2" : "#374151",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Share</button>
+              <button style={{
+                padding: "9px",
+                background: "transparent",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                borderRadius: "8px", cursor: "pointer",
+                color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <MoreHorizontal size={15} />
               </button>
             </div>
+          </div>
 
-            {studioGoals.length > 0 && currentGoal ? (
-              <div>
-                <div style={{ marginBottom: "14px" }}>
+          {/* RIGHT — Image panel */}
+          <div style={{
+            position: "relative",
+            background: isDark ? "#252528" : "#F3F4F6",
+            overflow: "hidden",
+            borderLeft: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+          }}>
+            {studioImages.length > 0 ? (
+              <>
+                <img
+                  src={studioImages[currentImageIndex]}
+                  alt="Studio"
+                  style={{
+                    width: "100%", height: "100%", objectFit: "cover",
+                  }}
+                />
+                {studioImages.length > 1 && (
                   <div style={{
-                    display: "flex", justifyContent: "space-between",
-                    alignItems: "center", marginBottom: "6px",
+                    position: "absolute", bottom: "12px",
+                    left: "50%", transform: "translateX(-50%)",
+                    display: "flex", gap: "4px",
                   }}>
-                    <span style={{
-                      fontSize: "14px", fontWeight: 600,
-                      color: isDark ? "#F2F2F2" : "#111827",
-                      fontFamily: "Inter, sans-serif",
-                    }}>
-                      {currentGoal.title}
-                    </span>
-                    <span style={{
-                      fontSize: "13px", fontWeight: 700, color: "#10B981",
-                      fontFamily: "Inter, sans-serif",
-                    }}>
-                      {currentGoal.progress || 0}%
-                    </span>
-                  </div>
-                  <div style={{
-                    height: "4px",
-                    background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6",
-                    borderRadius: "999px", overflow: "hidden",
-                  }}>
-                    <div style={{
-                      height: "100%",
-                      width: `${currentGoal.progress || 0}%`,
-                      background: "linear-gradient(90deg, #10B981, #059669)",
-                      borderRadius: "999px",
-                      transition: "width 500ms ease",
-                    }} />
-                  </div>
-                  {currentGoal.deadline && (
-                    <p style={{
-                      fontSize: "11px",
-                      color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
-                      marginTop: "4px", fontFamily: "Inter, sans-serif",
-                    }}>
-                      Due {new Date(currentGoal.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
-                  )}
-                </div>
-
-                {studioGoals.length > 1 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {studioGoals
-                      .filter((_, i) => i !== currentGoalIndex)
-                      .slice(0, 2)
-                      .map((goal, i) => (
-                        <div key={i} style={{
-                          display: "flex", alignItems: "center", gap: "8px",
-                        }}>
-                          <div style={{
-                            width: "5px", height: "5px", borderRadius: "50%",
-                            background: "#D1D5DB", flexShrink: 0,
-                          }} />
-                          <span style={{
-                            fontSize: "12px",
-                            color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280",
-                            flex: 1, overflow: "hidden",
-                            textOverflow: "ellipsis", whiteSpace: "nowrap",
-                            fontFamily: "Inter",
-                          }}>
-                            {goal.title}
-                          </span>
-                          <span style={{ fontSize: "11px", color: "#9CA3AF" }}>
-                            {goal.progress}%
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-
-                {studioGoals.length > 1 && (
-                  <div style={{ display: "flex", gap: "4px", marginTop: "12px" }}>
-                    {studioGoals.map((_, i) => (
+                    {studioImages.map((_, i) => (
                       <button
                         key={i}
-                        onClick={() => setCurrentGoalIndex(i)}
+                        onClick={() => setCurrentImageIndex(i)}
                         style={{
-                          width: i === currentGoalIndex ? "16px" : "5px",
-                          height: "5px", borderRadius: "999px",
-                          background: i === currentGoalIndex
-                            ? "#10B981"
-                            : (isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"),
+                          width: i === currentImageIndex ? "16px" : "6px",
+                          height: "6px", borderRadius: "999px",
+                          background: i === currentImageIndex ? "white" : "rgba(255,255,255,0.5)",
                           border: "none", cursor: "pointer", padding: 0,
-                          transition: "all 250ms",
+                          transition: "all 300ms",
                         }}
                       />
                     ))}
                   </div>
                 )}
-              </div>
+                <button style={{
+                  position: "absolute", top: "12px", right: "12px",
+                  padding: "6px", background: "rgba(0,0,0,0.4)",
+                  border: "none", borderRadius: "6px", cursor: "pointer",
+                  color: "white",
+                }}>
+                  <Maximize2 size={14} />
+                </button>
+              </>
             ) : (
-              <div>
-                <p style={{
-                  fontSize: "13px",
-                  color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
-                  fontStyle: "italic", marginBottom: "10px",
+              <div
+                onClick={() => studioImageInputRef.current?.click()}
+                style={{
+                  width: "100%", height: "100%",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", gap: "8px",
+                }}>
+                <div style={{
+                  width: "44px", height: "44px", borderRadius: "12px",
+                  background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Upload size={18} color={isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF"} />
+                </div>
+                <span style={{
+                  fontSize: "13px", fontWeight: 500,
+                  color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
                   fontFamily: "Inter, sans-serif",
                 }}>
-                  No goals added yet
-                </p>
-                <button
-                  onClick={() => setAddGoalOpen(true)}
-                  style={{
-                    padding: "7px 14px", background: "#F0FDF4",
-                    border: "1px solid #BBF7D0", borderRadius: "8px",
-                    fontSize: "13px", fontWeight: 600, color: "#065F46",
-                    cursor: "pointer", fontFamily: "Inter, sans-serif",
-                  }}>
-                  Add First Goal
-                </button>
+                  Add a studio photo or logo
+                </span>
               </div>
             )}
+
+            <input
+              ref={studioImageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={handleImageUpload}
+            />
           </div>
+        </div>
+
+        {/* STATS ROW */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+        }}>
+          {statItems.map((stat, i) => (
+            <div key={i} style={{
+              padding: "16px 24px",
+              borderRight: i < 3 ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` : "none",
+            }}>
+              <p style={{
+                fontSize: "11px", fontWeight: 500,
+                color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                margin: "0 0 4px", fontFamily: "Inter, sans-serif",
+                textTransform: "uppercase", letterSpacing: "0.3px",
+              }}>
+                {stat.label}
+              </p>
+              <p style={{
+                fontSize: "20px", fontWeight: 700,
+                color: isDark ? "#F2F2F2" : "#111827",
+                margin: "0 0 2px", fontFamily: "Inter, sans-serif",
+                fontVariantNumeric: "tabular-nums",
+              }}>
+                {stat.value}
+              </p>
+              {stat.change && (
+                <p style={{
+                  fontSize: "11px", fontWeight: 600,
+                  color: "#10B981", margin: 0,
+                  fontFamily: "Inter, sans-serif",
+                }}>
+                  {stat.change}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* TABS */}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+        }}>
+          {TABS.map(tab => {
+            const tabId = tab.toLowerCase();
+            const isActive = activeTab === tabId;
+            return (
+              <button
+                key={tab}
+                onClick={() => onTabChange(tabId)}
+                style={{
+                  padding: "14px 24px",
+                  border: "none",
+                  background: "transparent",
+                  fontSize: "14px",
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive
+                    ? (isDark ? "#F2F2F2" : "#111827")
+                    : (isDark ? "rgba(255,255,255,0.4)" : "#6B7280"),
+                  borderBottom: `2px solid ${isActive
+                    ? (isDark ? "#F2F2F2" : "#111827")
+                    : "transparent"}`,
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                  transition: "all 150ms",
+                  marginBottom: "-1px",
+                  position: "relative",
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.color = isDark ? "#F2F2F2" : "#111827";
+                    (e.currentTarget as HTMLButtonElement).style.borderBottomColor = isDark ? "rgba(255,255,255,0.2)" : "#E5E7EB";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.color = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";
+                    (e.currentTarget as HTMLButtonElement).style.borderBottomColor = "transparent";
+                  }
+                }}>
+                {tab}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -526,7 +657,7 @@ export default function StudioHeaderCard() {
                       }}
                     />
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: "0" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
                       {f.prefix && (
                         <span style={{
                           padding: "8px 10px", fontSize: "13px",
