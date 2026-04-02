@@ -851,6 +851,20 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
     toast.success("File removed");
   };
 
+  const handlePreviewImageUpload = async (templateId: string, file: File) => {
+    if (!userId) return;
+    const validTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
+    if (!validTypes.includes(file.type)) { toast.error("Only PNG, JPG, WEBP allowed"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    const path = `${templateId}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("template-previews").upload(path, file);
+    if (error) { toast.error("Upload failed"); return; }
+    const { data: { publicUrl } } = supabase.storage.from("template-previews").getPublicUrl(path);
+    await (supabase as any).from("shop_templates").update({ preview_image_url: publicUrl }).eq("id", templateId);
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, preview_image_url: publicUrl } : t));
+    toast.success("Preview image uploaded!");
+  };
+
   if (loading) {
     return (
       <div>
