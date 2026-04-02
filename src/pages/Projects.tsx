@@ -53,6 +53,11 @@ export default function Projects() {
   const [partifulUrl, setPartifulUrl] = useState("");
   const [partifulData, setPartifulData] = useState<Record<string, string>>({});
   const [partifulImporting, setPartifulImporting] = useState(false);
+  const [partifulPreview, setPartifulPreview] = useState<any>(null);
+  const [partifulFetching, setPartifulFetching] = useState(false);
+  const [partifulError, setPartifulError] = useState<string | null>(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [manualEventData, setManualEventData] = useState<Record<string, string>>({});
 
   const isDark = document.documentElement.classList.contains("dark");
 
