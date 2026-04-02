@@ -211,6 +211,8 @@ export default function Dashboard() {
 
   // Stock state
   const [showBrokerModal, setShowBrokerModal] = useState(false);
+  const [chartSize, setChartSize] = useState<'compact' | 'default' | 'expanded'>(() => (localStorage.getItem("dh_market_watch_size") as any) || "default");
+  const chartHeightMap = { compact: 350, default: 500, expanded: 720 };
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Drag-and-drop card order — left column
