@@ -591,30 +591,42 @@ export default function Dashboard() {
                   <h2 className="text-base font-semibold text-foreground">Recent Reflections</h2>
                   <p className="text-xs text-success">Capture your thoughts daily</p>
                 </div>
-                <button onClick={() => setJournalModalOpen(true)} className="text-sm font-medium text-success hover:underline">New Journal Entry</button>
+                <button onClick={() => navigate("/journal/new")} className="text-sm font-medium text-success hover:underline">New Journal Entry</button>
               </div>
-              <div className="px-5 pb-5 space-y-0">
-                {(journalEntries.length > 0 ? journalEntries : [
-                  { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), mood_emoji: "" },
-                  { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), mood_emoji: "" },
-                ]).slice(0, 5).map((entry: any) => {
-                  const entryDate = new Date(entry.created_at);
-                  const dateLabel = isToday(entryDate) ? "Today" : format(entryDate, "MMM d");
-                  return (
-                    <div key={entry.id} className="group flex items-center gap-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition rounded-lg px-2 -mx-2 cursor-pointer"
-                      onClick={() => setJournalModalOpen(true)}>
-                      <span className="text-[13px] text-muted-foreground w-16 flex-shrink-0">{dateLabel}</span>
-                      <span className="text-sm font-medium text-foreground flex-1 truncate">{entry.title || "Untitled Entry"}</span>
-                      <MoodIcon mood={entry.mood_emoji} />
-                      {entry.id && !entry.id.startsWith("sample") && (
-                        <button onClick={(e) => { e.stopPropagation(); setDeleteEntryId(entry.id); }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded">
-                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                        </button>
-                      )}
+              <div className="px-5 pb-5" style={{ display: "flex", gap: 20 }}>
+                {/* LEFT — Entry list */}
+                <div style={{ flex: "0 0 60%" }}>
+                  {(journalEntries.length > 0 ? journalEntries : [
+                    { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), mood_emoji: "", mood: "Calm" },
+                    { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), mood_emoji: "", mood: "Anxious" },
+                  ]).slice(0, 3).map((entry: any) => {
+                    const entryDate = new Date(entry.created_at);
+                    const dateLabel = isToday(entryDate) ? "Today" : format(entryDate, "MMM d");
+                    return (
+                      <div key={entry.id} className="group py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition rounded-lg px-2 -mx-2 cursor-pointer"
+                        onClick={() => entry.id.startsWith("sample") ? navigate("/journal") : navigate(`/journal/${entry.id}`)}>
+                        <span className="text-[11px] font-medium" style={{ color: "#10B981" }}>{dateLabel}</span>
+                        <p className="text-sm font-medium text-foreground truncate mt-0.5">{entry.title || "Untitled Entry"}</p>
+                        {entry.mood && <span className="text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: `${EMOTION_COLORS_DASH[entry.mood] || "#9CA3AF"}20`, color: EMOTION_COLORS_DASH[entry.mood] || "#9CA3AF" }}>{entry.mood}</span>}
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{String(entry.content_preview || "").replace(/<[^>]*>/g, "").substring(0, 80)}</p>
+                      </div>
+                    );
+                  })}
+                  <button onClick={() => navigate("/journal")} className="text-xs font-medium text-success hover:underline mt-2 block">View all →</button>
+                </div>
+                {/* RIGHT — Emotion bars */}
+                <div style={{ flex: "0 0 35%" }}>
+                  {(journalEmotionStats.length > 0 ? journalEmotionStats : [
+                    { label: "Calm", percentage: 40 }, { label: "Happy", percentage: 30 }, { label: "Focused", percentage: 20 }, { label: "Sad", percentage: 10 },
+                  ]).map(em => (
+                    <div key={em.label} style={{ marginBottom: 8 }}>
+                      <div style={{ height: 20, background: "var(--muted)", borderRadius: 999, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${Math.max(em.percentage, 10)}%`, background: EMOTION_COLORS_DASH[em.label] || "#9CA3AF", borderRadius: 999, transition: "width 600ms ease" }} />
+                      </div>
+                      <span style={{ fontSize: 10, color: "var(--muted-foreground)", fontFamily: "Inter, sans-serif" }}>{em.label}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
           </SortableCard>
