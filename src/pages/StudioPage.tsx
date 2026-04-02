@@ -39,24 +39,24 @@ export default function StudioPage() {
                   key={tab}
                   onClick={() => setActiveTab(tabId)}
                   style={{
-                    padding: "10px 22px",
+                    padding: "7px 18px",
                     borderRadius: "999px",
                     border: "1px solid",
                     borderColor: isActive
-                      ? (isDark ? "transparent" : "#111827")
+                      ? "#10B981"
                       : (isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"),
                     background: isActive
-                      ? (isDark ? "#F2F2F2" : "#111827")
+                      ? "#10B981"
                       : (isDark ? "transparent" : "white"),
                     color: isActive
-                      ? (isDark ? "#111827" : "white")
+                      ? "white"
                       : (isDark ? "rgba(255,255,255,0.6)" : "#374151"),
-                    fontSize: "14px",
+                    fontSize: "13px",
                     fontWeight: isActive ? 600 : 400,
                     cursor: "pointer",
                     fontFamily: "Inter, sans-serif",
                     transition: "all 150ms ease",
-                    boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                    boxShadow: isActive ? "0 2px 8px rgba(16,185,129,0.3)" : "none",
                   }}
                   onMouseEnter={e => {
                     if (!isActive) {
