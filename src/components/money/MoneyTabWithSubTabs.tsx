@@ -5,6 +5,7 @@ import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff
 import MoneyCard from "./MoneyCard";
 import MoneyOverview from "./overview/MoneyOverview";
 import DebtTab from "./DebtTab";
+import InvestingTab from "./InvestingTab";
 import { PlaidBannerFront, PlaidBannerBack } from "./cards/PlaidBanner";
 import { NetWorthFront, NetWorthBack } from "./cards/NetWorthCard";
 import { SpendingFront, SpendingBack } from "./cards/SpendingCard";
