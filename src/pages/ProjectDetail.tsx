@@ -212,7 +212,8 @@ export default function ProjectDetail() {
           <EventDetailView
             projectId={id!}
             projectName={project?.name || ""}
-            coverImage={project?.cover_image}
+            coverImage={project?.cover_image || (project as any)?.image_url}
+            projectData={project}
           />
         ) : isGoal ? (
           <GoalDetailView projectId={id!} projectName={project?.name || ""} coverImage={project?.cover_image} />

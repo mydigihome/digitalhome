@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useTasks, type Task } from "@/hooks/useTasks";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
@@ -77,13 +79,15 @@ interface Props {
   projectId: string;
   projectName: string;
   coverImage?: string | null;
+  projectData?: any;
 }
 
-export default function EventDetailView({ projectId, projectName, coverImage }: Props) {
+export default function EventDetailView({ projectId, projectName, coverImage, projectData }: Props) {
   const navigate = useNavigate();
   const { data: event } = useEventDetails(projectId);
   const { data: guests = [] } = useEventGuests(event?.id);
   const { data: questions = [] } = useRsvpQuestions(event?.id);
+  const { data: projectTasks = [] } = useTasks(projectId);
   const addGuests = useAddEventGuests();
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
@@ -101,8 +105,30 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   const [emailBody, setEmailBody] = useState("");
   const [showCoHostInvite, setShowCoHostInvite] = useState(false);
   const [coHostEmail, setCoHostEmail] = useState("");
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
-  if (!event) return null;
+  // Use event_details data, falling back to project-level data for imported events
+  const effectiveEvent = event || (projectData ? {
+    id: projectId,
+    project_id: projectId,
+    event_date: projectData.event_date || projectData.end_date,
+    location: projectData.location,
+    description: projectData.description || projectData.goal,
+    event_type: "event",
+    privacy: "private",
+    share_token: "",
+    location_type: "in_person",
+    shared_album_enabled: false,
+    external_link_url: null,
+    external_link_label: null,
+    playlist_url: null,
+    background_style: "default",
+    rsvp_deadline: null,
+    created_at: projectData.created_at,
+    updated_at: projectData.updated_at,
+  } as any : null);
+
+  if (!effectiveEvent) return null;
 
   const counts = {
     total: guests.length,
@@ -112,7 +138,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
     viewed: guests.filter(g => g.status === "viewed").length,
   };
 
-  const shareUrl = `${window.location.origin}/events/${event.share_token}`;
+  const shareUrl = `${window.location.origin}/events/${effectiveEvent.share_token}`;
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
@@ -125,7 +151,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
       .map(e => e.trim().toLowerCase())
       .filter(e => e && e.includes("@"));
     if (emails.length === 0) { toast.error("Enter valid emails"); return; }
-    await addGuests.mutateAsync(emails.map(email => ({ event_id: event.id, email })));
+    await addGuests.mutateAsync(emails.map(email => ({ event_id: effectiveEvent.id, email })));
     setNewEmails("");
     setShowAddGuests(false);
     toast.success(`${emails.length} guest(s) added`);
@@ -134,7 +160,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
   const openEmailComposer = (filter: "all" | "accepted") => {
     setEmailFilter(filter);
     const tpl = EMAIL_TEMPLATES[0];
-    const dateStr = event.event_date ? format(new Date(event.event_date), "MMMM d, yyyy") : "TBD";
+    const dateStr = effectiveEvent.event_date ? format(new Date(effectiveEvent.event_date), "MMMM d, yyyy") : "TBD";
     setEmailBody(tpl.body(projectName, dateStr));
     setShowEmailModal(true);
   };
@@ -151,7 +177,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
     toast.success("Email client opened");
   };
 
-  const eventType = event.event_type?.replace("_", " ") || "Event";
+  const eventType = effectiveEvent.event_type?.replace("_", " ") || "Event";
   const staggerDelay = (i: number) => ({ delay: i * 0.1 });
 
   return (
@@ -245,7 +271,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
         }}
       >
         {/* ═══ INFO CARDS ═══ */}
-        {event.event_date && (
+        {effectiveEvent.event_date && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(0), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -258,13 +284,13 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
             <div>
               <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Date & Time</p>
               <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>
-                {format(new Date(event.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(event.event_date), "h:mm a")}
+                {format(new Date(effectiveEvent.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(effectiveEvent.event_date), "h:mm a")}
               </p>
             </div>
           </motion.div>
         )}
 
-        {event.location && (
+        {effectiveEvent.location && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(1), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -276,7 +302,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
             </div>
             <div>
               <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Location</p>
-              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>{event.location}</p>
+              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>{effectiveEvent.location}</p>
             </div>
           </motion.div>
         )}
@@ -347,14 +373,14 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
         )}
 
         {/* ═══ ABOUT ═══ */}
-        {event.description && (
+        {effectiveEvent.description && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(3), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           >
             <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>About</p>
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 16, padding: 20, fontSize: 15, color: "#4B5563", lineHeight: 1.7, whiteSpace: "pre-wrap" as const }}>
-              {event.description}
+              {effectiveEvent.description}
             </div>
           </motion.div>
         )}
@@ -437,13 +463,95 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
           )}
 
           {/* RSVP Deadline */}
-          {event.rsvp_deadline && (
+          {effectiveEvent.rsvp_deadline && (
             <p className="text-center mt-6" style={{ fontSize: 13, color: "#9CA3AF" }}>
-              RSVP Deadline: {format(new Date(event.rsvp_deadline), "MMMM d, yyyy")}
-              {isPast(new Date(event.rsvp_deadline)) && (
+              RSVP Deadline: {format(new Date(effectiveEvent.rsvp_deadline), "MMMM d, yyyy")}
+              {isPast(new Date(effectiveEvent.rsvp_deadline)) && (
                 <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444" }}>Expired</span>
               )}
             </p>
+          )}
+        </motion.div>
+
+        {/* ═══ PREPARATION TIMELINE ═══ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
+            Preparation Timeline
+          </p>
+          {projectTasks.length === 0 ? (
+            <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
+              <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
+              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
+              <p style={{ fontSize: 13, color: "#9CA3AF" }}>AI-generated preparation tasks will appear here after event creation.</p>
+            </div>
+          ) : (
+            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
+              {projectTasks
+                .sort((a, b) => {
+                  if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+                  return a.position - b.position;
+                })
+                .map((task, i) => {
+                  const isDone = task.status === "done" || completedTasks.has(task.id);
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-start gap-3 transition-colors"
+                      style={{ padding: "14px 20px", borderBottom: i < projectTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <button
+                        onClick={async () => {
+                          const newStatus = isDone ? "backlog" : "done";
+                          setCompletedTasks(prev => {
+                            const next = new Set(prev);
+                            if (isDone) next.delete(task.id); else next.add(task.id);
+                            return next;
+                          });
+                          await supabase.from("tasks").update({ status: newStatus }).eq("id", task.id);
+                        }}
+                        className="mt-0.5 shrink-0 cursor-pointer"
+                        style={{
+                          width: 22, height: 22, borderRadius: "50%",
+                          border: `2px solid ${isDone ? "#10B981" : "#D1D5DB"}`,
+                          background: isDone ? "#10B981" : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          transition: "all 200ms",
+                        }}
+                      >
+                        {isDone && <CheckCircle className="h-3 w-3 text-white" />}
+                      </button>
+                      <div className="flex-1 min-w-0">
+                        <p style={{
+                          fontSize: 14, fontWeight: 500, color: isDone ? "#9CA3AF" : "#1F2937",
+                          textDecoration: isDone ? "line-through" : "none",
+                          lineHeight: 1.4,
+                        }}>
+                          {task.title}
+                        </p>
+                        {task.due_date && (
+                          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                            Due {format(new Date(task.due_date), "MMM d, yyyy")}
+                          </p>
+                        )}
+                      </div>
+                      {(task as any).ai_generated && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, color: "#8B5CF6",
+                          background: "rgba(139,92,246,0.1)", padding: "2px 8px",
+                          borderRadius: 6, whiteSpace: "nowrap",
+                        }}>
+                          AI
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
           )}
         </motion.div>
 
@@ -524,7 +632,7 @@ export default function EventDetailView({ projectId, projectName, coverImage }: 
                     const idx = Number(e.target.value);
                     setEmailTemplate(idx);
                     const tpl = EMAIL_TEMPLATES[idx];
-                    const dateStr = event.event_date ? format(new Date(event.event_date), "MMMM d, yyyy") : "TBD";
+                    const dateStr = effectiveEvent.event_date ? format(new Date(effectiveEvent.event_date), "MMMM d, yyyy") : "TBD";
                     setEmailBody(tpl.body(projectName, dateStr));
                   }}
                   className="w-full rounded-xl px-3 py-2 text-sm"
