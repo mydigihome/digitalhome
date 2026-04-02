@@ -216,15 +216,8 @@ export default function Dashboard() {
   const quickTodosRef = useRef<HTMLDivElement>(null);
 
   // Stock state
-  const [selectedStock, setSelectedStock] = useState("AAPL");
-  const [selectedStockName, setSelectedStockName] = useState("Apple Inc.");
-  const [stockDropdownOpen, setStockDropdownOpen] = useState(false);
-  const [stockSearchQuery, setStockSearchQuery] = useState("");
-  const [selectedTimeframe, setSelectedTimeframe] = useState(TIMEFRAMES[2]);
   const [showBrokerModal, setShowBrokerModal] = useState(false);
-  const { data: quoteData } = useMarketQuote(selectedStock);
-  const { data: tsData } = useTimeseries(selectedStock, selectedTimeframe.interval, selectedTimeframe.outputsize);
-  const { data: searchResults } = useSymbolSearch(stockSearchQuery);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   // Drag-and-drop card order — left column
   const [leftOrder, setLeftOrder] = useState<string[]>(() =>
