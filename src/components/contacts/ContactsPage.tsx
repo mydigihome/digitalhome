@@ -47,6 +47,7 @@ function getCategoryFromType(type: string | null): string {
 
 export default function ContactsPage() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { data: contacts = [], isLoading } = useContacts();
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
@@ -54,6 +55,8 @@ export default function ContactsPage() {
   const { data: gmailConnection } = useGmailConnection();
   const { connect: connectGmail, connecting } = useConnectGmail();
   const queryClient = useQueryClient();
+  const [noteValues, setNoteValues] = useState<Record<string, string>>({});
+  const noteTimers = useRef<Record<string, any>>({});
 
   const [activeTab, setActiveTab] = useState("Overview");
   const [filter, setFilter] = useState("All");
