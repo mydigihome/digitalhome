@@ -211,16 +211,29 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
         return;
       }
 
-      const { data: newEvent, error } = await supabase.from("projects").insert({
+      console.log("Importing event:", eventData);
+
+      const insertData: any = {
         user_id: user!.id,
         name: eventData.name,
         type: "event",
         view_preference: "kanban",
         goal: eventData.description || null,
         end_date: eventData.date || null,
-      }).select().single();
+      };
+
+      const { data: newEvent, error } = await supabase.from("projects")
+        .insert(insertData).select().single();
 
       if (error) throw error;
+
+      // Try to update extra columns (they may exist now)
+      if (eventData.image_url || eventData.location || eventData.host) {
+        await supabase.from("projects").update({
+          cover_image: eventData.image_url || null,
+          description: eventData.description || null,
+        } as any).eq("id", newEvent.id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       setPartifulModalOpen(false);
@@ -231,7 +244,12 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
       toast.success(`${eventData.name} imported!`);
 
       if (newEvent && eventData.date) {
-        generateHostStages(newEvent);
+        generateAIEventStages({
+          ...newEvent,
+          event_date: eventData.date,
+          location: eventData.location,
+          description: eventData.description,
+        });
       }
     } catch (err: any) {
       console.error("Import error:", err);
