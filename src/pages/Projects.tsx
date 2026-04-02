@@ -138,39 +138,42 @@ export default function Projects() {
   };
 
   // AI host stages generator
-  const generateHostStages = async (event: any) => {
-    const eventDate = new Date(event.end_date || event.start_date || Date.now());
-    const today = new Date();
-    const weeksUntil = Math.max(1, Math.floor((eventDate.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+  const generateAIEventStages = async (event: any) => {
+    const eventDate = event.event_date || event.end_date || event.start_date;
+    if (!eventDate) return;
+    const date = new Date(eventDate);
+    const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
 
-    const prompt = `You are an expert event planner. Create a preparation checklist for this event:
+    const prompt = `You are an event planning expert. Create exactly 5 simple preparation tasks for this event:
 Event: ${event.name}
-Date: ${eventDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
-Time until event: ${weeksUntil} weeks
+Date: ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+Days until event: ${daysUntil}
+${event.location ? `Location: ${event.location}` : ""}
+${event.description ? `Details: ${event.description}` : ""}
 
-Generate exactly 6-8 preparation tasks. Format as JSON array ONLY:
-[{"title":"Book the venue","weeks_before":8,"category":"Venue"}]
-Categories: Venue / Guests / Food & Drinks / Decorations / Entertainment / Budget / Communications / Day-of`;
+Return ONLY valid JSON array, nothing else:
+[{"title":"Task name","days_before":14,"category":"Category"}]
+Keep tasks simple and practical. 5 tasks maximum.
+Categories: Planning / Guests / Venue / Food / Day-of`;
 
     try {
       const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
-      const responseText = data?.plan || "";
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) return;
-      const stages = JSON.parse(jsonMatch[0]);
+      const text = data?.plan || "";
+      const start = text.indexOf("[");
+      const end = text.lastIndexOf("]");
+      if (start === -1 || end === -1) return;
+      const stages = JSON.parse(text.substring(start, end + 1));
+      if (!Array.isArray(stages)) return;
 
-      const newTasks = stages.map((stage: any, i: number) => {
-        const dueDate = new Date(eventDate);
-        dueDate.setDate(dueDate.getDate() - (stage.weeks_before * 7));
-        return {
-          project_id: event.id,
-          user_id: user!.id,
-          title: stage.title,
-          status: "backlog",
-          priority: "medium",
-          position: i,
-        };
-      });
+      const newTasks = stages.slice(0, 5).map((s: any, i: number) => ({
+        project_id: event.id,
+        user_id: user!.id,
+        title: s.title,
+        status: "backlog",
+        priority: "medium",
+        position: i,
+        ai_generated: true,
+      }));
 
       await supabase.from("tasks").insert(newTasks);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
