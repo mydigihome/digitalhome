@@ -841,6 +841,48 @@ export type Database = {
         }
         Relationships: []
       }
+      debts: {
+        Row: {
+          balance: number
+          created_at: string
+          creditor: string
+          due_date: string | null
+          id: string
+          interest_rate: number
+          monthly_payment: number
+          notes: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          balance: number
+          created_at?: string
+          creditor: string
+          due_date?: string | null
+          id?: string
+          interest_rate: number
+          monthly_payment: number
+          notes?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          creditor?: string
+          due_date?: string | null
+          id?: string
+          interest_rate?: number
+          monthly_payment?: number
+          notes?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -1623,6 +1665,36 @@ export type Database = {
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loan_applications: {
+        Row: {
+          amount: number
+          created_at: string
+          fee: number
+          id: string
+          interest_rate: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          fee: number
+          id?: string
+          interest_rate: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          fee?: number
+          id?: string
+          interest_rate?: number
+          status?: string
           user_id?: string
         }
         Relationships: []
