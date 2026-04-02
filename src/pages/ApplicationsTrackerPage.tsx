@@ -94,6 +94,19 @@ export default function ApplicationsTrackerPage() {
   });
 
   const bannerUrl = (prefs as any)?.app_banner_url;
+  const savedBannerColor = (prefs as any)?.applications_header_value;
+  const bannerGradient = savedBannerColor
+    ? `linear-gradient(135deg, ${savedBannerColor}, ${savedBannerColor}cc)`
+    : "linear-gradient(135deg, #059669, #10B981)";
+
+  const bannerColorPresets = [
+    { label: "Green", color: "#059669" },
+    { label: "Purple", color: "#7B5EA7" },
+    { label: "Dark", color: "#1C1C1E" },
+    { label: "Blue", color: "#2563EB" },
+    { label: "Rose", color: "#E11D48" },
+    { label: "Slate", color: "#475569" },
+  ];
 
   const getColumnId = (status: string) => statusMap[status] || "applied";
 
