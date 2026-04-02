@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { X, Shield, TrendingUp, Zap, Sparkles, Copy, RefreshCw } from "lucide-react";
+import { X, Shield, TrendingUp, Zap, Sparkles, Copy, RefreshCw, Download } from "lucide-react";
+import jsPDF from "jspdf";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
