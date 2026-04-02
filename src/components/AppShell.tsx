@@ -73,8 +73,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const isProjectsActive = location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
   const isFinanceActive = location.pathname.startsWith("/finance");
 
-  const [financeOpen, setFinanceOpen] = useState(isFinanceActive);
-
   const go = (path: string) => {
     navigate(path);
     onNavigate?.();
