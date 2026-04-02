@@ -376,11 +376,6 @@ export default function Dashboard() {
   const hasCover = prefs?.dashboard_cover_type === "image" && prefs.dashboard_cover;
   const heroBg = hasCover ? prefs!.dashboard_cover! : HERO_BG;
 
-  const quote = quoteData?.quote;
-  const priceChange = quote ? parseFloat(quote.change) : 0;
-  const priceChangePercent = quote ? parseFloat(quote.percent_change) : 0;
-  const currentPrice = quote ? parseFloat(quote.price) : 0;
-  const chartData = tsData?.timeseries || quoteData?.timeseries || [];
 
   const handleAddTodo = () => {
     if (!newTodoText.trim()) return;
