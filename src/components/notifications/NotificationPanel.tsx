@@ -333,6 +333,93 @@ export default function NotificationPanel({ onClose, onUnreadCountChange, userId
       </div>
 
       <style>{`.notif-row:hover .notif-delete { opacity: 1 !important; }`}</style>
+
+      {/* Notification Settings Modal */}
+      {notifSettingsOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }} onClick={() => setNotifSettingsOpen(false)}>
+          <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: "20px", width: "min(480px, 95vw)", maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h2 style={{ fontSize: "18px", fontWeight: "700", color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", margin: 0, marginBottom: "2px" }}>Notification Settings</h2>
+                <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>Control what you hear about</p>
+              </div>
+              <button onClick={() => setNotifSettingsOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer" }}><X size={18} color="#6B7280" /></button>
+            </div>
+            {/* Content */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+              {/* Push Notifications */}
+              <div style={{ marginBottom: "28px" }}>
+                <p style={{ fontSize: "11px", fontWeight: "700", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "14px", fontFamily: "Inter, sans-serif" }}>Device Notifications</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: "12px" }}>
+                  <div>
+                    <p style={{ fontSize: "14px", fontWeight: "600", color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", marginBottom: "2px" }}>Push Notifications</p>
+                    <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>
+                      {pushPermission === "granted" ? "✓ Enabled on this device" : pushPermission === "denied" ? "✗ Blocked — enable in browser settings" : "Get notified on your device"}
+                    </p>
+                  </div>
+                  <button onClick={handleRequestPush} style={{ padding: "7px 16px", background: pushPermission === "granted" ? "#F0FDF4" : pushPermission === "denied" ? "#FEF2F2" : "#10B981", color: pushPermission === "granted" ? "#065F46" : pushPermission === "denied" ? "#DC2626" : "white", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: "600", cursor: pushPermission === "denied" ? "not-allowed" : "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>
+                    {pushPermission === "granted" ? "Enabled ✓" : pushPermission === "denied" ? "Blocked" : "Enable"}
+                  </button>
+                </div>
+              </div>
+              {/* Notification Types */}
+              <div style={{ marginBottom: "28px" }}>
+                <p style={{ fontSize: "11px", fontWeight: "700", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "14px", fontFamily: "Inter, sans-serif" }}>Notify Me About</p>
+                {[
+                  { key: "bills", Icon: CreditCard, color: "#F59E0B", label: "Upcoming Bills", desc: "Bills due within 7 days" },
+                  { key: "followups", Icon: Users, color: "#EC4899", label: "Contact Follow-ups", desc: "Overdue relationship check-ins" },
+                  { key: "projects", Icon: FolderOpen, color: "#3B82F6", label: "Project Deadlines", desc: "Tasks due within 3 days" },
+                  { key: "content", Icon: Clapperboard, color: "#7B5EA7", label: "Content Due", desc: "Scheduled posts approaching" },
+                  { key: "studio", Icon: TrendingUp, color: "#10B981", label: "Studio Updates", desc: "New comments and milestones" },
+                  { key: "money", Icon: DollarSign, color: "#10B981", label: "Money Alerts", desc: "Net worth and balance updates" },
+                ].map(item => (
+                  <div key={item.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB"}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ width: "34px", height: "34px", borderRadius: "8px", background: item.color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <item.Icon size={16} color={item.color} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: "600", color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", marginBottom: "1px" }}>{item.label}</p>
+                        <p style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF", fontFamily: "Inter, sans-serif" }}>{item.desc}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => toggleNotifType(item.key)} style={{ width: "44px", height: "24px", borderRadius: "999px", border: "none", background: notifSettings[item.key] ? "#10B981" : isDark ? "#3A3A3C" : "#E5E7EB", cursor: "pointer", position: "relative", transition: "background 200ms", flexShrink: 0 }}>
+                      <div style={{ position: "absolute", top: "2px", left: notifSettings[item.key] ? "22px" : "2px", width: "20px", height: "20px", borderRadius: "50%", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 200ms ease" }} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {/* Quiet Hours */}
+              <div style={{ marginBottom: "20px" }}>
+                <p style={{ fontSize: "11px", fontWeight: "700", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "14px", fontFamily: "Inter, sans-serif" }}>Quiet Hours</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: "600", color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>Do Not Disturb</p>
+                    <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>Pause all notifications</p>
+                  </div>
+                  <button onClick={() => toggleNotifType("quiet_mode")} style={{ width: "44px", height: "24px", borderRadius: "999px", border: "none", background: notifSettings.quiet_mode ? "#10B981" : isDark ? "#3A3A3C" : "#E5E7EB", cursor: "pointer", position: "relative", transition: "background 200ms" }}>
+                    <div style={{ position: "absolute", top: "2px", left: notifSettings.quiet_mode ? "22px" : "2px", width: "20px", height: "20px", borderRadius: "50%", background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 200ms" }} />
+                  </button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  {[{ key: "quiet_from", label: "From", def: "22:00" }, { key: "quiet_to", label: "To", def: "08:00" }].map(t => (
+                    <div key={t.key}>
+                      <label style={{ fontSize: "11px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", display: "block", marginBottom: "5px", fontFamily: "Inter, sans-serif" }}>{t.label}</label>
+                      <input type="time" value={notifSettings[t.key] || t.def} onChange={e => updateNotifSetting(t.key, e.target.value)} style={{ width: "100%", padding: "8px 12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "8px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", background: isDark ? "#252528" : "white", outline: "none", fontFamily: "Inter, sans-serif", boxSizing: "border-box" }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{ padding: "16px 24px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+              <button onClick={() => setNotifSettingsOpen(false)} style={{ padding: "9px 20px", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "8px", background: isDark ? "#252528" : "white", fontSize: "13px", fontWeight: "500", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Cancel</button>
+              <button onClick={saveNotifSettings} style={{ padding: "9px 20px", border: "none", borderRadius: "8px", background: "#10B981", fontSize: "13px", fontWeight: "600", color: "white", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Save Settings</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
