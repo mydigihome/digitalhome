@@ -3183,14 +3183,17 @@ export type Database = {
       }
       trading_plans: {
         Row: {
+          account_size: number | null
           asset_name: string
           completed_at: string | null
           created_at: string
           current_price: number | null
           entry_price: number | null
           id: string
+          plan_content: string | null
           position_size: number | null
           risk_reward_ratio: number | null
+          risk_tolerance: string | null
           status: string
           stop_loss: number | null
           strategy_notes: string | null
@@ -3205,14 +3208,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_size?: number | null
           asset_name: string
           completed_at?: string | null
           created_at?: string
           current_price?: number | null
           entry_price?: number | null
           id?: string
+          plan_content?: string | null
           position_size?: number | null
           risk_reward_ratio?: number | null
+          risk_tolerance?: string | null
           status?: string
           stop_loss?: number | null
           strategy_notes?: string | null
@@ -3227,14 +3233,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_size?: number | null
           asset_name?: string
           completed_at?: string | null
           created_at?: string
           current_price?: number | null
           entry_price?: number | null
           id?: string
+          plan_content?: string | null
           position_size?: number | null
           risk_reward_ratio?: number | null
+          risk_tolerance?: string | null
           status?: string
           stop_loss?: number | null
           strategy_notes?: string | null
@@ -3351,6 +3360,7 @@ export type Database = {
           applications_header_value: string | null
           banner_color: string | null
           bio: string | null
+          broker_url: string | null
           content_planner_access: boolean | null
           content_planner_is_admin: boolean | null
           created_at: string
@@ -3377,6 +3387,7 @@ export type Database = {
           onboarding_focus: string | null
           onboarding_skipped_steps: string[] | null
           onboarding_step: number | null
+          preferred_broker: string | null
           profile_photo: string | null
           religion: string | null
           show_scripture_card: boolean | null
@@ -3407,6 +3418,7 @@ export type Database = {
           applications_header_value?: string | null
           banner_color?: string | null
           bio?: string | null
+          broker_url?: string | null
           content_planner_access?: boolean | null
           content_planner_is_admin?: boolean | null
           created_at?: string
@@ -3433,6 +3445,7 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          preferred_broker?: string | null
           profile_photo?: string | null
           religion?: string | null
           show_scripture_card?: boolean | null
@@ -3463,6 +3476,7 @@ export type Database = {
           applications_header_value?: string | null
           banner_color?: string | null
           bio?: string | null
+          broker_url?: string | null
           content_planner_access?: boolean | null
           content_planner_is_admin?: boolean | null
           created_at?: string
@@ -3489,6 +3503,7 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          preferred_broker?: string | null
           profile_photo?: string | null
           religion?: string | null
           show_scripture_card?: boolean | null
