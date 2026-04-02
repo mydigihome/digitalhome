@@ -49,7 +49,8 @@ import {
   arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Minimize2, Maximize2 } from "lucide-react";
+import { Maximize2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
 
 /* ── Helpers ── */
@@ -211,8 +212,9 @@ export default function Dashboard() {
 
   // Stock state
   const [showBrokerModal, setShowBrokerModal] = useState(false);
-  const [chartSize, setChartSize] = useState<'compact' | 'default' | 'expanded'>(() => (localStorage.getItem("dh_market_watch_size") as any) || "default");
-  const chartHeightMap = { compact: 350, default: 500, expanded: 720 };
+  const [isMarketFullscreen, setIsMarketFullscreen] = useState(false);
+  const enterFullscreen = () => { setIsMarketFullscreen(true); document.body.style.overflow = "hidden"; };
+  const exitFullscreen = () => { setIsMarketFullscreen(false); document.body.style.overflow = ""; };
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Drag-and-drop card order — left column
@@ -445,9 +447,9 @@ export default function Dashboard() {
       case "networth-projects":
         return (
            <SortableCard key={id} id={id}>
-            <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
-              <div className="w-full lg:w-[280px] lg:flex-shrink-0">{compactNetWorth}</div>
-              <div className="w-full lg:flex-1">{compactProjects}</div>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
+              <div style={{ width: '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
+              <div style={{ flex: 1, flexGrow: 1, minWidth: 0 }}>{compactProjects}</div>
             </div>
           </SortableCard>
         );
@@ -464,32 +466,42 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 border-r border-border pr-2">
-                    <button
-                      onClick={() => { setChartSize("compact"); localStorage.setItem("dh_market_watch_size", "compact"); }}
-                      title="Compact"
-                      className={`w-7 h-7 flex items-center justify-center rounded-md transition ${chartSize === "compact" ? "bg-success/10 text-success" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      <Minimize2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => { const next = chartSize === "expanded" ? "default" : "expanded"; setChartSize(next); localStorage.setItem("dh_market_watch_size", next); }}
-                      title="Expanded"
-                      className={`w-7 h-7 flex items-center justify-center rounded-md transition ${chartSize === "expanded" ? "bg-success/10 text-success" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={enterFullscreen}
+                    title="Fullscreen"
+                    className="w-7 h-7 flex items-center justify-center rounded-md transition text-muted-foreground hover:bg-success/10 hover:text-success"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
                   <button onClick={() => setShowBrokerModal(true)}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-primary text-primary-foreground hover:bg-primary/90">
                     Trade
                   </button>
                 </div>
               </div>
-              <div style={{ height: chartHeightMap[chartSize] }}>
+              <div style={{ height: 500 }}>
                 <TradingViewWidget />
               </div>
             </div>
+            {isMarketFullscreen && createPortal(
+              <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, display: 'flex', flexDirection: 'column' }} className="bg-background">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-base text-foreground">Market Watch</span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-success">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success inline-block" /> Live
+                    </span>
+                  </div>
+                  <button onClick={exitFullscreen} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 text-white hover:bg-black/40 transition">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <TradingViewWidget />
+                </div>
+              </div>,
+              document.body
+            )}
           </SortableCard>
         );
 
