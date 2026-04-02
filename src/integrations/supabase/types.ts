@@ -851,6 +851,7 @@ export type Database = {
           interest_rate: number
           monthly_payment: number
           notes: string | null
+          payment_url: string | null
           status: string
           type: string
           user_id: string
@@ -864,6 +865,7 @@ export type Database = {
           interest_rate: number
           monthly_payment: number
           notes?: string | null
+          payment_url?: string | null
           status?: string
           type: string
           user_id: string
@@ -877,6 +879,7 @@ export type Database = {
           interest_rate?: number
           monthly_payment?: number
           notes?: string | null
+          payment_url?: string | null
           status?: string
           type?: string
           user_id?: string
@@ -1695,6 +1698,36 @@ export type Database = {
           id?: string
           interest_rate?: number
           status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loan_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          payment_date: string
+          tier_used: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          tier_used?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          tier_used?: string | null
           user_id?: string
         }
         Relationships: []
