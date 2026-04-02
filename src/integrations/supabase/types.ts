@@ -517,6 +517,41 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_emails: {
+        Row: {
+          contact_id: string | null
+          content: string | null
+          id: string
+          sent_at: string | null
+          tone: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          content?: string | null
+          id?: string
+          sent_at?: string | null
+          tone?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          content?: string | null
+          id?: string
+          sent_at?: string | null
+          tone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_emails_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_interactions: {
         Row: {
           contact_id: string
@@ -923,6 +958,41 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_drafts: {
+        Row: {
+          contact_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          tone: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          tone?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          tone?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_drafts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
         ]
