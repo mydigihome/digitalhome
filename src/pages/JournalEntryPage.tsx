@@ -764,7 +764,15 @@ export default function JournalEntryPage() {
                 <p style={{ fontSize: 13, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif", margin: 0 }}>Prefer online therapy?</p>
                 <p style={{ fontSize: 11, color: subtextColor, fontFamily: "Inter, sans-serif", margin: 0 }}>BetterHelp matches you in 48hrs</p>
               </div>
-              <button onClick={() => window.open("https://www.betterhelp.com/get-started/", "_blank")} style={{
+              <button onClick={() => {
+                const link = document.createElement("a");
+                link.href = "https://www.betterhelp.com/get-started/";
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }} style={{
                 padding: "6px 14px", background: "#3B82F6", color: "white", border: "none",
                 borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
               }}>Try it →</button>
