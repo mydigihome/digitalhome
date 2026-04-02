@@ -82,6 +82,9 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const [addGoalOpen, setAddGoalOpen] = useState(false);
   const [einModalOpen, setEinModalOpen] = useState(false);
   const [einValue, setEinValue] = useState("");
+  const [studioPreviewOpen, setStudioPreviewOpen] = useState(false);
+  const [studioMenuOpen, setStudioMenuOpen] = useState(false);
+  const [einValue, setEinValue] = useState("");
 
   // Settings form
   const [formProfile, setFormProfile] = useState<StudioProfile>({});
