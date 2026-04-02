@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
+import CreateGoalModal from "@/components/goals/CreateGoalModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
