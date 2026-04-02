@@ -228,33 +228,9 @@ export default function Dashboard() {
     loadStoredJson<string[]>("dh_right_column_order", DEFAULT_RIGHT_ORDER)
   );
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-  const handleLeftDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setLeftOrder((prev) => {
-        const oldIdx = prev.indexOf(active.id as string);
-        const newIdx = prev.indexOf(over.id as string);
-        const next = arrayMove(prev, oldIdx, newIdx);
-        saveStoredJson("dh_left_column_order", next);
-        return next;
-      });
-    }
-  };
-  const handleRightDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setRightOrder((prev) => {
-        const oldIdx = prev.indexOf(active.id as string);
-        const newIdx = prev.indexOf(over.id as string);
-        const next = arrayMove(prev, oldIdx, newIdx);
-        saveStoredJson("dh_right_column_order", next);
-        return next;
-      });
-    }
-  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
