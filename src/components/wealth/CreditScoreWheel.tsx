@@ -196,50 +196,47 @@ export default function CreditScoreWheel() {
         )}
 
         {/* This Week's Credit Tip */}
-        {score && (
-          <div className="mt-6 pt-5 border-t border-border">
-            <div className="rounded-xl p-4 text-left" style={{
-              background: "linear-gradient(135deg, #7B5EA7, #6D4F9A)",
-            }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-white/90" />
-                  <span className="text-xs font-semibold text-white/90 uppercase tracking-wider">This Week's Credit Tip</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }}>
-                    <Sparkles className="h-3 w-3 text-white/80" />
-                    <span className="text-[10px] font-medium text-white/80">AI Powered</span>
-                  </div>
-                  <button
-                    onClick={() => fetchTip(true)}
-                    disabled={loadingTip}
-                    className="p-1 rounded-md hover:bg-white/10 transition-colors"
-                  >
-                    <RefreshCw className={`h-3.5 w-3.5 text-white/70 ${loadingTip ? 'animate-spin' : ''}`} />
-                  </button>
-                </div>
+        <div className="mt-6 pt-5 border-t border-border">
+          <div className="rounded-xl p-4 text-left" style={{
+            background: '#F5F3FF',
+            border: '1px solid #DDD6FE',
+          }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" style={{ color: '#7B5EA7' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#7B5EA7' }}>This Week's Credit Tip</span>
               </div>
-
-              {loadingTip && !creditTip ? (
-                <div className="py-3">
-                  <div className="h-3 w-3/4 rounded bg-white/20 animate-pulse mb-2" />
-                  <div className="h-3 w-1/2 rounded bg-white/20 animate-pulse" />
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: 'rgba(123,94,167,0.1)' }}>
+                  <Sparkles className="h-3 w-3" style={{ color: '#7B5EA7' }} />
+                  <span className="text-[10px] font-medium" style={{ color: '#7B5EA7' }}>AI Powered</span>
                 </div>
-              ) : creditTip ? (
-                <>
-                  <p className="text-sm text-white/95 leading-relaxed mb-3">{creditTip.tip}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-white px-2 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.3)", border: "1px solid rgba(16,185,129,0.4)" }}>
-                      Potential: {creditTip.impact}
-                    </span>
-                    <span className="text-[11px] text-white/60">{creditTip.category}</span>
-                  </div>
-                </>
-              ) : null}
+                <button
+                  onClick={() => fetchTip(true)}
+                  disabled={loadingTip}
+                  className="p-1 rounded-md transition-colors"
+                  style={{ color: '#7B5EA7' }}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${loadingTip ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            <p className="text-sm leading-relaxed mb-3" style={{ color: '#374151' }}>
+              {creditTip?.tip || "Pay down any card above 30% utilization to below 10% — this single action can move your score 20-40 points within 30 days."}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{
+                background: 'rgba(123,94,167,0.12)',
+                border: '1px solid rgba(123,94,167,0.25)',
+                color: '#7B5EA7',
+              }}>
+                ↑ {creditTip?.impact || "+15-25 pts"} potential
+              </span>
+              <span className="text-[11px]" style={{ color: '#9CA3AF' }}>{creditTip?.category || "Utilization"}</span>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </section>
   );
