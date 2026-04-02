@@ -10,11 +10,11 @@ import { formatDistanceToNow } from "date-fns";
 import {
   Search, Plus, Mail, Phone, MapPin, Briefcase, Pencil, Trash2,
   Sparkles, Loader2, RotateCw, BookOpen, FolderPlus, CheckSquare,
-  Linkedin, Users, ChevronDown, X, Check
+  Linkedin, Users, ChevronDown, ChevronUp, X, Check, Filter,
+  ArrowUpDown, MessageSquare
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
-import EmailView from "./views/EmailView";
 import ComposeModal from "./modals/ComposeModal";
 import "../../styles/contacts-tab.css";
 
@@ -45,6 +45,18 @@ function getCategoryFromType(type: string | null): string {
   return map[type.toLowerCase()] || type.charAt(0).toUpperCase() + type.slice(1);
 }
 
+function getCompanyColor(company: string): string {
+  const colors = [
+    "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+    "#06B6D4", "#84CC16", "#F97316", "#EC4899", "#6366F1",
+  ];
+  let hash = 0;
+  for (let i = 0; i < company.length; i++) {
+    hash = company.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export default function ContactsPage() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -59,18 +71,13 @@ export default function ContactsPage() {
   const noteTimers = useRef<Record<string, any>>({});
 
   const [activeTab, setActiveTab] = useState("Overview");
-  const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<"name" | "last_contacted_date">("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  // AI Email panel state
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [emailTone, setEmailTone] = useState("cold");
-  const [emailSubject, setEmailSubject] = useState("");
-  const [generatedEmail, setGeneratedEmail] = useState("");
-  const [emailGenerating, setEmailGenerating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterValue, setFilterValue] = useState("All");
 
   // Add contact modal
   const [addContactOpen, setAddContactOpen] = useState(false);
@@ -81,28 +88,6 @@ export default function ContactsPage() {
 
   // LinkedIn panel
   const [linkedInPanel, setLinkedInPanel] = useState<{ open: boolean; connections: LinkedInConnection[] }>({ open: false, connections: [] });
-
-  // Avatar
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (user) {
-      const url = user.user_metadata?.avatar_url;
-      if (url) setAvatarUrl(url);
-    }
-  }, [user]);
-
-  // Emailed count
-  const [emailedCount, setEmailedCount] = useState(0);
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { count } = await supabase
-        .from("contact_interactions")
-        .select("id", { count: "exact", head: true })
-        .eq("interaction_type", "email");
-      if (count != null) setEmailedCount(count);
-    })();
-  }, [user]);
 
   // LinkedIn OAuth callback
   useEffect(() => {
@@ -134,26 +119,13 @@ export default function ContactsPage() {
     }
   }, [queryClient]);
 
-  const handleLinkedInImport = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error("Please sign in to connect LinkedIn"); return; }
-      const redirectUri = `${window.location.origin}/relationships`;
-      const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID || "86vrea7sthla29";
-      const scope = "openid profile email";
-      const state = crypto.randomUUID();
-      sessionStorage.setItem("linkedin_oauth_state", state);
-      window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}`;
-    } catch { toast.error("Failed to start LinkedIn connection"); }
-  };
-
   // Filtering & sorting
   const filteredContacts = contacts
     .filter(c => {
-      if (filter !== "All") {
+      if (filterValue !== "All") {
         const cat = getCategoryFromType(c.relationship_type);
-        if (filter === "Digi Home") return cat === "Digi Home" || c.imported_from === "digihome";
-        return cat === filter;
+        if (filterValue === "Digi Home") return cat === "Digi Home" || c.imported_from === "digihome";
+        return cat === filterValue;
       }
       return true;
     })
@@ -171,7 +143,7 @@ export default function ContactsPage() {
       return sortDir === "asc" ? aDate - bDate : bDate - aDate;
     });
 
-  const handleSort = (field: "name" | "last_contacted_date") => {
+  const toggleSort = (field: "name" | "last_contacted_date") => {
     if (sortField === field) {
       setSortDir(d => d === "asc" ? "desc" : "asc");
     } else {
@@ -180,45 +152,29 @@ export default function ContactsPage() {
     }
   };
 
+  const toggleSelectContact = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
   const handleDeleteContact = async (id: string) => {
     if (!confirm("Delete this contact?")) return;
     deleteContact.mutate(id);
     if (expandedId === id) setExpandedId(null);
+    setSelectedIds(prev => prev.filter(x => x !== id));
     toast.success("Contact deleted");
   };
 
-  // AI Email Generation
-  const generateEmail = async () => {
-    if (!selectedContact) return;
-    setEmailGenerating(true);
-    const toneMap: Record<string, string> = {
-      cold: "cold outreach — professional, concise, value-focused",
-      warm: "warm and friendly — familiar tone, personal touch",
-      checkin: "casual check-in — brief, genuine, no agenda",
-      followup: "follow up — references previous conversation, next steps",
-    };
-    const prompt = `Write a short professional email from ${profile?.full_name || "me"} to ${selectedContact.name}.
-Contact details:
-- Name: ${selectedContact.name}
-- Title: ${selectedContact.title || selectedContact.job_title || "unknown"}
-- Company: ${selectedContact.company || "unknown"}
-- Category: ${getCategoryFromType(selectedContact.relationship_type)}
-- Last interaction: ${selectedContact.last_contacted_date ? formatRelativeDate(selectedContact.last_contacted_date) : "never"}
+  const handleBulkDelete = () => {
+    selectedIds.forEach(id => deleteContact.mutate(id));
+    setSelectedIds([]);
+    setExpandedId(null);
+    toast.success("Contacts removed");
+  };
 
-Email tone: ${toneMap[emailTone] || toneMap.cold}
-${emailSubject ? `Topic: ${emailSubject}` : ""}
-
-Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound human, not AI-generated. End with a single clear call to action.`;
-
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-email-draft", { body: { prompt } });
-      if (error) throw error;
-      setGeneratedEmail(data.plan);
-    } catch {
-      toast.error("Could not generate email. Try again.");
-    } finally {
-      setEmailGenerating(false);
-    }
+  const handleBulkEmail = () => {
+    const emails = contacts.filter(c => selectedIds.includes(c.id) && c.email).map(c => c.email);
+    if (emails.length === 0) { toast.error("No email addresses found"); return; }
+    window.open(`mailto:${emails.join(",")}`, "_blank");
   };
 
   const openCompose = (to: string, name: string, subject?: string, threadId?: string, isReply?: boolean) => {
@@ -229,64 +185,6 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 
   return (
     <div style={{ padding: "0" }}>
-      {/* PAGE HEADER */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{
-            width: "64px", height: "64px", borderRadius: "50%", overflow: "hidden",
-            border: `2px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, flexShrink: 0,
-            background: isDark ? "#252528" : "#F5F3FF",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "22px", fontWeight: 700, color: isDark ? "#E9D5FF" : "#7B5EA7",
-          }}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            ) : (
-              profile?.full_name?.charAt(0)?.toUpperCase() || "?"
-            )}
-          </div>
-          <div>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", margin: 0 }}>
-              {profile?.full_name || "Your Network"}
-            </h1>
-            <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontStyle: "italic", margin: 0 }}>
-              Your network is your net worth.
-            </p>
-          </div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
-          <div style={{ display: "flex", gap: "20px" }}>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "24px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", lineHeight: 1, margin: 0 }}>{contacts.length}</p>
-              <p style={{ fontSize: "11px", color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: 0 }}>Total Contacts</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "24px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", lineHeight: 1, margin: 0 }}>{emailedCount}</p>
-              <p style={{ fontSize: "11px", color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: 0 }}>Emails Sent</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={handleLinkedInImport} style={{
-              display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
-              background: "#0A66C2", color: "white", border: "none", borderRadius: "8px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer",
-            }}>
-              <Linkedin size={14} /> Import from LinkedIn
-            </button>
-            <button onClick={() => gmailConnection ? null : connectGmail()} style={{
-              display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
-              background: isDark ? "#1C1C1E" : "white", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-              borderRadius: "8px", fontSize: "13px", fontWeight: 600,
-              color: gmailConnection ? "#10B981" : (isDark ? "#F2F2F2" : "#374151"), cursor: "pointer",
-            }}>
-              <Mail size={14} /> {gmailConnection ? "Gmail Connected" : connecting ? "Connecting..." : "Connect Gmail"}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* TABS */}
       <div style={{
         display: "flex", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
@@ -307,48 +205,89 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 
       {/* TAB CONTENT */}
       {activeTab === "Emails" ? (
-        <EmailsTabContent
-          contacts={contacts}
-          isDark={isDark}
-          user={user}
-        />
+        <EmailsTabContent contacts={contacts} isDark={isDark} user={user} />
       ) : (
         <div>
           {/* TOOLBAR */}
           <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px",
+            display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", justifyContent: "space-between",
           }}>
             <div style={{
-              display: "flex", alignItems: "center", gap: "8px", width: "280px",
-              background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-              borderRadius: "8px", padding: "8px 12px",
+              display: "flex", alignItems: "center", gap: "8px",
+              background: isDark ? "#252528" : "white",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              borderRadius: "8px", padding: "8px 14px", width: "280px",
             }}>
-              <Search size={14} color="#9CA3AF" />
+              <Search size={15} color="#9CA3AF" />
               <input
-                placeholder="Search contacts..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                type="text" placeholder="Search contacts..."
+                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 style={{
-                  border: "none", background: "transparent", outline: "none", fontSize: "14px",
-                  color: isDark ? "#F2F2F2" : "#374151", width: "100%",
+                  border: "none", outline: "none", fontSize: "14px",
+                  color: isDark ? "#F2F2F2" : "#374151", background: "transparent", width: "100%",
                 }}
               />
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <select
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-                style={{
-                  padding: "8px 12px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              {/* All people pill */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px",
+                background: isDark ? "rgba(59,130,246,0.1)" : "#EFF6FF",
+                border: `1px solid ${isDark ? "rgba(59,130,246,0.3)" : "#BFDBFE"}`,
+                borderRadius: "8px", fontSize: "13px", fontWeight: 600,
+                color: isDark ? "#93C5FD" : "#1D4ED8",
+              }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "2px", background: "#3B82F6" }} />
+                All people
+                <span style={{
+                  background: "#3B82F6", color: "white", borderRadius: "999px",
+                  padding: "1px 7px", fontSize: "11px",
+                }}>{contacts.length}</span>
+              </div>
+              {/* Filter */}
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setFilterOpen(!filterOpen)} style={{
+                  display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px",
                   border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  background: isDark ? "#252528" : "white", color: isDark ? "#F2F2F2" : "#374151",
-                  outline: "none", cursor: "pointer",
-                }}
-              >
-                {["All", "Professional", "Friends", "Family", "Digi Home"].map(f => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+                  borderRadius: "8px", background: isDark ? "#1C1C1E" : "white",
+                  fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+                }}>
+                  <Filter size={14} /> Filter
+                </button>
+                {filterOpen && (
+                  <div style={{
+                    position: "absolute", top: "100%", right: 0, marginTop: "4px", zIndex: 30,
+                    background: isDark ? "#252528" : "white", borderRadius: "8px",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: "160px",
+                  }}>
+                    {["All", "Professional", "Friends", "Family", "Digi Home"].map(f => (
+                      <div key={f} onClick={() => { setFilterValue(f); setFilterOpen(false); }}
+                        style={{
+                          padding: "8px 14px", cursor: "pointer", fontSize: "13px",
+                          color: filterValue === f ? "#10B981" : (isDark ? "#F2F2F2" : "#374151"),
+                          fontWeight: filterValue === f ? 600 : 400,
+                          background: filterValue === f ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : "transparent",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#1C1C1E" : "#F9FAFB")}
+                        onMouseLeave={e => (e.currentTarget.style.background = filterValue === f ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : "transparent")}
+                      >
+                        {f}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Sort */}
+              <button onClick={() => toggleSort("name")} style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                borderRadius: "8px", background: isDark ? "#1C1C1E" : "white",
+                fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+              }}>
+                <ArrowUpDown size={14} /> Sort
+              </button>
+              {/* Add contact */}
               <button onClick={() => { setEditContact(null); setAddContactOpen(true); }} style={{
                 display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
                 background: "#10B981", color: "white", border: "none", borderRadius: "8px",
@@ -364,30 +303,16 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
               <Loader2 size={24} className="animate-spin" style={{ color: "#9CA3AF" }} />
             </div>
           ) : filteredContacts.length === 0 ? (
-            <div style={{
-              textAlign: "center", padding: "60px 20px",
-              background: isDark ? "#1C1C1E" : "white", borderRadius: "12px",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-            }}>
-              <Users size={48} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
-              <p style={{ fontSize: "15px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "4px" }}>No contacts yet</p>
-              <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "16px" }}>Import from LinkedIn or add manually.</p>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-                <button onClick={handleLinkedInImport} style={{
-                  display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
-                  background: "#0A66C2", color: "white", border: "none", borderRadius: "8px",
-                  fontSize: "13px", fontWeight: 600, cursor: "pointer",
-                }}>
-                  <Linkedin size={14} /> Import LinkedIn
-                </button>
-                <button onClick={() => { setEditContact(null); setAddContactOpen(true); }} style={{
-                  display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px",
-                  background: "#10B981", color: "white", border: "none", borderRadius: "8px",
-                  fontSize: "13px", fontWeight: 600, cursor: "pointer",
-                }}>
-                  <Plus size={14} /> Add Contact
-                </button>
-              </div>
+            <div style={{ padding: "80px 20px", textAlign: "center" }}>
+              <Users size={48} color="#D1D5DB" style={{ margin: "0 auto 16px" }} />
+              <p style={{ fontSize: "16px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "6px" }}>No contacts yet</p>
+              <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "20px" }}>Add your first contact to get started</p>
+              <button onClick={() => { setEditContact(null); setAddContactOpen(true); }} style={{
+                padding: "10px 24px", background: "#10B981", color: "white", border: "none",
+                borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer",
+              }}>
+                + Add Contact
+              </button>
             </div>
           ) : (
             <div style={{
@@ -396,117 +321,166 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
             }}>
               {/* TABLE HEADER */}
               <div style={{
-                display: "grid", gridTemplateColumns: "32px 2.5fr 1.5fr 1fr 1fr 1fr 1fr",
-                padding: "12px 20px", background: isDark ? "#252528" : "#F9FAFB",
-                borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
-                fontSize: "12px", fontWeight: 600,
-                color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
-                textTransform: "uppercase", letterSpacing: "0.5px",
+                display: "grid", gridTemplateColumns: "40px 2fr 1.5fr 2fr 1.5fr 1fr 1.5fr",
+                padding: "12px 20px", borderBottom: `2px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827",
+                alignItems: "center", background: isDark ? "#252528" : "white",
               }}>
-                <span></span>
-                <span style={{ cursor: "pointer" }} onClick={() => handleSort("name")}>
-                  Name {sortField === "name" ? (sortDir === "asc" ? "↓" : "↑") : ""}
-                </span>
+                <input
+                  type="checkbox"
+                  style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#3B82F6" }}
+                  onChange={e => {
+                    if (e.target.checked) setSelectedIds(filteredContacts.map(c => c.id));
+                    else setSelectedIds([]);
+                  }}
+                  checked={selectedIds.length === filteredContacts.length && filteredContacts.length > 0}
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer" }}
+                  onClick={() => toggleSort("name")}>
+                  Name
+                  <ChevronUp size={14} color="#9CA3AF" style={{
+                    transition: "transform 200ms",
+                    transform: sortField === "name" && sortDir === "desc" ? "rotate(180deg)" : "rotate(0deg)",
+                  }} />
+                </div>
+                <span>Status</span>
                 <span>Email</span>
                 <span>Phone</span>
-                <span>Category</span>
+                <span>Notes</span>
                 <span>Company</span>
-                <span style={{ cursor: "pointer" }} onClick={() => handleSort("last_contacted_date")}>
-                  Last Contact {sortField === "last_contacted_date" ? (sortDir === "asc" ? "↓" : "↑") : ""}
-                </span>
               </div>
 
               {/* ROWS */}
               {filteredContacts.map(contact => {
-                const category = getCategoryFromType(contact.relationship_type);
                 const isExpanded = expandedId === contact.id;
+                const isSelected = selectedIds.includes(contact.id);
+                const status = (contact as any).status || null;
                 return (
                   <div key={contact.id}>
                     <div
                       onClick={() => setExpandedId(isExpanded ? null : contact.id)}
                       style={{
-                        display: "grid", gridTemplateColumns: "32px 2.5fr 1.5fr 1fr 1fr 1fr 1fr",
+                        display: "grid", gridTemplateColumns: "40px 2fr 1.5fr 2fr 1.5fr 1fr 1.5fr",
                         padding: "14px 20px",
-                        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
+                        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6"}`,
                         alignItems: "center", cursor: "pointer",
-                        background: isExpanded ? (isDark ? "#252528" : "#F9FAFB") : (isDark ? "#1C1C1E" : "white"),
-                        transition: "background 150ms",
+                        background: isSelected
+                          ? (isDark ? "rgba(59,130,246,0.1)" : "#EFF6FF")
+                          : (isDark ? "#1C1C1E" : "white"),
+                        transition: "background 100ms",
                       }}
-                      onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLDivElement).style.background = isDark ? "#252528" : "#FAFAFA"; }}
-                      onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLDivElement).style.background = isDark ? "#1C1C1E" : "white"; }}
+                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#252528" : "#FAFAFA"; }}
+                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#1C1C1E" : "white"; }}
                     >
                       {/* Checkbox */}
-                      <div onClick={e => e.stopPropagation()}>
-                        <input type="checkbox" style={{ width: "15px", height: "15px", cursor: "pointer", accentColor: "#10B981" }} />
-                      </div>
+                      <input
+                        type="checkbox" checked={isSelected}
+                        onChange={e => { e.stopPropagation(); toggleSelectContact(contact.id); }}
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#3B82F6" }}
+                      />
 
-                      {/* Name + Avatar + ChevronDown */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      {/* Name + Avatar */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         <div style={{
-                          width: "36px", height: "36px", borderRadius: "50%",
-                          background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF",
+                          width: "32px", height: "32px", borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                          background: isDark ? "#252528" : "#F3F4F6",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "14px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0, overflow: "hidden",
+                          fontSize: "13px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
                         }}>
                           {contact.photo_url ? (
                             <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                          ) : contact.name.charAt(0).toUpperCase()}
+                          ) : contact.name?.charAt(0).toUpperCase()}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: "14px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>
-                            {contact.name}
-                          </p>
-                          <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: 0 }}>
-                            {contact.title || contact.job_title || category}
-                          </p>
-                        </div>
-                        <ChevronDown size={14} style={{
-                          color: "#9CA3AF", flexShrink: 0, transition: "transform 200ms",
-                          transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
-                        }} />
+                        <span style={{ fontSize: "14px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827" }}>
+                          {contact.name}
+                        </span>
+                      </div>
+
+                      {/* Status badge */}
+                      <div>
+                        {status ? (
+                          <span style={{
+                            display: "inline-flex", padding: "3px 10px", borderRadius: "6px",
+                            fontSize: "12px", fontWeight: 500,
+                            background: isDark
+                              ? (status === "Hot Lead" ? "rgba(234,179,8,0.15)" : status === "Customer" ? "rgba(16,185,129,0.15)" : status === "Partially Interested" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)")
+                              : (status === "Hot Lead" ? "#FEF9C3" : status === "Customer" ? "#DCFCE7" : status === "Partially Interested" ? "#FEF3C7" : "#F3F4F6"),
+                            color: status === "Hot Lead" ? "#854D0E" : status === "Customer" ? "#166534" : status === "Partially Interested" ? "#92400E" : (isDark ? "rgba(255,255,255,0.5)" : "#374151"),
+                            border: `1px solid ${
+                              isDark
+                                ? (status === "Hot Lead" ? "rgba(234,179,8,0.3)" : status === "Customer" ? "rgba(16,185,129,0.3)" : status === "Partially Interested" ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")
+                                : (status === "Hot Lead" ? "#FDE047" : status === "Customer" ? "#86EFAC" : status === "Partially Interested" ? "#FCD34D" : "#E5E7EB")
+                            }`,
+                          }}>
+                            {status}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB" }}>—</span>
+                        )}
                       </div>
 
                       {/* Email */}
-                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {contact.email || "—"}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{
+                          fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#374151",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}>
+                          {contact.email || "—"}
+                        </span>
+                        {contact.email && (
+                          <a href={`mailto:${contact.email}`} onClick={e => e.stopPropagation()}
+                            style={{ display: "flex", flexShrink: 0, color: "#9CA3AF" }}>
+                            <Mail size={13} />
+                          </a>
+                        )}
+                      </div>
 
                       {/* Phone */}
-                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280" }}>
+                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.5)" : "#374151" }}>
                         {contact.phone || "—"}
                       </span>
 
-                      {/* Category badge */}
-                      <span style={{
-                        display: "inline-flex", padding: "3px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 600, width: "fit-content",
-                        background: isDark
-                          ? (category === "Professional" ? "rgba(29,78,216,0.15)" : category === "Friends" ? "rgba(16,185,129,0.15)" : category === "Family" ? "rgba(245,158,11,0.15)" : "rgba(123,94,167,0.15)")
-                          : (category === "Professional" ? "#EFF6FF" : category === "Friends" ? "#F0FDF4" : category === "Family" ? "#FFF7ED" : "#F5F3FF"),
-                        color: category === "Professional" ? "#1D4ED8" : category === "Friends" ? "#065F46" : category === "Family" ? "#92400E" : "#7B5EA7",
-                      }}>
-                        {category}
-                      </span>
+                      {/* Notes count */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#9CA3AF", fontSize: "13px" }}>
+                        {contact.notes ? (
+                          <><MessageSquare size={13} /><span>1</span></>
+                        ) : <span>—</span>}
+                      </div>
 
                       {/* Company */}
-                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {contact.company || "—"}
-                      </span>
-
-                      {/* Last Contact */}
-                      <span style={{ fontSize: "13px", color: "#9CA3AF" }}>
-                        {contact.last_contacted_date ? formatRelativeDate(contact.last_contacted_date) : "Never"}
-                      </span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {contact.company ? (
+                          <>
+                            <div style={{
+                              width: "24px", height: "24px", borderRadius: "6px",
+                              background: getCompanyColor(contact.company),
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: "11px", fontWeight: 700, color: "white", flexShrink: 0,
+                            }}>
+                              {contact.company.charAt(0).toUpperCase()}
+                            </div>
+                            <span style={{
+                              fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#374151",
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            }}>
+                              {contact.company}
+                            </span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB" }}>—</span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* EXPANDED DROPDOWN */}
+                    {/* EXPANDED ACCORDION */}
                     {isExpanded && (
                       <ExpandedContactRow
                         contact={contact}
-                        category={category}
                         isDark={isDark}
                         onEdit={() => { setEditContact(contact); setAddContactOpen(true); }}
                         onDelete={() => handleDeleteContact(contact.id)}
-                        onEmail={() => { setSelectedContact(contact); setActiveTab("Emails"); }}
+                        onEmail={() => { setActiveTab("Emails"); }}
                         noteValues={noteValues}
                         setNoteValues={setNoteValues}
                         noteTimers={noteTimers}
@@ -517,6 +491,39 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* BULK ACTION BAR */}
+          {selectedIds.length > 0 && (
+            <div style={{
+              position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+              background: "#111827", color: "white", borderRadius: "12px", padding: "12px 20px",
+              display: "flex", alignItems: "center", gap: "16px",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.25)", zIndex: 200,
+            }}>
+              <span style={{ fontSize: "13px", fontWeight: 600 }}>{selectedIds.length} selected</span>
+              <button onClick={handleBulkEmail} style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px",
+                background: "#10B981", color: "white", border: "none", borderRadius: "8px",
+                fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              }}>
+                <Mail size={13} /> Email selected
+              </button>
+              <button onClick={() => { if (window.confirm(`Remove ${selectedIds.length} contacts?`)) handleBulkDelete(); }} style={{
+                display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px",
+                background: "rgba(220,38,38,0.2)", color: "#FCA5A5",
+                border: "1px solid rgba(220,38,38,0.3)", borderRadius: "8px",
+                fontSize: "13px", cursor: "pointer",
+              }}>
+                <Trash2 size={13} /> Remove from list
+              </button>
+              <button onClick={() => setSelectedIds([])} style={{
+                background: "transparent", border: "none", color: "rgba(255,255,255,0.5)",
+                cursor: "pointer", padding: "4px",
+              }}>
+                <X size={16} />
+              </button>
             </div>
           )}
         </div>
@@ -558,8 +565,8 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 }
 
 /* EXPANDED CONTACT ROW */
-function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEmail, noteValues, setNoteValues, noteTimers, user, navigate }: {
-  contact: Contact; category: string; isDark: boolean;
+function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteValues, setNoteValues, noteTimers, user, navigate }: {
+  contact: Contact; isDark: boolean;
   onEdit: () => void; onDelete: () => void; onEmail: () => void;
   noteValues: Record<string, string>;
   setNoteValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
@@ -569,47 +576,45 @@ function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEma
   const { data: interactions = [] } = useContactInteractions(contact.id);
 
   return (
-    <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#FAFAFA" }}>
+    <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#F9FAFB" }}>
       {/* BANNER */}
-      <div style={{ height: "80px", background: "linear-gradient(135deg, #7B5EA7, #10B981)", position: "relative" }}>
-        {/* Avatar over banner */}
+      <div style={{ height: "72px", background: "linear-gradient(135deg, #7B5EA7, #10B981)", position: "relative" }}>
         <div style={{
-          position: "absolute", bottom: "-24px", left: "24px", width: "56px", height: "56px",
+          position: "absolute", bottom: "-20px", left: "20px", width: "48px", height: "48px",
           borderRadius: "50%", border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
           background: isDark ? "rgba(123,94,167,0.3)" : "#F5F3FF",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "20px", fontWeight: 800, color: "#7B5EA7", overflow: "hidden",
+          fontSize: "18px", fontWeight: 800, color: "#7B5EA7", overflow: "hidden",
         }}>
           {contact.photo_url
             ? <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
             : contact.name.charAt(0).toUpperCase()
           }
         </div>
-        {/* Edit + Delete buttons */}
-        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "8px" }}>
+        <div style={{ position: "absolute", top: "10px", right: "14px", display: "flex", gap: "6px" }}>
           <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
-            padding: "6px 12px", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
-            borderRadius: "6px", color: "white", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+            padding: "5px 10px", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: "6px", color: "white", fontSize: "11px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "4px",
           }}>
-            <Pencil size={11} /> Edit
+            <Pencil size={10} /> Edit
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
-            padding: "6px 12px", background: "rgba(220,38,38,0.2)", border: "1px solid rgba(220,38,38,0.3)",
-            borderRadius: "6px", color: "#FCA5A5", fontSize: "12px", fontWeight: 500, cursor: "pointer",
+            padding: "5px 10px", background: "rgba(220,38,38,0.15)", border: "1px solid rgba(220,38,38,0.3)",
+            borderRadius: "6px", color: "#FCA5A5", fontSize: "11px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "4px",
           }}>
-            <Trash2 size={11} /> Delete
+            <Trash2 size={10} /> Delete
           </button>
         </div>
       </div>
 
       {/* CONTENT - 4 columns */}
-      <div style={{ padding: "36px 24px 24px", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr", gap: "24px" }}>
+      <div style={{ padding: "32px 20px 20px", display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr", gap: "20px" }}>
         {/* COL 1 — Identity */}
         <div>
-          <h3 style={{ fontSize: "18px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "4px", margin: "0 0 4px" }}>{contact.name}</h3>
-          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", marginBottom: "14px", margin: "0 0 14px" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 2px" }}>{contact.name}</h3>
+          <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: "0 0 12px" }}>
             {[contact.title, contact.company].filter(Boolean).join(" · ")}
           </p>
           {[
@@ -618,8 +623,8 @@ function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEma
             { Icon: MapPin, value: (contact as any).location },
             { Icon: Briefcase, value: contact.company },
           ].filter(i => i.value).map(({ Icon, value, href }, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-              <Icon size={13} color="#9CA3AF" />
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "7px" }}>
+              <Icon size={12} color="#9CA3AF" />
               {href ? (
                 <a href={href} onClick={e => e.stopPropagation()} style={{ fontSize: "13px", color: "#10B981", textDecoration: "none" }}>{value}</a>
               ) : (
@@ -631,47 +636,47 @@ function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEma
 
         {/* COL 2 — Quick Actions */}
         <div>
-          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Quick Actions</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Quick Actions</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             <button onClick={e => { e.stopPropagation(); onEmail(); }} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
-              background: "#10B981", color: "white", border: "none", borderRadius: "8px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
+              background: "#10B981", color: "white", border: "none", borderRadius: "7px",
+              fontSize: "12px", fontWeight: 600, cursor: "pointer",
             }}>
-              <Mail size={13} /> Send Email
+              <Mail size={12} /> Send Email
             </button>
             <button onClick={e => { e.stopPropagation(); navigate("/projects"); }} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
               background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-              borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
             }}>
-              <FolderPlus size={13} color="#7B5EA7" /> Create Project
+              <FolderPlus size={12} color="#7B5EA7" /> Create Project
             </button>
             <button onClick={e => e.stopPropagation()} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
+              display: "flex", alignItems: "center", gap: "7px", padding: "8px 12px",
               background: isDark ? "#1C1C1E" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-              borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
+              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
             }}>
-              <CheckSquare size={13} color="#10B981" /> Create Task
+              <CheckSquare size={12} color="#10B981" /> Create Task
             </button>
           </div>
-          <div style={{ marginTop: "16px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px", margin: "0 0 6px" }}>Last Contacted</p>
+          <div style={{ marginTop: "12px" }}>
+            <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 4px" }}>Last Contacted</p>
             <p style={{
-              fontSize: "13px", margin: 0,
+              fontSize: "12px", margin: 0,
               color: contact.last_contacted_date ? (isDark ? "#F2F2F2" : "#111827") : "#9CA3AF",
               fontStyle: contact.last_contacted_date ? "normal" : "italic",
             }}>
               {contact.last_contacted_date
                 ? new Date(contact.last_contacted_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                : "Never contacted"}
+                : "Never"}
             </p>
           </div>
         </div>
 
-        {/* COL 3 — Notes inline editable */}
+        {/* COL 3 — Notes */}
         <div>
-          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Notes</p>
+          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Notes</p>
           <textarea
             value={noteValues[contact.id] ?? contact.notes ?? ""}
             onChange={e => {
@@ -683,45 +688,43 @@ function ExpandedContactRow({ contact, category, isDark, onEdit, onDelete, onEma
               }, 1000);
             }}
             onClick={e => e.stopPropagation()}
-            placeholder="Add notes... autosaves as you type."
+            placeholder="Notes... autosaves."
             style={{
-              width: "100%", minHeight: "120px", padding: "10px 12px",
+              width: "100%", minHeight: "110px", padding: "8px 10px",
               border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-              borderRadius: "8px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151",
+              borderRadius: "7px", fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151",
               lineHeight: 1.6, resize: "vertical", outline: "none",
-              background: isDark ? "#1C1C1E" : "white", boxSizing: "border-box", fontFamily: "inherit",
+              background: isDark ? "#252528" : "white", boxSizing: "border-box", fontFamily: "inherit",
             }}
-            onFocus={e => { e.target.style.borderColor = "#10B981"; e.target.style.boxShadow = "0 0 0 2px rgba(16,185,129,0.1)"; }}
-            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; e.target.style.boxShadow = "none"; }}
+            onFocus={e => { e.target.style.borderColor = "#10B981"; }}
+            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; }}
           />
-          <p style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px", margin: "4px 0 0" }}>
-            <Check size={10} /> Autosaves as you type
-          </p>
+          <p style={{ fontSize: "10px", color: "#9CA3AF", margin: "3px 0 0" }}>✓ Autosaves</p>
         </div>
 
         {/* COL 4 — Interactions */}
         <div>
-          <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", margin: "0 0 10px" }}>Interactions</p>
+          <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Interactions</p>
           {interactions.length > 0
             ? interactions.slice(0, 3).map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#10B981", flexShrink: 0, marginTop: "5px" }} />
+              <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#10B981", flexShrink: 0, marginTop: "5px" }} />
                 <div>
-                  <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4, margin: 0 }}>{item.title || item.description || "Interaction"}</p>
-                  <p style={{ fontSize: "11px", color: "#9CA3AF", marginTop: "2px", margin: "2px 0 0" }}>{formatRelativeDate(item.interaction_date)}</p>
+                  <p style={{ fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4, margin: 0 }}>{item.title || item.description || "Interaction"}</p>
+                  <p style={{ fontSize: "10px", color: "#9CA3AF", margin: "2px 0 0" }}>{formatRelativeDate(item.interaction_date)}</p>
                 </div>
               </div>
             ))
-            : <p style={{ fontSize: "13px", color: "#9CA3AF", fontStyle: "italic", margin: 0 }}>No interactions yet.</p>
+            : <p style={{ fontSize: "12px", color: "#9CA3AF", fontStyle: "italic", margin: 0 }}>No interactions yet.</p>
           }
           <button onClick={e => e.stopPropagation()} style={{
-            display: "flex", alignItems: "center", gap: "6px", marginTop: "8px",
-            padding: "7px 12px", background: "transparent",
+            display: "flex", alignItems: "center", gap: "5px", marginTop: "6px",
+            padding: "6px 10px", background: "transparent",
             border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
-            borderRadius: "6px", fontSize: "12px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
+            borderRadius: "6px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
             cursor: "pointer", width: "100%", justifyContent: "center",
           }}>
-            <Plus size={12} /> Log interaction
+            <Plus size={11} /> Log interaction
           </button>
         </div>
       </div>
@@ -741,6 +744,7 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [category, setCategory] = useState("Professional");
+  const [status, setStatus] = useState("Just Enquiry");
 
   useEffect(() => {
     if (editContact) {
@@ -751,8 +755,10 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
       setTitle(editContact.title || editContact.job_title || "");
       setNotes(editContact.notes || "");
       setCategory(getCategoryFromType(editContact.relationship_type));
+      setStatus((editContact as any).status || "Just Enquiry");
     } else {
-      setName(""); setEmail(""); setPhone(""); setCompany(""); setTitle(""); setNotes(""); setCategory("Professional");
+      setName(""); setEmail(""); setPhone(""); setCompany(""); setTitle(""); setNotes("");
+      setCategory("Professional"); setStatus("Just Enquiry");
     }
   }, [editContact, isOpen]);
 
@@ -764,10 +770,11 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
       name, email: email || null, phone: phone || null, company: company || null,
       title: title || null, notes: notes || null,
       relationship_type: category.toLowerCase().replace(" ", ""),
-    });
+    } as any);
   };
 
   const categories = ["Professional", "Friends", "Family", "Digi Home", "Other"];
+  const statuses = ["Just Enquiry", "Partially Interested", "Hot Lead", "Customer"];
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "10px 14px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
     borderRadius: "10px", fontSize: "14px", outline: "none", boxSizing: "border-box",
@@ -799,18 +806,34 @@ function AddContactModalInline({ isOpen, onClose, editContact, isDark, onSave }:
             <input value={company} onChange={e => setCompany(e.target.value)} placeholder="Company" style={inputStyle} />
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Job Title" style={inputStyle} />
           </div>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {categories.map(c => (
-              <button key={c} onClick={() => setCategory(c)} style={{
-                padding: "6px 14px", borderRadius: "999px", fontSize: "13px",
-                border: `1.5px solid ${category === c ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
-                background: category === c ? "#10B981" : "transparent",
-                color: category === c ? "white" : (isDark ? "rgba(255,255,255,0.6)" : "#374151"),
-                fontWeight: category === c ? 600 : 400, cursor: "pointer",
-              }}>
-                {c}
-              </button>
-            ))}
+          {/* Category */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Category</p>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              {categories.map(c => (
+                <button key={c} onClick={() => setCategory(c)} style={{
+                  padding: "6px 14px", borderRadius: "999px", fontSize: "13px",
+                  border: `1.5px solid ${category === c ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+                  background: category === c ? "#10B981" : "transparent",
+                  color: category === c ? "white" : (isDark ? "rgba(255,255,255,0.6)" : "#374151"),
+                  fontWeight: category === c ? 600 : 400, cursor: "pointer",
+                }}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Status */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Status</p>
+            <select
+              value={status} onChange={e => setStatus(e.target.value)}
+              style={{
+                ...inputStyle, cursor: "pointer",
+              }}
+            >
+              {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
           <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes" rows={3} style={{ ...inputStyle, resize: "vertical", minHeight: "80px" }} />
         </div>
@@ -845,7 +868,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
   const [historyLoading, setHistoryLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch email history
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -887,10 +909,8 @@ function EmailsTabContent({ contacts, isDark, user }: {
   const saveToDrafts = async () => {
     if (!user || !selectedContact || !generatedEmail) return;
     await supabase.from("email_drafts").insert({
-      user_id: user.id,
-      contact_id: selectedContact.id,
-      content: generatedEmail,
-      tone: emailTone,
+      user_id: user.id, contact_id: selectedContact.id,
+      content: generatedEmail, tone: emailTone,
     } as any);
     toast.success("Saved to drafts");
   };
@@ -902,10 +922,8 @@ function EmailsTabContent({ contacts, isDark, user }: {
   };
 
   const tones = [
-    { key: "cold", label: "Cold" },
-    { key: "warm", label: "Warm" },
-    { key: "checkin", label: "Check In" },
-    { key: "followup", label: "Follow Up" },
+    { key: "cold", label: "Cold" }, { key: "warm", label: "Warm" },
+    { key: "checkin", label: "Check In" }, { key: "followup", label: "Follow Up" },
   ];
 
   return (
@@ -919,9 +937,8 @@ function EmailsTabContent({ contacts, isDark, user }: {
           <Sparkles size={18} color="#7B5EA7" />
           <h2 style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>AI Email Composer</h2>
         </div>
-
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {/* TO field */}
+          {/* TO */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>To</p>
             <div style={{ position: "relative" }} ref={dropdownRef}>
@@ -934,20 +951,14 @@ function EmailsTabContent({ contacts, isDark, user }: {
                 }}>
                   <div>
                     <span style={{ fontSize: "14px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827" }}>{selectedContact.name}</span>
-                    {selectedContact.email && (
-                      <span style={{ fontSize: "12px", color: "#9CA3AF", marginLeft: "8px" }}>{selectedContact.email}</span>
-                    )}
+                    {selectedContact.email && <span style={{ fontSize: "12px", color: "#9CA3AF", marginLeft: "8px" }}>{selectedContact.email}</span>}
                   </div>
-                  <button onClick={() => { setSelectedContact(null); setGeneratedEmail(""); }} style={{
-                    background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "2px",
-                  }}>
+                  <button onClick={() => { setSelectedContact(null); setGeneratedEmail(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "2px" }}>
                     <X size={14} />
                   </button>
                 </div>
               ) : (
-                <input
-                  placeholder="Search contacts..."
-                  value={contactSearch}
+                <input placeholder="Search contacts..." value={contactSearch}
                   onChange={e => { setContactSearch(e.target.value); setShowDropdown(true); }}
                   onFocus={() => setShowDropdown(true)}
                   style={{
@@ -969,19 +980,11 @@ function EmailsTabContent({ contacts, isDark, user }: {
                     <p style={{ padding: "12px", fontSize: "13px", color: "#9CA3AF", margin: 0 }}>No contacts found</p>
                   ) : filteredContacts.slice(0, 8).map(c => (
                     <div key={c.id} onClick={() => { setSelectedContact(c); setShowDropdown(false); setContactSearch(""); }}
-                      style={{
-                        padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px",
-                        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
-                      }}
+                      style={{ padding: "10px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: "10px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}` }}
                       onMouseEnter={e => (e.currentTarget.style.background = isDark ? "#1C1C1E" : "#F9FAFB")}
                       onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                     >
-                      <div style={{
-                        width: "28px", height: "28px", borderRadius: "50%",
-                        background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0,
-                      }}>
+                      <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0 }}>
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -994,7 +997,6 @@ function EmailsTabContent({ contacts, isDark, user }: {
               )}
             </div>
           </div>
-
           {/* TONE */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>Tone</p>
@@ -1005,20 +1007,14 @@ function EmailsTabContent({ contacts, isDark, user }: {
                   background: emailTone === t.key ? "#7B5EA7" : "transparent",
                   color: emailTone === t.key ? "white" : (isDark ? "rgba(255,255,255,0.6)" : "#374151"),
                   border: emailTone === t.key ? "1px solid #7B5EA7" : `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                }}>
-                  {t.label}
-                </button>
+                }}>{t.label}</button>
               ))}
             </div>
           </div>
-
           {/* ABOUT */}
           <div>
             <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 6px" }}>About (optional)</p>
-            <input
-              placeholder="e.g. Investment property..."
-              value={emailSubject}
-              onChange={e => setEmailSubject(e.target.value)}
+            <input placeholder="e.g. Investment property..." value={emailSubject} onChange={e => setEmailSubject(e.target.value)}
               style={{
                 width: "100%", padding: "10px 14px", borderRadius: "8px", fontSize: "14px",
                 border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
@@ -1027,8 +1023,7 @@ function EmailsTabContent({ contacts, isDark, user }: {
               }}
             />
           </div>
-
-          {/* Generate button */}
+          {/* Generate */}
           <button onClick={generateDraft} disabled={!selectedContact || generating} style={{
             width: "100%", height: "44px", background: selectedContact ? "#7B5EA7" : (isDark ? "#333" : "#D1D5DB"),
             color: "white", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: 600,
@@ -1038,8 +1033,7 @@ function EmailsTabContent({ contacts, isDark, user }: {
             {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             {generating ? "Generating..." : "Generate Draft"}
           </button>
-
-          {/* Generated draft */}
+          {/* Draft */}
           {generatedEmail && (
             <div style={{
               background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
@@ -1048,27 +1042,9 @@ function EmailsTabContent({ contacts, isDark, user }: {
               <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>AI Draft</p>
               <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.6, margin: "0 0 14px", whiteSpace: "pre-wrap" }}>{generatedEmail}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <button onClick={openInEmail} style={{
-                  width: "100%", padding: "10px", background: isDark ? "#F2F2F2" : "#111827",
-                  color: isDark ? "#111827" : "white", border: "none", borderRadius: "8px",
-                  fontSize: "13px", fontWeight: 600, cursor: "pointer",
-                }}>
-                  Open in Email App
-                </button>
-                <button onClick={saveToDrafts} style={{
-                  width: "100%", padding: "10px", background: "transparent",
-                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                  color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
-                }}>
-                  Save to Drafts
-                </button>
-                <button onClick={() => { setGeneratedEmail(""); generateDraft(); }} style={{
-                  background: "none", border: "none", fontSize: "12px", color: "#7B5EA7",
-                  cursor: "pointer", padding: "4px 0", fontWeight: 500,
-                }}>
-                  ↻ Regenerate
-                </button>
+                <button onClick={openInEmail} style={{ width: "100%", padding: "10px", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Open in Email App</button>
+                <button onClick={saveToDrafts} style={{ width: "100%", padding: "10px", background: "transparent", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer" }}>Save to Drafts</button>
+                <button onClick={() => { setGeneratedEmail(""); generateDraft(); }} style={{ background: "none", border: "none", fontSize: "12px", color: "#7B5EA7", cursor: "pointer", padding: "4px 0", fontWeight: 500 }}>↻ Regenerate</button>
               </div>
             </div>
           )}
@@ -1098,30 +1074,16 @@ function EmailsTabContent({ contacts, isDark, user }: {
                 display: "flex", alignItems: "center", gap: "12px", padding: "12px 0",
                 borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}`,
               }}>
-                <div style={{
-                  width: "32px", height: "32px", borderRadius: "50%",
-                  background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0,
-                }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#7B5EA7", flexShrink: 0 }}>
                   {email.contact?.name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>
-                    {email.contact?.name || "Unknown"}
-                  </p>
+                  <p style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", margin: 0 }}>{email.contact?.name || "Unknown"}</p>
                 </div>
                 {email.tone && (
-                  <span style={{
-                    padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600,
-                    background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", color: "#7B5EA7",
-                  }}>
-                    {email.tone}
-                  </span>
+                  <span style={{ padding: "2px 8px", borderRadius: "999px", fontSize: "10px", fontWeight: 600, background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", color: "#7B5EA7" }}>{email.tone}</span>
                 )}
-                <span style={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0 }}>
-                  {email.sent_at ? formatRelativeDate(email.sent_at) : "—"}
-                </span>
+                <span style={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0 }}>{email.sent_at ? formatRelativeDate(email.sent_at) : "—"}</span>
               </div>
             ))}
           </div>
