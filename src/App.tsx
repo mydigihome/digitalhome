@@ -84,8 +84,6 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/events/:token" element={<PublicEventPage />} />
-            <Route path="/templates" element={<TemplateShop />} />
-            <Route path="/templates/success" element={<TemplateSuccess />} />
             <Route path="/admin/templates" element={<ProtectedRoute><AdminTemplates /></ProtectedRoute>} />
             <Route path="/relationships" element={<ProtectedRoute><RelationshipsPage /></ProtectedRoute>} />
             <Route path="/monthly-review" element={<ProtectedRoute><MonthlyReviewPage /></ProtectedRoute>} />
