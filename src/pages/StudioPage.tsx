@@ -5,6 +5,7 @@ import StudioHQView from "@/components/studio/StudioHQView";
 import StudioPlatformsView from "@/components/studio/StudioPlatformsView";
 import StudioDealsView from "@/components/studio/StudioDealsView";
 import StudioRevenueView from "@/components/studio/StudioRevenueView";
+import StudioHeaderCard from "@/components/studio/StudioHeaderCard";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -72,6 +73,7 @@ export default function StudioPage() {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4 sm:p-6 bg-white dark:bg-[#0f1117]">
+          <StudioHeaderCard />
           {renderContent()}
         </div>
       </div>

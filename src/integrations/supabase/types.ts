@@ -2941,6 +2941,36 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_goals: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          deadline: string | null
+          id: string
+          progress: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          progress?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          deadline?: string | null
+          id?: string
+          progress?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       studio_ideas: {
         Row: {
           brand_id: string | null
@@ -2987,6 +3017,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      studio_profile: {
+        Row: {
+          business_license: string | null
+          created_at: string | null
+          description: string | null
+          ein_number: string | null
+          handle: string | null
+          id: string
+          instagram_handle: string | null
+          llc_document: string | null
+          pitch_deck: string | null
+          studio_name: string | null
+          tiktok_handle: string | null
+          total_followers: number | null
+          twitter_handle: string | null
+          updated_at: string | null
+          user_id: string
+          youtube_url: string | null
+        }
+        Insert: {
+          business_license?: string | null
+          created_at?: string | null
+          description?: string | null
+          ein_number?: string | null
+          handle?: string | null
+          id?: string
+          instagram_handle?: string | null
+          llc_document?: string | null
+          pitch_deck?: string | null
+          studio_name?: string | null
+          tiktok_handle?: string | null
+          total_followers?: number | null
+          twitter_handle?: string | null
+          updated_at?: string | null
+          user_id: string
+          youtube_url?: string | null
+        }
+        Update: {
+          business_license?: string | null
+          created_at?: string | null
+          description?: string | null
+          ein_number?: string | null
+          handle?: string | null
+          id?: string
+          instagram_handle?: string | null
+          llc_document?: string | null
+          pitch_deck?: string | null
+          studio_name?: string | null
+          tiktok_handle?: string | null
+          total_followers?: number | null
+          twitter_handle?: string | null
+          updated_at?: string | null
+          user_id?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
       }
       studio_strategy: {
         Row: {
