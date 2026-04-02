@@ -893,6 +893,7 @@ export default function Dashboard() {
       </AlertDialog>
 
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />
+      <CreateGoalModal open={createGoalOpen} onClose={() => setCreateGoalOpen(false)} />
       <NoteEditor open={noteEditorOpen} onClose={() => setNoteEditorOpen(false)} />
       {taskEditorOpen && projects.length > 0 && (
         <TaskEditor projectId={projects[0].id} defaultStatus="backlog" onClose={() => setTaskEditorOpen(false)} />
