@@ -30,7 +30,7 @@ export default function CreditScoreGaugeCard() {
   const handleSave = () => {
     const val = parseInt(inputVal);
     if (isNaN(val) || val < 300 || val > 850) return;
-    updateCardData({ ...((cardData as any) || {}), credit: { score: val, updatedAt: new Date().toISOString() } });
+    saveCardData("credit", { score: val, updatedAt: new Date().toISOString() });
     setEditing(false);
   };
 
