@@ -197,6 +197,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [createGoalOpen, setCreateGoalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
   const [noteEditorOpen, setNoteEditorOpen] = useState(false);
   const [newTodoText, setNewTodoText] = useState("");
