@@ -733,8 +733,14 @@ export default function Dashboard() {
                   onNewGoal={() => setProjectModalOpen(true)}
                   onNewContact={() => navigate("/relationships")}
                   onNewBill={() => navigate("/finance/wealth")}
-                  onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
-                  onJournal={() => navigate("/journal?new=true")}
+                  onNewTodo={() => {
+                    quickTodosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                      quickTodosRef.current?.classList.add('ring-2', 'ring-[#10B981]');
+                      setTimeout(() => quickTodosRef.current?.classList.remove('ring-2', 'ring-[#10B981]'), 1500);
+                    }, 500);
+                  }}
+                  onJournal={() => setJournalModalOpen(true)}
                 />
               </div>
 
