@@ -705,7 +705,7 @@ Make them specific to this event.
                 })}
 
               {/* + Add Stage button */}
-              <div style={{ padding: "10px 20px", borderTop: projectTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
+              <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
                 {!showAddStage ? (
                   <button
                     onClick={() => setShowAddStage(true)}
