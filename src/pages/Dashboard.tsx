@@ -863,7 +863,7 @@ export default function Dashboard() {
       <QuickAddModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
-        onNewGoal={() => setProjectModalOpen(true)}
+        onNewGoal={() => setCreateGoalOpen(true)}
         onNewTask={scrollToTodos}
         onNewJournal={() => setJournalModalOpen(true)}
         onNewContact={() => navigate("/relationships")}
