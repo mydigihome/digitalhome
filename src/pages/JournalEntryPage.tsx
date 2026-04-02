@@ -738,7 +738,13 @@ export default function JournalEntryPage() {
                 if (therapistInsurance) params.append("insurance", therapistInsurance.toLowerCase().replace(/\s+/g, "-"));
                 const qs = params.toString();
                 if (qs) url += "?" + qs;
-                window.open(url, "_blank");
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 setTherapistModalOpen(false);
               }} style={{
                 flex: 1, padding: 11, background: "#EC4899", color: "white", border: "none",
