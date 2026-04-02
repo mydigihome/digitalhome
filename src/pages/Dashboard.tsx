@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -18,11 +18,12 @@ import { format, isToday } from "date-fns";
 import {
   Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown, ExternalLink,
   Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon, Search,
+  Smile, CloudRain, Heart, Sun, Trash2,
 } from "lucide-react";
 import BrokerSelectionModal from "@/components/wealth/BrokerSelectionModal";
 import { TradingPair } from "@/hooks/useTradingPairs";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
 import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
@@ -31,6 +32,12 @@ import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
 import AdminReminderWidget from "@/components/AdminReminderWidget";
+import JournalEntryModal from "@/components/journal/JournalEntryModal";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /* ── Helpers ── */
 function getGreeting() {
@@ -135,6 +142,16 @@ function ScriptureContent({ religion }: { religion?: string }) {
   );
 }
 
+// Mood emoji to Lucide icon mapper
+function MoodIcon({ mood }: { mood?: string }) {
+  if (!mood) return <Heart className="w-4 h-4 text-muted-foreground/40" />;
+  const m = mood.toLowerCase();
+  if (m.includes('happy') || m.includes('great') || m === '😊' || m === '❤️' || m === '😄') return <Smile className="w-4 h-4 text-success" />;
+  if (m.includes('sad') || m.includes('down') || m === '😢' || m === '🌧') return <CloudRain className="w-4 h-4 text-info" />;
+  if (m.includes('calm') || m.includes('peace') || m === '☀️') return <Sun className="w-4 h-4 text-warning" />;
+  return <Heart className="w-4 h-4 text-muted-foreground/40" />;
+}
+
 export default function Dashboard() {
   const { profile, user } = useAuth();
   const { data: projects = [] } = useProjects();
@@ -148,6 +165,7 @@ export default function Dashboard() {
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [taskEditorOpen, setTaskEditorOpen] = useState(false);
@@ -158,6 +176,9 @@ export default function Dashboard() {
   const now = useCurrentTime();
   const [showTutorial, setShowTutorial] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [journalModalOpen, setJournalModalOpen] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
+  const quickTodosRef = useRef<HTMLDivElement>(null);
 
   // Stock
   const [selectedStock, setSelectedStock] = useState("AAPL");
@@ -401,8 +422,14 @@ export default function Dashboard() {
               onNewGoal={() => setProjectModalOpen(true)}
               onNewContact={() => navigate("/relationships")}
               onNewBill={() => navigate("/finance/wealth")}
-              onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
-              onJournal={() => navigate("/journal?new=true")}
+              onNewTodo={() => {
+                quickTodosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                  quickTodosRef.current?.classList.add('ring-2', 'ring-[#10B981]');
+                  setTimeout(() => quickTodosRef.current?.classList.remove('ring-2', 'ring-[#10B981]'), 1500);
+                }, 500);
+              }}
+              onJournal={() => setJournalModalOpen(true)}
             />
           </div>
 
@@ -706,8 +733,14 @@ export default function Dashboard() {
                   onNewGoal={() => setProjectModalOpen(true)}
                   onNewContact={() => navigate("/relationships")}
                   onNewBill={() => navigate("/finance/wealth")}
-                  onNewTodo={() => document.querySelector<HTMLInputElement>('[placeholder="Add a quick note..."]')?.focus()}
-                  onJournal={() => navigate("/journal?new=true")}
+                  onNewTodo={() => {
+                    quickTodosRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => {
+                      quickTodosRef.current?.classList.add('ring-2', 'ring-[#10B981]');
+                      setTimeout(() => quickTodosRef.current?.classList.remove('ring-2', 'ring-[#10B981]'), 1500);
+                    }, 500);
+                  }}
+                  onJournal={() => setJournalModalOpen(true)}
                 />
               </div>
 
@@ -905,37 +938,38 @@ export default function Dashboard() {
                 )}
               </motion.div>
 
-              {/* RECENT REFLECTIONS — 3 columns */}
+              {/* RECENT REFLECTIONS — list view */}
               <motion.div {...stagger(5)} className="mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
                 <div className="p-5 pb-0 flex items-center justify-between mb-4">
                   <div>
                     <h2 className="text-[17px] font-bold text-foreground">Recent Reflections</h2>
                     <p className="text-xs text-success">Capture your thoughts daily</p>
                   </div>
-                  <button onClick={() => navigate("/journal?new=true")} className="text-sm font-semibold text-primary">New Journal Entry</button>
+                  <button onClick={() => setJournalModalOpen(true)} className="text-sm font-semibold text-primary">New Journal Entry</button>
                 </div>
-                <div className="px-5 pb-5 grid grid-cols-3 gap-3">
+                <div className="px-5 pb-5 space-y-0">
                   {(journalEntries.length > 0 ? journalEntries : [
-                    { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), content_preview: "Woke up feeling incredibly refreshed today. The meditation session really helped clear the fog before starting the major project review...", mood_emoji: "❤️" },
-                    { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), content_preview: "Today was challenging. Sometimes the market doesn't go the way you expect, but it's important to stay disciplined with the long-term plan...", mood_emoji: "🌧" },
-                    { id: "sample3", title: "Small Wins Matter", created_at: new Date(Date.now() - 172800000).toISOString(), content_preview: "The new design system component was finally approved. It feels good to see the months of effort co...", mood_emoji: "" },
-                  ]).slice(0, 3).map((entry: any) => {
+                    { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), mood_emoji: "❤️" },
+                    { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), mood_emoji: "🌧" },
+                    { id: "sample3", title: "Small Wins Matter", created_at: new Date(Date.now() - 172800000).toISOString(), mood_emoji: "" },
+                  ]).slice(0, 5).map((entry: any) => {
                     const entryDate = new Date(entry.created_at);
-                    const dateLabel = isToday(entryDate) ? "TODAY" : format(entryDate, "MMM d, yyyy").toUpperCase();
+                    const dateLabel = isToday(entryDate) ? "Today" : format(entryDate, "MMM d");
                     return (
-                      <button key={entry.id} onClick={() => navigate("/journal")}
-                        className="p-4 bg-card rounded-[16px] border border-border hover:border-primary/30 hover:shadow-md transition text-left relative">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-primary">{dateLabel}</p>
-                          <span className="text-lg opacity-40">{entry.mood_emoji || "❤️"}</span>
-                        </div>
-                        <p className="text-[15px] font-semibold mb-1 text-foreground">
-                          {entry.title || "Untitled Entry"}
-                        </p>
-                        <p className="text-xs leading-relaxed text-muted-foreground line-clamp-3">
-                          {entry.content_preview || "No content yet..."}
-                        </p>
-                      </button>
+                      <div key={entry.id} className="group flex items-center gap-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition rounded-lg px-2 -mx-2 cursor-pointer"
+                        onClick={() => setJournalModalOpen(true)}>
+                        <span className="text-[13px] text-muted-foreground w-16 flex-shrink-0">{dateLabel}</span>
+                        <span className="text-[14px] font-medium text-foreground flex-1 truncate">{entry.title || "Untitled Entry"}</span>
+                        <MoodIcon mood={entry.mood_emoji} />
+                        {entry.id && !entry.id.startsWith("sample") && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteEntryId(entry.id); }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-destructive/10 rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -1027,7 +1061,7 @@ export default function Dashboard() {
               </motion.div>
 
               {/* QUICK TO-DOS */}
-              <motion.div {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+              <motion.div ref={quickTodosRef} {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-[17px] font-bold text-foreground">Quick To-Dos</h2>
                   <span className="text-sm font-semibold text-primary">Edit List</span>
@@ -1060,6 +1094,35 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Journal Modal */}
+      <JournalEntryModal open={journalModalOpen} onClose={() => setJournalModalOpen(false)} />
+
+      {/* Delete Journal Entry Confirmation */}
+      <AlertDialog open={!!deleteEntryId} onOpenChange={() => setDeleteEntryId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entry?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete this journal entry.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                const id = deleteEntryId;
+                setDeleteEntryId(null);
+                await supabase.from("journal_entries").delete().eq("id", id!);
+                queryClient.invalidateQueries({ queryKey: ["recent_journal"] });
+                toast("Entry deleted", {
+                  action: { label: "Undo", onClick: () => toast.info("Undo not available for this action") },
+                  duration: 5000,
+                });
+              }}
+            >Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modals */}
       <NewProjectModal open={projectModalOpen} onOpenChange={setProjectModalOpen} />

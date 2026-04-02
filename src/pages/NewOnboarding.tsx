@@ -446,14 +446,15 @@ export default function NewOnboarding() {
               </button>
             </div>
             <button
-              onClick={() => goTo(6)}
+              onClick={handleFinish}
+              disabled={saving}
               className="w-full max-w-[340px] mx-auto mt-8 py-4 rounded-[14px] font-semibold text-base transition-all active:scale-[0.98]"
               style={{ backgroundColor: '#111827', color: '#fff' }}
             >
-              Continue
+              {saving ? 'Setting up...' : 'Continue'}
             </button>
             <button
-              onClick={() => skip('contacts', 6)}
+              onClick={() => { skip('contacts', 6); handleFinish(); }}
               className="mt-4 text-sm font-medium cursor-pointer block mx-auto"
               style={{ color: '#9ca3af' }}
             >

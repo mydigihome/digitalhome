@@ -33,7 +33,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   }, [user]);
 
   useEffect(() => {
-    // Initialize dark mode from localStorage, then system preference
     const saved = localStorage.getItem("digi-home-theme");
     if (saved === "dark") {
       document.documentElement.classList.add("dark");
@@ -44,7 +43,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       document.body.classList.remove("dark");
       setDarkMode(false);
     } else {
-      // No saved preference — use system
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       if (prefersDark) {
         document.documentElement.classList.add("dark");
@@ -83,39 +81,20 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   };
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard"), color: "#3B82F6" },
-    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive, color: "#F97316" },
+    { icon: Home, label: "Home", path: "/dashboard", active: location.pathname.startsWith("/dashboard") },
+    { icon: Folder, label: "Projects", path: "/projects", active: isProjectsActive },
   ];
 
   const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
 
   const bottomNavItems = [
-    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships"), color: "#EC4899" },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision"), color: "#F59E0B" },
-    { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio"), color: "#8B5CF6" },
+    { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
+    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio") },
   ];
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
-
-  const activeStyle = (isActive: boolean) => ({
-    backgroundColor: isActive ? 'hsl(var(--accent))' : undefined,
-    color: isActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
-    boxShadow: isActive
-      ? 'inset 0 0 10px rgba(99,102,241,0.1), 0 2px 8px rgba(99,102,241,0.08)'
-      : undefined,
-  });
-
-  const iconCircleCn = (isActive: boolean, color?: string) =>
-    `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-      isActive
-        ? 'bg-accent border border-accent-foreground/20'
-        : 'border border-border group-hover:border-primary/20'
-    }`;
-
-  const iconBgStyle = (isActive: boolean, color?: string) => ({
-    backgroundColor: isActive ? undefined : color ? `${color}15` : 'hsl(var(--secondary))',
-  });
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
@@ -130,18 +109,53 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     );
   };
 
+  // Sidebar nav item styles — white text on dark charcoal sidebar
+  const navItemClass = (isActive: boolean, isLocked?: boolean) => cn(
+    "group flex w-full items-center rounded-xl transition-all duration-200",
+    collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
+    isActive
+      ? "border-l-[3px] border-[#10B981] font-medium"
+      : "border-l-[3px] border-transparent hover:border-[#10B981]",
+    isLocked && "opacity-60"
+  );
+
+  const navItemStyle = (isActive: boolean) => ({
+    backgroundColor: isActive ? 'rgba(16,185,129,0.12)' : undefined,
+    color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.85)',
+  });
+
+  const navItemHoverHandlers = (isActive: boolean) => ({
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!isActive) {
+        e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.08)';
+        e.currentTarget.style.color = '#FFFFFF';
+      }
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (!isActive) {
+        e.currentTarget.style.backgroundColor = '';
+        e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
+      }
+    },
+  });
+
+  const iconStyle = (isActive: boolean) => ({
+    color: isActive ? '#10B981' : 'rgba(255,255,255,0.75)',
+  });
+
   return (
     <div className="flex flex-1 flex-col h-full">
       {/* Logo + Collapse Toggle */}
       <div className={cn("py-5", collapsed ? "px-3 flex justify-center" : "px-5")}>
         <div className="flex items-center gap-2.5">
-          <div className="h-3 w-3 rounded-full bg-primary flex-shrink-0" />
+          <div className="h-3 w-3 rounded-full bg-[#10B981] flex-shrink-0" />
           {!collapsed && (
             <>
-              <span className="text-[15px] font-semibold tracking-tight text-foreground flex-1">Digital Home</span>
+              <span className="text-[15px] font-semibold tracking-tight text-white flex-1">Digital Home</span>
               <button
                 onClick={() => setCollapsed(true)}
-                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+                style={{ color: 'rgba(255,255,255,0.5)' }}
                 aria-label="Collapse sidebar"
               >
                 <PanelLeftClose className="w-4 h-4" />
@@ -151,7 +165,8 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
           {collapsed && (
             <button
               onClick={() => setCollapsed(false)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+              style={{ color: 'rgba(255,255,255,0.5)' }}
               aria-label="Expand sidebar"
             >
               <PanelLeft className="w-4 h-4" />
@@ -162,7 +177,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
-        <ul className="space-y-1.5">
+        <ul className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -170,16 +185,11 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 <NavTooltip label={item.label}>
                   <button
                     onClick={() => go(item.path)}
-                    className={cn(
-                      "group flex w-full items-center rounded-xl transition-all duration-200",
-                      collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                     item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
-                    )}
-                    style={activeStyle(item.active)}
+                    className={navItemClass(item.active)}
+                    style={navItemStyle(item.active)}
+                    {...navItemHoverHandlers(item.active)}
                   >
-                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
-                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? '#4338CA' : item.color }} strokeWidth={1.5} />
-                    </span>
+                    <Icon className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(item.active)} strokeWidth={1.5} />
                     {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
                 </NavTooltip>
@@ -203,24 +213,19 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                     setFinanceOpen(true);
                   }
                 }}
-                className={cn(
-                  "group flex w-full items-center rounded-xl transition-all duration-200",
-                  collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                  isFinanceActive ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
-                )}
-                style={activeStyle(isFinanceActive)}
+                className={navItemClass(isFinanceActive)}
+                style={navItemStyle(isFinanceActive)}
+                {...navItemHoverHandlers(isFinanceActive)}
               >
-                 <span className={iconCircleCn(isFinanceActive)} style={iconBgStyle(isFinanceActive, '#10B981')}>
-                   <Wallet className="w-[18px] h-[18px]" style={{ color: isFinanceActive ? 'hsl(var(--accent-foreground))' : '#10B981' }} strokeWidth={1.5} />
-                 </span>
+                <Wallet className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(isFinanceActive)} strokeWidth={1.5} />
                 {!collapsed && (
                   <>
                     <span className="flex-1 text-left text-[14px]">Money</span>
-                     <ChevronDown
-                       className="shrink-0 transition-transform duration-200"
-                       style={{
-                         width: 14, height: 14,
-                         color: isFinanceActive ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
+                    <ChevronDown
+                      className="shrink-0 transition-transform duration-200"
+                      style={{
+                        width: 14, height: 14,
+                        color: 'rgba(255,255,255,0.7)',
                         transform: financeOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                       }}
                     />
@@ -243,22 +248,31 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                       <button
                         onClick={() => go("/finance/applications")}
                         className={cn(
-                         "flex w-full items-center gap-3 rounded-lg py-2 pl-14 pr-3 text-[13px] transition-all duration-200",
-                         location.pathname === "/finance/applications"
-                           ? "font-medium bg-accent/50"
-                           : "hover:text-foreground hover:bg-secondary"
-                       )}
-                       style={{
-                         color: location.pathname === "/finance/applications" ? 'hsl(var(--accent-foreground))' : 'hsl(var(--muted-foreground))',
-                       }}
-                     >
-                       <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                         location.pathname === "/finance/applications"
-                           ? 'bg-accent border border-accent-foreground/20'
-                           : 'bg-secondary border border-border'
-                       }`}>
-                         <LayoutGrid className={`w-3.5 h-3.5 ${location.pathname === "/finance/applications" ? 'text-accent-foreground' : 'text-muted-foreground'}`} strokeWidth={1.5} />
-                        </div>
+                          "flex w-full items-center gap-3 rounded-lg py-2 pr-3 text-[13px] transition-all duration-200",
+                          "border-l-[3px]",
+                          location.pathname === "/finance/applications"
+                            ? "font-medium border-[#10B981]"
+                            : "border-transparent hover:border-[#10B981]"
+                        )}
+                        style={{
+                          paddingLeft: '40px',
+                          color: location.pathname === "/finance/applications" ? '#10B981' : 'rgba(255,255,255,0.75)',
+                          backgroundColor: location.pathname === "/finance/applications" ? 'rgba(16,185,129,0.12)' : undefined,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (location.pathname !== "/finance/applications") {
+                            e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.08)';
+                            e.currentTarget.style.color = '#FFFFFF';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (location.pathname !== "/finance/applications") {
+                            e.currentTarget.style.backgroundColor = '';
+                            e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
+                          }
+                        }}
+                      >
+                        <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.5} />
                         Applications
                       </button>
                     </li>
@@ -283,21 +297,15 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                         go(item.path);
                       }
                     }}
-                    className={cn(
-                      "group flex w-full items-center rounded-xl transition-all duration-200",
-                      collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                      item.active ? "font-medium" : "hover:bg-secondary hover:shadow-sm",
-                      isLocked && "opacity-60"
-                    )}
-                    style={activeStyle(item.active)}
+                    className={navItemClass(item.active, isLocked)}
+                    style={navItemStyle(item.active)}
+                    {...navItemHoverHandlers(item.active)}
                   >
-                    <span className={iconCircleCn(item.active)} style={iconBgStyle(item.active, item.color)}>
-                      <Icon className="w-[18px] h-[18px]" style={{ color: item.active ? 'hsl(var(--accent-foreground))' : item.color }} strokeWidth={1.5} />
-                    </span>
+                    <Icon className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(item.active)} strokeWidth={1.5} />
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left text-[14px]">{item.label}</span>
-                        {isLocked && <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                        {isLocked && <Lock className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />}
                       </>
                     )}
                   </button>
@@ -311,16 +319,11 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
               <NavTooltip label="Admin">
                 <button
                   onClick={() => go("/admin")}
-                  className={cn(
-                    "group flex w-full items-center rounded-xl transition-all duration-200",
-                    collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
-                   location.pathname === "/admin" ? "font-medium" : "hover:bg-secondary hover:shadow-sm"
-                 )}
-                 style={activeStyle(location.pathname === "/admin")}
-               >
-                 <span className={iconCircleCn(location.pathname === "/admin")} style={iconBgStyle(location.pathname === "/admin", '#6366F1')}>
-                   <Shield className="w-[18px] h-[18px]" style={{ color: location.pathname === "/admin" ? 'hsl(var(--accent-foreground))' : '#6366F1' }} strokeWidth={1.5} />
-                  </span>
+                  className={navItemClass(location.pathname === "/admin")}
+                  style={navItemStyle(location.pathname === "/admin")}
+                  {...navItemHoverHandlers(location.pathname === "/admin")}
+                >
+                  <Shield className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(location.pathname === "/admin")} strokeWidth={1.5} />
                   {!collapsed && <span className="flex-1 text-left text-[14px]">Admin</span>}
                 </button>
               </NavTooltip>
@@ -332,65 +335,64 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
       {/* Legal Footer Links */}
       {!collapsed && (
         <div className="px-3 pb-2 text-center">
-          <a href="/privacy" className="text-[10px] text-[#9ca3af] hover:text-[#6366f1] transition-colors">Privacy</a>
-          <span className="text-[10px] text-[#9ca3af] mx-1.5">·</span>
-          <a href="/terms" className="text-[10px] text-[#9ca3af] hover:text-[#6366f1] transition-colors">Terms</a>
+          <a href="/privacy" className="text-[11px] hover:text-white/70 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>Privacy</a>
+          <span className="text-[11px] mx-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
+          <a href="/terms" className="text-[11px] hover:text-white/70 transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>Terms</a>
         </div>
       )}
 
       {/* Bottom Profile Section */}
       <div className="shrink-0 px-3 pb-4 relative">
         {collapsed ? (
-          /* Collapsed: just avatar */
           <NavTooltip label={displayName}>
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               className="w-full flex justify-center py-2"
             >
               <div className="relative">
-               <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
-                   {avatarUrl ? (
-                     <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                   ) : (
-                     <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
-                       {displayName.charAt(0).toUpperCase()}
-                     </div>
-                   )}
-                 </div>
-                 <div
-                   className="absolute bottom-0 right-0 rounded-full border-2 border-sidebar"
-                   style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
-                 />
+                <div className="h-9 w-9 overflow-hidden rounded-full bg-white/10">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-[#10B981] text-white">
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="absolute bottom-0 right-0 rounded-full border-2 border-[#1C1C1E]"
+                  style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
+                />
               </div>
             </button>
           </NavTooltip>
         ) : (
-          /* Expanded: full profile card */
           <button
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:shadow-md bg-card border border-border shadow-sm"
+            className="w-full flex items-center gap-3 rounded-2xl p-3 text-left transition-all duration-200 hover:bg-white/5"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="relative shrink-0">
-              <div className="h-9 w-9 overflow-hidden rounded-full bg-secondary">
+              <div className="h-9 w-9 overflow-hidden rounded-full bg-white/10">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-primary text-primary-foreground">
+                  <div className="flex h-full w-full items-center justify-center text-xs font-semibold bg-[#10B981] text-white">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div
-                className="absolute bottom-0 right-0 rounded-full border-2 border-card"
+                className="absolute bottom-0 right-0 rounded-full border-2 border-[#1C1C1E]"
                 style={{ width: 10, height: 10, backgroundColor: '#22C55E' }}
               />
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[14px] font-normal text-foreground">
+              <div className="truncate text-[14px] font-normal text-white">
                 {displayName}
               </div>
-              <div className="truncate text-[11px] text-muted-foreground">
+              <div className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 {user?.email || ''}
               </div>
             </div>
@@ -401,12 +403,12 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 e.stopPropagation();
                 toggleDarkMode();
               }}
-              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-secondary w-8 h-8 bg-secondary"
+              className="shrink-0 inline-flex items-center justify-center rounded-full transition-colors hover:bg-white/10 w-8 h-8 bg-white/5"
             >
               {darkMode ? (
-                <Sun className="w-3.5 h-3.5 text-warning" />
+                <Sun className="w-3.5 h-3.5 text-amber-400" />
               ) : (
-                <Moon className="w-3.5 h-3.5 text-muted-foreground" />
+                <Moon className="w-3.5 h-3.5" style={{ color: 'rgba(255,255,255,0.6)' }} />
               )}
             </div>
           </button>
@@ -515,9 +517,6 @@ function MobileTabBar() {
     { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
-
-  // Update isActive to handle contacts path for mobile tab
-  
 
   const isActive = (path: string) => {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
@@ -631,8 +630,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   const sidebarWidth = collapsed ? 72 : 280;
+
+  // Auto-expand sidebar on first dashboard load per session
+  useEffect(() => {
+    if (location.pathname.startsWith("/dashboard") && !sessionStorage.getItem("sidebar_welcomed")) {
+      sessionStorage.setItem("sidebar_welcomed", "true");
+      setCollapsed(false);
+      const timer = setTimeout(() => {
+        setCollapsed(true);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, []); // only on mount
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
@@ -659,7 +671,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <div className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+            <div className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
             <span className="text-sm font-semibold text-foreground">Digital Home</span>
           </div>
         </div>
@@ -694,7 +706,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* Main Content */}
         <main className="transition-all duration-300 min-h-screen bg-background" style={{ paddingLeft: `${sidebarWidth}px` }}>
-          <div className="lg:block hidden" /> {/* spacer for transition */}
+          <div className="lg:block hidden" />
           <ContentWrapper>{children}</ContentWrapper>
         </main>
 
