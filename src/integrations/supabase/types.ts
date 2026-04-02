@@ -2477,14 +2477,21 @@ export type Database = {
           cover_image: string | null
           cover_type: string | null
           created_at: string
+          description: string | null
           end_date: string | null
+          event_date: string | null
           financial_goal: number | null
           financial_goal_set_by: string | null
           goal: string | null
+          host_name: string | null
           icon: string | null
           icon_type: string | null
           id: string
+          image_url: string | null
+          location: string | null
           name: string
+          partiful_url: string | null
+          source: string | null
           start_date: string | null
           type: string
           updated_at: string
@@ -2497,14 +2504,21 @@ export type Database = {
           cover_image?: string | null
           cover_type?: string | null
           created_at?: string
+          description?: string | null
           end_date?: string | null
+          event_date?: string | null
           financial_goal?: number | null
           financial_goal_set_by?: string | null
           goal?: string | null
+          host_name?: string | null
           icon?: string | null
           icon_type?: string | null
           id?: string
+          image_url?: string | null
+          location?: string | null
           name: string
+          partiful_url?: string | null
+          source?: string | null
           start_date?: string | null
           type?: string
           updated_at?: string
@@ -2517,14 +2531,21 @@ export type Database = {
           cover_image?: string | null
           cover_type?: string | null
           created_at?: string
+          description?: string | null
           end_date?: string | null
+          event_date?: string | null
           financial_goal?: number | null
           financial_goal_set_by?: string | null
           goal?: string | null
+          host_name?: string | null
           icon?: string | null
           icon_type?: string | null
           id?: string
+          image_url?: string | null
+          location?: string | null
           name?: string
+          partiful_url?: string | null
+          source?: string | null
           start_date?: string | null
           type?: string
           updated_at?: string

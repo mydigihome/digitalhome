@@ -126,13 +126,75 @@ export default function CreateEventModal({ open, onClose }: Props) {
         }
       }
 
-      toast.success("Event created!");
+      toast.success("Event created! Generating AI prep stages...");
       onClose();
+
+      // Generate AI prep stages in background
+      if (project && form.event_date) {
+        generateAIEventStages({
+          id: project.id,
+          name: form.name,
+          event_date: form.event_date,
+          location: form.location,
+          description: form.description,
+          user_id: user!.id,
+        });
+      }
+
       navigate(`/project/${project.id}`);
     } catch (err) {
       toast.error("Failed to create event");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const generateAIEventStages = async (event: any) => {
+    const eventDate = event.event_date;
+    if (!eventDate) return;
+    const date = new Date(eventDate);
+    const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
+
+    const prompt = `You are an event planning expert. Create exactly 5 simple preparation tasks for this event:
+Event: ${event.name}
+Date: ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+Days until event: ${daysUntil}
+${event.location ? `Location: ${event.location}` : ""}
+${event.description ? `Details: ${event.description}` : ""}
+
+Return ONLY valid JSON array, nothing else:
+[{"title":"Task name","days_before":14,"category":"Category"}]
+Keep tasks simple and practical. 5 tasks maximum.
+Categories: Planning / Guests / Venue / Food / Day-of`;
+
+    try {
+      const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
+      const text = data?.plan || "";
+      const start = text.indexOf("[");
+      const end = text.lastIndexOf("]");
+      if (start === -1 || end === -1) return;
+      const stages = JSON.parse(text.substring(start, end + 1));
+      if (!Array.isArray(stages)) return;
+
+      const tasks = stages.slice(0, 5).map((s: any, i: number) => {
+        const due = new Date(date);
+        due.setDate(due.getDate() - (s.days_before || 7));
+        const today = new Date();
+        return {
+          project_id: event.id,
+          user_id: event.user_id,
+          title: s.title,
+          status: "backlog",
+          priority: "medium",
+          position: i,
+          ai_generated: true,
+        };
+      });
+
+      await supabase.from("tasks").insert(tasks);
+      toast.success(`${tasks.length} AI prep tasks created!`);
+    } catch (e) {
+      console.error("Stage gen error:", e);
     }
   };
 
