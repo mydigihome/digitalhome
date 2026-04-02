@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import {
   ArrowLeft, Sparkles, RefreshCw, X, Mic, Square, Play, Pause,
   Trash2, Send, Loader2, Heart, MapPin, Pencil, Check, Image as ImageIcon,
+  BookOpen, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +58,18 @@ export default function JournalEntryPage() {
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [photoTab, setPhotoTab] = useState<"library" | "upload">("library");
 
+  // Therapist modal state
+  const [therapistModalOpen, setTherapistModalOpen] = useState(false);
+  const [therapistZip, setTherapistZip] = useState("");
+  const [therapistConcern, setTherapistConcern] = useState("");
+  const [therapistInsurance, setTherapistInsurance] = useState("");
+
+  // Church modal state
+  const [churchModalOpen, setChurchModalOpen] = useState(false);
+  const [churchZip, setChurchZip] = useState("");
+  const [churchDenomination, setChurchDenomination] = useState("church");
+  const [churchPreference, setChurchPreference] = useState("");
+
   const photoInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -67,13 +80,18 @@ export default function JournalEntryPage() {
 
   const isDark = document.documentElement.classList.contains("dark");
 
-  // Colors
   const bg = isDark ? "#1C1C1E" : "#FAF9F7";
   const cardBg = isDark ? "#252528" : "white";
   const borderCol = isDark ? "rgba(255,255,255,0.08)" : "#E8E5E0";
   const textPrimary = isDark ? "#F2F2F2" : "#111827";
   const textSecondary = isDark ? "rgba(255,255,255,0.4)" : "#B0ABA3";
   const textBody = isDark ? "#E5E4E2" : "#111827";
+  const modalBg = isDark ? "#1C1C1E" : "white";
+  const inputBg = isDark ? "#252528" : "white";
+  const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB";
+  const inputColor = isDark ? "#F2F2F2" : "#374151";
+  const labelColor = isDark ? "rgba(255,255,255,0.6)" : "#374151";
+  const subtextColor = isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF";
 
   // Load existing entry
   const { data: existingEntry } = useQuery({
@@ -101,7 +119,6 @@ export default function JournalEntryPage() {
     }
   }, [existingEntry]);
 
-  // Daily prompt
   useEffect(() => {
     const today = new Date().toDateString();
     const cached = localStorage.getItem(`dh_journal_prompt_${today}`);
@@ -124,7 +141,6 @@ export default function JournalEntryPage() {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
 
-  // Photo upload
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -136,7 +152,6 @@ export default function JournalEntryPage() {
     setPhotoModalOpen(false);
   };
 
-  // Voice recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -191,7 +206,6 @@ export default function JournalEntryPage() {
     return data.publicUrl;
   };
 
-  // Save
   const handleSave = async () => {
     const editorContent = editorRef.current?.innerHTML || content;
     if (!editorContent && !title) { toast("Nothing to save"); return; }
@@ -269,11 +283,11 @@ export default function JournalEntryPage() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "16px 0", position: "sticky", top: 0, zIndex: 50, background: bg,
           }}>
-            <button onClick={() => navigate("/journal")} style={{
+            <button onClick={() => navigate("/journal")} title="My Entries" style={{
               width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
               background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <ArrowLeft size={16} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+              <BookOpen size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
             </button>
             <span style={{ fontSize: 15, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif" }}>
               {isEditing ? (isNew ? "New Entry" : "Edit Entry") : "Journal Entry"}
@@ -307,7 +321,7 @@ export default function JournalEntryPage() {
                 width: "100%", fontSize: 28, fontWeight: 800, color: textPrimary,
                 border: "none", outline: "none", background: "transparent", textAlign: "center",
                 fontFamily: "Inter, sans-serif", marginBottom: 16, letterSpacing: "-0.5px",
-                boxSizing: "border-box", 
+                boxSizing: "border-box",
               }}
             />
           ) : (
@@ -340,7 +354,7 @@ export default function JournalEntryPage() {
             })}
           </div>
 
-          {/* AI PROMPT — only for new entries with no content */}
+          {/* AI PROMPT */}
           {isEditing && !content && isNew && (
             <div style={{
               padding: 16, background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
@@ -470,7 +484,7 @@ export default function JournalEntryPage() {
 
           {/* THERAPIST + CHURCH LINKS */}
           <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20 }}>
-            <button onClick={() => window.open("https://www.psychologytoday.com/us/therapists", "_blank")} style={{
+            <button onClick={() => setTherapistModalOpen(true)} style={{
               display: "flex", alignItems: "center", gap: 5, padding: "6px 14px",
               backgroundColor: isDark ? "rgba(190,24,93,0.1)" : "#FDF2F8",
               border: `1px solid ${isDark ? "rgba(190,24,93,0.2)" : "#FDF2F8"}`,
@@ -479,16 +493,7 @@ export default function JournalEntryPage() {
             }}>
               <Heart size={12} color="#BE185D" /> Find a Therapist
             </button>
-            <button onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                  pos => window.open(`https://www.google.com/maps/search/church/@${pos.coords.latitude},${pos.coords.longitude},14z`, "_blank"),
-                  () => window.open("https://www.google.com/maps/search/church+near+me", "_blank")
-                );
-              } else {
-                window.open("https://www.google.com/maps/search/church+near+me", "_blank");
-              }
-            }} style={{
+            <button onClick={() => setChurchModalOpen(true)} style={{
               display: "flex", alignItems: "center", gap: 5, padding: "6px 14px",
               backgroundColor: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
               border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF"}`,
@@ -535,8 +540,6 @@ export default function JournalEntryPage() {
             maxWidth: 560, width: "100%", maxHeight: "80vh", overflow: "auto",
           }}>
             <h3 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: "0 0 16px", fontFamily: "Inter, sans-serif" }}>Add a Photo</h3>
-
-            {/* Tabs */}
             <div style={{ display: "flex", gap: 0, marginBottom: 16, borderRadius: 8, overflow: "hidden", border: `1px solid ${borderCol}` }}>
               {(["library", "upload"] as const).map(tab => (
                 <button key={tab} onClick={() => setPhotoTab(tab)} style={{
@@ -549,7 +552,6 @@ export default function JournalEntryPage() {
                 </button>
               ))}
             </div>
-
             {photoTab === "library" ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {LIBRARY_IMAGES.map(img => (
@@ -599,7 +601,7 @@ export default function JournalEntryPage() {
           display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
         }} onClick={() => setSubstackModalOpen(false)}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24,
+            background: modalBg, borderRadius: 16, padding: 24,
             maxWidth: 420, width: "100%",
           }}>
             <h3 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: "0 0 6px", fontFamily: "Inter, sans-serif" }}>Post to Substack</h3>
@@ -608,29 +610,251 @@ export default function JournalEntryPage() {
             <input value={substackEmail} onChange={e => setSubstackEmail(e.target.value)}
               placeholder="yourusername@substack.com"
               style={{
-                width: "100%", padding: "10px 14px", border: `1.5px solid ${borderCol}`,
+                width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
                 borderRadius: 8, fontSize: 14, outline: "none", fontFamily: "Inter, sans-serif",
                 boxSizing: "border-box", marginTop: 6, marginBottom: 8,
-                background: isDark ? "#252528" : "white", color: textPrimary,
+                background: inputBg, color: inputColor,
               }}
             />
-            <p style={{ fontSize: 11, color: textSecondary, margin: "0 0 12px", fontFamily: "Inter, sans-serif" }}>
+            <p style={{ fontSize: 11, color: subtextColor, margin: "0 0 12px", fontFamily: "Inter, sans-serif" }}>
               Find this in Substack → Settings → Import → Email your draft address
             </p>
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, cursor: "pointer" }}>
               <input type="checkbox" checked={saveSubstackEmail} onChange={e => setSaveSubstackEmail(e.target.checked)} />
-              <span style={{ fontSize: 13, color: textSecondary, fontFamily: "Inter, sans-serif" }}>Remember this email</span>
+              <span style={{ fontSize: 13, color: subtextColor, fontFamily: "Inter, sans-serif" }}>Remember this email</span>
             </label>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setSubstackModalOpen(false)} style={{
-                flex: 1, padding: 11, border: `1.5px solid ${borderCol}`, borderRadius: 10,
-                background: isDark ? "#252528" : "white", fontSize: 14, fontWeight: 500,
-                cursor: "pointer", fontFamily: "Inter, sans-serif", color: textPrimary,
+                flex: 1, padding: 11, border: `1.5px solid ${inputBorder}`, borderRadius: 10,
+                background: inputBg, fontSize: 14, fontWeight: 500,
+                cursor: "pointer", fontFamily: "Inter, sans-serif", color: inputColor,
               }}>Cancel</button>
               <button onClick={handleSubstackPublish} style={{
                 flex: 1, padding: 11, background: "#10B981", color: "white", border: "none",
                 borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
               }}>Send to Substack</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FIND A THERAPIST MODAL */}
+      {therapistModalOpen && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }} onClick={() => setTherapistModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: modalBg, borderRadius: 20, padding: 28,
+            maxWidth: 440, width: "100%",
+          }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: textPrimary, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>
+              Find a Therapist
+            </h2>
+            <p style={{ fontSize: 13, color: subtextColor, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>
+              We'll find licensed therapists near you on Psychology Today
+            </p>
+
+            {/* Zip Code */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Your Zip Code *
+              </label>
+              <input value={therapistZip} onChange={e => setTherapistZip(e.target.value)}
+                placeholder="e.g. 80202" maxLength={10}
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", boxSizing: "border-box", background: inputBg,
+                }}
+                onFocus={e => { e.target.style.borderColor = "#EC4899"; }}
+                onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; }}
+              />
+            </div>
+
+            {/* Concern */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                What do you need help with?
+              </label>
+              <select value={therapistConcern} onChange={e => setTherapistConcern(e.target.value)}
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", background: inputBg, cursor: "pointer", boxSizing: "border-box",
+                }}>
+                <option value="">Select a concern...</option>
+                <option value="anxiety">Anxiety</option>
+                <option value="depression">Depression</option>
+                <option value="trauma-and-ptsd">Trauma & PTSD</option>
+                <option value="relationship-issues">Relationship Issues</option>
+                <option value="grief">Grief & Loss</option>
+                <option value="stress">Stress</option>
+                <option value="self-esteem">Self-Esteem</option>
+                <option value="life-transitions">Life Transitions</option>
+                <option value="career">Career Counseling</option>
+                <option value="identity">Identity & Purpose</option>
+                <option value="adhd">ADHD</option>
+                <option value="eating-disorders">Eating Disorders</option>
+                <option value="addiction">Addiction</option>
+                <option value="family-conflict">Family Conflict</option>
+              </select>
+            </div>
+
+            {/* Insurance */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Insurance (optional)
+              </label>
+              <input value={therapistInsurance} onChange={e => setTherapistInsurance(e.target.value)}
+                placeholder="e.g. Blue Cross, Aetna"
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", boxSizing: "border-box", background: inputBg,
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setTherapistModalOpen(false)} style={{
+                flex: 1, padding: 11, border: `1.5px solid ${inputBorder}`, borderRadius: 10,
+                background: inputBg, fontSize: 14, fontWeight: 500, color: inputColor,
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Cancel</button>
+              <button onClick={() => {
+                if (!therapistZip) { toast.error("Enter your zip code"); return; }
+                let url = `https://www.psychologytoday.com/us/therapists/${therapistZip}`;
+                const params = new URLSearchParams();
+                if (therapistConcern) params.append("issue", therapistConcern);
+                if (therapistInsurance) params.append("insurance", therapistInsurance.toLowerCase().replace(/\s+/g, "-"));
+                const qs = params.toString();
+                if (qs) url += "?" + qs;
+                window.open(url, "_blank");
+                setTherapistModalOpen(false);
+              }} style={{
+                flex: 1, padding: 11, background: "#EC4899", color: "white", border: "none",
+                borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}>
+                <Search size={16} /> Find Therapists
+              </button>
+            </div>
+
+            {/* BetterHelp */}
+            <div style={{
+              marginTop: 16, padding: "12px 14px", background: isDark ? "#252528" : "#F9FAFB",
+              borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif", margin: 0 }}>Prefer online therapy?</p>
+                <p style={{ fontSize: 11, color: subtextColor, fontFamily: "Inter, sans-serif", margin: 0 }}>BetterHelp matches you in 48hrs</p>
+              </div>
+              <button onClick={() => window.open("https://www.betterhelp.com/get-started/", "_blank")} style={{
+                padding: "6px 14px", background: "#3B82F6", color: "white", border: "none",
+                borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Try it →</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FIND A CHURCH MODAL */}
+      {churchModalOpen && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }} onClick={() => setChurchModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: modalBg, borderRadius: 20, padding: 28,
+            maxWidth: 440, width: "100%",
+          }}>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: textPrimary, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>
+              Find a Church
+            </h2>
+            <p style={{ fontSize: 13, color: subtextColor, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>
+              Find churches near you on Google Maps
+            </p>
+
+            {/* Zip Code */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Your Zip Code *
+              </label>
+              <input value={churchZip} onChange={e => setChurchZip(e.target.value)}
+                placeholder="e.g. 80202" maxLength={10}
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", boxSizing: "border-box", background: inputBg,
+                }}
+                onFocus={e => { e.target.style.borderColor = "#7B5EA7"; }}
+                onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; }}
+              />
+            </div>
+
+            {/* Denomination */}
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Denomination / Religion
+              </label>
+              <select value={churchDenomination} onChange={e => setChurchDenomination(e.target.value)}
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", background: inputBg, cursor: "pointer", boxSizing: "border-box",
+                }}>
+                <option value="church">Any Church</option>
+                <option value="non-denominational church">Non-Denominational</option>
+                <option value="Baptist church">Baptist</option>
+                <option value="Catholic church">Catholic</option>
+                <option value="Methodist church">Methodist</option>
+                <option value="Pentecostal church">Pentecostal</option>
+                <option value="AME church">AME (African Methodist Episcopal)</option>
+                <option value="COGIC church">COGIC</option>
+                <option value="Presbyterian church">Presbyterian</option>
+                <option value="Lutheran church">Lutheran</option>
+                <option value="Episcopal church">Episcopal</option>
+                <option value="Adventist church">Seventh-day Adventist</option>
+                <option value="evangelical church">Evangelical</option>
+                <option value="mosque">Mosque (Islam)</option>
+                <option value="synagogue">Synagogue (Jewish)</option>
+              </select>
+            </div>
+
+            {/* Preference */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Any other preference? (optional)
+              </label>
+              <input value={churchPreference} onChange={e => setChurchPreference(e.target.value)}
+                placeholder="e.g. contemporary, young adults, Spanish speaking"
+                style={{
+                  width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                  borderRadius: 8, fontSize: 14, color: inputColor, outline: "none",
+                  fontFamily: "Inter, sans-serif", boxSizing: "border-box", background: inputBg,
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setChurchModalOpen(false)} style={{
+                flex: 1, padding: 11, border: `1.5px solid ${inputBorder}`, borderRadius: 10,
+                background: inputBg, fontSize: 14, fontWeight: 500, color: inputColor,
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Cancel</button>
+              <button onClick={() => {
+                if (!churchZip) { toast.error("Enter your zip code"); return; }
+                const searchTerms = [churchPreference, churchDenomination, "near", churchZip].filter(Boolean).join(" ");
+                window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchTerms)}`, "_blank");
+                setChurchModalOpen(false);
+              }} style={{
+                flex: 1, padding: 11, background: "#7B5EA7", color: "white", border: "none",
+                borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              }}>
+                <MapPin size={16} /> Find Churches
+              </button>
             </div>
           </div>
         </div>
