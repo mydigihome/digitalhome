@@ -1061,7 +1061,7 @@ export default function Dashboard() {
               </motion.div>
 
               {/* QUICK TO-DOS */}
-              <motion.div {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm">
+              <motion.div ref={quickTodosRef} {...stagger(3)} className="p-5 mb-4 bg-card/70 dark:bg-card/50 backdrop-blur-xl border border-border rounded-3xl shadow-sm transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-[17px] font-bold text-foreground">Quick To-Dos</h2>
                   <span className="text-sm font-semibold text-primary">Edit List</span>
