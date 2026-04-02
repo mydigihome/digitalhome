@@ -105,19 +105,17 @@ function SortableCard({ id, children }: { id: string; children: React.ReactNode 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.95 : 1,
-    zIndex: isDragging ? 50 : undefined,
-    boxShadow: isDragging ? "0 8px 30px rgba(0,0,0,0.15)" : undefined,
-    scale: isDragging ? 1.01 : 1,
+    opacity: isDragging ? 0.4 : 1,
+    position: "relative" as const,
   };
   return (
     <div ref={setNodeRef} style={style} className="relative group/drag">
       <div
         {...attributes}
         {...listeners}
-        className="absolute -left-1 top-4 z-20 w-6 h-6 rounded-md bg-muted/80 border border-border flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/drag:opacity-100 transition-opacity"
+        className="absolute left-3 top-3 z-20 w-7 h-7 rounded-md bg-muted/80 backdrop-blur border border-border flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover/drag:opacity-100 transition-opacity"
       >
-        <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+        <GripVertical className="w-4 h-4 text-muted-foreground" />
       </div>
       {children}
     </div>
