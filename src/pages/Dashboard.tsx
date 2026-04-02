@@ -170,13 +170,6 @@ function ScriptureContent({ religion }: { religion?: string }) {
   );
 }
 
-const stockOptions = [
-  { symbol: "AAPL", name: "Apple Inc." },
-  { symbol: "BTC/USD", name: "Bitcoin" },
-  { symbol: "ETH/USD", name: "Ethereum" },
-  { symbol: "TSLA", name: "Tesla Inc." },
-  { symbol: "SPY", name: "S&P 500 ETF" },
-];
 
 const DEFAULT_LEFT_ORDER = ["networth-projects", "market", "momentum", "links", "studio", "reflections"];
 const DEFAULT_RIGHT_ORDER = ["scripture", "reminders", "agenda", "todos", "network"];
