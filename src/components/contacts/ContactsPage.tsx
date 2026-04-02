@@ -893,7 +893,6 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
           </div>
         </div>
       </div>
-      </div>
 
       {/* ─── SECTIONS A + B ─── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
