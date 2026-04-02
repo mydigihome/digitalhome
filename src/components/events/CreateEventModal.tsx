@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   Calendar, MapPin, Users, Clock, Image, Plus, X, Mail,
   Globe, Lock, ChevronRight,
+  UtensilsCrossed, BookOpen, Heart, Plane, Palette, Cake, Target, PartyPopper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +18,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 const EVENT_TYPES = [
-  { value: "dinner_party", label: "Dinner Party", emoji: "dinner" },
-  { value: "book_club", label: "Book Club", emoji: "book" },
-  { value: "sorority_event", label: "Sorority Event", emoji: "heart" },
-  { value: "trip", label: "Trip", emoji: "plane" },
-  { value: "workshop", label: "Workshop", emoji: "palette" },
-  { value: "birthday", label: "Birthday", emoji: "cake" },
-  { value: "other", label: "Other", emoji: "target" },
+  { Icon: UtensilsCrossed, label: "Dinner Party", value: "dinner_party" },
+  { Icon: BookOpen, label: "Book Club", value: "book_club" },
+  { Icon: Heart, label: "Sorority Event", value: "sorority_event" },
+  { Icon: Plane, label: "Trip", value: "trip" },
+  { Icon: Palette, label: "Workshop", value: "workshop" },
+  { Icon: Cake, label: "Birthday", value: "birthday" },
+  { Icon: PartyPopper, label: "Party", value: "party" },
+  { Icon: Target, label: "Other", value: "other" },
 ];
 
 interface Props {
@@ -39,6 +41,7 @@ export default function CreateEventModal({ open, onClose }: Props) {
   const addGuests = useAddEventGuests();
   const createQuestion = useCreateRsvpQuestion();
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const isDark = document.documentElement.classList.contains("dark");
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
@@ -135,6 +138,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
+  const purple = "#7B5EA7";
+  const purpleLight = isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF";
+  const purpleBorder = purple;
+
   const steps = [
     // Step 0: Basic Info
     <div className="space-y-4" key="basic">
@@ -144,40 +151,65 @@ export default function CreateEventModal({ open, onClose }: Props) {
           value={form.name}
           onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
           placeholder="My Amazing Event"
-          className="text-lg"
+          className="text-lg focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10"
         />
       </div>
       <div className="space-y-2">
         <Label>Event Type</Label>
         <div className="grid grid-cols-2 gap-2">
-          {EVENT_TYPES.map(t => (
-            <button
-              key={t.value}
-              onClick={() => setForm(p => ({ ...p, event_type: t.value }))}
-              className={cn(
-                "flex items-center gap-2 rounded-lg border p-3 text-sm transition-all",
-                form.event_type === t.value
-                  ? "border-primary bg-primary/5 text-foreground"
-                  : "border-border hover:border-primary/50 text-muted-foreground"
-              )}
-            >
-              <span className="text-lg">{t.emoji}</span> {t.label}
-            </button>
-          ))}
+          {EVENT_TYPES.map(t => {
+            const selected = form.event_type === t.value;
+            return (
+              <button
+                key={t.value}
+                onClick={() => setForm(p => ({ ...p, event_type: t.value }))}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "14px 16px",
+                  border: "1.5px solid",
+                  borderColor: selected ? purpleBorder : (isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"),
+                  borderRadius: "10px",
+                  background: selected ? purpleLight : (isDark ? "#252528" : "white"),
+                  cursor: "pointer",
+                  textAlign: "left" as const,
+                  transition: "all 150ms",
+                  width: "100%",
+                }}
+              >
+                <div style={{
+                  width: "32px", height: "32px", borderRadius: "8px",
+                  background: selected ? purple : (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"),
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 150ms", flexShrink: 0,
+                }}>
+                  <t.Icon size={16} color={selected ? "white" : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280")} />
+                </div>
+                <span style={{
+                  fontSize: "13px", fontWeight: selected ? "600" : "400",
+                  color: selected ? (isDark ? "#E9D5FF" : "#5B21B6") : (isDark ? "#F2F2F2" : "#374151"),
+                  fontFamily: "Inter, sans-serif",
+                }}>
+                  {t.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>,
 
-    // Step 1: Date, Location, Cover + Collapsible Extras
+    // Step 1: Date, Location, Cover
     <div className="space-y-4" key="details">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>Date</Label>
-          <Input type="date" value={form.event_date} onChange={e => setForm(p => ({ ...p, event_date: e.target.value }))} />
+          <Input type="date" value={form.event_date} onChange={e => setForm(p => ({ ...p, event_date: e.target.value }))} className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10" />
         </div>
         <div className="space-y-2">
           <Label>Time</Label>
-          <Input type="time" value={form.event_time} onChange={e => setForm(p => ({ ...p, event_time: e.target.value }))} />
+          <Input type="time" value={form.event_time} onChange={e => setForm(p => ({ ...p, event_time: e.target.value }))} className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10" />
         </div>
       </div>
       <div className="space-y-2">
@@ -185,28 +217,41 @@ export default function CreateEventModal({ open, onClose }: Props) {
         <div className="flex gap-2 mb-2">
           <button
             onClick={() => setForm(p => ({ ...p, location_type: "physical" }))}
-            className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs border transition",
-              form.location_type === "physical" ? "border-primary bg-primary/5" : "border-border")}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              padding: "6px 12px", borderRadius: "6px", fontSize: "12px",
+              border: `1px solid ${form.location_type === "physical" ? purple : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+              background: form.location_type === "physical" ? purpleLight : "transparent",
+              color: form.location_type === "physical" ? purple : (isDark ? "#F2F2F2" : "#374151"),
+              cursor: "pointer", transition: "all 150ms",
+            }}
           >
-            <MapPin className="h-3.5 w-3.5" /> Physical
+            <MapPin size={14} /> Physical
           </button>
           <button
             onClick={() => setForm(p => ({ ...p, location_type: "virtual" }))}
-            className={cn("flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs border transition",
-              form.location_type === "virtual" ? "border-primary bg-primary/5" : "border-border")}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              padding: "6px 12px", borderRadius: "6px", fontSize: "12px",
+              border: `1px solid ${form.location_type === "virtual" ? purple : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+              background: form.location_type === "virtual" ? purpleLight : "transparent",
+              color: form.location_type === "virtual" ? purple : (isDark ? "#F2F2F2" : "#374151"),
+              cursor: "pointer", transition: "all 150ms",
+            }}
           >
-            <Globe className="h-3.5 w-3.5" /> Virtual
+            <Globe size={14} /> Virtual
           </button>
         </div>
         <Input
           value={form.location}
           onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
           placeholder={form.location_type === "virtual" ? "Zoom/Meet link" : "123 Main St, City"}
+          className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10"
         />
       </div>
       <div className="space-y-2">
         <Label>Description</Label>
-        <Textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="What's this event about?" />
+        <Textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={3} placeholder="What's this event about?" className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10" />
       </div>
       <div className="space-y-2">
         <Label>Cover Image</Label>
@@ -218,13 +263,23 @@ export default function CreateEventModal({ open, onClose }: Props) {
             </button>
           </div>
         ) : (
-          <button onClick={() => coverInputRef.current?.click()} className="w-full h-24 rounded-lg border-2 border-dashed border-border hover:border-primary transition flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Image className="h-5 w-5" /> Upload cover image
+          <button
+            onClick={() => coverInputRef.current?.click()}
+            style={{
+              width: "100%", height: "96px", borderRadius: "8px",
+              border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              fontSize: "14px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+              cursor: "pointer", transition: "border 150ms", background: "transparent",
+            }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = purple; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; }}
+          >
+            <Image size={20} /> Upload cover image
           </button>
         )}
         <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
       </div>
-
     </div>,
 
     // Step 2: Guests & RSVP
@@ -236,29 +291,42 @@ export default function CreateEventModal({ open, onClose }: Props) {
           onChange={e => setForm(p => ({ ...p, guest_emails: e.target.value }))}
           placeholder="email1@example.com, email2@example.com"
           rows={3}
+          className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10"
         />
         <p className="text-xs text-muted-foreground">Separate emails with commas, semicolons, or new lines</p>
       </div>
       <div className="space-y-2">
         <Label>RSVP Deadline</Label>
-        <Input type="date" value={form.rsvp_deadline} onChange={e => setForm(p => ({ ...p, rsvp_deadline: e.target.value }))} />
+        <Input type="date" value={form.rsvp_deadline} onChange={e => setForm(p => ({ ...p, rsvp_deadline: e.target.value }))} className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10" />
       </div>
       <div className="space-y-2">
         <Label>Privacy</Label>
         <div className="flex gap-2">
           <button
             onClick={() => setForm(p => ({ ...p, privacy: "private" }))}
-            className={cn("flex items-center gap-1.5 rounded-md px-3 py-2 text-sm border transition flex-1",
-              form.privacy === "private" ? "border-primary bg-primary/5" : "border-border")}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", flex: 1,
+              padding: "8px 12px", borderRadius: "6px", fontSize: "13px",
+              border: `1px solid ${form.privacy === "private" ? purple : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+              background: form.privacy === "private" ? purpleLight : "transparent",
+              color: form.privacy === "private" ? purple : (isDark ? "#F2F2F2" : "#374151"),
+              cursor: "pointer", transition: "all 150ms",
+            }}
           >
-            <Lock className="h-4 w-4" /> Private (invite only)
+            <Lock size={16} /> Private (invite only)
           </button>
           <button
             onClick={() => setForm(p => ({ ...p, privacy: "public" }))}
-            className={cn("flex items-center gap-1.5 rounded-md px-3 py-2 text-sm border transition flex-1",
-              form.privacy === "public" ? "border-primary bg-primary/5" : "border-border")}
+            style={{
+              display: "flex", alignItems: "center", gap: "6px", flex: 1,
+              padding: "8px 12px", borderRadius: "6px", fontSize: "13px",
+              border: `1px solid ${form.privacy === "public" ? purple : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+              background: form.privacy === "public" ? purpleLight : "transparent",
+              color: form.privacy === "public" ? purple : (isDark ? "#F2F2F2" : "#374151"),
+              cursor: "pointer", transition: "all 150ms",
+            }}
           >
-            <Globe className="h-4 w-4" /> Public link
+            <Globe size={16} /> Public link
           </button>
         </div>
       </div>
@@ -273,7 +341,7 @@ export default function CreateEventModal({ open, onClose }: Props) {
           </div>
         ))}
         <div className="flex gap-2">
-          <Input value={newQuestion} onChange={e => setNewQuestion(e.target.value)} placeholder="e.g. Any dietary restrictions?" onKeyDown={e => {
+          <Input value={newQuestion} onChange={e => setNewQuestion(e.target.value)} placeholder="e.g. Any dietary restrictions?" className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10" onKeyDown={e => {
             if (e.key === "Enter" && newQuestion.trim()) {
               setForm(p => ({ ...p, rsvp_questions: [...p.rsvp_questions, newQuestion.trim()] }));
               setNewQuestion("");
@@ -305,24 +373,29 @@ export default function CreateEventModal({ open, onClose }: Props) {
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="w-full max-w-[580px] max-h-[85vh] overflow-y-auto rounded-2xl bg-card border border-primary/20 p-6 shadow-xl"
+          className="w-full max-w-[580px] max-h-[85vh] overflow-y-auto rounded-2xl bg-card p-6 shadow-xl"
+          style={{ border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "rgba(123,94,167,0.2)"}` }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-foreground">Create Event</h2>
-              <p className="text-sm text-muted-foreground">Step {step + 1} of {steps.length}</p>
+              <p className="text-sm" style={{ color: purple }}>Step {step + 1} of {steps.length}</p>
             </div>
             <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground">
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Progress */}
+          {/* Progress — purple */}
           <div className="flex gap-1 mb-6">
             {steps.map((_, i) => (
-              <div key={i} className={cn("h-1 flex-1 rounded-full transition-all", i <= step ? "bg-primary" : "bg-secondary")} />
+              <div
+                key={i}
+                className="h-1 flex-1 rounded-full transition-all"
+                style={{ background: i <= step ? purple : (isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB") }}
+              />
             ))}
           </div>
 
@@ -339,22 +412,43 @@ export default function CreateEventModal({ open, onClose }: Props) {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation */}
+          {/* Navigation — purple buttons */}
           <div className="flex gap-3 mt-6 pt-4 border-t border-border">
             {step > 0 && (
               <Button variant="outline" onClick={() => setStep(s => s - 1)} className="flex-1">Back</Button>
             )}
             {step < steps.length - 1 ? (
-              <Button onClick={() => {
-                if (step === 0 && !form.name.trim()) { toast.error("Event name is required"); return; }
-                setStep(s => s + 1);
-              }} className="flex-1">
-                Continue <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+              <button
+                onClick={() => {
+                  if (step === 0 && !form.name.trim()) { toast.error("Event name is required"); return; }
+                  setStep(s => s + 1);
+                }}
+                style={{
+                  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "4px",
+                  padding: "10px 20px", background: purple, border: "none", borderRadius: "8px",
+                  fontSize: "14px", fontWeight: "600", color: "white", cursor: "pointer",
+                  transition: "background 150ms", fontFamily: "Inter, sans-serif",
+                }}
+                onMouseEnter={e => { (e.target as HTMLElement).style.background = "#6D4F9A"; }}
+                onMouseLeave={e => { (e.target as HTMLElement).style.background = purple; }}
+              >
+                Continue <ChevronRight size={16} />
+              </button>
             ) : (
-              <Button onClick={handleSubmit} disabled={submitting} className="flex-1">
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                style={{
+                  flex: 1, padding: "10px 20px",
+                  background: submitting ? "#9B85BF" : purple,
+                  border: "none", borderRadius: "8px",
+                  fontSize: "14px", fontWeight: "600", color: "white",
+                  cursor: submitting ? "not-allowed" : "pointer",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
                 {submitting ? "Creating..." : "Create Event"}
-              </Button>
+              </button>
             )}
           </div>
         </motion.div>
