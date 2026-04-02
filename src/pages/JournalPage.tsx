@@ -179,23 +179,49 @@ export default function JournalPage() {
           </div>
         </div>
 
-        {/* STREAK CARD */}
-        <div style={{ margin: "0 12px 20px", padding: 20, background: "linear-gradient(135deg, #10B981, #059669)", borderRadius: 14, color: "white" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 500, opacity: 0.8, margin: 0, fontFamily: "Inter, sans-serif" }}>Current Streak</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
-                <span style={{ fontSize: 36, fontWeight: 800, fontFamily: "Inter, sans-serif" }}>{currentStreak}</span>
-                <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.8 }}>days</span>
-              </div>
-              <p style={{ fontSize: 12, opacity: 0.7, margin: "4px 0 0", fontFamily: "Inter, sans-serif" }}>{entries.length} total entries</p>
-            </div>
-            <p style={{ fontSize: 12, opacity: 0.8, maxWidth: 160, textAlign: "right", fontFamily: "Inter, sans-serif", margin: 0, lineHeight: 1.4 }}>Celebrate what made you smile today.</p>
+        {/* STREAK CARD — Journal notebook style */}
+        <div style={{
+          margin: "0 12px 20px", padding: "20px 24px",
+          background: isDark ? "#1C1C1E" : "#FFFDF7",
+          borderRadius: 14,
+          border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E8E2D4"}`,
+          position: "relative", overflow: "hidden",
+        }}>
+          {/* Notebook lines */}
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{
+                position: "absolute", left: 24, right: 24,
+                top: 28 + i * 24,
+                height: 1, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(16,185,129,0.12)",
+              }} />
+            ))}
+            {/* Left margin line */}
+            <div style={{
+              position: "absolute", top: 0, bottom: 0, left: 52,
+              width: 1, background: isDark ? "rgba(239,68,68,0.15)" : "rgba(239,68,68,0.2)",
+            }} />
           </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 16 }}>
+          <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#10B981", margin: 0, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Current Streak</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
+                <span style={{ fontSize: 36, fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>{currentStreak}</span>
+                <span style={{ fontSize: 14, fontWeight: 500, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280" }}>days</span>
+              </div>
+              <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF", margin: "4px 0 0", fontFamily: "Inter, sans-serif" }}>{entries.length} total entries</p>
+            </div>
+            <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF", maxWidth: 160, textAlign: "right", fontFamily: "Inter, sans-serif", margin: 0, lineHeight: 1.5, fontStyle: "italic" }}>Celebrate what made you smile today.</p>
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 16, position: "relative", zIndex: 1 }}>
             {last7Days.map((has, i) => (
-              <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: has ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {has && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#059669" }} />}
+              <div key={i} style={{
+                width: 28, height: 28, borderRadius: "50%",
+                background: has ? (isDark ? "rgba(16,185,129,0.2)" : "#D1FAE5") : (isDark ? "#252528" : "#F3F4F6"),
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: has ? "1.5px solid #10B981" : `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+              }}>
+                {has && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }} />}
               </div>
             ))}
           </div>
