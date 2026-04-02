@@ -1,5 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '@supabase/supabase-js/cors'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,21 +20,21 @@ serve(async (req) => {
       )
     }
 
-    // Use Lovable AI proxy
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')
-    if (!lovableApiKey) {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+    if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY not configured')
     }
 
-    const response = await fetch('https://api.lovable.dev/api/ai/chat', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lovableApiKey}`,
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [{ role: 'user', content: prompt }],
+        max_tokens: 3000,
       }),
     })
 
@@ -40,7 +44,7 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    const plan = data.reply || data.content?.[0]?.text || data.choices?.[0]?.message?.content || ''
+    const plan = data.choices?.[0]?.message?.content || ''
 
     return new Response(
       JSON.stringify({ plan }),
