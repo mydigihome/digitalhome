@@ -3289,6 +3289,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          ai_generated: boolean | null
           assignee: string | null
           auto_scheduled: boolean | null
           blocked_by: string[] | null
@@ -3308,6 +3309,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_generated?: boolean | null
           assignee?: string | null
           auto_scheduled?: boolean | null
           blocked_by?: string[] | null
@@ -3327,6 +3329,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_generated?: boolean | null
           assignee?: string | null
           auto_scheduled?: boolean | null
           blocked_by?: string[] | null
