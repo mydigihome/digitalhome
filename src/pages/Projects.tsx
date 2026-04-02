@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Calendar, Target, FolderOpen, ChevronRight, LayoutGrid, List,
   Search, Archive, Check, CheckSquare, Trash2, Archive as ArchiveIcon,
-  X, AlertTriangle, Link, Loader2, Sparkles, MapPin, Users, Eye,
+  X, AlertTriangle, Link, Loader2, Sparkles, MapPin, Users, Eye, User,
 } from "lucide-react";
 import ProjectFinancialBar from "@/components/projects/ProjectFinancialBar";
 import ProjectContactAvatars from "@/components/projects/ProjectContactAvatars";
