@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, X, Settings, DollarSign, CreditCard, Clapperboard, FolderOpen, Users, BookOpen, UserPlus, FileText, Download } from "lucide-react";
+import { Bell, X, Settings, DollarSign, CreditCard, Clapperboard, FolderOpen, Users, BookOpen, UserPlus, FileText, Download, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
