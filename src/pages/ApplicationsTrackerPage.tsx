@@ -79,7 +79,6 @@ export default function ApplicationsTrackerPage() {
   const [showStudentPrompt, setShowStudentPrompt] = useState(false);
   const [bannerColorPickerOpen, setBannerColorPickerOpen] = useState(false);
   const isStudent = (prefs as any)?.user_type === "student";
-  const isStudent = (prefs as any)?.user_type === "student";
 
   const [view, setView] = useState<"list" | "kanban">(() => {
     return (localStorage.getItem("dh_applications_view") as "list" | "kanban") || "list";
