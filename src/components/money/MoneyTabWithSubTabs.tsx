@@ -268,6 +268,8 @@ export default function MoneyTabWithSubTabs() {
           <MoneyOverview />
         ) : activeTab === "debt" ? (
           <DebtTab />
+        ) : activeTab === "investing" ? (
+          <InvestingTab />
         ) : (
           <>
             {/* Hidden cards restore drawer */}
