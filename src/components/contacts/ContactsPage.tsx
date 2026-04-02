@@ -575,6 +575,21 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
   user: any; navigate: any;
 }) {
   const { data: interactions = [] } = useContactInteractions(contact.id);
+  const { data: quickTodos = [] } = useQuickTodos();
+  const addTodo = useAddQuickTodo();
+  const [showTodoInput, setShowTodoInput] = useState(false);
+  const [todoText, setTodoText] = useState("");
+
+  const handleSaveTodo = () => {
+    if (!todoText.trim()) return;
+    addTodo.mutate({ text: todoText.trim(), order: quickTodos.length }, {
+      onSuccess: () => {
+        toast.success("To-do added to dashboard!");
+        setTodoText("");
+        setShowTodoInput(false);
+      },
+    });
+  };
 
   return (
     <div style={{ borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#111112" : "#F9FAFB" }}>
