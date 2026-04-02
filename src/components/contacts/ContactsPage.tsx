@@ -12,7 +12,8 @@ import {
   Search, Plus, Mail, Phone, MapPin, Briefcase, Pencil, Trash2,
   Sparkles, Loader2, RotateCw, BookOpen, FolderPlus, CheckSquare,
   Linkedin, Users, ChevronDown, ChevronUp, X, Check, Filter,
-  ArrowUpDown, MessageSquare, Upload, FileSpreadsheet, UserPlus, Calendar
+  ArrowUpDown, MessageSquare, Upload, FileSpreadsheet, UserPlus, Calendar,
+  Gift
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
@@ -792,149 +793,161 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
     ? Math.floor((Date.now() - new Date(contact.last_contacted_date).getTime()) / 86400000)
     : 999;
   const strength = daysSince < 14
-    ? { label: "Hot", color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0", dot: "#10B981" }
+    ? { label: "Hot", color: "#065F46", bg: "#F0FDF4", border: "#BBF7D0" }
     : daysSince < 45
-    ? { label: "Warm", color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A", dot: "#F59E0B" }
-    : { label: "Cold", color: "#9CA3AF", bg: "#F9FAFB", border: "#E5E7EB", dot: "#D1D5DB" };
-
-  const contactInfoItems = [
-    { Icon: Mail, val: contact.email, href: contact.email ? `mailto:${contact.email}` : undefined, color: "#10B981" },
-    { Icon: Phone, val: contact.phone, href: contact.phone ? `tel:${contact.phone}` : undefined, color: "#3B82F6" },
-    { Icon: MapPin, val: contact.location, color: "#F59E0B" },
-    { Icon: Briefcase, val: contact.company, color: "#7B5EA7" },
-    { Icon: Calendar, val: contact.birthday ? `Birthday: ${new Date(contact.birthday).toLocaleDateString("en-US", { month: "long", day: "numeric" })}` : null, color: "#EF4444" },
-  ].filter(i => i.val);
+    ? { label: "Warm", color: "#92400E", bg: "#FFFBEB", border: "#FDE68A" }
+    : { label: "Cold", color: "#374151", bg: "#F9FAFB", border: "#E5E7EB" };
 
   return (
-    <div style={{ background: isDark ? "#1C1C1E" : "white", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` }}>
-      {/* TOP BANNER */}
+    <div style={{ borderBottom: `2px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#1C1C1E" : "white" }}>
+      {/* ─── BANNER + IDENTITY ─── */}
       <div style={{
-        height: "90px",
-        background: "linear-gradient(135deg, #1C1C1E 0%, #2D2B3D 60%, #1B2E1B 100%)",
-        position: "relative",
+        height: "80px",
+        background: "linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 50%, #0d3b2e 100%)",
+        position: "relative", overflow: "hidden",
       }}>
         <div style={{
           position: "absolute", inset: 0,
-          backgroundImage: "radial-gradient(circle at 30% 50%, rgba(16,185,129,0.12) 0%, transparent 60%), radial-gradient(circle at 70% 30%, rgba(123,94,167,0.12) 0%, transparent 60%)",
+          backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(16,185,129,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(123,94,167,0.15) 0%, transparent 60%)",
         }} />
         {/* Avatar */}
         <div style={{
-          position: "absolute", bottom: "-28px", left: "24px",
-          width: "56px", height: "56px", borderRadius: "50%",
+          position: "absolute", bottom: "-20px", left: "28px",
+          width: "48px", height: "48px", borderRadius: "50%",
           border: `3px solid ${isDark ? "#1C1C1E" : "white"}`,
           background: "#F5F3FF", overflow: "hidden",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "20px", fontWeight: 800, color: "#7B5EA7",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          fontSize: "18px", fontWeight: 800, color: "#7B5EA7",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)", zIndex: 2,
         }}>
           {contact.photo_url ? (
             <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
           ) : contact.name?.charAt(0).toUpperCase()}
         </div>
-        {/* Tags on banner */}
-        <div style={{
-          position: "absolute", bottom: "10px", left: "96px",
-          display: "flex", gap: "6px", flexWrap: "wrap",
-        }}>
-          {(contact.tags || []).map((tag: string, i: number) => (
-            <span key={i} style={{
-              padding: "2px 10px", background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.25)", borderRadius: "999px",
-              fontSize: "11px", fontWeight: 500, color: "white", backdropFilter: "blur(4px)",
-            }}>
-              {tag}
-            </span>
-          ))}
-          <button onClick={e => { e.stopPropagation(); setTagModalContact(contact); setTagModalOpen(true); }} style={{
-            padding: "2px 10px", background: "rgba(255,255,255,0.1)",
-            border: "1px dashed rgba(255,255,255,0.3)", borderRadius: "999px",
-            fontSize: "11px", color: "rgba(255,255,255,0.7)", cursor: "pointer",
-          }}>
-            + Tag
-          </button>
-        </div>
         {/* Edit + Delete */}
-        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px" }}>
+        <div style={{ position: "absolute", top: "12px", right: "16px", display: "flex", gap: "6px", zIndex: 2 }}>
           <button onClick={e => { e.stopPropagation(); onEdit(); }} style={{
-            padding: "5px 12px", background: "rgba(255,255,255,0.15)",
-            border: "1px solid rgba(255,255,255,0.25)", borderRadius: "6px",
-            color: "white", fontSize: "12px", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px", backdropFilter: "blur(4px)",
+            padding: "5px 12px", background: "rgba(255,255,255,0.12)",
+            border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px",
+            color: "rgba(255,255,255,0.85)", fontSize: "11px", fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif", backdropFilter: "blur(4px)",
           }}>
-            <Pencil size={11} /> Edit
+            <Pencil size={10} /> Edit
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete(); }} style={{
-            padding: "5px 12px", background: "rgba(220,38,38,0.2)",
-            border: "1px solid rgba(220,38,38,0.3)", borderRadius: "6px",
-            color: "#FCA5A5", fontSize: "12px", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "4px",
+            padding: "5px 12px", background: "rgba(239,68,68,0.15)",
+            border: "1px solid rgba(239,68,68,0.25)", borderRadius: "6px",
+            color: "#FCA5A5", fontSize: "11px", fontWeight: 500, cursor: "pointer",
+            display: "flex", alignItems: "center", gap: "4px", fontFamily: "Inter, sans-serif",
           }}>
-            <Trash2 size={11} /> Delete
+            <Trash2 size={10} /> Delete
           </button>
         </div>
       </div>
 
-      {/* MAIN CONTENT — 5 columns */}
-      <div style={{
-        padding: "40px 24px 24px",
-        display: "grid", gridTemplateColumns: "1.8fr 1fr 1fr 1fr 1.2fr", gap: "20px",
-      }}>
-        {/* COL 1 — Identity + Contact Info */}
-        <div>
-          <h3 style={{ fontSize: "18px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px" }}>{contact.name}</h3>
-          <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "14px" }}>
-            {[contact.title, contact.company].filter(Boolean).join(" · ")}
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {contactInfoItems.map(({ Icon, val, href, color }, i) => (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "6px 10px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: "7px",
-              }}>
-                <div style={{
-                  width: "26px", height: "26px", borderRadius: "6px",
-                  background: color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+      {/* ─── IDENTITY ROW ─── */}
+      <div style={{ padding: "32px 28px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h3 style={{ fontSize: "20px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", marginBottom: "2px", fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px" }}>
+              {contact.name}
+            </h3>
+            {(contact.title || contact.company) && (
+              <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "#6B7280", marginBottom: "14px", fontFamily: "Inter, sans-serif" }}>
+                {[contact.title, contact.company].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "center" }}>
+              {contact.email && (
+                <a href={`mailto:${contact.email}`} onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none", fontFamily: "Inter, sans-serif" }}>
+                  <Mail size={13} color="#9CA3AF" /> {contact.email}
+                </a>
+              )}
+              {contact.phone && (
+                <a href={`tel:${contact.phone}`} onClick={e => e.stopPropagation()} style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none", fontFamily: "Inter, sans-serif" }}>
+                  <Phone size={13} color="#9CA3AF" /> {contact.phone}
+                </a>
+              )}
+              {contact.location && (
+                <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>
+                  <MapPin size={13} color="#9CA3AF" /> {contact.location}
+                </span>
+              )}
+              {contact.birthday && (
+                <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>
+                  <Gift size={13} color="#EF4444" /> {new Date(contact.birthday).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                </span>
+              )}
+            </div>
+          </div>
+          {/* Right side: relationship + tags */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+            <span style={{
+              padding: "4px 12px",
+              background: isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.1)" : strength.label === "Warm" ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)") : strength.bg,
+              border: `1px solid ${isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.2)" : strength.label === "Warm" ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)") : strength.border}`,
+              borderRadius: "999px", fontSize: "12px", fontWeight: 600, color: strength.color, fontFamily: "Inter, sans-serif",
+            }}>
+              {strength.label}
+              {contact.last_contacted_date && (
+                <span style={{ fontWeight: 400, marginLeft: "4px", opacity: 0.7 }}>
+                  · {daysSince}d ago
+                </span>
+              )}
+            </span>
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "280px" }}>
+              {(contact.tags || []).map((tag: string, i: number) => (
+                <span key={i} style={{
+                  padding: "2px 10px",
+                  background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF",
+                  border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
+                  borderRadius: "999px", fontSize: "11px", fontWeight: 500,
+                  color: isDark ? "#C4B5FD" : "#7B5EA7", fontFamily: "Inter, sans-serif",
                 }}>
-                  <Icon size={13} color={color} />
-                </div>
-                {href ? (
-                  <a href={href} onClick={e => e.stopPropagation()} style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", textDecoration: "none" }}>{val}</a>
-                ) : (
-                  <span style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151" }}>{val}</span>
-                )}
-              </div>
-            ))}
+                  {tag}
+                </span>
+              ))}
+              <button onClick={e => { e.stopPropagation(); setTagModalContact(contact); setTagModalOpen(true); }} style={{
+                padding: "2px 8px", background: "transparent",
+                border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
+                borderRadius: "999px", fontSize: "11px", color: "#9CA3AF", cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>
+                + Tag
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* COL 2 — Quick Actions */}
-        <div>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Actions</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+      {/* ─── SECTIONS A + B ─── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1px 1fr", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+        {/* A — QUICK ACTIONS */}
+        <div style={{ padding: "20px 28px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", fontSize: "10px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "Inter, sans-serif" }}>A</span>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Quick Actions</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <button onClick={e => { e.stopPropagation(); onEmail(); }} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
-              background: "#10B981", color: "white", border: "none", borderRadius: "8px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer", width: "100%",
-            }}>
-              <Mail size={13} /> Send Email
+              display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
+              background: "#10B981", border: "none", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, color: "white", cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left", transition: "opacity 150ms",
+            }} onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }} onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
+              <Mail size={14} /> Send Email
             </button>
             <button onClick={e => { e.stopPropagation(); navigate("/projects"); }} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
-              background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF",
-              color: isDark ? "#C4B5FD" : "#7B5EA7",
-              border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`,
-              borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", width: "100%",
-            }}>
-              <FolderPlus size={13} /> New Project
+              display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
+              background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: "none", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, color: isDark ? "#C4B5FD" : "#7B5EA7", cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left", transition: "opacity 150ms",
+            }} onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }} onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
+              <FolderPlus size={14} /> Create Project
             </button>
             <button onClick={e => { e.stopPropagation(); setShowTodoInput(!showTodoInput); }} style={{
-              display: "flex", alignItems: "center", gap: "8px", padding: "9px 14px",
-              background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
-              color: isDark ? "#6EE7B7" : "#065F46",
-              border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`,
-              borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", width: "100%",
-            }}>
-              <CheckSquare size={13} /> Add Task
+              display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
+              background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", border: "none", borderRadius: "8px",
+              fontSize: "13px", fontWeight: 600, color: isDark ? "#6EE7B7" : "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left", transition: "opacity 150ms",
+            }} onMouseEnter={e => { e.currentTarget.style.opacity = "0.85"; }} onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}>
+              <CheckSquare size={14} /> Add Task
             </button>
             {showTodoInput && (
               <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: "6px" }}>
@@ -957,70 +970,61 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
               </div>
             )}
           </div>
-          {/* Relationship strength */}
-          <div style={{ marginTop: "16px" }}>
-            <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>Relationship</p>
-            <div style={{
-              display: "flex", alignItems: "center", gap: "6px", padding: "6px 10px",
-              background: isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.1)" : strength.label === "Warm" ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.05)") : strength.bg,
-              border: `1px solid ${isDark ? (strength.label === "Hot" ? "rgba(16,185,129,0.2)" : strength.label === "Warm" ? "rgba(245,158,11,0.2)" : "rgba(255,255,255,0.08)") : strength.border}`,
-              borderRadius: "7px",
-            }}>
-              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: strength.dot }} />
-              <span style={{ fontSize: "13px", fontWeight: 600, color: strength.color }}>{strength.label}</span>
-              <span style={{ fontSize: "11px", color: "#9CA3AF", marginLeft: "auto" }}>
-                {daysSince === 999 ? "Never contacted" : `${daysSince}d ago`}
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* COL 3 — Follow-up Reminder */}
-        <div>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Follow-up</p>
-          <div style={{ marginBottom: "10px" }}>
-            <p style={{ fontSize: "11px", color: "#6B7280", marginBottom: "6px" }}>Check in every</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
-              {[
-                { label: "2 weeks", days: 14 },
-                { label: "1 month", days: 30 },
-                { label: "3 months", days: 90 },
-                { label: "6 months", days: 180 },
-              ].map(option => (
-                <button key={option.days} onClick={async e => {
-                  e.stopPropagation();
-                  await supabase.from("contacts").update({ followup_cadence: option.days } as any).eq("id", contact.id);
-                  setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, followup_cadence: option.days } : c));
-                }} style={{
-                  padding: "7px 6px", borderRadius: "7px", border: "1.5px solid",
-                  borderColor: contact.followup_cadence === option.days ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"),
-                  background: contact.followup_cadence === option.days ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : (isDark ? "#252528" : "white"),
-                  color: contact.followup_cadence === option.days ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"),
-                  fontSize: "11px", fontWeight: contact.followup_cadence === option.days ? 600 : 400, cursor: "pointer",
-                }}>
-                  {option.label}
-                </button>
-              ))}
-            </div>
+        {/* Vertical divider */}
+        <div style={{ background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" }} />
+
+        {/* B — FOLLOW-UP */}
+        <div style={{ padding: "20px 28px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
+            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", fontSize: "10px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "Inter, sans-serif" }}>B</span>
+            <span style={{ fontSize: "11px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Follow-up</span>
           </div>
-          {/* Next follow-up */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
+            <span style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.45)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>Last contacted</span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+              {contact.last_contacted_date ? new Date(contact.last_contacted_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Never"}
+            </span>
+          </div>
+          <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.45)" : "#6B7280", marginBottom: "8px", fontFamily: "Inter, sans-serif" }}>Check in every</p>
+          <div style={{ display: "flex", gap: "6px", marginBottom: "12px", flexWrap: "wrap" }}>
+            {[
+              { label: "2 weeks", days: 14 },
+              { label: "1 month", days: 30 },
+              { label: "3 months", days: 90 },
+              { label: "6 months", days: 180 },
+            ].map(opt => (
+              <button key={opt.days} onClick={async e => {
+                e.stopPropagation();
+                await supabase.from("contacts").update({ followup_cadence: opt.days } as any).eq("id", contact.id);
+                setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, followup_cadence: opt.days } : c));
+              }} style={{
+                padding: "5px 12px", borderRadius: "999px", border: "1.5px solid",
+                borderColor: contact.followup_cadence === opt.days ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"),
+                background: contact.followup_cadence === opt.days ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : "transparent",
+                color: contact.followup_cadence === opt.days ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"),
+                fontSize: "11px", fontWeight: contact.followup_cadence === opt.days ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+              }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {/* Next due + overdue */}
           {contact.followup_cadence && contact.last_contacted_date && (() => {
-            const nextDate = new Date(contact.last_contacted_date);
-            nextDate.setDate(nextDate.getDate() + contact.followup_cadence);
-            const daysUntil = Math.floor((nextDate.getTime() - Date.now()) / 86400000);
-            const isOverdue = daysUntil < 0;
+            const next = new Date(contact.last_contacted_date);
+            next.setDate(next.getDate() + contact.followup_cadence);
+            const daysUntil = Math.floor((next.getTime() - Date.now()) / 86400000);
+            const overdue = daysUntil < 0;
             return (
               <div style={{
-                padding: "10px 12px", marginBottom: "8px",
-                background: isOverdue ? (isDark ? "rgba(220,38,38,0.1)" : "#FEF2F2") : (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"),
-                border: `1px solid ${isOverdue ? (isDark ? "rgba(220,38,38,0.2)" : "#FECACA") : (isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0")}`,
+                padding: "8px 12px", marginBottom: "10px",
+                background: overdue ? (isDark ? "rgba(220,38,38,0.1)" : "#FEF2F2") : (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"),
+                border: `1px solid ${overdue ? (isDark ? "rgba(220,38,38,0.2)" : "#FECACA") : (isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0")}`,
                 borderRadius: "8px",
               }}>
-                <p style={{ fontSize: "11px", fontWeight: 600, color: isOverdue ? "#DC2626" : "#065F46", marginBottom: "2px" }}>
-                  {isOverdue ? `Overdue by ${Math.abs(daysUntil)} days` : `Due in ${daysUntil} days`}
-                </p>
-                <p style={{ fontSize: "11px", color: "#6B7280" }}>
-                  {nextDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                <p style={{ fontSize: "12px", fontWeight: 600, color: overdue ? "#DC2626" : "#065F46", fontFamily: "Inter, sans-serif", margin: 0 }}>
+                  {overdue ? `Overdue · ${Math.abs(daysUntil)} days past due` : `Next due ${next.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${daysUntil}d away`}
                 </p>
               </div>
             );
@@ -1032,83 +1036,98 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
             setLocalContacts(prev => prev.map(c => c.id === contact.id ? { ...c, last_contacted_date: now } : c));
             toast.success("Marked as contacted!");
           }} style={{
-            width: "100%", padding: "8px", background: isDark ? "#252528" : "white",
+            width: "100%", padding: "8px",
+            background: isDark ? "#252528" : "white",
             border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
             borderRadius: "8px", fontSize: "12px", fontWeight: 500,
             color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+            fontFamily: "Inter, sans-serif", transition: "all 150ms",
           }}>
             <Check size={12} color="#10B981" /> Mark as Contacted Today
           </button>
         </div>
+      </div>
 
-        {/* COL 4 — Notes */}
-        <div>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>Notes</p>
-          <textarea
-            value={noteValues[contact.id] ?? contact.notes ?? ""}
-            onChange={e => {
-              const val = e.target.value;
-              setNoteValues(prev => ({ ...prev, [contact.id]: val }));
-              clearTimeout(noteTimers.current[contact.id]);
-              noteTimers.current[contact.id] = setTimeout(async () => {
-                await supabase.from("contacts").update({ notes: val } as any).eq("id", contact.id);
-              }, 1000);
-            }}
-            onClick={e => e.stopPropagation()}
-            placeholder="Notes about this person... autosaves as you type."
-            style={{
-              width: "100%", minHeight: "130px", padding: "10px 12px",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-              borderRadius: "8px", fontSize: "13px",
-              color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.6,
-              resize: "vertical", outline: "none",
-              background: isDark ? "#252528" : "white",
-              boxSizing: "border-box", fontFamily: "inherit",
-            }}
-            onFocus={e => { e.target.style.borderColor = "#10B981"; e.target.style.boxShadow = "0 0 0 2px rgba(16,185,129,0.08)"; }}
-            onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; e.target.style.boxShadow = "none"; }}
-          />
-          <p style={{ fontSize: "10px", color: "#9CA3AF", marginTop: "4px", display: "flex", alignItems: "center", gap: "3px" }}>
-            <Check size={9} /> Autosaves
-          </p>
+      {/* ─── SECTION C — NOTES ─── */}
+      <div style={{ padding: "20px 28px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+          <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", fontSize: "10px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "Inter, sans-serif" }}>C</span>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Notes</span>
+          <span style={{ fontSize: "11px", color: "#D1D5DB", marginLeft: "auto", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: "3px" }}>
+            <Check size={10} /> Autosaves
+          </span>
         </div>
+        <textarea
+          value={noteValues[contact.id] ?? contact.notes ?? ""}
+          onChange={e => {
+            const val = e.target.value;
+            setNoteValues(prev => ({ ...prev, [contact.id]: val }));
+            clearTimeout(noteTimers.current[contact.id]);
+            noteTimers.current[contact.id] = setTimeout(async () => {
+              await supabase.from("contacts").update({ notes: val } as any).eq("id", contact.id);
+            }, 1000);
+          }}
+          onClick={e => e.stopPropagation()}
+          placeholder="What do you know about this person? Any context, conversations, or things to remember..."
+          style={{
+            width: "100%", minHeight: "80px", padding: "12px 14px",
+            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
+            borderRadius: "8px", fontSize: "14px",
+            color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.7,
+            resize: "vertical", outline: "none",
+            background: isDark ? "#252528" : "#FAFAFA",
+            boxSizing: "border-box", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+          }}
+          onFocus={e => { e.target.style.borderColor = "#10B981"; e.target.style.background = isDark ? "#1C1C1E" : "white"; e.target.style.boxShadow = "0 0 0 3px rgba(16,185,129,0.06)"; }}
+          onBlur={e => { e.target.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"; e.target.style.background = isDark ? "#252528" : "#FAFAFA"; e.target.style.boxShadow = "none"; }}
+        />
+      </div>
 
-        {/* COL 5 — Interactions / History */}
-        <div>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "10px" }}>History</p>
-          {interactions.length > 0
-            ? interactions.slice(0, 4).map((item: any, i: number) => (
-              <div key={i} style={{ display: "flex", gap: "8px", marginBottom: "10px", alignItems: "flex-start" }}>
-                <div style={{
-                  width: "24px", height: "24px", borderRadius: "6px",
-                  background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: "1px",
-                }}>
-                  <MessageSquare size={11} color="#10B981" />
-                </div>
-                <div>
-                  <p style={{ fontSize: "12px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.4 }}>
+      {/* ─── SECTION D — HISTORY ─── */}
+      <div style={{ padding: "20px 28px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+          <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", fontSize: "10px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "Inter, sans-serif" }}>D</span>
+          <span style={{ fontSize: "11px", fontWeight: 700, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Interaction History</span>
+        </div>
+        {interactions.length > 0 ? (
+          <div style={{ position: "relative", paddingLeft: "20px" }}>
+            <div style={{ position: "absolute", left: "6px", top: "6px", bottom: "6px", width: "1px", background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6" }} />
+            {interactions.slice(0, 5).map((item: any, i: number) => (
+              <div key={i} style={{ position: "relative", marginBottom: "14px", display: "flex", gap: "12px", alignItems: "flex-start" }}>
+                <div style={{ position: "absolute", left: "-17px", top: "5px", width: "8px", height: "8px", borderRadius: "50%", background: "#10B981", border: `2px solid ${isDark ? "#1C1C1E" : "white"}`, boxShadow: `0 0 0 2px ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.8)" : "#374151", lineHeight: 1.5, marginBottom: "2px", fontFamily: "Inter, sans-serif" }}>
                     {item.title || item.description || "Interaction"}
                   </p>
-                  <p style={{ fontSize: "10px", color: "#9CA3AF", marginTop: "1px" }}>
-                    {item.interaction_date ? formatRelativeDate(item.interaction_date) : ""}
-                  </p>
+                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                    <span style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
+                      {item.interaction_date ? new Date(item.interaction_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                    </span>
+                    {item.interaction_type && (
+                      <span style={{ fontSize: "10px", color: "#D1D5DB", fontFamily: "Inter, sans-serif" }}>· {item.interaction_type}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))
-            : <p style={{ fontSize: "12px", color: "#9CA3AF", fontStyle: "italic" }}>No history yet.</p>
-          }
-          <button onClick={e => e.stopPropagation()} style={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
-            width: "100%", padding: "7px",
-            background: "transparent", border: `1px dashed ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
-            borderRadius: "7px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280",
-            cursor: "pointer", marginTop: "4px",
-          }}>
-            <Plus size={11} /> Log interaction
-          </button>
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: "13px", color: "#9CA3AF", fontStyle: "italic", fontFamily: "Inter, sans-serif" }}>
+            No interactions logged yet. Send an email or log one below.
+          </p>
+        )}
+        <button onClick={e => e.stopPropagation()} style={{
+          display: "flex", alignItems: "center", gap: "6px", marginTop: "12px",
+          padding: "8px 14px", background: "transparent",
+          border: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#D1D5DB"}`,
+          borderRadius: "8px", fontSize: "12px", fontWeight: 500,
+          color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#D1D5DB"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "#6B7280"; }}>
+          <Plus size={12} /> Log an interaction
+        </button>
       </div>
     </div>
   );
