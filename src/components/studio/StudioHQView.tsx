@@ -69,6 +69,7 @@ export default function StudioHQView() {
   const [ideas, setIdeas] = useState<Idea[]>(MOCK_IDEAS);
   const [newIdea, setNewIdea] = useState("");
   const [invites, setInvites] = useState<StudioInvite[]>([]);
+  const [collaborators] = useState<any[]>([]);
 
   // Modals
   const [newContentOpen, setNewContentOpen] = useState(false);
@@ -77,6 +78,7 @@ export default function StudioHQView() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
+  const [cardMenuOpen, setCardMenuOpen] = useState<string | null>(null);
 
   // New content form
   const [formTitle, setFormTitle] = useState("");
