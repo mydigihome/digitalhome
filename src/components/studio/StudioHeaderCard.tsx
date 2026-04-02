@@ -415,32 +415,94 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                 <Pencil size={13} />
                 Edit Studio
               </button>
-              <button style={{
-                padding: "9px 16px",
-                background: "transparent",
-                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
-                borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                color: isDark ? "#F2F2F2" : "#374151",
-                cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}>Preview</button>
-              <button style={{
-                padding: "9px 16px",
-                background: "transparent",
-                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
-                borderRadius: "8px", fontSize: "13px", fontWeight: 500,
-                color: isDark ? "#F2F2F2" : "#374151",
-                cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}>Share</button>
-              <button style={{
-                padding: "9px",
-                background: "transparent",
-                border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
-                borderRadius: "8px", cursor: "pointer",
-                color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <MoreHorizontal size={15} />
-              </button>
+              <button
+                onClick={() => {
+                  if (!studioName) {
+                    toast("Add your studio name first", { description: "Click Edit Studio to get started." });
+                    return;
+                  }
+                  setStudioPreviewOpen(true);
+                }}
+                style={{
+                  padding: "9px 16px",
+                  background: "transparent",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                  borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                  color: isDark ? "#F2F2F2" : "#374151",
+                  cursor: "pointer", fontFamily: "Inter, sans-serif",
+                }}>Preview</button>
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/studio/${user?.id}`;
+                  if (navigator.share) {
+                    navigator.share({ title: studioName || "My Studio", text: "Check out my studio on Digital Home", url: shareUrl }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    toast("Link copied!", { description: "Studio link copied to clipboard." });
+                  }
+                }}
+                style={{
+                  padding: "9px 16px",
+                  background: "transparent",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                  borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                  color: isDark ? "#F2F2F2" : "#374151",
+                  cursor: "pointer", fontFamily: "Inter, sans-serif",
+                }}>Share</button>
+              <div style={{ position: "relative" }} onMouseDown={e => e.stopPropagation()}>
+                <button
+                  onClick={() => setStudioMenuOpen(!studioMenuOpen)}
+                  style={{
+                    padding: "9px",
+                    background: "transparent",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB"}`,
+                    borderRadius: "8px", cursor: "pointer",
+                    color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                  <MoreHorizontal size={15} />
+                </button>
+                {studioMenuOpen && (
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 6px)", right: 0,
+                    background: isDark ? "#1C1C1E" : "white",
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    borderRadius: "10px", padding: "4px", minWidth: "160px",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 50,
+                  }}>
+                    {[
+                      { label: "Edit Studio", Icon: Pencil, action: () => { setSettingsOpen(true); setStudioMenuOpen(false); } },
+                      { label: "Add Photos", Icon: ImagePlus, action: () => { studioImageInputRef.current?.click(); setStudioMenuOpen(false); } },
+                      {
+                        label: "Remove Photos", Icon: Trash2, color: "#DC2626",
+                        action: async () => {
+                          setStudioImages([]);
+                          await supabase.from("studio_profile").upsert({ user_id: user!.id, images: [] as any } as any, { onConflict: "user_id" });
+                          toast("Photos removed");
+                          setStudioMenuOpen(false);
+                        },
+                      },
+                    ].map(item => (
+                      <button
+                        key={item.label}
+                        onClick={item.action}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "8px", width: "100%",
+                          padding: "8px 12px", background: "transparent", border: "none",
+                          borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: 500,
+                          color: item.color || (isDark ? "#F2F2F2" : "#374151"),
+                          fontFamily: "Inter, sans-serif", textAlign: "left",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                      >
+                        <item.Icon size={14} />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
