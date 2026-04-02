@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
-  Target, ChevronRight, Sparkles, X, Plus, Trash2, GripVertical, Loader2,
+  Target, ChevronRight, Sparkles, X, Plus, Trash2, Loader2,
+  Home, Music, UtensilsCrossed, Briefcase, Heart, Rocket, Dumbbell,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,16 +15,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateProject } from "@/hooks/useProjects";
 import { useCreateGoalStage, useCreateGoalTask } from "@/hooks/useGoals";
 import { supabase } from "@/integrations/supabase/client";
+import type { LucideIcon } from "lucide-react";
 
-const GOAL_TYPES = [
-  { value: "buy_home", label: "Buy a Home", emoji: "home" },
-  { value: "music_ep", label: "Launch Music EP", emoji: "music" },
-  { value: "family_cookout", label: "Plan Family Cookout", emoji: "utensils" },
-  { value: "start_business", label: "Start a Business", emoji: "briefcase" },
-  { value: "wedding", label: "Wedding Planning", emoji: "heart" },
-  { value: "career_change", label: "Career Change", emoji: "rocket" },
-  { value: "fitness", label: "Fitness Goal", emoji: "dumbbell" },
-  { value: "custom", label: "Custom", emoji: "sparkles" },
+const GOAL_TYPES: { value: string; label: string; Icon: LucideIcon }[] = [
+  { value: "home", label: "Buy a Home", Icon: Home },
+  { value: "music", label: "Launch Music EP", Icon: Music },
+  { value: "cooking", label: "Plan Family Cookout", Icon: UtensilsCrossed },
+  { value: "business", label: "Start a Business", Icon: Briefcase },
+  { value: "wedding", label: "Wedding Planning", Icon: Heart },
+  { value: "career", label: "Career Change", Icon: Rocket },
+  { value: "fitness", label: "Fitness Goal", Icon: Dumbbell },
+  { value: "custom", label: "Custom", Icon: Sparkles },
 ];
 
 interface StageData {
@@ -51,6 +54,8 @@ export default function CreateGoalModal({ open, onClose }: Props) {
   const [resources, setResources] = useState<{ title: string; url: string }[]>([]);
   const [generating, setGenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const isDark = document.documentElement.classList.contains("dark");
 
   const generateStages = async () => {
     if (!name.trim()) { toast.error("Enter a goal name first"); return; }
@@ -110,7 +115,6 @@ export default function CreateGoalModal({ open, onClose }: Props) {
         end_date: endDate || undefined,
       });
 
-      // Create stages and tasks
       for (let i = 0; i < stages.length; i++) {
         const s = stages[i];
         if (!s.name.trim()) continue;
@@ -133,7 +137,6 @@ export default function CreateGoalModal({ open, onClose }: Props) {
         }
       }
 
-      // Save resources
       if (resources.length > 0) {
         for (const r of resources) {
           if (!r.title.trim()) continue;
@@ -203,19 +206,39 @@ export default function CreateGoalModal({ open, onClose }: Props) {
                 </div>
                 <div className="space-y-2">
                   <Label>Goal Type</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {GOAL_TYPES.map(t => (
-                      <button
-                        key={t.value}
-                        onClick={() => setGoalType(t.value)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-lg border p-3 text-sm transition-all",
-                          goalType === t.value ? "border-primary bg-primary/5 text-foreground" : "border-border hover:border-primary/50 text-muted-foreground"
-                        )}
-                      >
-                        <span className="text-lg">{t.emoji}</span> {t.label}
-                      </button>
-                    ))}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {GOAL_TYPES.map(t => {
+                      const isSelected = goalType === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          onClick={() => setGoalType(t.value)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "10px",
+                            padding: "14px 16px",
+                            border: "1.5px solid",
+                            borderColor: isSelected ? "#10B981" : (isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"),
+                            borderRadius: "10px",
+                            background: isSelected
+                              ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4")
+                              : (isDark ? "#252528" : "white"),
+                            cursor: "pointer",
+                            transition: "all 150ms",
+                            fontFamily: "Inter, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: isSelected ? "600" : "400",
+                            color: isSelected
+                              ? (isDark ? "#6EE7B7" : "#065F46")
+                              : (isDark ? "#F2F2F2" : "#374151"),
+                          }}
+                        >
+                          <t.Icon size={18} style={{ color: isSelected ? "#10B981" : (isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF") }} />
+                          {t.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -231,7 +254,6 @@ export default function CreateGoalModal({ open, onClose }: Props) {
 
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                {/* AI Generate Button */}
                 <Button
                   variant="outline"
                   className="w-full border-primary/30 hover:bg-primary/5"
@@ -245,7 +267,6 @@ export default function CreateGoalModal({ open, onClose }: Props) {
                   )}
                 </Button>
 
-                {/* Stages */}
                 <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-1">
                   {stages.map((stage, si) => (
                     <div key={si} className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
