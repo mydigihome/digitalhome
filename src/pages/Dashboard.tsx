@@ -17,8 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, isToday } from "date-fns";
 import {
-  Plus, Edit2, X, ChevronDown, TrendingUp, TrendingDown, ExternalLink,
-  Mail as MailIcon, ShoppingBag, FileText, Link as LinkIcon, Search,
+  Plus, Edit2, X, TrendingUp, ExternalLink,
+  Mail as MailIcon, ShoppingBag, FileText,
   Smile, CloudRain, Heart, Sun, Trash2, GripVertical, Target, UserPlus,
   Receipt, CheckCircle, BookOpen,
 } from "lucide-react";
