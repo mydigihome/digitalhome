@@ -32,7 +32,6 @@ import NewProjectModal from "@/components/NewProjectModal";
 import TaskEditor from "@/components/TaskEditor";
 import NoteEditor from "@/components/NoteEditor";
 import MonthlyReviewBanner from "@/components/dashboard/MonthlyReviewBanner";
-import NetWorthCard from "@/components/dashboard/NetWorthCard";
 import AdminReminderWidget from "@/components/AdminReminderWidget";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
 import StudioSnapshotCard from "@/components/dashboard/StudioSnapshotCard";
