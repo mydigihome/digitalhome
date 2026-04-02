@@ -75,12 +75,7 @@ export function useDeleteProject() {
       if (error) throw error;
     },
     onSuccess: async () => {
-      const projectsQueryKey = ["projects", user?.id] as const;
-      await qc.resetQueries();
-      await qc.refetchQueries({ type: "active" });
-      await qc.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await qc.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
+      await qc.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
     },
   });
 }

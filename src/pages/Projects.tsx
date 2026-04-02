@@ -107,11 +107,11 @@ export default function Projects() {
       const succeeded = results.filter(r => r.success).length;
       const failed = results.filter(r => !r.success).length;
 
-      await queryClient.resetQueries();
-      await queryClient.refetchQueries({ type: "active" });
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
+      // Force UI update by removing deleted items from the cache, then refetch
+      queryClient.setQueryData(projectsQueryKey, (old: any[]) =>
+        old ? old.filter((p: any) => !idsToDelete.includes(p.id)) : []
+      );
+      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
 
       if (failed > 0) {
         toast.error(`${succeeded} deleted, ${failed} failed`);
@@ -120,11 +120,7 @@ export default function Projects() {
       }
     } catch (err) {
       console.error("Bulk delete error:", err);
-      await queryClient.resetQueries();
-      await queryClient.refetchQueries({ type: "active" });
-      await queryClient.invalidateQueries({ queryKey: projectsQueryKey, refetchType: "all" });
-      await queryClient.refetchQueries({ queryKey: projectsQueryKey });
-      window.dispatchEvent(new Event("focus"));
+      await queryClient.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
       toast.error("Delete failed. Please try again.");
     }
   };
