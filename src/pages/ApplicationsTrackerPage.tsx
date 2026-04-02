@@ -851,6 +851,20 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
     toast.success("File removed");
   };
 
+  const handlePreviewImageUpload = async (templateId: string, file: File) => {
+    if (!userId) return;
+    const validTypes = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
+    if (!validTypes.includes(file.type)) { toast.error("Only PNG, JPG, WEBP allowed"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Max 5MB"); return; }
+    const path = `${templateId}/${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("template-previews").upload(path, file);
+    if (error) { toast.error("Upload failed"); return; }
+    const { data: { publicUrl } } = supabase.storage.from("template-previews").getPublicUrl(path);
+    await (supabase as any).from("shop_templates").update({ preview_image_url: publicUrl }).eq("id", templateId);
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, preview_image_url: publicUrl } : t));
+    toast.success("Preview image uploaded!");
+  };
+
   if (loading) {
     return (
       <div>
@@ -895,7 +909,7 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               <p style={{ fontSize: 12, lineHeight: 1.4 }} className="text-muted-foreground">{template.description || defaultTemplateData[idx]?.description}</p>
             </div>
 
-            {/* Admin Upload/Generate tabs */}
+            {/* Admin Upload zones */}
             {isAdmin && !template.file_url && (
               <div style={{ padding: "0 16px 12px" }}>
                 <div
@@ -923,6 +937,34 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
+            {/* Admin Preview Image Upload */}
+            {isAdmin && !template.preview_image_url && (
+              <div style={{ padding: "0 16px 12px" }}>
+                <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 6 }}>Preview Image (thumbnail)</p>
+                <div
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handlePreviewImageUpload(template.id, f); }}
+                  onClick={() => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = "image/png,image/jpg,image/jpeg,image/webp";
+                    input.onchange = (ev: any) => { const f = ev.target.files?.[0]; if (f) handlePreviewImageUpload(template.id, f); };
+                    input.click();
+                  }}
+                  style={{
+                    border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                    borderRadius: 10, padding: "20px 16px", textAlign: "center",
+                    background: isDark ? "#252528" : "#F9FAFB", cursor: "pointer",
+                  }}
+                >
+                  <Upload size={18} style={{ margin: "0 auto 6px", color: "#9CA3AF" }} />
+                  <p style={{ fontSize: 12 }} className="text-muted-foreground">
+                    <span style={{ fontWeight: 600 }} className="text-foreground">Upload preview</span> PNG, JPG, WEBP
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Uploading state */}
             {uploadingId === template.id && (
               <div style={{ padding: "0 16px 16px", textAlign: "center" }}>
@@ -931,20 +973,34 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
-            {/* File uploaded — Preview state */}
-            {template.file_url && uploadingId !== template.id && (
+            {/* Card thumbnail — always show if preview_image_url exists, or file_url exists */}
+            {(template.preview_image_url || template.file_url) && uploadingId !== template.id && (
               <div style={{ position: "relative", margin: "0 16px 16px", borderRadius: 10, overflow: "hidden" }}>
-                <div style={{
-                  aspectRatio: "4/3",
-                  background: isDark ? "#252528" : "#F5F3FF",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {template.preview_image_url ? (
-                    <img src={template.preview_image_url} alt={template.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
+                {template.preview_image_url ? (
+                  <img
+                    src={template.preview_image_url}
+                    alt={template.title}
+                    style={{
+                      width: "100%",
+                      aspectRatio: "3/4",
+                      objectFit: "cover",
+                      objectPosition: "top",
+                      borderRadius: 8,
+                      border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                      display: "block",
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    aspectRatio: "3/4",
+                    background: isDark ? "#252528" : "#F5F3FF",
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    borderRadius: 8, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                  }}>
                     <FileText size={40} style={{ color: "#7B5EA7", opacity: 0.4 }} />
-                  )}
-                </div>
+                    <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 8 }}>No preview yet</p>
+                  </div>
+                )}
 
                 {/* Hover overlay */}
                 <div
