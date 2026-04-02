@@ -110,7 +110,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [newStageTitle, setNewStageTitle] = useState("");
   const [newStageDueDate, setNewStageDueDate] = useState("");
   const [addingStage, setAddingStage] = useState(false);
-  const { user: authUser } = useAuth();
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
@@ -598,10 +597,12 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                       disabled={!newStageTitle.trim() || addingStage}
                       onClick={async () => {
                         if (!newStageTitle.trim() || !authUser) return;
+                        if (!newStageTitle.trim() || !user) return;
                         setAddingStage(true);
                         const { error } = await supabase.from("tasks").insert({
                           project_id: projectId,
                           user_id: authUser.id,
+                           user_id: user.id,
                           title: newStageTitle.trim(),
                           due_date: newStageDueDate || null,
                           status: "backlog",
