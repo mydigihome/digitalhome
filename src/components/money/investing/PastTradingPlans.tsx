@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { History, Eye, Trash2, X, Copy } from "lucide-react";
+import { History, Eye, Trash2, X, Copy, Download } from "lucide-react";
+import jsPDF from "jspdf";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
