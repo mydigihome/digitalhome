@@ -802,7 +802,7 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
     <div style={{ borderBottom: `2px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, background: isDark ? "#1C1C1E" : "white" }}>
       {/* ─── BANNER + IDENTITY ─── */}
       <div style={{
-        height: "80px",
+        height: "56px",
         background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
         position: "relative", overflow: "hidden",
       }}>
