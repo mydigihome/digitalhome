@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info, RotateCcw } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
@@ -76,6 +77,7 @@ export default function ApplicationsTrackerPage() {
   const [cardMenuOpen, setCardMenuOpen] = useState<string | null>(null);
   const [showBannerMenu, setShowBannerMenu] = useState(false);
   const [showStudentPrompt, setShowStudentPrompt] = useState(false);
+  const [bannerColorPickerOpen, setBannerColorPickerOpen] = useState(false);
   const isStudent = (prefs as any)?.user_type === "student";
 
   const [view, setView] = useState<"list" | "kanban">(() => {
@@ -92,6 +94,19 @@ export default function ApplicationsTrackerPage() {
   });
 
   const bannerUrl = (prefs as any)?.app_banner_url;
+  const savedBannerColor = (prefs as any)?.applications_header_value;
+  const bannerGradient = savedBannerColor
+    ? `linear-gradient(135deg, ${savedBannerColor}, ${savedBannerColor}cc)`
+    : "linear-gradient(135deg, #059669, #10B981)";
+
+  const bannerColorPresets = [
+    { label: "Green", color: "#059669" },
+    { label: "Purple", color: "#7B5EA7" },
+    { label: "Dark", color: "#1C1C1E" },
+    { label: "Blue", color: "#2563EB" },
+    { label: "Rose", color: "#E11D48" },
+    { label: "Slate", color: "#475569" },
+  ];
 
   const getColumnId = (status: string) => statusMap[status] || "applied";
 
@@ -217,61 +232,76 @@ export default function ApplicationsTrackerPage() {
     <AppShell>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="min-h-screen bg-background">
 
-        {/* Gradient Header */}
-        <div
-          className="relative w-full overflow-hidden group"
-          style={{
-            background: bannerUrl?.startsWith("linear-gradient") ? bannerUrl
-              : !bannerUrl ? `linear-gradient(135deg, ${(prefs as any)?.banner_color || '#6366F1'}15, ${(prefs as any)?.banner_color || '#6366F1'}05)` : undefined,
-            backgroundImage: bannerUrl && !bannerUrl.startsWith("linear-gradient") ? `url(${bannerUrl})` : undefined,
-            backgroundSize: "cover", backgroundPosition: "center",
-            borderRadius: "0 0 40px 40px", paddingTop: 48, paddingBottom: 40,
-          }}
-        >
-          <div className="max-w-xl lg:max-w-6xl mx-auto px-5">
-            <div className="flex items-center justify-between mb-8">
-              <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
-                <ChevronLeft className="h-5 w-5 text-foreground" />
-              </button>
-              <div className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition">
-                  <Search className="h-4 w-4 text-foreground" />
+        {/* Slim Banner Header */}
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-5 pt-6">
+          <div
+            style={{
+              background: bannerGradient,
+              borderRadius: 14,
+              padding: "16px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 28,
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: "white", letterSpacing: "-0.3px", margin: 0 }}>
+                <em style={{ fontStyle: "italic" }}>Resource</em> Studio
+              </h1>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", margin: "2px 0 0" }}>
+                Career templates and application tracker
+              </p>
+            </div>
+            <Popover open={bannerColorPickerOpen} onOpenChange={setBannerColorPickerOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 14px",
+                    background: "rgba(255,255,255,0.2)",
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    borderRadius: 8, color: "white", fontSize: 12, fontWeight: 500,
+                    cursor: "pointer", backdropFilter: "blur(4px)",
+                  }}
+                >
+                  <Pencil size={12} /> Customize
                 </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-52 p-3">
+                <p className="text-xs font-semibold text-foreground mb-2">Banner Color</p>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                  {bannerColorPresets.map(p => (
+                    <button
+                      key={p.color}
+                      onClick={async () => {
+                        await upsertPrefs.mutateAsync({ applications_header_value: p.color } as any);
+                        setBannerColorPickerOpen(false);
+                        toast.success("Banner updated");
+                      }}
+                      title={p.label}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%", background: p.color,
+                        border: savedBannerColor === p.color ? "2px solid white" : "2px solid transparent",
+                        boxShadow: savedBannerColor === p.color ? "0 0 0 2px #10B981" : "0 0 0 1px rgba(0,0,0,0.1)",
+                        cursor: "pointer",
+                      }}
+                    />
+                  ))}
+                </div>
                 <button
                   onClick={async () => {
-                    const current = (prefs as any)?.template_notifications ?? false;
-                    await upsertPrefs.mutateAsync({ template_notifications: !current } as any);
-                    toast.success(!current ? "You'll be notified of new templates!" : "Notifications turned off");
+                    await upsertPrefs.mutateAsync({ applications_header_value: null } as any);
+                    setBannerColorPickerOpen(false);
+                    toast.success("Reset to default");
                   }}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-card/50 backdrop-blur-md hover:bg-card/70 transition"
+                  className="text-xs text-muted-foreground hover:text-foreground transition"
                 >
-                  <Bell className={`h-4 w-4 ${(prefs as any)?.template_notifications ? 'text-primary fill-primary' : 'text-foreground'}`} />
+                  Reset to default
                 </button>
-              </div>
-            </div>
-            <h1 className="text-5xl font-semibold tracking-tight text-foreground">Resource Studio</h1>
-            <p className="text-sm font-medium text-muted-foreground mt-2">
-              {(prefs as any)?.app_banner_text || "Download free career resources and premium templates."}
-            </p>
+              </PopoverContent>
+            </Popover>
           </div>
-          <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="relative">
-              <Button variant="secondary" size="sm" onClick={() => setShowBannerMenu(!showBannerMenu)} className="rounded-full backdrop-blur-md bg-card/50">Change cover</Button>
-              {showBannerMenu && (
-                <div className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-border bg-card p-2 shadow-lg">
-                  <button onClick={() => bannerInputRef.current?.click()} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-secondary">Upload image</button>
-                  <div className="px-3 py-2 text-xs text-muted-foreground">Gradients</div>
-                  <div className="grid grid-cols-4 gap-1 px-3 pb-2">
-                    {gradientPresets.map((g, i) => (
-                      <button key={i} onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: g } as any); setShowBannerMenu(false); toast.success("Banner updated"); }} className="h-8 w-full rounded-lg" style={{ background: g }} />
-                    ))}
-                  </div>
-                  <button onClick={async () => { await upsertPrefs.mutateAsync({ app_banner_url: null, app_banner_text: null } as any); setShowBannerMenu(false); toast.success("Banner reset"); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-destructive hover:bg-destructive/10">Reset to default</button>
-                </div>
-              )}
-            </div>
-          </div>
-          <input ref={bannerInputRef} type="file" accept="image/jpeg,image/png" className="hidden" onChange={handleBannerUpload} />
         </div>
 
         {/* Main Content */}
@@ -824,9 +854,9 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
   if (loading) {
     return (
       <div>
-        <div className="flex items-center gap-2.5 mb-5">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
-          <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <Sparkles size={16} color="#10B981" />
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }} className="text-foreground">Career Templates</h2>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />Loading templates...
@@ -837,44 +867,13 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
 
   return (
     <div>
-      <div className="flex items-center gap-2.5 mb-5">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center"><span className="text-primary text-sm">✨</span></div>
-        <h2 className="text-xl font-bold text-foreground">Career Templates</h2>
-      </div>
-
-      {/* Pricing Banner */}
-      <div style={{
-        background: isDark ? "rgba(123,94,167,0.1)" : "linear-gradient(135deg, #F5F3FF, #EDE9FE)",
-        border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`,
-        borderRadius: 14, padding: "20px 24px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        marginBottom: 24, flexWrap: "wrap", gap: 16,
-      }}>
-        <div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: isDark ? "#E9D5FF" : "#4C1D95", marginBottom: 4 }}>Career Templates</h3>
-          <p style={{ fontSize: 13, color: "#6B7280" }}>Preview any template free. Download individually or get all 4.</p>
+      {/* Section title */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Sparkles size={16} color="#10B981" />
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }} className="text-foreground">Career Templates</h2>
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>Single template</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: "#7B5EA7" }}>$8</p>
-          </div>
-          <div style={{ width: 1, height: 40, background: isDark ? "rgba(255,255,255,0.1)" : "#DDD6FE" }} />
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>All 4 templates</p>
-            <p style={{ fontSize: 20, fontWeight: 800, color: "#10B981" }}>$25</p>
-          </div>
-          <button
-            onClick={openStripeForBundle}
-            style={{
-              padding: "10px 20px", background: "#10B981", color: "white",
-              border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
-              cursor: "pointer", whiteSpace: "nowrap",
-            }}
-          >
-            Get All 4 — $25
-          </button>
-        </div>
+        <p style={{ fontSize: 13 }} className="text-muted-foreground">Preview free · Purchase to download</p>
       </div>
 
       {/* 2x2 Template Grid */}
@@ -1011,42 +1010,44 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
-            {/* Download / Buy button for non-admin */}
-            {!isAdmin && template.file_url && (
+            {/* Preview / Download button */}
+            {template.file_url && uploadingId !== template.id && (
               <div style={{ padding: "0 16px 16px" }}>
                 {hasPurchased ? (
                   <button
                     onClick={() => handleDownload(template)}
+                    className="template-download-btn"
                     style={{
-                      display: "flex", alignItems: "center", gap: 6, justifyContent: "center",
-                      padding: "10px 20px", background: "#10B981", color: "white",
-                      border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                      cursor: "pointer", width: "100%",
+                      width: "100%", padding: 10, marginTop: 0,
+                      background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
+                      border: `1.5px solid ${isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"}`,
+                      borderRadius: 999, fontSize: 13, fontWeight: 600,
+                      color: isDark ? "#10B981" : "#065F46",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 150ms",
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#10B981"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "#10B981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"; e.currentTarget.style.color = isDark ? "#10B981" : "#065F46"; e.currentTarget.style.borderColor = isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"; }}
                   >
-                    <Download size={14} /> Download
+                    <Download size={14} /> Download Now
                   </button>
                 ) : (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      onClick={() => openStripeForSingle(template)}
-                      style={{
-                        flex: 1, padding: "10px 12px", background: "#7B5EA7", color: "white",
-                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                      }}
-                    >
-                      Buy — $8
-                    </button>
-                    <button
-                      onClick={openStripeForBundle}
-                      style={{
-                        flex: 1, padding: "10px 12px", background: "#10B981", color: "white",
-                        border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                      }}
-                    >
-                      All 4 — $25
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handlePreview(template)}
+                    style={{
+                      width: "100%", padding: 10, marginTop: 0,
+                      background: "transparent",
+                      border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`,
+                      borderRadius: 999, fontSize: 13, fontWeight: 500,
+                      color: isDark ? "rgba(255,255,255,0.7)" : "#374151",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.7)" : "#374151"; }}
+                  >
+                    <Eye size={14} /> Preview
+                  </button>
                 )}
               </div>
             )}
@@ -1079,34 +1080,50 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
 
           {/* Footer */}
           <div style={{
-            background: isDark ? "#1C1C1E" : "white",
-            padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center",
-            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+            padding: "16px 24px",
+            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
+            background: isDark ? "#111112" : "#F9FAFB",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            flexShrink: 0,
           }}>
-            <p style={{ fontSize: 14 }} className="text-muted-foreground">
-              {hasPurchased ? "You own this template" : "Download this template: $8 · Get all 4: $25"}
-            </p>
+            <div>
+              <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280", marginBottom: 2 }}>Like what you see?</p>
+              <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF" }}>This template or get all 4</p>
+            </div>
             <div style={{ display: "flex", gap: 10 }}>
               {hasPurchased ? (
                 <button
                   onClick={() => { handleDownload(previewTemplate); setPreviewTemplate(null); }}
-                  style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "10px 24px", background: "#10B981", color: "white",
+                    border: "none", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                  }}
                 >
-                  <Download size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} /> Download
+                  <Download size={14} /> Download Now
                 </button>
               ) : (
                 <>
                   <button
                     onClick={() => openStripeForSingle(previewTemplate)}
-                    style={{ padding: "10px 20px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "10px 20px", background: isDark ? "#1C1C1E" : "white",
+                      border: "1.5px solid #7B5EA7", borderRadius: 999,
+                      fontSize: 13, fontWeight: 600, color: "#7B5EA7", cursor: "pointer",
+                    }}
                   >
-                    Buy This — $8
+                    This one — $8
                   </button>
                   <button
                     onClick={openStripeForBundle}
-                    style={{ padding: "10px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "10px 20px", background: "#10B981", color: "white",
+                      border: "none", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    }}
                   >
-                    Get All 4 — $25
+                    All 4 — $25
                   </button>
                 </>
               )}
