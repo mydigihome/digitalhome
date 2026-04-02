@@ -38,6 +38,7 @@ import "../../styles/money-tab.css";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
+  { id: "applications", label: "Applications", icon: CreditCard },
   { id: "debt", label: "Debt", icon: TrendingDown },
   { id: "investing", label: "Investing", icon: TrendingUp },
 ] as const;
