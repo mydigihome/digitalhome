@@ -1,0 +1,1 @@
+ALTER TABLE public.studio_profile ADD COLUMN IF NOT EXISTS images text[] DEFAULT '{}';
