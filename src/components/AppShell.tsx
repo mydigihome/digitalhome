@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard, Bell } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import JournalEntryModal from "@/components/journal/JournalEntryModal";
 import { WaitlistModal } from "@/components/content-planner/WaitlistModal";
+import NotificationPanel from "@/components/notifications/NotificationPanel";
 
 // Context for sidebar collapsed state
 const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
@@ -546,6 +547,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [journalOpen, setJournalOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { user } = useAuth();
+  const isDark = document.documentElement.classList.contains("dark");
   const location = useLocation();
 
   const sidebarWidth = collapsed ? 72 : 280;
@@ -561,6 +566,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       return () => clearTimeout(timer);
     }
   }, []); // only on mount
+
+  // Generate notifications on load
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.functions.invoke("generate-notifications", { body: { user_id: user.id } }).catch(() => {});
+  }, [user?.id]);
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed }}>
@@ -590,6 +601,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="h-2.5 w-2.5 rounded-full bg-[#10B981]" />
             <span className="text-sm font-semibold text-foreground">Digital Home</span>
           </div>
+          {/* Mobile Bell */}
+          {user && (
+            <div style={{ position: "relative" }}>
+              <button
+                className="notif-bell"
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  position: "relative", width: "34px", height: "34px", borderRadius: "50%",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  background: isDark ? "#252528" : "white", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <Bell size={16} color={isDark ? "rgba(255,255,255,0.7)" : "#374151"} />
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: "absolute", top: "-2px", right: "-2px",
+                    width: unreadCount > 9 ? "20px" : "16px", height: "16px",
+                    borderRadius: "999px", background: "#EF4444",
+                    border: `2px solid ${isDark ? "#252528" : "white"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", fontWeight: "700", color: "white",
+                  }}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Sidebar Overlay */}
@@ -619,6 +659,48 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         <FloatingCloud onClick={() => setJournalOpen(true)} />
         <JournalEntryModal open={journalOpen} onClose={() => setJournalOpen(false)} />
+
+        {/* Desktop Bell Icon — fixed top-right */}
+        {user && (
+          <div className="hidden lg:block fixed top-4 z-40" style={{ right: "24px" }}>
+            <div style={{ position: "relative" }}>
+              <button
+                className="notif-bell"
+                onClick={() => setNotifOpen(!notifOpen)}
+                style={{
+                  position: "relative", width: "38px", height: "38px", borderRadius: "50%",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  background: isDark ? "#252528" : "white", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 150ms",
+                }}
+              >
+                <Bell size={18} color={isDark ? "rgba(255,255,255,0.7)" : "#374151"} />
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: "absolute", top: "-2px", right: "-2px",
+                    width: unreadCount > 9 ? "20px" : "16px", height: "16px",
+                    borderRadius: "999px", background: "#EF4444",
+                    border: `2px solid ${isDark ? "#252528" : "white"}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "9px", fontWeight: "700", color: "white", fontFamily: "Inter, sans-serif",
+                  }}>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Notification Panel */}
+        {notifOpen && user && (
+          <NotificationPanel
+            onClose={() => setNotifOpen(false)}
+            onUnreadCountChange={setUnreadCount}
+            userId={user.id}
+          />
+        )}
 
         {/* Main Content */}
         <main className="transition-all duration-300 min-h-screen bg-background" style={{ paddingLeft: `${sidebarWidth}px` }}>
