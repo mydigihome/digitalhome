@@ -106,6 +106,11 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [showCoHostInvite, setShowCoHostInvite] = useState(false);
   const [coHostEmail, setCoHostEmail] = useState("");
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [showAddStage, setShowAddStage] = useState(false);
+  const [newStageTitle, setNewStageTitle] = useState("");
+  const [newStageDueDate, setNewStageDueDate] = useState("");
+  const [addingStage, setAddingStage] = useState(false);
+  const { user: authUser } = useAuth();
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
@@ -481,15 +486,22 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
             Preparation Timeline
           </p>
-          {projectTasks.length === 0 ? (
+          {projectTasks.length === 0 && !showAddStage ? (
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
               <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
               <p style={{ fontSize: 13, color: "#9CA3AF" }}>AI-generated preparation tasks will appear here after event creation.</p>
+              <button
+                onClick={() => setShowAddStage(true)}
+                className="mt-3 cursor-pointer"
+                style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+              >
+                + Add Stage
+              </button>
             </div>
           ) : (
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
-              {projectTasks
+              {[...projectTasks]
                 .sort((a, b) => {
                   if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
                   return a.position - b.position;
@@ -551,6 +563,76 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                     </div>
                   );
                 })}
+
+              {/* + Add Stage button */}
+              <div style={{ padding: "10px 20px", borderTop: projectTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
+                {!showAddStage ? (
+                  <button
+                    onClick={() => setShowAddStage(true)}
+                    className="cursor-pointer"
+                    style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+                  >
+                    + Add Stage
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 150 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", display: "block", marginBottom: 4 }}>Title</label>
+                      <input
+                        value={newStageTitle}
+                        onChange={e => setNewStageTitle(e.target.value)}
+                        placeholder="e.g. Confirm catering"
+                        style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #E5E7EB", borderRadius: 8, fontSize: 13, color: "#1F2937", outline: "none" }}
+                      />
+                    </div>
+                    <div style={{ width: 140 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", display: "block", marginBottom: 4 }}>Due date</label>
+                      <input
+                        type="date"
+                        value={newStageDueDate}
+                        onChange={e => setNewStageDueDate(e.target.value)}
+                        style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #E5E7EB", borderRadius: 8, fontSize: 13, color: "#1F2937", outline: "none" }}
+                      />
+                    </div>
+                    <button
+                      disabled={!newStageTitle.trim() || addingStage}
+                      onClick={async () => {
+                        if (!newStageTitle.trim() || !authUser) return;
+                        setAddingStage(true);
+                        const { error } = await supabase.from("tasks").insert({
+                          project_id: projectId,
+                          user_id: authUser.id,
+                          title: newStageTitle.trim(),
+                          due_date: newStageDueDate || null,
+                          status: "backlog",
+                          priority: "medium",
+                          position: projectTasks.length,
+                        });
+                        setAddingStage(false);
+                        if (error) { toast.error("Failed to add stage"); return; }
+                        setNewStageTitle("");
+                        setNewStageDueDate("");
+                        setShowAddStage(false);
+                        toast.success("Stage added");
+                      }}
+                      style={{
+                        padding: "8px 16px", borderRadius: 8, border: "none",
+                        background: "#8B5CF6", color: "white", fontSize: 13, fontWeight: 600,
+                        cursor: newStageTitle.trim() ? "pointer" : "not-allowed",
+                        opacity: newStageTitle.trim() ? 1 : 0.5,
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => { setShowAddStage(false); setNewStageTitle(""); setNewStageDueDate(""); }}
+                      style={{ padding: "8px 12px", borderRadius: 8, border: "1.5px solid #E5E7EB", background: "white", fontSize: 13, color: "#6B7280", cursor: "pointer" }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </motion.div>

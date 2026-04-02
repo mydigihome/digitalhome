@@ -143,7 +143,11 @@ export default function Projects() {
   // AI host stages generator
   const generateAIEventStages = async (event: any) => {
     const eventDate = event.event_date || event.end_date || event.start_date;
-    if (!eventDate) return;
+    console.log("generateAIEventStages called for:", event.id, event.name, "eventDate:", eventDate);
+    if (!eventDate) {
+      console.warn("No event date found, skipping AI stages");
+      return;
+    }
     const date = new Date(eventDate);
     const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
 
@@ -178,8 +182,14 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
         ai_generated: true,
       }));
 
-      await supabase.from("tasks").insert(newTasks);
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      console.log("Inserting AI tasks:", newTasks);
+      const { data: inserted, error: insertError } = await supabase.from("tasks").insert(newTasks).select();
+      console.log("Insert result:", inserted, insertError);
+      if (insertError) {
+        console.error("Task insert error:", insertError);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["tasks"], refetchType: "all" });
       toast.success(`${newTasks.length} AI prep tasks created!`);
     } catch (error) {
       console.error("Failed to generate stages:", error);
