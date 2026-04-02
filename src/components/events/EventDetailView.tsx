@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTasks, type Task } from "@/hooks/useTasks";
+import { type Task } from "@/hooks/useTasks";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link,
+  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,12 +82,24 @@ interface Props {
   projectData?: any;
 }
 
+type PrepTask = Task & {
+  ai_generated?: boolean | null;
+  labels?: string[] | null;
+};
+
+const sortPrepTasks = (tasks: PrepTask[]) =>
+  [...tasks].sort((a, b) => {
+    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+    if (a.due_date) return -1;
+    if (b.due_date) return 1;
+    return a.position - b.position;
+  });
+
 export default function EventDetailView({ projectId, projectName, coverImage, projectData }: Props) {
   const navigate = useNavigate();
   const { data: event } = useEventDetails(projectId);
   const { data: guests = [] } = useEventGuests(event?.id);
   const { data: questions = [] } = useRsvpQuestions(event?.id);
-  const { data: projectTasks = [] } = useTasks(projectId);
   const addGuests = useAddEventGuests();
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
@@ -110,6 +122,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [newStageTitle, setNewStageTitle] = useState("");
   const [newStageDueDate, setNewStageDueDate] = useState("");
   const [addingStage, setAddingStage] = useState(false);
+  const [prepTasks, setPrepTasks] = useState<PrepTask[]>([]);
+  const [generatingStages, setGeneratingStages] = useState(false);
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
@@ -131,6 +145,133 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     created_at: projectData.created_at,
     updated_at: projectData.updated_at,
   } as any : null);
+
+  useEffect(() => {
+    if (!effectiveEvent || !user) return;
+
+    let cancelled = false;
+
+    const loadEventData = async () => {
+      const { data: existingTasks } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("project_id", effectiveEvent.id)
+        .order("due_date", { ascending: true });
+
+      if (cancelled) return;
+
+      const currentTasks = sortPrepTasks((existingTasks as PrepTask[] | null) || []);
+      setPrepTasks(currentTasks);
+
+      const resolvedEventDate = effectiveEvent.event_date || projectData?.date;
+      if (currentTasks.length > 0 || !resolvedEventDate) return;
+
+      setGeneratingStages(true);
+
+      try {
+        const eventDate = new Date(resolvedEventDate);
+        const today = new Date();
+        const daysUntil = Math.max(0, Math.floor((eventDate.getTime() - today.getTime()) / 86400000));
+
+        const prompt = `
+You are an expert event planner.
+
+Create exactly 5 preparation tasks 
+for this event.
+
+Event: ${projectName}
+
+Date: ${eventDate.toLocaleDateString(
+  'en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }
+)}
+
+Days until: ${daysUntil}
+
+${effectiveEvent.location ? `Location: ${effectiveEvent.location}` : ''}
+${effectiveEvent.description ? `About: ${effectiveEvent.description}` : ''}
+
+Return ONLY a JSON array, nothing else:
+
+[
+  {
+    "title": "Book the venue",
+    "days_before": 30,
+    "category": "Venue"
+  }
+]
+
+5 tasks maximum.
+
+Make them specific to this event.
+
+`;
+
+        const { data } = await supabase.functions.invoke(
+          'generate-trading-plan',
+          { body: { prompt } }
+        );
+
+        const text = data?.plan || '';
+        const start = text.indexOf('[');
+        const end = text.lastIndexOf(']');
+
+        if (start !== -1 && end !== -1) {
+          const stages = JSON.parse(text.substring(start, end + 1));
+
+          if (Array.isArray(stages)) {
+            const tasksToInsert = stages
+              .slice(0, 5)
+              .map((s: any, i: number) => {
+                const due = new Date(eventDate);
+                due.setDate(due.getDate() - (s.days_before || 7));
+                const finalDue = due < today ? today : due;
+
+                return {
+                  project_id: effectiveEvent.id,
+                  user_id: user.id,
+                  title: s.title,
+                  due_date: finalDue.toISOString().split('T')[0],
+                  status: 'backlog',
+                  priority: 'medium',
+                  position: i,
+                  ai_generated: true,
+                  labels: s.category ? [String(s.category)] : [],
+                };
+              });
+
+            const { data: inserted, error } = await supabase
+              .from('tasks')
+              .insert(tasksToInsert)
+              .select();
+
+            if (!error && inserted && !cancelled) {
+              setPrepTasks(sortPrepTasks(inserted as PrepTask[]));
+              toast.success('Prep stages ready ✨', {
+                description: `${inserted.length} tasks generated for your event`,
+                duration: 4000,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Stage gen error:', e);
+      } finally {
+        if (!cancelled) {
+          setGeneratingStages(false);
+        }
+      }
+    };
+
+    loadEventData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveEvent, projectData?.date, projectName, user]);
 
   if (!effectiveEvent) return null;
 
