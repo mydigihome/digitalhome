@@ -539,7 +539,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                           </p>
                         )}
                       </div>
-                      {task.ai_generated && (
+                      {(task as any).ai_generated && (
                         <span style={{
                           fontSize: 10, fontWeight: 600, color: "#8B5CF6",
                           background: "rgba(139,92,246,0.1)", padding: "2px 8px",
