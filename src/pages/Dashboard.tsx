@@ -890,123 +890,20 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* LEFT COLUMN */}
             <div className="flex-1 min-w-0 space-y-4">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
-                  {cardOrder.map((id) => renderCard(id))}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleLeftDragEnd}>
+                <SortableContext items={leftOrder} strategy={verticalListSortingStrategy}>
+                  {leftOrder.map((id) => renderLeftCard(id))}
                 </SortableContext>
               </DndContext>
             </div>
 
             {/* RIGHT COLUMN — fixed 320px */}
             <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
-              {/* Daily Scripture */}
-              {(prefs as any)?.show_scripture_card && (
-                <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                  <h3 className="font-semibold text-sm mb-3 text-foreground">Daily Scripture</h3>
-                  <ScriptureContent religion={(prefs as any)?.religion} />
-                </div>
-              )}
-
-              {/* Money Reminders */}
-              <div className="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-white" />
-                  </div>
-                  <h2 className="text-base font-semibold text-white">Money Reminders</h2>
-                </div>
-                {moneyReminders.length > 0 ? (
-                  <div className="space-y-0">
-                    {moneyReminders.map((bill, idx) => (
-                      <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
-                        <div>
-                          <p className="text-sm font-medium text-white">{bill.name}</p>
-                          <p className="text-xs text-white/50">Due soon</p>
-                        </div>
-                        <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-0">
-                    <div className="flex items-center justify-between py-3 border-b border-white/10">
-                      <div><p className="text-sm font-medium text-white">Credit Card Due</p><p className="text-xs text-white/50">March 5th</p></div>
-                      <span className="text-base font-bold text-red-400">$1,240.00</span>
-                    </div>
-                    <div className="flex items-center justify-between py-3">
-                      <div><p className="text-sm font-medium text-white">Rent Payment</p><p className="text-xs text-white/50">March 1st</p></div>
-                      <span className="text-base font-bold text-red-400">$2,800.00</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Today's Agenda */}
-              <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-foreground">Today's Agenda</h2>
-                  <button onClick={() => navigate("/calendar")} className="text-sm font-medium text-success hover:underline">View All</button>
-                </div>
-                {agendaItems.length > 0 ? (
-                  <div className="space-y-0">
-                    {agendaItems.map((item, idx) => {
-                      const colors = ["hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--destructive))"];
-                      return (
-                        <div key={idx} className="flex gap-4 py-3 border-b border-border last:border-b-0">
-                          <div className="w-1 rounded-sm flex-shrink-0" style={{ background: colors[idx % 3] }} />
-                          <div>
-                            <p className="text-xs font-semibold" style={{ color: colors[idx % 3] }}>{item.time}</p>
-                            <p className="text-sm font-semibold text-foreground">{item.title}</p>
-                            {item.subtitle && <p className="text-xs text-muted-foreground">{item.subtitle}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-center py-6 text-muted-foreground">No events today</p>
-                )}
-              </div>
-
-              {/* Quick To-Dos */}
-              <div ref={quickTodosRef} className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-foreground">Quick To-Dos</h2>
-                </div>
-                <div className="space-y-0">
-                  {todos.filter(t => !t.completed).slice(0, 3).map(todo => (
-                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                      <button onClick={() => updateTodo.mutate({ id: todo.id, completed: true })}
-                        className="w-5 h-5 rounded-full border-2 border-border flex-shrink-0 flex items-center justify-center transition hover:border-primary" />
-                      <span className="text-sm text-foreground">{todo.text}</span>
-                    </div>
-                  ))}
-                  {todos.filter(t => t.completed).slice(0, 2).map(todo => (
-                    <div key={todo.id} className="flex items-center gap-3 py-2.5">
-                      <div className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center bg-primary">
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5L4 7L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </div>
-                      <span className="text-sm line-through text-muted-foreground">{todo.text}</span>
-                    </div>
-                  ))}
-                  <input value={newTodoText} onChange={(e) => setNewTodoText(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
-                    placeholder="Add a quick note..."
-                    className="w-full mt-2 py-2 px-3 text-[13px] bg-transparent outline-none rounded-lg border border-dashed border-border text-foreground placeholder:text-muted-foreground" />
-                </div>
-              </div>
-
-              {/* Network Summary — smaller */}
-              <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]" style={{ maxHeight: 180, overflow: "hidden" }}>
-                <h2 className="text-base font-semibold text-foreground mb-3">Network</h2>
-                <p className="text-2xl font-bold text-foreground tabular-nums">{contacts.length}</p>
-                <p className="text-xs text-muted-foreground mb-3">Total contacts</p>
-                {contacts.length > 0 && contacts[0] && (
-                  <p className="text-xs text-muted-foreground truncate">Last contacted: <span className="text-foreground font-medium">{contacts[0].name}</span></p>
-                )}
-                <button onClick={() => navigate("/relationships")}
-                  className="mt-2 text-xs font-medium text-success hover:underline">+ Add Contact</button>
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleRightDragEnd}>
+                <SortableContext items={rightOrder} strategy={verticalListSortingStrategy}>
+                  {rightOrder.map((id) => renderRightCard(id))}
+                </SortableContext>
+              </DndContext>
             </div>
           </div>
         </div>
