@@ -19,7 +19,7 @@ function getRating(score: number) {
 }
 
 export default function CreditScoreGaugeCard() {
-  const { cardData, updateCardData } = useMoneyPreferences();
+  const { cardData, saveCardData } = useMoneyPreferences();
   const creditData = (cardData as any)?.credit || {};
   const score = creditData.score as number | undefined;
   const updatedAt = creditData.updatedAt as string | undefined;
