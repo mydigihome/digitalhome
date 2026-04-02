@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Calendar, LayoutGrid, Plus, UserPlus, X, ChevronLeft, ChevronRight,
   Clock, MessageSquare, Send, Trash2, ArrowRight, Lightbulb,
+  MoreHorizontal, Maximize2, MoveRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
