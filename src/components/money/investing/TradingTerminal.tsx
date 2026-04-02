@@ -202,7 +202,7 @@ export default function TradingTerminal({ onOpenPlanModal }: Props) {
             </div>
           </div>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <AdvancedChart theme={theme} />
+            <AdvancedChart theme={theme} userId={user?.id || "anonymous"} widgetId="investing-terminal-fs" />
           </div>
         </div>,
         document.body
