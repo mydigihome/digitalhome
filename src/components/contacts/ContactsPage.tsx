@@ -307,7 +307,11 @@ Write ONLY the email body. No subject line. No preamble. Max 4 sentences. Sound 
 
       {/* TAB CONTENT */}
       {activeTab === "Emails" ? (
-        <EmailView onReply={(to, name, subject, threadId) => openCompose(to, name, subject, threadId, true)} />
+        <EmailsTabContent
+          contacts={contacts}
+          isDark={isDark}
+          user={user}
+        />
       ) : (
         <div>
           {/* TOOLBAR */}
