@@ -263,6 +263,8 @@ export default function MoneyTabWithSubTabs() {
         {/* Overview tab → new layout */}
         {activeTab === "overview" ? (
           <MoneyOverview />
+        ) : activeTab === "debt" ? (
+          <DebtTab />
         ) : (
           <>
             {/* Hidden cards restore drawer */}
