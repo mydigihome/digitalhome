@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { BarChart3, CreditCard, TrendingDown, LineChart, Plus, Search, X, EyeOff, Eye, ChevronDown, Landmark, TrendingUp } from "lucide-react";
@@ -37,6 +38,7 @@ import "../../styles/money-tab.css";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
+  { id: "applications", label: "Applications", icon: CreditCard },
   { id: "debt", label: "Debt", icon: TrendingDown },
   { id: "investing", label: "Investing", icon: TrendingUp },
 ] as const;
@@ -46,6 +48,7 @@ type TabId = typeof TABS[number]["id"];
 // Which cards belong to which tab
 const TAB_CARDS: Record<TabId, string[]> = {
   overview: ["plaid", "net-worth", "savings-rate", "moneyflow", "emergency", "salary"],
+  applications: [],
   debt: ["debt", "credit-score", "net-worth-history", "refund-tracker"],
   investing: [],
 };
@@ -114,10 +117,25 @@ export default function MoneyTabWithSubTabs() {
   } = useMoneyPreferences();
   const { isPremium } = usePremiumStatus();
 
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    return (localStorage.getItem("dh_money_tab") as TabId) || "overview";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [trackFinanceOpen, setTrackFinanceOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("dh_money_tab", activeTab);
+  }, [activeTab]);
+
+  const handleTabClick = (tabId: TabId) => {
+    if (tabId === "applications") {
+      navigate("/finance/applications");
+    } else {
+      setActiveTab(tabId);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -229,7 +247,7 @@ export default function MoneyTabWithSubTabs() {
             {TABS.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
                   activeTab === tab.id
                     ? "border-success text-foreground"
