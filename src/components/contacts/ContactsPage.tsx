@@ -12,7 +12,8 @@ import {
   Search, Plus, Mail, Phone, MapPin, Briefcase, Pencil, Trash2,
   Sparkles, Loader2, RotateCw, BookOpen, FolderPlus, CheckSquare,
   Linkedin, Users, ChevronDown, ChevronUp, X, Check, Filter,
-  ArrowUpDown, MessageSquare, Upload, FileSpreadsheet, UserPlus, Calendar
+  ArrowUpDown, MessageSquare, Upload, FileSpreadsheet, UserPlus, Calendar,
+  Gift
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import LinkedInSelectionPanel from "./panels/LinkedInSelectionPanel";
