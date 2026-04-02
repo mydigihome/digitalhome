@@ -28,8 +28,6 @@ import StudioPage from "./pages/StudioPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
 import PublicEventPage from "./pages/PublicEventPage";
-import TemplateShop from "./pages/TemplateShop";
-import TemplateSuccess from "./pages/TemplateSuccess";
 import AdminTemplates from "./pages/AdminTemplates";
 import RelationshipsPage from "./pages/RelationshipsPage";
 import MonthlyReviewPage from "./pages/MonthlyReviewPage";
