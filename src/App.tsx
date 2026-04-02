@@ -15,6 +15,8 @@ import ResetPassword from "./pages/ResetPassword";
 // import Welcome from "./pages/Welcome";
 import NewOnboarding from "./pages/NewOnboarding";
 import Dashboard from "./pages/Dashboard";
+import JournalPage from "./pages/JournalPage";
+import JournalEntryPage from "./pages/JournalEntryPage";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import CalendarPage from "./pages/CalendarPage";
