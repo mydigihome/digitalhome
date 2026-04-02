@@ -891,7 +891,7 @@ export default function Dashboard() {
         onClose={() => setQuickAddOpen(false)}
         onNewGoal={() => setCreateGoalOpen(true)}
         onNewTask={scrollToTodos}
-        onNewJournal={() => setJournalModalOpen(true)}
+        onNewJournal={() => navigate("/journal/new")}
         onNewContact={() => navigate("/relationships")}
       />
       <StatusUpdateModal open={statusModalOpen} onClose={() => setStatusModalOpen(false)} />
