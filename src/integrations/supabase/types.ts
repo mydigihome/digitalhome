@@ -769,6 +769,57 @@ export type Database = {
           },
         ]
       }
+      content_items: {
+        Row: {
+          assigned_to: string | null
+          caption_notes: string | null
+          comment_count: number | null
+          content_type: string | null
+          created_at: string | null
+          created_by: string | null
+          due_date: string | null
+          id: string
+          platform: string | null
+          stage: string | null
+          studio_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          caption_notes?: string | null
+          comment_count?: number | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          platform?: string | null
+          stage?: string | null
+          studio_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          caption_notes?: string | null
+          comment_count?: number | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          platform?: string | null
+          stage?: string | null
+          studio_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_pieces: {
         Row: {
           ai_caption: string | null
@@ -2953,6 +3004,36 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_collaborators: {
+        Row: {
+          collaborator_email: string | null
+          collaborator_id: string | null
+          created_at: string | null
+          id: string
+          role: string | null
+          status: string | null
+          studio_owner_id: string
+        }
+        Insert: {
+          collaborator_email?: string | null
+          collaborator_id?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string | null
+          status?: string | null
+          studio_owner_id: string
+        }
+        Update: {
+          collaborator_email?: string | null
+          collaborator_id?: string | null
+          created_at?: string | null
+          id?: string
+          role?: string | null
+          status?: string | null
+          studio_owner_id?: string
+        }
+        Relationships: []
+      }
       studio_goals: {
         Row: {
           category: string | null
@@ -3029,6 +3110,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      studio_invites: {
+        Row: {
+          created_at: string | null
+          id: string
+          invitee_email: string
+          inviter_user_id: string
+          status: string | null
+          studio_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invitee_email: string
+          inviter_user_id: string
+          status?: string | null
+          studio_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invitee_email?: string
+          inviter_user_id?: string
+          status?: string | null
+          studio_name?: string | null
+        }
+        Relationships: []
       }
       studio_profile: {
         Row: {
