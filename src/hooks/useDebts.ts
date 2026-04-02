@@ -13,6 +13,7 @@ export interface Debt {
   due_date: string | null;
   status: string;
   notes: string | null;
+  payment_url: string | null;
   created_at: string;
 }
 
