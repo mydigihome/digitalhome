@@ -803,13 +803,9 @@ function ExpandedContactRow({ contact, isDark, onEdit, onDelete, onEmail, noteVa
       {/* ─── BANNER + IDENTITY ─── */}
       <div style={{
         height: "80px",
-        background: "linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 50%, #0d3b2e 100%)",
+        background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
         position: "relative", overflow: "hidden",
       }}>
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(16,185,129,0.15) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(123,94,167,0.15) 0%, transparent 60%)",
-        }} />
         {/* Avatar */}
         <div style={{
           position: "absolute", bottom: "-20px", left: "28px",
