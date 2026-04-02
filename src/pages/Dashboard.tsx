@@ -447,10 +447,10 @@ export default function Dashboard() {
     switch (id) {
       case "networth-projects":
         return (
-          <SortableCard key={id} id={id}>
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="w-full lg:w-[40%]">{compactNetWorth}</div>
-              <div className="w-full lg:w-[60%]">{compactProjects}</div>
+           <SortableCard key={id} id={id}>
+            <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
+              <div className="w-full lg:w-[280px] lg:flex-shrink-0">{compactNetWorth}</div>
+              <div className="w-full lg:flex-1">{compactProjects}</div>
             </div>
           </SortableCard>
         );
