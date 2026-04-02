@@ -15,7 +15,22 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ArrowLeft, Upload, Download, DollarSign, TrendingUp, FileText, Palette, Mail, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { ShopTemplate } from "@/hooks/useShopTemplates";
+
+interface ShopTemplate {
+  id: string;
+  title: string;
+  description: string | null;
+  template_type: string;
+  preview_image_url: string | null;
+  file_url: string | null;
+  pdf_url: string | null;
+  price_cents: number;
+  is_active: boolean;
+  is_in_bundle: boolean;
+  tags: string[];
+  download_count: number;
+  created_at: string;
+}
 
 const SLOTS_PER_CATEGORY = 4;
 
