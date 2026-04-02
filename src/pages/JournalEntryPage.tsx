@@ -283,12 +283,20 @@ export default function JournalEntryPage() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "16px 0", position: "sticky", top: 0, zIndex: 50, background: bg,
           }}>
-            <button onClick={() => navigate("/journal")} title="My Entries" style={{
-              width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
-              background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <BookOpen size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button onClick={() => navigate("/journal")} title="My Entries" style={{
+                width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
+                background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <BookOpen size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+              </button>
+              <button onClick={() => navigate(-1 as any)} title="Close" style={{
+                width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
+                background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <X size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+              </button>
+            </div>
             <span style={{ fontSize: 15, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif" }}>
               {isEditing ? (isNew ? "New Entry" : "Edit Entry") : "Journal Entry"}
             </span>
@@ -301,7 +309,7 @@ export default function JournalEntryPage() {
                 {saving ? "Saving..." : "Save"}
               </button>
             ) : (
-              <div style={{ width: 36 }} />
+              <div style={{ width: 80 }} />
             )}
           </div>
 
@@ -730,7 +738,13 @@ export default function JournalEntryPage() {
                 if (therapistInsurance) params.append("insurance", therapistInsurance.toLowerCase().replace(/\s+/g, "-"));
                 const qs = params.toString();
                 if (qs) url += "?" + qs;
-                window.open(url, "_blank");
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 setTherapistModalOpen(false);
               }} style={{
                 flex: 1, padding: 11, background: "#EC4899", color: "white", border: "none",
@@ -750,7 +764,15 @@ export default function JournalEntryPage() {
                 <p style={{ fontSize: 13, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif", margin: 0 }}>Prefer online therapy?</p>
                 <p style={{ fontSize: 11, color: subtextColor, fontFamily: "Inter, sans-serif", margin: 0 }}>BetterHelp matches you in 48hrs</p>
               </div>
-              <button onClick={() => window.open("https://www.betterhelp.com/get-started/", "_blank")} style={{
+              <button onClick={() => {
+                const link = document.createElement("a");
+                link.href = "https://www.betterhelp.com/get-started/";
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }} style={{
                 padding: "6px 14px", background: "#3B82F6", color: "white", border: "none",
                 borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
               }}>Try it →</button>
@@ -846,7 +868,13 @@ export default function JournalEntryPage() {
               <button onClick={() => {
                 if (!churchZip) { toast.error("Enter your zip code"); return; }
                 const searchTerms = [churchPreference, churchDenomination, "near", churchZip].filter(Boolean).join(" ");
-                window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchTerms)}`, "_blank");
+                const link = document.createElement("a");
+                link.href = `https://www.google.com/maps/search/${encodeURIComponent(searchTerms)}`;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
                 setChurchModalOpen(false);
               }} style={{
                 flex: 1, padding: 11, background: "#7B5EA7", color: "white", border: "none",
