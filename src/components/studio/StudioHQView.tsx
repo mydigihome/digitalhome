@@ -605,46 +605,52 @@ export default function StudioHQView() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "1px", background: isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB", borderRadius: "8px", overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "8px", minHeight: "400px" }}>
               {weekDates.map((date, i) => {
                 const dateStr = date.toISOString().split("T")[0];
-                const dayItems = contentItems.filter(c => c.due_date === dateStr);
+                const dayItems = contentItems.filter(c => c.due_date && new Date(c.due_date).toDateString() === date.toDateString());
                 const isToday = new Date().toDateString() === date.toDateString();
                 return (
-                  <div key={i}
-                    onClick={() => {
-                      setFormDueDate(dateStr);
-                      setFormStage("idea");
-                      setNewContentOpen(true);
-                    }}
-                    style={{
-                      background: isDark ? "#1C1C1E" : "white",
-                      minHeight: "140px", padding: "8px", cursor: "pointer",
-                    }}>
+                  <div key={i} style={{
+                    background: isDark ? (isToday ? "rgba(16,185,129,0.08)" : "#252528") : (isToday ? "#F0FDF4" : "#F9FAFB"),
+                    border: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
+                    borderRadius: "10px", padding: "10px", minHeight: "300px",
+                  }}>
                     <div style={{
-                      fontSize: "10px", fontWeight: 600, color: isToday ? "#10B981" : "#9CA3AF",
-                      textTransform: "uppercase", marginBottom: "6px", fontFamily: "Inter, sans-serif",
+                      textAlign: "center", marginBottom: "10px", paddingBottom: "8px",
+                      borderBottom: `1px solid ${isDark ? (isToday ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.06)") : (isToday ? "#BBF7D0" : "#F3F4F6")}`,
                     }}>
-                      {date.toLocaleDateString("en-US", { weekday: "short" })} {date.getDate()}
+                      <p style={{ fontSize: "11px", color: "#9CA3AF", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", fontFamily: "Inter, sans-serif", margin: 0 }}>
+                        {date.toLocaleDateString("en-US", { weekday: "short" })}
+                      </p>
+                      <p style={{ fontSize: "18px", fontWeight: isToday ? 800 : 500, color: isToday ? "#10B981" : (isDark ? "#F2F2F2" : "#111827"), fontFamily: "Inter, sans-serif", margin: "2px 0 0" }}>
+                        {date.getDate()}
+                      </p>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      {dayItems.map(item => (
-                        <div key={item.id}
-                          onClick={e => { e.stopPropagation(); setDetailCard(item); }}
-                          style={{
-                            padding: "4px 8px", borderRadius: "6px", cursor: "pointer",
-                            borderLeft: `3px solid ${PLATFORM_COLORS[item.platform || ""] || "#9CA3AF"}`,
-                            background: isDark ? "#252528" : "#F9FAFB",
-                          }}>
-                          <p style={{ fontSize: "11px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {item.title.substring(0, 30)}
-                          </p>
-                          <p style={{ fontSize: "9px", color: "#9CA3AF", margin: 0 }}>
+                    {dayItems.map(item => (
+                      <div key={item.id} onClick={() => setDetailCard(item)} style={{
+                        padding: "6px 8px", borderRadius: "6px", marginBottom: "5px", cursor: "pointer",
+                        background: item.platform === "Instagram" ? "#FDF2F8" : item.platform === "YouTube" ? "#FEF2F2" : item.platform === "TikTok" ? "#F0FDF4" : item.platform === "Twitter" ? "#EFF6FF" : "#F5F3FF",
+                        borderLeft: "3px solid",
+                        borderColor: item.platform === "Instagram" ? "#BE185D" : item.platform === "YouTube" ? "#DC2626" : item.platform === "TikTok" ? "#065F46" : item.platform === "Twitter" ? "#1D4ED8" : "#7B5EA7",
+                      }}>
+                        <p style={{ fontSize: "11px", fontWeight: 600, color: "#111827", fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: "0 0 2px" }}>
+                          {item.title}
+                        </p>
+                        {item.platform && (
+                          <p style={{ fontSize: "10px", color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>
                             {item.platform}{item.content_type ? ` · ${item.content_type}` : ""}
                           </p>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    ))}
+                    <button onClick={() => { setFormDueDate(dateStr); setFormStage("idea"); setNewContentOpen(true); }}
+                      style={{
+                        width: "100%", padding: "5px", background: "transparent",
+                        border: `1px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                        borderRadius: "6px", fontSize: "11px", color: "#D1D5DB",
+                        cursor: "pointer", fontFamily: "Inter, sans-serif", marginTop: "4px",
+                      }}>+ Add</button>
                   </div>
                 );
               })}
