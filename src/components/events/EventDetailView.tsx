@@ -138,7 +138,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     viewed: guests.filter(g => g.status === "viewed").length,
   };
 
-  const shareUrl = `${window.location.origin}/events/${event.share_token}`;
+  const shareUrl = `${window.location.origin}/events/${effectiveEvent.share_token}`;
 
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
@@ -151,7 +151,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
       .map(e => e.trim().toLowerCase())
       .filter(e => e && e.includes("@"));
     if (emails.length === 0) { toast.error("Enter valid emails"); return; }
-    await addGuests.mutateAsync(emails.map(email => ({ event_id: event.id, email })));
+    await addGuests.mutateAsync(emails.map(email => ({ event_id: effectiveEvent.id, email })));
     setNewEmails("");
     setShowAddGuests(false);
     toast.success(`${emails.length} guest(s) added`);
@@ -160,7 +160,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const openEmailComposer = (filter: "all" | "accepted") => {
     setEmailFilter(filter);
     const tpl = EMAIL_TEMPLATES[0];
-    const dateStr = event.event_date ? format(new Date(event.event_date), "MMMM d, yyyy") : "TBD";
+    const dateStr = effectiveEvent.event_date ? format(new Date(effectiveEvent.event_date), "MMMM d, yyyy") : "TBD";
     setEmailBody(tpl.body(projectName, dateStr));
     setShowEmailModal(true);
   };
@@ -177,7 +177,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     toast.success("Email client opened");
   };
 
-  const eventType = event.event_type?.replace("_", " ") || "Event";
+  const eventType = effectiveEvent.event_type?.replace("_", " ") || "Event";
   const staggerDelay = (i: number) => ({ delay: i * 0.1 });
 
   return (
@@ -271,7 +271,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
         }}
       >
         {/* ═══ INFO CARDS ═══ */}
-        {event.event_date && (
+        {effectiveEvent.event_date && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(0), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -284,13 +284,13 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             <div>
               <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Date & Time</p>
               <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>
-                {format(new Date(event.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(event.event_date), "h:mm a")}
+                {format(new Date(effectiveEvent.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(effectiveEvent.event_date), "h:mm a")}
               </p>
             </div>
           </motion.div>
         )}
 
-        {event.location && (
+        {effectiveEvent.location && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(1), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
@@ -302,7 +302,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             </div>
             <div>
               <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Location</p>
-              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>{event.location}</p>
+              <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>{effectiveEvent.location}</p>
             </div>
           </motion.div>
         )}
@@ -373,14 +373,14 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
         )}
 
         {/* ═══ ABOUT ═══ */}
-        {event.description && (
+        {effectiveEvent.description && (
           <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ ...staggerDelay(3), duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           >
             <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>About</p>
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 16, padding: 20, fontSize: 15, color: "#4B5563", lineHeight: 1.7, whiteSpace: "pre-wrap" as const }}>
-              {event.description}
+              {effectiveEvent.description}
             </div>
           </motion.div>
         )}
@@ -463,10 +463,10 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           )}
 
           {/* RSVP Deadline */}
-          {event.rsvp_deadline && (
+          {effectiveEvent.rsvp_deadline && (
             <p className="text-center mt-6" style={{ fontSize: 13, color: "#9CA3AF" }}>
-              RSVP Deadline: {format(new Date(event.rsvp_deadline), "MMMM d, yyyy")}
-              {isPast(new Date(event.rsvp_deadline)) && (
+              RSVP Deadline: {format(new Date(effectiveEvent.rsvp_deadline), "MMMM d, yyyy")}
+              {isPast(new Date(effectiveEvent.rsvp_deadline)) && (
                 <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444" }}>Expired</span>
               )}
             </p>
@@ -550,7 +550,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                     const idx = Number(e.target.value);
                     setEmailTemplate(idx);
                     const tpl = EMAIL_TEMPLATES[idx];
-                    const dateStr = event.event_date ? format(new Date(event.event_date), "MMMM d, yyyy") : "TBD";
+                    const dateStr = effectiveEvent.event_date ? format(new Date(effectiveEvent.event_date), "MMMM d, yyyy") : "TBD";
                     setEmailBody(tpl.body(projectName, dateStr));
                   }}
                   className="w-full rounded-xl px-3 py-2 text-sm"
