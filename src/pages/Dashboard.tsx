@@ -180,7 +180,8 @@ const stockOptions = [
   { symbol: "SPY", name: "S&P 500 ETF" },
 ];
 
-const DEFAULT_CARD_ORDER = ["networth", "market", "momentum", "links", "projects", "studio", "reflections"];
+const DEFAULT_LEFT_ORDER = ["networth-projects", "market", "momentum", "links", "studio", "reflections"];
+const DEFAULT_RIGHT_ORDER = ["scripture", "reminders", "agenda", "todos", "network"];
 const HERO_BG = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80";
 
 /* ═══════════════════════════════════════════════════ */
