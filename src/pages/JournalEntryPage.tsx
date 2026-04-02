@@ -1,15 +1,34 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
-import { ArrowLeft, Plus, Sparkles, RefreshCw, Camera, X, Mic, Square, Play, Pause, Trash2, Bold, Italic, Underline, Send, Loader2, Heart, Church, Image as ImageIcon } from "lucide-react";
-import TherapistFinderModal from "@/components/journal/TherapistFinderModal";
-import ChurchFinderModal from "@/components/journal/ChurchFinderModal";
+import {
+  ArrowLeft, Sparkles, RefreshCw, X, Mic, Square, Play, Pause,
+  Trash2, Send, Loader2, Heart, MapPin, Pencil, Check, Image as ImageIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
-const TAG_OPTIONS = ["Personal", "Calm", "Motivation", "Grateful", "Anxious", "Happy", "Sad", "Inspired", "Focused"];
+const MOOD_TAGS = [
+  "Personal", "Calm", "Motivation", "Grateful", "Happy", "Inspired",
+  "Anxious", "Sad", "Focused", "Reflective", "Energized", "At Peace",
+];
+
+const LIBRARY_IMAGES = [
+  { id: 1, url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800", label: "Sunset Beach" },
+  { id: 2, url: "https://images.unsplash.com/photo-1444927714506-8492d94b4e3d?w=800", label: "Birds in Flight" },
+  { id: 3, url: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800", label: "Forest Stream" },
+  { id: 4, url: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800", label: "Mountain Sunset" },
+  { id: 5, url: "https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=800", label: "Peaceful Path" },
+  { id: 6, url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800", label: "Mountain View" },
+  { id: 7, url: "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=800", label: "Golden Hour" },
+  { id: 8, url: "https://images.unsplash.com/photo-1476611338391-6f395a0dd82e?w=800", label: "Ocean Calm" },
+  { id: 9, url: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800", label: "Misty Forest" },
+  { id: 10, url: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=800", label: "Sunrise" },
+  { id: 11, url: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=800", label: "Wildflowers" },
+  { id: 12, url: "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=800", label: "Starry Night" },
+];
 
 export default function JournalEntryPage() {
   const navigate = useNavigate();
@@ -31,11 +50,12 @@ export default function JournalEntryPage() {
   const [saving, setSaving] = useState(false);
   const [entryId, setEntryId] = useState<string | null>(isNew ? null : id!);
   const [dailyPrompt, setDailyPrompt] = useState("What's one thing you're proud of today?");
-  const [therapistModalOpen, setTherapistModalOpen] = useState(false);
-  const [churchModalOpen, setChurchModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(isNew);
   const [substackModalOpen, setSubstackModalOpen] = useState(false);
   const [substackEmail, setSubstackEmail] = useState("");
   const [saveSubstackEmail, setSaveSubstackEmail] = useState(true);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [photoTab, setPhotoTab] = useState<"library" | "upload">("library");
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -46,6 +66,14 @@ export default function JournalEntryPage() {
   const [waveformBars] = useState(() => Array.from({ length: 40 }, () => Math.random() * 24 + 8));
 
   const isDark = document.documentElement.classList.contains("dark");
+
+  // Colors
+  const bg = isDark ? "#1C1C1E" : "#FAF9F7";
+  const cardBg = isDark ? "#252528" : "white";
+  const borderCol = isDark ? "rgba(255,255,255,0.08)" : "#E8E5E0";
+  const textPrimary = isDark ? "#F2F2F2" : "#111827";
+  const textSecondary = isDark ? "rgba(255,255,255,0.4)" : "#B0ABA3";
+  const textBody = isDark ? "#E5E4E2" : "#111827";
 
   // Load existing entry
   const { data: existingEntry } = useQuery({
@@ -60,12 +88,15 @@ export default function JournalEntryPage() {
   useEffect(() => {
     if (existingEntry) {
       setTitle(existingEntry.title || "");
-      const c = typeof existingEntry.content === "string" ? existingEntry.content : (existingEntry.content_preview || "");
+      const c = typeof existingEntry.content === "string"
+        ? existingEntry.content
+        : (existingEntry.content_preview || "");
       setContent(c);
       setSelectedTags((existingEntry as any).tags || []);
       setImageUrl((existingEntry as any).image_url || null);
       setAudioUrl((existingEntry as any).audio_url || null);
       setEntryId(existingEntry.id);
+      setIsEditing(false);
       if (editorRef.current && c) editorRef.current.innerHTML = c;
     }
   }, [existingEntry]);
@@ -76,20 +107,22 @@ export default function JournalEntryPage() {
     const cached = localStorage.getItem(`dh_journal_prompt_${today}`);
     if (cached) { setDailyPrompt(cached); return; }
     supabase.functions.invoke("generate-trading-plan", {
-      body: { prompt: `Generate ONE thoughtful journaling question for today. Make it personal, reflective, and positive. Max 15 words. Just the question, nothing else. Examples: "What small moment brought you joy today?" "What are you grateful for that you often overlook?"` }
+      body: { prompt: `Generate ONE thoughtful journaling question for today. Make it personal, reflective, and positive. Max 15 words. Just the question, nothing else.` }
     }).then(({ data }) => {
       const p = data?.plan?.trim()?.replace(/^["']|["']$/g, "");
       if (p) { setDailyPrompt(p); localStorage.setItem(`dh_journal_prompt_${today}`, p); }
     }).catch(() => {});
   }, []);
 
-  // Substack email
   useEffect(() => {
     const saved = localStorage.getItem("dh_substack_email");
     if (saved) setSubstackEmail(saved);
   }, []);
 
-  const toggleTag = (tag: string) => setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  const toggleTag = (tag: string) => {
+    if (!isEditing) return;
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
 
   // Photo upload
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,6 +133,7 @@ export default function JournalEntryPage() {
     if (error) { toast.error("Upload failed"); return; }
     const { data } = supabase.storage.from("journal-media").getPublicUrl(path);
     setImageUrl(data.publicUrl);
+    setPhotoModalOpen(false);
   };
 
   // Voice recording
@@ -194,6 +228,15 @@ export default function JournalEntryPage() {
     finally { setSaving(false); }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Delete this entry? Cannot be undone.")) return;
+    if (!entryId || !user) return;
+    await supabase.from("journal_entries").delete().eq("id", entryId).eq("user_id", user.id);
+    qc.invalidateQueries({ queryKey: ["journal-entries-all"] });
+    navigate("/journal");
+    toast("Entry deleted");
+  };
+
   const handleSubstackPublish = () => {
     if (!substackEmail) return;
     if (saveSubstackEmail) localStorage.setItem("dh_substack_email", substackEmail);
@@ -204,159 +247,397 @@ export default function JournalEntryPage() {
     toast.success("Opening email to Substack...");
   };
 
+  const entryDate = existingEntry?.created_at
+    ? new Date(existingEntry.created_at)
+    : new Date();
+
+  const circleBtn = (onClick: () => void, icon: React.ReactNode) => (
+    <button onClick={onClick} style={{
+      width: 44, height: 44, borderRadius: "50%",
+      border: `1px solid ${borderCol}`, background: cardBg,
+      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+    }}>{icon}</button>
+  );
+
   return (
     <AppShell>
-      <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 16px 120px" }}>
-        {/* Back */}
-        <button onClick={() => navigate("/journal")} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", cursor: "pointer", fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", fontFamily: "Inter, sans-serif", marginBottom: 20, padding: 0 }}>
-          <ArrowLeft size={16} /> Back to Journal
-        </button>
+      <div style={{ background: bg, minHeight: "100vh" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 16px 120px" }}>
 
-        {/* Date */}
-        <p style={{ fontSize: 13, fontWeight: 600, color: "#10B981", textAlign: "center", margin: "0 0 12px", fontFamily: "Inter, sans-serif" }}>
-          {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-        </p>
-
-        {/* Title */}
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Give your entry a title..." style={{ width: "100%", fontSize: 28, fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827", border: "none", outline: "none", background: "transparent", textAlign: "center", fontFamily: "Inter, sans-serif", marginBottom: 16, letterSpacing: "-0.5px", boxSizing: "border-box" }} />
-
-        {/* Tags */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
-          {TAG_OPTIONS.map(tag => (
-            <button key={tag} onClick={() => toggleTag(tag)} style={{ padding: "6px 16px", borderRadius: 999, border: "1.5px solid", borderColor: selectedTags.includes(tag) ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"), background: selectedTags.includes(tag) ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : (isDark ? "#252528" : "white"), color: selectedTags.includes(tag) ? "#065F46" : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"), fontSize: 13, fontWeight: selectedTags.includes(tag) ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms" }}>
-              {tag}
+          {/* HEADER */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "16px 0", position: "sticky", top: 0, zIndex: 50, background: bg,
+          }}>
+            <button onClick={() => navigate("/journal")} style={{
+              width: 36, height: 36, borderRadius: "50%", border: `1px solid ${borderCol}`,
+              background: cardBg, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <ArrowLeft size={16} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
             </button>
-          ))}
+            <span style={{ fontSize: 15, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif" }}>
+              {isEditing ? (isNew ? "New Entry" : "Edit Entry") : "Journal Entry"}
+            </span>
+            {isEditing ? (
+              <button onClick={handleSave} disabled={saving} style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                fontSize: 14, fontWeight: 600, color: "#10B981", fontFamily: "Inter, sans-serif",
+                opacity: saving ? 0.6 : 1,
+              }}>
+                {saving ? "Saving..." : "Save"}
+              </button>
+            ) : (
+              <div style={{ width: 36 }} />
+            )}
+          </div>
+
+          {/* DATE */}
+          <p style={{
+            fontSize: 14, fontWeight: 600, color: "#10B981", textAlign: "center",
+            margin: "8px 0 12px", fontFamily: "Inter, sans-serif",
+          }}>
+            {entryDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+          </p>
+
+          {/* TITLE */}
+          {isEditing ? (
+            <input value={title} onChange={e => setTitle(e.target.value)}
+              placeholder="Give your entry a title..."
+              style={{
+                width: "100%", fontSize: 28, fontWeight: 800, color: textPrimary,
+                border: "none", outline: "none", background: "transparent", textAlign: "center",
+                fontFamily: "Inter, sans-serif", marginBottom: 16, letterSpacing: "-0.5px",
+                boxSizing: "border-box", 
+              }}
+            />
+          ) : (
+            <h1 style={{
+              fontSize: 28, fontWeight: 800, color: textPrimary, textAlign: "center",
+              fontFamily: "Inter, sans-serif", marginBottom: 16, letterSpacing: "-0.5px", margin: "0 0 16px",
+            }}>
+              {title || "Untitled Entry"}
+            </h1>
+          )}
+
+          {/* MOOD TAGS */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
+            {MOOD_TAGS.map(tag => {
+              const selected = selectedTags.includes(tag);
+              if (!isEditing && !selected) return null;
+              return (
+                <button key={tag} onClick={() => toggleTag(tag)} style={{
+                  padding: "6px 16px", borderRadius: 999,
+                  border: `1.5px solid ${selected ? "#10B981" : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`,
+                  background: selected ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : (isDark ? "#252528" : "white"),
+                  color: selected ? (isDark ? "#6EE7B7" : "#065F46") : (isDark ? "rgba(255,255,255,0.4)" : "#6B7280"),
+                  fontSize: 13, fontWeight: selected ? 600 : 400,
+                  cursor: isEditing ? "pointer" : "default",
+                  fontFamily: "Inter, sans-serif", transition: "all 150ms",
+                }}>
+                  {tag}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* AI PROMPT — only for new entries with no content */}
+          {isEditing && !content && isNew && (
+            <div style={{
+              padding: 16, background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
+              borderRadius: 12, border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`,
+              marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 12,
+            }}>
+              <Sparkles size={18} color="#7B5EA7" style={{ flexShrink: 0, marginTop: 2 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#7B5EA7", margin: "0 0 4px", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Today's Prompt</p>
+                <p style={{ fontSize: 14, color: isDark ? "#C4B5FD" : "#4C1D95", margin: 0, fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>{dailyPrompt}</p>
+              </div>
+              <button onClick={() => {
+                localStorage.removeItem(`dh_journal_prompt_${new Date().toDateString()}`);
+                setDailyPrompt("Loading...");
+                supabase.functions.invoke("generate-trading-plan", {
+                  body: { prompt: `Generate ONE thoughtful journaling question. Personal, reflective, positive. Max 15 words. Just the question.` }
+                }).then(({ data }) => {
+                  const p = data?.plan?.trim()?.replace(/^["']|["']$/g, "");
+                  if (p) setDailyPrompt(p);
+                });
+              }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}>
+                <RefreshCw size={14} color="#7B5EA7" />
+              </button>
+            </div>
+          )}
+
+          {/* PHOTO */}
+          {imageUrl && (
+            <div style={{ position: "relative", marginBottom: 20, borderRadius: 12, overflow: "hidden" }}>
+              <img src={imageUrl} alt="Journal" style={{ width: "100%", maxHeight: 340, objectFit: "cover", borderRadius: 12 }} />
+              {isEditing && (
+                <button onClick={() => setImageUrl(null)} style={{
+                  position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%",
+                  background: "rgba(0,0,0,0.5)", border: "none", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <X size={14} color="white" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* VOICE RECORDER / PLAYER */}
+          {(audioUrl || isRecording || isEditing) && (
+            <div style={{
+              marginBottom: 20, padding: 14, background: isDark ? "#252528" : "#FFFBF0",
+              borderRadius: 12, border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#FEF3C7"}`,
+            }}>
+              {!audioUrl && !isRecording && isEditing && (
+                <button onClick={startRecording} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  background: "transparent", border: "none", cursor: "pointer", width: "100%", padding: 0,
+                }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: isDark ? "rgba(245,158,11,0.15)" : "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Mic size={16} color="#F59E0B" />
+                  </div>
+                  <span style={{ fontSize: 13, color: textSecondary, fontFamily: "Inter, sans-serif" }}>Add a voice note</span>
+                </button>
+              )}
+              {isRecording && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button onClick={stopRecording} style={{
+                    width: 36, height: 36, borderRadius: "50%", background: "#EF4444",
+                    border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Square size={14} color="white" fill="white" />
+                  </button>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 2, height: 32 }}>
+                    {Array.from({ length: 20 }).map((_, i) => (
+                      <div key={i} style={{
+                        width: 3, borderRadius: 2, background: "#EF4444",
+                        animation: `wave 0.5s ease-in-out ${i * 0.05}s infinite alternate`, height: "60%",
+                      }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#EF4444", fontFamily: "Inter, sans-serif" }}>{recordingTime}s</span>
+                </div>
+              )}
+              {audioUrl && !isRecording && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button onClick={togglePlayback} style={{
+                    width: 36, height: 36, borderRadius: "50%", background: "#F59E0B",
+                    border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {isPlaying ? <Pause size={14} color="white" /> : <Play size={14} color="white" />}
+                  </button>
+                  <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: 1, height: 32 }}>
+                    {waveformBars.map((h, i) => (
+                      <div key={i} style={{
+                        width: 2, height: h, borderRadius: 1,
+                        background: isDark ? "rgba(245,158,11,0.4)" : "#FBBF24",
+                      }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 12, color: textSecondary, fontFamily: "Inter, sans-serif" }}>{audioDuration}</span>
+                  {isEditing && (
+                    <button onClick={() => { setAudioUrl(null); setAudioBlob(null); audioRef.current = null; }} style={{
+                      background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: 4,
+                    }}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* BODY TEXT */}
+          {isEditing ? (
+            <div ref={editorRef} contentEditable suppressContentEditableWarning
+              onInput={e => setContent((e.currentTarget as HTMLDivElement).innerHTML)}
+              data-placeholder="Start writing..."
+              style={{
+                minHeight: 200, padding: "0", fontSize: 16, lineHeight: 1.7,
+                color: textBody, outline: "none", fontFamily: "Inter, sans-serif",
+                caretColor: "#10B981", marginBottom: 24,
+              }}
+            />
+          ) : (
+            <div style={{
+              fontSize: 16, lineHeight: 1.7, color: textBody, fontFamily: "Inter, sans-serif",
+              marginBottom: 24, whiteSpace: "pre-wrap",
+            }}
+              dangerouslySetInnerHTML={{ __html: content || "<span style='color:#B0ABA3'>No content</span>" }}
+            />
+          )}
+
+          {/* THERAPIST + CHURCH LINKS */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20 }}>
+            <button onClick={() => window.open("https://www.psychologytoday.com/us/therapists", "_blank")} style={{
+              display: "flex", alignItems: "center", gap: 5, padding: "6px 14px",
+              backgroundColor: isDark ? "rgba(190,24,93,0.1)" : "#FDF2F8",
+              border: `1px solid ${isDark ? "rgba(190,24,93,0.2)" : "#FDF2F8"}`,
+              borderRadius: 999, fontSize: 12, fontWeight: 500, color: "#BE185D",
+              cursor: "pointer", fontFamily: "Inter, sans-serif",
+            }}>
+              <Heart size={12} color="#BE185D" /> Find a Therapist
+            </button>
+            <button onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  pos => window.open(`https://www.google.com/maps/search/church/@${pos.coords.latitude},${pos.coords.longitude},14z`, "_blank"),
+                  () => window.open("https://www.google.com/maps/search/church+near+me", "_blank")
+                );
+              } else {
+                window.open("https://www.google.com/maps/search/church+near+me", "_blank");
+              }
+            }} style={{
+              display: "flex", alignItems: "center", gap: 5, padding: "6px 14px",
+              backgroundColor: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF",
+              border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#F5F3FF"}`,
+              borderRadius: 999, fontSize: 12, fontWeight: 500, color: "#7B5EA7",
+              cursor: "pointer", fontFamily: "Inter, sans-serif",
+            }}>
+              <MapPin size={12} color="#7B5EA7" /> Find a Church
+            </button>
+          </div>
+
         </div>
 
-        {/* AI Prompt */}
-        {!content && !existingEntry && (
-          <div style={{ padding: 16, background: isDark ? "rgba(123,94,167,0.1)" : "#F5F3FF", borderRadius: 12, border: `1px solid ${isDark ? "rgba(123,94,167,0.2)" : "#DDD6FE"}`, marginBottom: 24, display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <Sparkles size={18} color="#7B5EA7" style={{ flexShrink: 0, marginTop: 2 }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, color: "#7B5EA7", margin: "0 0 4px", fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>Today's Prompt</p>
-              <p style={{ fontSize: 14, color: isDark ? "#C4B5FD" : "#4C1D95", margin: 0, fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>{dailyPrompt}</p>
-            </div>
-            <button onClick={() => { localStorage.removeItem(`dh_journal_prompt_${new Date().toDateString()}`); setDailyPrompt("Loading..."); supabase.functions.invoke("generate-trading-plan", { body: { prompt: `Generate ONE thoughtful journaling question. Personal, reflective, positive. Max 15 words. Just the question.` } }).then(({ data }) => { const p = data?.plan?.trim()?.replace(/^["']|["']$/g, ""); if (p) setDailyPrompt(p); }); }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4 }}>
-              <RefreshCw size={14} color="#7B5EA7" />
-            </button>
-          </div>
-        )}
-
-        {/* Photo */}
-        {imageUrl && (
-          <div style={{ position: "relative", marginBottom: 20, borderRadius: 12, overflow: "hidden" }}>
-            <img src={imageUrl} alt="Journal" style={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 12 }} />
-            <button onClick={() => setImageUrl(null)} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <X size={14} color="white" />
-            </button>
-          </div>
-        )}
-
-        {/* Voice Recorder */}
-        <div style={{ marginBottom: 20, padding: 16, background: isDark ? "#1C1C1E" : "#F9FAFB", borderRadius: 12, border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
-          {!audioUrl && !isRecording && (
-            <button onClick={startRecording} style={{ display: "flex", alignItems: "center", gap: 10, background: "transparent", border: "none", cursor: "pointer", width: "100%", padding: 0 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#FEE2E2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Mic size={16} color="#EF4444" />
-              </div>
-              <span style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>Add a voice note</span>
-            </button>
+        {/* BOTTOM ACTION BAR */}
+        <div style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: isDark ? "#1C1C1E" : "white",
+          borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E8E5E0"}`,
+          padding: "12px 0", display: "flex", justifyContent: "center", gap: 16,
+        }}>
+          {isEditing ? (
+            <>
+              {circleBtn(() => setPhotoModalOpen(true), <ImageIcon size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+              {circleBtn(() => setSubstackModalOpen(true), <Send size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+              {circleBtn(handleDelete, <Trash2 size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+            </>
+          ) : (
+            <>
+              {circleBtn(() => setIsEditing(true), <Pencil size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+              {circleBtn(() => setSubstackModalOpen(true), <Send size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+              {circleBtn(handleDelete, <Trash2 size={18} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />)}
+            </>
           )}
-          {isRecording && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <button onClick={stopRecording} style={{ width: 36, height: 36, borderRadius: "50%", background: "#EF4444", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Square size={14} color="white" fill="white" />
-              </button>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 2, height: 32 }}>
-                {Array.from({ length: 20 }).map((_, i) => (
-                  <div key={i} style={{ width: 3, borderRadius: 2, background: "#EF4444", animation: `wave 0.5s ease-in-out ${i * 0.05}s infinite alternate`, height: "60%" }} />
-                ))}
-              </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#EF4444", fontFamily: "Inter, sans-serif" }}>{recordingTime}s</span>
-            </div>
-          )}
-          {audioUrl && !isRecording && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button onClick={togglePlayback} style={{ width: 36, height: 36, borderRadius: "50%", background: "#10B981", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {isPlaying ? <Pause size={14} color="white" /> : <Play size={14} color="white" />}
-              </button>
-              <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: 1, height: 32 }}>
-                {waveformBars.map((h, i) => (
-                  <div key={i} style={{ width: 2, height: h, borderRadius: 1, background: isDark ? "rgba(255,255,255,0.2)" : "#D1D5DB" }} />
-                ))}
-              </div>
-              <span style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>{audioDuration}</span>
-              <button onClick={() => { setAudioUrl(null); setAudioBlob(null); audioRef.current = null; }} style={{ background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: 4 }}>
-                <Trash2 size={14} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Editor */}
-        <div style={{ marginBottom: 20, background: isDark ? "#1C1C1E" : "white", borderRadius: 12, border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, overflow: "hidden" }}>
-          <div style={{ display: "flex", gap: 4, padding: "8px 12px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}` }}>
-            {[{ label: "B", action: "bold", s: { fontWeight: 700 } as React.CSSProperties }, { label: "I", action: "italic", s: { fontStyle: "italic" } as React.CSSProperties }, { label: "U", action: "underline", s: { textDecoration: "underline" } as React.CSSProperties }].map(btn => (
-              <button key={btn.action} onClick={() => document.execCommand(btn.action)} style={{ width: 32, height: 32, borderRadius: 6, border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, background: isDark ? "#252528" : "white", cursor: "pointer", fontSize: 13, color: isDark ? "#F2F2F2" : "#374151", ...btn.s }}>
-                {btn.label}
-              </button>
-            ))}
-          </div>
-          <div ref={editorRef} contentEditable suppressContentEditableWarning onInput={e => setContent((e.currentTarget as HTMLDivElement).innerHTML)} data-placeholder="Start writing your thoughts..." style={{ minHeight: 200, padding: "16px", fontSize: 16, lineHeight: 1.7, color: isDark ? "#F2F2F2" : "#111827", outline: "none", fontFamily: "Inter, sans-serif", caretColor: "#10B981" }} />
-        </div>
-
-        {/* Bottom Action Bar */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: isDark ? "#1C1C1E" : "white", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 100 }}>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button onClick={() => photoInputRef.current?.click()} style={{ width: 40, height: 40, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Camera size={16} color={isDark ? "rgba(255,255,255,0.5)" : "#6B7280"} />
-            </button>
-            <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoUpload} />
-            <button onClick={() => setTherapistModalOpen(true)} style={{ padding: "8px 14px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6"}`, borderRadius: 999, background: isDark ? "#252528" : "white", cursor: "pointer", fontSize: 12, fontWeight: 500, color: isDark ? "rgba(255,255,255,0.6)" : "#374151", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
-              <Heart size={12} /> Find Therapist
-            </button>
-            <button onClick={() => setChurchModalOpen(true)} style={{ padding: "8px 14px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#F3F4F6"}`, borderRadius: 999, background: isDark ? "#252528" : "white", cursor: "pointer", fontSize: 12, fontWeight: 500, color: isDark ? "rgba(255,255,255,0.6)" : "#374151", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 5 }}>
-              <Church size={12} /> Find Church
-            </button>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setSubstackModalOpen(true)} style={{ padding: "8px 16px", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: 8, background: isDark ? "#252528" : "white", cursor: "pointer", fontSize: 13, fontWeight: 500, color: isDark ? "rgba(255,255,255,0.6)" : "#374151", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 6 }}>
-              <Send size={13} /> Substack
-            </button>
-            <button onClick={handleSave} disabled={saving} style={{ padding: "8px 20px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 6, opacity: saving ? 0.7 : 1 }}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Save Entry
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Substack Modal */}
+      {/* PHOTO LIBRARY MODAL */}
+      {photoModalOpen && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 10000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }} onClick={() => setPhotoModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24,
+            maxWidth: 560, width: "100%", maxHeight: "80vh", overflow: "auto",
+          }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: "0 0 16px", fontFamily: "Inter, sans-serif" }}>Add a Photo</h3>
+
+            {/* Tabs */}
+            <div style={{ display: "flex", gap: 0, marginBottom: 16, borderRadius: 8, overflow: "hidden", border: `1px solid ${borderCol}` }}>
+              {(["library", "upload"] as const).map(tab => (
+                <button key={tab} onClick={() => setPhotoTab(tab)} style={{
+                  flex: 1, padding: "10px 0", fontSize: 13, fontWeight: 600,
+                  fontFamily: "Inter, sans-serif", cursor: "pointer", border: "none",
+                  background: photoTab === tab ? "#10B981" : (isDark ? "#252528" : "#F9FAFB"),
+                  color: photoTab === tab ? "white" : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"),
+                }}>
+                  {tab === "library" ? "Choose from Library" : "Upload Photo"}
+                </button>
+              ))}
+            </div>
+
+            {photoTab === "library" ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {LIBRARY_IMAGES.map(img => (
+                  <div key={img.id} onClick={() => { setImageUrl(img.url); setPhotoModalOpen(false); }}
+                    style={{
+                      position: "relative", cursor: "pointer", borderRadius: 10, overflow: "hidden",
+                      aspectRatio: "1/1", border: imageUrl === img.url ? "3px solid #10B981" : `1px solid ${borderCol}`,
+                    }}>
+                    <img src={img.url} alt={img.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    {imageUrl === img.url && (
+                      <div style={{
+                        position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%",
+                        background: "#10B981", display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Check size={12} color="white" />
+                      </div>
+                    )}
+                    <div style={{
+                      position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 6px 4px",
+                      background: "linear-gradient(transparent, rgba(0,0,0,0.5))",
+                    }}>
+                      <span style={{ fontSize: 10, color: "white", fontFamily: "Inter, sans-serif" }}>{img.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <button onClick={() => photoInputRef.current?.click()} style={{
+                  padding: "12px 24px", background: "#10B981", color: "white", border: "none",
+                  borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                }}>
+                  Choose File
+                </button>
+                <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoUpload} />
+                <p style={{ fontSize: 12, color: textSecondary, marginTop: 12, fontFamily: "Inter, sans-serif" }}>JPG, PNG, or WebP</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SUBSTACK MODAL */}
       {substackModalOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setSubstackModalOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 420, width: "100%" }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 6px", fontFamily: "Inter, sans-serif" }}>Post to Substack</h3>
-            <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", margin: "0 0 20px", fontFamily: "Inter, sans-serif" }}>This will send your entry as a draft to your Substack publication.</p>
-            <label style={{ fontSize: 13, fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>Your Substack Draft Email</label>
-            <input value={substackEmail} onChange={e => setSubstackEmail(e.target.value)} placeholder="yourusername@substack.com" style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: 8, fontSize: 14, outline: "none", fontFamily: "Inter, sans-serif", boxSizing: "border-box", marginTop: 6, marginBottom: 8, background: isDark ? "#252528" : "white", color: isDark ? "#F2F2F2" : "#111827" }} />
-            <p style={{ fontSize: 11, color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", margin: "0 0 12px", fontFamily: "Inter, sans-serif" }}>Find this in Substack → Settings → Import → Email your draft address</p>
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 10000,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        }} onClick={() => setSubstackModalOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24,
+            maxWidth: 420, width: "100%",
+          }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: textPrimary, margin: "0 0 6px", fontFamily: "Inter, sans-serif" }}>Post to Substack</h3>
+            <p style={{ fontSize: 13, color: textSecondary, margin: "0 0 20px", fontFamily: "Inter, sans-serif" }}>Send your entry as a draft to your Substack publication.</p>
+            <label style={{ fontSize: 13, fontWeight: 600, color: textPrimary, fontFamily: "Inter, sans-serif" }}>Your Substack Draft Email</label>
+            <input value={substackEmail} onChange={e => setSubstackEmail(e.target.value)}
+              placeholder="yourusername@substack.com"
+              style={{
+                width: "100%", padding: "10px 14px", border: `1.5px solid ${borderCol}`,
+                borderRadius: 8, fontSize: 14, outline: "none", fontFamily: "Inter, sans-serif",
+                boxSizing: "border-box", marginTop: 6, marginBottom: 8,
+                background: isDark ? "#252528" : "white", color: textPrimary,
+              }}
+            />
+            <p style={{ fontSize: 11, color: textSecondary, margin: "0 0 12px", fontFamily: "Inter, sans-serif" }}>
+              Find this in Substack → Settings → Import → Email your draft address
+            </p>
             <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, cursor: "pointer" }}>
               <input type="checkbox" checked={saveSubstackEmail} onChange={e => setSaveSubstackEmail(e.target.checked)} />
-              <span style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", fontFamily: "Inter, sans-serif" }}>Remember this email</span>
+              <span style={{ fontSize: 13, color: textSecondary, fontFamily: "Inter, sans-serif" }}>Remember this email</span>
             </label>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setSubstackModalOpen(false)} style={{ flex: 1, padding: 11, border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: 10, background: isDark ? "#252528" : "white", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "Inter, sans-serif", color: isDark ? "#F2F2F2" : "#374151" }}>Cancel</button>
-              <button onClick={handleSubstackPublish} style={{ flex: 1, padding: 11, background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Send to Substack</button>
+              <button onClick={() => setSubstackModalOpen(false)} style={{
+                flex: 1, padding: 11, border: `1.5px solid ${borderCol}`, borderRadius: 10,
+                background: isDark ? "#252528" : "white", fontSize: 14, fontWeight: 500,
+                cursor: "pointer", fontFamily: "Inter, sans-serif", color: textPrimary,
+              }}>Cancel</button>
+              <button onClick={handleSubstackPublish} style={{
+                flex: 1, padding: 11, background: "#10B981", color: "white", border: "none",
+                borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>Send to Substack</button>
             </div>
           </div>
         </div>
       )}
 
-      <TherapistFinderModal open={therapistModalOpen} onClose={() => setTherapistModalOpen(false)} />
-      <ChurchFinderModal open={churchModalOpen} onClose={() => setChurchModalOpen(false)} />
-
       <style>{`
-        [contenteditable]:empty:before { content: attr(data-placeholder); color: #9CA3AF; pointer-events: none; }
+        [contenteditable]:empty:before { content: attr(data-placeholder); color: #B0ABA3; pointer-events: none; }
         @keyframes wave { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
       `}</style>
     </AppShell>
