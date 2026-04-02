@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  Camera, Shield, Hash, Presentation, FileCheck,
-  Eye, Plus, Target, X, Trash2, Pencil,
+  Shield, Hash, FileText, Award, Check,
+  Plus, Target, X, Trash2, Pencil,
 } from "lucide-react";
 
 interface StudioDoc {
@@ -39,8 +39,8 @@ interface StudioProfile {
 const DOC_ITEMS: { key: string; label: string; Icon: typeof Shield; color: string; isText?: boolean }[] = [
   { key: "llc_document", label: "LLC Document", Icon: Shield, color: "#7B5EA7" },
   { key: "ein_number", label: "EIN Number", Icon: Hash, color: "#10B981", isText: true },
-  { key: "pitch_deck", label: "Pitch Deck", Icon: Presentation, color: "#F59E0B" },
-  { key: "business_license", label: "Business License", Icon: FileCheck, color: "#3B82F6" },
+  { key: "pitch_deck", label: "Pitch Deck", Icon: FileText, color: "#F59E0B" },
+  { key: "business_license", label: "Business License", Icon: Award, color: "#3B82F6" },
 ];
 
 const GOAL_CATEGORIES = ["Followers", "Revenue", "Content", "Brand Deal", "Other"];
@@ -203,261 +203,272 @@ export default function StudioHeaderCard() {
     <>
       <div style={{
         background: isDark ? "#1C1C1E" : "white",
-        borderRadius: "14px",
-        border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+        borderRadius: "16px",
+        border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
         overflow: "hidden",
         marginBottom: "24px",
       }}>
         {/* BANNER */}
         <div style={{
           height: "100px",
-          background: "linear-gradient(135deg, #7B5EA7 0%, #6366F1 50%, #10B981 100%)",
+          background: "linear-gradient(135deg, #0F0F0F 0%, #1a1a2e 40%, #16213e 70%, #0d3b2e 100%)",
           position: "relative",
+          overflow: "hidden",
         }}>
           <div style={{
             position: "absolute", inset: 0,
-            background: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundImage: "radial-gradient(ellipse at 15% 50%, rgba(16,185,129,0.2) 0%, transparent 55%), radial-gradient(ellipse at 85% 30%, rgba(123,94,167,0.2) 0%, transparent 55%)",
           }} />
+          {studioName ? (
+            <div style={{
+              position: "absolute", inset: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <h1 style={{
+                fontSize: "28px", fontWeight: 800, color: "white",
+                letterSpacing: "-0.5px", fontFamily: "Inter, sans-serif",
+                textShadow: "0 2px 20px rgba(0,0,0,0.5)", margin: 0,
+              }}>
+                {studioName}
+              </h1>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSettingsOpen(true)}
+              style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: "transparent", border: "none", cursor: "pointer",
+                gap: "8px", color: "rgba(255,255,255,0.5)", fontSize: "15px",
+                fontWeight: 500, fontFamily: "Inter, sans-serif",
+              }}>
+              <Plus size={18} color="rgba(255,255,255,0.5)" />
+              Add your studio name
+            </button>
+          )}
           <button
             onClick={() => { setFormProfile({ studio_name: studioName, handle: studioHandle, ...formProfile }); setSettingsOpen(true); }}
             style={{
-              position: "absolute", top: "12px", right: "16px",
-              display: "flex", alignItems: "center", gap: "6px",
-              padding: "6px 12px", background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.2)", borderRadius: "6px",
-              color: "white", fontSize: "12px", fontWeight: 500, cursor: "pointer",
-              backdropFilter: "blur(4px)",
+              position: "absolute", top: "14px", right: "16px",
+              display: "flex", alignItems: "center", gap: "5px",
+              padding: "6px 12px", background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px",
+              color: "rgba(255,255,255,0.8)", fontSize: "12px", fontWeight: 500,
+              cursor: "pointer", backdropFilter: "blur(8px)",
+              fontFamily: "Inter, sans-serif", zIndex: 2,
             }}>
-            <Pencil size={12} /> Edit Studio
+            <Pencil size={11} />
+            Edit Studio
           </button>
         </div>
 
-        {/* CONTENT */}
+        {/* BOTTOM — clean horizontal */}
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 380px", gap: "24px",
-          padding: "20px 24px 24px",
+          display: "grid", gridTemplateColumns: "1fr auto 1fr",
+          padding: "20px 28px", alignItems: "start",
         }}>
-          {/* LEFT — Identity + Docs */}
+          {/* LEFT — Business Docs */}
           <div>
-            {studioName ? (
-              <h2 style={{
-                fontSize: "22px", fontWeight: 800, margin: "0 0 2px",
-                color: isDark ? "#F2F2F2" : "#111827",
-              }}>{studioName}</h2>
-            ) : (
-              <button
-                onClick={() => setSettingsOpen(true)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  padding: "10px 16px", border: "2px dashed #D1D5DB",
-                  borderRadius: "10px", background: "transparent",
-                  color: "#9CA3AF", fontSize: "14px", cursor: "pointer", width: "100%",
-                }}>
-                <Plus size={14} /> Add your studio / brand name
-              </button>
-            )}
-            {studioHandle && (
-              <p style={{ fontSize: "13px", color: "#9CA3AF", margin: "0 0 16px" }}>
-                @{studioHandle}
-              </p>
-            )}
-            {!studioHandle && studioName && <div style={{ height: "16px" }} />}
-
-            {/* Business Documents */}
-            <div style={{ marginTop: studioName ? "0" : "16px" }}>
-              <p style={{
-                fontSize: "11px", fontWeight: 600, color: "#9CA3AF",
-                textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 10px",
-              }}>Business Documents</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {DOC_ITEMS.map(doc => {
-                  const val = studioDocs[doc.key as keyof StudioDoc];
-                  return (
-                    <div key={doc.key} style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "10px 14px",
-                      background: isDark ? "#252528" : "#F9FAFB",
-                      border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
-                      borderRadius: "8px",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{
-                          width: "32px", height: "32px", borderRadius: "8px",
-                          background: `${doc.color}15`, display: "flex",
-                          alignItems: "center", justifyContent: "center",
+            <p style={{
+              fontSize: "11px", fontWeight: 600, color: "#9CA3AF",
+              textTransform: "uppercase", letterSpacing: "0.8px",
+              marginBottom: "14px", fontFamily: "Inter, sans-serif",
+            }}>
+              Business Documents
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {DOC_ITEMS.map(doc => {
+                const val = studioDocs[doc.key as keyof StudioDoc];
+                return (
+                  <div key={doc.key} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <doc.Icon size={14} color={val ? doc.color : "#D1D5DB"} />
+                      <span style={{
+                        fontSize: "13px", fontFamily: "Inter, sans-serif",
+                        color: val
+                          ? (isDark ? "#F2F2F2" : "#111827")
+                          : (isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF"),
+                        fontWeight: val ? 500 : 400,
+                      }}>
+                        {doc.label}
+                      </span>
+                      {val && (
+                        <span style={{
+                          fontSize: "11px", color: "#10B981",
+                          display: "flex", alignItems: "center", gap: "3px",
                         }}>
-                          <doc.Icon size={15} color={doc.color} />
-                        </div>
-                        <div>
-                          <p style={{
-                            fontSize: "13px", fontWeight: 600, margin: 0,
-                            color: isDark ? "#F2F2F2" : "#111827",
-                          }}>{doc.label}</p>
-                          <p style={{
-                            fontSize: "11px", margin: 0,
-                            color: val ? "#10B981" : "#9CA3AF",
-                          }}>
-                            {val ? (doc.isText ? val : "Uploaded ✓") : "Not added yet"}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDocAction(doc)}
-                        style={{
-                          padding: "5px 10px",
-                          background: val ? "transparent" : (isDark ? "#1C1C1E" : "#F3F4F6"),
-                          border: val ? `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}` : "none",
-                          borderRadius: "6px", fontSize: "11px", fontWeight: 500,
-                          color: isDark ? "#F2F2F2" : (val ? "#374151" : "#6B7280"),
-                          cursor: "pointer", display: "flex", alignItems: "center", gap: "4px",
-                        }}>
-                        {val ? (<><Eye size={11} /> View</>) : (<><Plus size={11} /> Add</>)}
-                      </button>
+                          <Check size={10} />
+                          {doc.isText ? val : "Added"}
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                    <button
+                      onClick={() => handleDocAction(doc)}
+                      style={{
+                        background: "transparent", border: "none",
+                        fontSize: "12px",
+                        color: val ? "#6B7280" : "#10B981",
+                        cursor: "pointer", fontWeight: 500,
+                        fontFamily: "Inter, sans-serif",
+                      }}>
+                      {val ? "View →" : "+ Add"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* RIGHT — Cycling Goals */}
+          {/* CENTER DIVIDER */}
+          <div style={{
+            width: "1px",
+            background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
+            alignSelf: "stretch", margin: "0 32px",
+          }} />
+
+          {/* RIGHT — Goals */}
           <div>
             <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              marginBottom: "12px",
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", marginBottom: "14px",
             }}>
               <p style={{
                 fontSize: "11px", fontWeight: 600, color: "#9CA3AF",
-                textTransform: "uppercase", letterSpacing: "0.5px", margin: 0,
-              }}>Studio Goals</p>
+                textTransform: "uppercase", letterSpacing: "0.8px",
+                fontFamily: "Inter, sans-serif", margin: 0,
+              }}>
+                Studio Goals
+              </p>
               <button
                 onClick={() => setAddGoalOpen(true)}
                 style={{
-                  display: "flex", alignItems: "center", gap: "4px",
-                  padding: "4px 10px", background: "transparent",
-                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  borderRadius: "6px", fontSize: "11px",
-                  color: isDark ? "#9CA3AF" : "#6B7280", cursor: "pointer",
+                  background: "transparent", border: "none",
+                  fontSize: "12px", color: "#10B981", cursor: "pointer",
+                  fontWeight: 500, display: "flex", alignItems: "center",
+                  gap: "4px", fontFamily: "Inter, sans-serif",
                 }}>
-                <Plus size={11} /> Add Goal
+                <Plus size={12} />
+                Add
               </button>
             </div>
 
             {studioGoals.length > 0 && currentGoal ? (
-              <>
-                <div style={{
-                  background: "linear-gradient(135deg, #1C1C2E, #2D1B4E)",
-                  borderRadius: "12px", padding: "20px", position: "relative", overflow: "hidden",
-                }}>
+              <div>
+                <div style={{ marginBottom: "14px" }}>
                   <div style={{
-                    position: "absolute", top: "-20px", right: "-20px",
-                    width: "80px", height: "80px", borderRadius: "50%",
-                    background: "rgba(16,185,129,0.15)",
-                  }} />
-                  <div>
-                    <div style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      marginBottom: "10px",
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center", marginBottom: "6px",
+                  }}>
+                    <span style={{
+                      fontSize: "14px", fontWeight: 600,
+                      color: isDark ? "#F2F2F2" : "#111827",
+                      fontFamily: "Inter, sans-serif",
                     }}>
-                      <span style={{
-                        fontSize: "10px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
-                        textTransform: "uppercase", letterSpacing: "0.5px",
-                      }}>Current Focus</span>
-                      <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)" }}>
-                        {currentGoalIndex + 1} of {studioGoals.length}
-                      </span>
-                    </div>
-                    <p style={{
-                      fontSize: "16px", fontWeight: 700, color: "white", margin: "0 0 14px",
-                    }}>{currentGoal.title}</p>
-                    <div style={{
-                      height: "6px", borderRadius: "999px",
-                      background: "rgba(255,255,255,0.1)", overflow: "hidden",
+                      {currentGoal.title}
+                    </span>
+                    <span style={{
+                      fontSize: "13px", fontWeight: 700, color: "#10B981",
+                      fontFamily: "Inter, sans-serif",
                     }}>
-                      <div style={{
-                        height: "100%", borderRadius: "999px",
-                        background: "linear-gradient(90deg, #10B981, #34D399)",
-                        width: `${currentGoal.progress}%`,
-                        transition: "width 500ms ease",
-                      }} />
-                    </div>
-                    <div style={{
-                      display: "flex", justifyContent: "space-between",
-                      marginTop: "8px",
-                    }}>
-                      <span style={{ fontSize: "11px", color: "#10B981" }}>
-                        {currentGoal.progress}% complete
-                      </span>
-                      {currentGoal.deadline && (
-                        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>
-                          Due {new Date(currentGoal.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </span>
-                      )}
-                    </div>
+                      {currentGoal.progress || 0}%
+                    </span>
                   </div>
-                  {studioGoals.length > 1 && (
+                  <div style={{
+                    height: "4px",
+                    background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6",
+                    borderRadius: "999px", overflow: "hidden",
+                  }}>
                     <div style={{
-                      display: "flex", justifyContent: "center", gap: "6px", marginTop: "14px",
+                      height: "100%",
+                      width: `${currentGoal.progress || 0}%`,
+                      background: "linear-gradient(90deg, #10B981, #059669)",
+                      borderRadius: "999px",
+                      transition: "width 500ms ease",
+                    }} />
+                  </div>
+                  {currentGoal.deadline && (
+                    <p style={{
+                      fontSize: "11px",
+                      color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                      marginTop: "4px", fontFamily: "Inter, sans-serif",
                     }}>
-                      {studioGoals.map((_, i) => (
-                        <button key={i} onClick={() => setCurrentGoalIndex(i)} style={{
-                          width: i === currentGoalIndex ? "20px" : "6px",
-                          height: "6px", borderRadius: "999px",
-                          background: i === currentGoalIndex ? "#10B981" : "rgba(255,255,255,0.2)",
-                          border: "none", cursor: "pointer", padding: 0,
-                          transition: "all 300ms ease",
-                        }} />
-                      ))}
-                    </div>
+                      Due {new Date(currentGoal.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
                   )}
                 </div>
 
-                {/* Goals list */}
-                <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                  {studioGoals.map((goal) => (
-                    <div key={goal.id} style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      padding: "8px 12px",
-                      borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`,
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{
-                          width: "6px", height: "6px", borderRadius: "50%",
-                          background: goal.progress >= 100 ? "#10B981" : "#D1D5DB",
-                          flexShrink: 0,
-                        }} />
-                        <span style={{
-                          fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151",
-                        }}>{goal.title}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "11px", color: "#9CA3AF" }}>{goal.progress}%</span>
-                        <button onClick={() => handleDeleteGoal(goal.id)} style={{
-                          background: "transparent", border: "none", cursor: "pointer",
-                          color: "#D1D5DB", padding: "2px",
+                {studioGoals.length > 1 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {studioGoals
+                      .filter((_, i) => i !== currentGoalIndex)
+                      .slice(0, 2)
+                      .map((goal, i) => (
+                        <div key={i} style={{
+                          display: "flex", alignItems: "center", gap: "8px",
                         }}>
-                          <X size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+                          <div style={{
+                            width: "5px", height: "5px", borderRadius: "50%",
+                            background: "#D1D5DB", flexShrink: 0,
+                          }} />
+                          <span style={{
+                            fontSize: "12px",
+                            color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280",
+                            flex: 1, overflow: "hidden",
+                            textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            fontFamily: "Inter",
+                          }}>
+                            {goal.title}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#9CA3AF" }}>
+                            {goal.progress}%
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {studioGoals.length > 1 && (
+                  <div style={{ display: "flex", gap: "4px", marginTop: "12px" }}>
+                    {studioGoals.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentGoalIndex(i)}
+                        style={{
+                          width: i === currentGoalIndex ? "16px" : "5px",
+                          height: "5px", borderRadius: "999px",
+                          background: i === currentGoalIndex
+                            ? "#10B981"
+                            : (isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"),
+                          border: "none", cursor: "pointer", padding: 0,
+                          transition: "all 250ms",
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
-              <div style={{
-                textAlign: "center", padding: "40px 20px",
-                background: "linear-gradient(135deg, #1C1C2E, #2D1B4E)",
-                borderRadius: "12px",
-              }}>
-                <Target size={32} color="rgba(255,255,255,0.3)" style={{ margin: "0 auto 12px" }} />
-                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", margin: "0 0 16px" }}>
-                  No studio goals yet
+              <div>
+                <p style={{
+                  fontSize: "13px",
+                  color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                  fontStyle: "italic", marginBottom: "10px",
+                  fontFamily: "Inter, sans-serif",
+                }}>
+                  No goals added yet
                 </p>
-                <button onClick={() => setAddGoalOpen(true)} style={{
-                  padding: "8px 16px", background: "#10B981", color: "white",
-                  border: "none", borderRadius: "8px", fontSize: "13px",
-                  fontWeight: 600, cursor: "pointer",
-                }}>Add First Goal</button>
+                <button
+                  onClick={() => setAddGoalOpen(true)}
+                  style={{
+                    padding: "7px 14px", background: "#F0FDF4",
+                    border: "1px solid #BBF7D0", borderRadius: "8px",
+                    fontSize: "13px", fontWeight: 600, color: "#065F46",
+                    cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  }}>
+                  Add First Goal
+                </button>
               </div>
             )}
           </div>
