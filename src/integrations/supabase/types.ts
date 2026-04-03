@@ -3718,11 +3718,13 @@ export type Database = {
       user_preferences: {
         Row: {
           accent_colors: Json | null
+          annual_start_date: string | null
           app_banner_text: string | null
           app_banner_url: string | null
           applications_header_type: string | null
           applications_header_value: string | null
           banner_color: string | null
+          billing_cycle: string | null
           bio: string | null
           broker_url: string | null
           content_planner_access: boolean | null
@@ -3760,6 +3762,7 @@ export type Database = {
           signup_number: number | null
           student_email: string | null
           student_verified: boolean | null
+          studio_unlocked: boolean | null
           subscription_type: string | null
           template_notifications: boolean | null
           theme_color: string | null
@@ -3777,11 +3780,13 @@ export type Database = {
         }
         Insert: {
           accent_colors?: Json | null
+          annual_start_date?: string | null
           app_banner_text?: string | null
           app_banner_url?: string | null
           applications_header_type?: string | null
           applications_header_value?: string | null
           banner_color?: string | null
+          billing_cycle?: string | null
           bio?: string | null
           broker_url?: string | null
           content_planner_access?: boolean | null
@@ -3819,6 +3824,7 @@ export type Database = {
           signup_number?: number | null
           student_email?: string | null
           student_verified?: boolean | null
+          studio_unlocked?: boolean | null
           subscription_type?: string | null
           template_notifications?: boolean | null
           theme_color?: string | null
@@ -3836,11 +3842,13 @@ export type Database = {
         }
         Update: {
           accent_colors?: Json | null
+          annual_start_date?: string | null
           app_banner_text?: string | null
           app_banner_url?: string | null
           applications_header_type?: string | null
           applications_header_value?: string | null
           banner_color?: string | null
+          billing_cycle?: string | null
           bio?: string | null
           broker_url?: string | null
           content_planner_access?: boolean | null
@@ -3878,6 +3886,7 @@ export type Database = {
           signup_number?: number | null
           student_email?: string | null
           student_verified?: boolean | null
+          studio_unlocked?: boolean | null
           subscription_type?: string | null
           template_notifications?: boolean | null
           theme_color?: string | null
