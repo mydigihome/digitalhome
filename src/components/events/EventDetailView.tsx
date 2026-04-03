@@ -661,16 +661,25 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                   );
                 })}
 
-              {/* + Add Stage button */}
-              <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none" }}>
+              <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none", display: "flex", gap: 12, alignItems: "center" }}>
                 {!showAddStage ? (
-                  <button
-                    onClick={() => setShowAddStage(true)}
-                    className="cursor-pointer"
-                    style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                  >
-                    + Add Stage
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowAddStage(true)}
+                      className="cursor-pointer"
+                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+                    >
+                      + Add Stage
+                    </button>
+                    <button
+                      onClick={handleGenerateAIStages}
+                      disabled={generatingStages}
+                      className="cursor-pointer"
+                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+                    >
+                      {generatingStages ? "Generating..." : "✨ Generate AI Stages"}
+                    </button>
+                  </>
                 ) : (
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 150 }}>
