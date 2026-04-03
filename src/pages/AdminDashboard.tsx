@@ -499,6 +499,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         </>)}
+      </div>
 
       {/* GHOST USER PANEL */}
       {ghostPanelOpen && ghostUser && (
