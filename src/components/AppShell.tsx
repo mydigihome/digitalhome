@@ -437,8 +437,6 @@ function MobileTabBar() {
   }, []);
 
   const moreItems = [
-    { icon: Sparkles, label: "Content Planner", path: "/vision" },
-    { icon: BookOpen, label: "Resources", path: "/resources" },
     { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
