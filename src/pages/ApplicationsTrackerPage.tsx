@@ -699,6 +699,7 @@ export default function ApplicationsTrackerPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Add/Edit Application Modal */}
         {showForm && (
