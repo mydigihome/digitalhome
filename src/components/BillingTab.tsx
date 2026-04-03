@@ -38,6 +38,8 @@ export default function BillingTab({
   verifying, setVerifying,
 }: BillingTabProps) {
   const [foundingCount, setFoundingCount] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const plan = usePlan();
 
   useEffect(() => {
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("founding_member", true)
