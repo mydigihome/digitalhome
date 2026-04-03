@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { RefreshCw, Loader2, Plus, X, TrendingUp, Heart, MessageCircle, BarChart3, Clock, Search } from "lucide-react";
+import { RefreshCw, Loader2, Plus, X, TrendingUp, Heart, MessageCircle, BarChart3, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,9 +36,17 @@ const mockRecentPosts = [
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const hoursOfDay = ["6a", "8a", "10a", "12p", "2p", "4p", "6p", "8p", "10p"];
 
-const heatmapData = daysOfWeek.map((day) =>
+const heatmapData = daysOfWeek.map(() =>
   hoursOfDay.map(() => Math.random())
 );
+
+const connectPlatformOptions = [
+  { id: "youtube", label: "YouTube" },
+  { id: "instagram", label: "Instagram" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "twitterx", label: "Twitter/X" },
+  { id: "substack", label: "Substack" },
+];
 
 export default function StudioPlatformsView() {
   const isMobile = useIsMobile();
@@ -46,36 +54,36 @@ export default function StudioPlatformsView() {
 
   const [activePlatform, setActivePlatform] = useState("instagram");
   const [platforms, setPlatforms] = useState<PlatformTab[]>(defaultPlatforms);
-  const [showConnectModal, setShowConnectModal] = useState(false);
-  const [youtubeHandle, setYoutubeHandle] = useState("");
-  const [connecting, setConnecting] = useState(false);
+  const [showConnect, setShowConnect] = useState(false);
+  const [connectPlatform, setConnectPlatform] = useState("youtube");
+  const [connectHandle, setConnectHandle] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
   const [analysisText, setAnalysisText] = useState("Connect your platforms and click Refresh Analysis to get AI-powered insights about your content performance, audience growth, and optimal posting strategy.");
   const [refreshingAnalysis, setRefreshingAnalysis] = useState(false);
 
-  const [studioData, setStudioData] = useState<any>(null);
+  const loadStudioProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("studio_profile")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data) {
+      const d = data as any;
+      setPlatforms((prev) =>
+        prev.map((p) => {
+          if (p.id === "youtube") return { ...p, followers: d.youtube_subscribers || 0 };
+          if (p.id === "instagram") return { ...p, followers: d.instagram_followers || 0 };
+          if (p.id === "tiktok") return { ...p, followers: d.tiktok_followers || 0 };
+          if (p.id === "twitter") return { ...p, followers: d.twitter_followers || 0 };
+          return p;
+        })
+      );
+    }
+  };
 
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from("studio_profile")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (data) {
-        setStudioData(data);
-        const d = data as any;
-        setPlatforms((prev) =>
-          prev.map((p) => {
-            if (p.id === "youtube") return { ...p, followers: d.youtube_subscribers || 0 };
-            if (p.id === "instagram") return { ...p, followers: d.instagram_followers || 0 };
-            if (p.id === "tiktok") return { ...p, followers: d.tiktok_followers || 0 };
-            if (p.id === "twitter") return { ...p, followers: d.twitter_followers || 0 };
-            return p;
-          })
-        );
-      }
-    })();
+    loadStudioProfile();
   }, [user]);
 
   const activeData = useMemo(() => {
@@ -88,36 +96,69 @@ export default function StudioPlatformsView() {
     };
   }, [activePlatform, platforms]);
 
-  const connectYouTube = async () => {
-    if (!youtubeHandle.trim() || !user) return;
-    setConnecting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("fetch-youtube-stats", { body: { handle: youtubeHandle } });
-      if (error || !data?.channel) {
-        toast.error(data?.error || "Channel not found. Try a different handle or URL.");
-        return;
-      }
-      const ch = data.channel;
-      await supabase.from("studio_profile").upsert({
-        user_id: user.id,
-        youtube_handle: ch.handle || youtubeHandle,
-        youtube_channel_id: ch.channel_id,
-        youtube_subscribers: ch.subscribers,
-        youtube_total_views: ch.total_views,
-        youtube_video_count: ch.video_count,
-        youtube_recent_videos: ch.recent_videos,
-        youtube_connected: true,
-        youtube_synced_at: new Date().toISOString(),
-      } as any, { onConflict: "user_id" });
+  const handleConnect = async () => {
+    if (!connectHandle.trim() || !user) return;
+    setIsConnecting(true);
 
-      setPlatforms((prev) => prev.map((p) => (p.id === "youtube" ? { ...p, followers: ch.subscribers } : p)));
-      setShowConnectModal(false);
-      setYoutubeHandle("");
-      toast.success(`YouTube connected! ${ch.subscribers.toLocaleString()} subscribers`);
-    } catch {
-      toast.error("Connection failed. Please try again.");
+    try {
+      if (connectPlatform === "youtube") {
+        const input = connectHandle.trim();
+        const channelIdMatch = input.match(/channel\/(UC[a-zA-Z0-9_-]{22})/);
+
+        const body = channelIdMatch
+          ? { handle: channelIdMatch[1] }
+          : { handle: input };
+
+        const { data, error } = await supabase.functions.invoke("fetch-youtube-stats", { body });
+
+        if (error || !data?.channel) {
+          toast.error(data?.error || "Channel not found. Try your exact channel URL: youtube.com/@YourHandle");
+          return;
+        }
+
+        const ch = data.channel;
+        await supabase.from("studio_profile").upsert({
+          user_id: user.id,
+          youtube_handle: ch.handle || input,
+          youtube_channel_id: ch.channel_id,
+          youtube_subscribers: ch.subscribers,
+          youtube_total_views: ch.total_views,
+          youtube_video_count: ch.video_count,
+          youtube_recent_videos: ch.recent_videos,
+          youtube_connected: true,
+          youtube_synced_at: new Date().toISOString(),
+        } as any, { onConflict: "user_id" });
+
+        toast.success(`YouTube connected! ${ch.subscribers.toLocaleString()} subscribers`);
+      } else {
+        const field = connectPlatform === "twitterx" ? "twitter" : connectPlatform;
+        const cleanHandle = connectHandle.trim().replace(/^@/, "");
+
+        const updateObj: any = {
+          user_id: user.id,
+          [`${field}_handle`]: cleanHandle,
+          [`${field}_connected`]: true,
+        };
+        if (field !== "substack") {
+          updateObj[`${field}_synced_at`] = new Date().toISOString();
+        }
+        if (field === "substack") {
+          updateObj.substack_url = connectHandle.includes("http") ? connectHandle : `https://${connectHandle}`;
+          delete updateObj.substack_handle;
+          delete updateObj.substack_connected;
+        }
+
+        await supabase.from("studio_profile").upsert(updateObj as any, { onConflict: "user_id" });
+        toast.success(`${connectPlatform === "twitterx" ? "Twitter/X" : connectPlatform.charAt(0).toUpperCase() + connectPlatform.slice(1)} saved`);
+      }
+
+      setConnectHandle("");
+      setShowConnect(false);
+      await loadStudioProfile();
+    } catch (err: any) {
+      toast.error(err.message || "Connection failed");
     } finally {
-      setConnecting(false);
+      setIsConnecting(false);
     }
   };
 
@@ -137,6 +178,12 @@ export default function StudioPlatformsView() {
     if (value > 0.4) return "bg-primary/30";
     if (value > 0.2) return "bg-primary/15";
     return "bg-muted";
+  };
+
+  const getPlaceholder = () => {
+    if (connectPlatform === "youtube") return "@yourchannel or channel URL";
+    if (connectPlatform === "substack") return "yourname.substack.com";
+    return "@yourhandle";
   };
 
   return (
@@ -161,13 +208,65 @@ export default function StudioPlatformsView() {
           </button>
         ))}
         <button
-          onClick={() => setShowConnectModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40 transition-all"
+          onClick={() => setShowConnect(!showConnect)}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium border transition-all ${
+            showConnect
+              ? "border-primary text-primary bg-primary/10"
+              : "border-dashed border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+          }`}
         >
-          <Plus className="w-3.5 h-3.5" />
+          {showConnect ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           Connect
         </button>
       </div>
+
+      {/* Inline Connect Panel */}
+      {showConnect && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-foreground">Connect a platform</p>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {connectPlatformOptions.map((cp) => (
+              <button
+                key={cp.id}
+                onClick={() => { setConnectPlatform(cp.id); setConnectHandle(""); }}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                  connectPlatform === cp.id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/40"
+                }`}
+              >
+                {cp.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={connectHandle}
+              onChange={(e) => setConnectHandle(e.target.value)}
+              placeholder={getPlaceholder()}
+              onKeyDown={(e) => { if (e.key === "Enter") handleConnect(); }}
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <button
+              onClick={handleConnect}
+              disabled={!connectHandle.trim() || isConnecting}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
+            >
+              {isConnecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isConnecting ? "Connecting..." : "Connect"}
+            </button>
+          </div>
+
+          {connectPlatform === "youtube" && (
+            <p className="text-[11px] text-muted-foreground">
+              Try: @YourChannel or paste your full YouTube channel URL
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -242,13 +341,11 @@ export default function StudioPlatformsView() {
         </h3>
         <div className="overflow-x-auto">
           <div className="min-w-[400px]">
-            {/* Hour headers */}
             <div className="flex ml-10 mb-1">
               {hoursOfDay.map((h) => (
                 <span key={h} className="flex-1 text-center text-[10px] text-muted-foreground">{h}</span>
               ))}
             </div>
-            {/* Rows */}
             {daysOfWeek.map((day, di) => (
               <div key={day} className="flex items-center gap-1 mb-1">
                 <span className="w-9 text-xs text-muted-foreground text-right pr-1">{day}</span>
@@ -287,48 +384,6 @@ export default function StudioPlatformsView() {
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{analysisText}</p>
       </div>
-
-      {/* Connect Modal */}
-      {showConnectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowConnectModal(false)}>
-          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-foreground">Connect Platform</h3>
-              <button onClick={() => setShowConnectModal(false)} className="text-muted-foreground hover:text-foreground">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">Enter your YouTube channel handle or URL to connect and pull in your stats.</p>
-            <div className="flex items-center gap-2 mb-3">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <input
-                type="text"
-                value={youtubeHandle}
-                onChange={(e) => setYoutubeHandle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") connectYouTube(); }}
-                placeholder="@yourchannel or channel URL"
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowConnectModal(false)}
-                className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={connectYouTube}
-                disabled={!youtubeHandle.trim() || connecting}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {connecting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                {connecting ? "Connecting..." : "Connect"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
