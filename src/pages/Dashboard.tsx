@@ -796,7 +796,7 @@ export default function Dashboard() {
           {/* ═══ HERO BANNER ═══ */}
           <div
             className="relative w-full overflow-hidden rounded-2xl mb-6 group cursor-pointer"
-            style={{ height: 220 }}
+            style={{ height: window.innerWidth < 768 ? 160 : 220 }}
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file"; input.accept = "image/*";
