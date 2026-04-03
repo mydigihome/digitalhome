@@ -610,9 +610,9 @@ export default function Dashboard() {
                 </div>
                 <button onClick={() => navigate("/journal/new")} className="text-sm font-medium text-success hover:underline">New Journal Entry</button>
               </div>
-              <div className="px-5 pb-5" style={{ display: "flex", gap: 20 }}>
+              <div className="px-5 pb-5 flex flex-col sm:flex-row gap-5">
                 {/* LEFT — Entry list */}
-                <div style={{ flex: "0 0 60%" }}>
+                <div className="flex-1 sm:flex-[0_0_60%]">
                   {(journalEntries.length > 0 ? journalEntries : [
                     { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), mood_emoji: "", mood: "Calm" },
                     { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), mood_emoji: "", mood: "Anxious" },
