@@ -180,12 +180,8 @@ export default function SettingsPage() {
     if (p.welcome_video_url) setWelcomeVideoUrl(p.welcome_video_url);
     if (p.billing_cycle) setBillingCycle(p.billing_cycle as "monthly" | "annual");
     if (p.studio_unlocked) setStudioUnlocked(true);
-    if (p.billing_cycle === "annual" && p.annual_start_date) {
-      setAnnualLocked(true);
-      const renewal = new Date(p.annual_start_date);
-      renewal.setFullYear(renewal.getFullYear() + 1);
-      setRenewalDate(renewal.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
-    }
+    if (p.plan_tier) setCurrentPlan(p.plan_tier);
+    if (p.student_verified) { setStudentVerified(true); setStudentDiscount(true); }
     setSubstackEmail(localStorage.getItem("substack-email") || "");
   }, [prefs]);
 
