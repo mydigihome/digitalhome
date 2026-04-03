@@ -659,6 +659,12 @@ export default function SettingsPage() {
                   {plan.badge && (
                     <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
                   )}
+                  {(plan as any).badgeCustom && !plan.badge && (
+                    <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: "#FEF2F2", color: "#DC2626", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4, border: "1px solid #FECACA" }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#DC2626", display: "inline-block" }} />
+                      {(plan as any).badgeCustom}
+                    </div>
+                  )}
                   <p style={{ fontSize: 13, fontWeight: 700, color: plan.color, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</p>
                   <div style={{ marginBottom: 6 }}>
                     {discountedPrice ? (
