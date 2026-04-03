@@ -845,7 +845,7 @@ export default function Dashboard() {
             </div>
 
             {/* Quick-action circles at bottom of hero */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-5">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 sm:gap-5">
               {heroActions.map((action) => {
                 const Icon = action.icon;
                 return (
