@@ -23,10 +23,23 @@ const ACCENT_THEMES = [
   { name: "Minimal", primary: "#374151", secondary: "#6B7280", label: "Minimal" },
 ];
 
-const PLANS = [
-  { tier: "free", name: "Free", price: "$0", period: "/month", color: "#6B7280", features: ["Dashboard & Journal", "Basic project tracking", "Up to 25 contacts", "Studio overview", "1 bank connection"] },
-  { tier: "standard", name: "Standard", price: "$12", period: "/month", color: "#10B981", popular: true, features: ["Everything in Free", "Unlimited contacts", "AI trading plans", "Content pipeline", "Email templates", "Studio collaboration"] },
-  { tier: "pro", name: "Pro", price: "$29", period: "/month", color: "#7B5EA7", features: ["Everything in Standard", "Unlimited AI generation", "Priority support", "Custom domain", "White-label option", "API access"] },
+const BILLING_PLANS = [
+  {
+    tier: "founding", name: "Founding Member", badge: "🏆 First 50 Only",
+    monthlyPrice: 7, annualPrice: 49, monthlyPerYear: 84, annualMonthly: 4,
+    color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A",
+    description: "Locked forever · Never increases · First 50 users only",
+    features: ["✦ Everything in Standard", "✦ Price locked forever at $7/mo", "✦ Founding Member gold badge", "✦ Direct line to the founder", "✦ First access to every new feature", "✦ Your name in the founding members wall"],
+    stripeMonthly: "PASTE_FOUNDING_MONTHLY_LINK", stripeAnnual: "PASTE_FOUNDING_ANNUAL_LINK", limited: true,
+  },
+  {
+    tier: "standard", name: "Standard", badge: "⭐ Full Platform Access",
+    monthlyPrice: 12, annualPrice: 99, monthlyPerYear: 144, annualMonthly: 8,
+    color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0",
+    description: "Complete access to everything we built. No feature locks.",
+    features: ["Dashboard — all widgets + market watch", "Journal unlimited + voice + Substack", "Projects unlimited + AI stages", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings", "Resource Center"],
+    stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
+  },
 ];
 
 const BROKERS: { name: string; url: string }[] = [
