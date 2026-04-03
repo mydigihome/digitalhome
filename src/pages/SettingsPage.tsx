@@ -484,13 +484,14 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", display: "block" }}>
-                            {new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            {review.month && review.year ? new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : review.review_month || "Review"}
                           </span>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
                             {review.focus_word && <span style={{ padding: "2px 8px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 10, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
-                            <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Draft"}</span>
+                            {review.ai_summary && <span style={{ padding: "2px 8px", background: isDark ? "rgba(99,102,241,0.15)" : "#EEF2FF", border: `1px solid ${isDark ? "rgba(99,102,241,0.3)" : "#C7D2FE"}`, borderRadius: 999, fontSize: 10, fontWeight: 600, color: "#6366F1", fontFamily: "Inter, sans-serif" }}>Approved</span>}
+                            <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : review.created_at ? new Date(review.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
                           </div>
-                          {review.went_well && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 }}>"{review.went_well.substring(0, 80)}{review.went_well.length > 80 ? "..." : ""}"</p>}
+                          {(review.went_well || review.ai_summary) && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 }}>"{(review.went_well || review.ai_summary || "").substring(0, 80)}{(review.went_well || review.ai_summary || "").length > 80 ? "..." : ""}"</p>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
