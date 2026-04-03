@@ -519,6 +519,71 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
+        </>)}
+
+        {/* STRATEGY TAB */}
+        {adminTab === "strategy" && (
+          <div style={{ padding: "0" }}>
+            {/* Price Roadmap */}
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>📈 Price Roadmap</h3>
+              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>When to raise prices based on user milestones</p>
+              {[
+                { milestone: "0–50 users", status: "current", standard: "$12/mo", founding: "$7/mo (locked)", note: "Build trust, gather feedback, onboard founding members" },
+                { milestone: "51–150 users", status: "upcoming", standard: "$15/mo", founding: "$7/mo (still locked)", note: "Raise Standard after founding closes. Signal growth." },
+                { milestone: "150–500 users", status: "future", standard: "$19/mo", founding: "$7/mo (still locked)", note: "Add Pro tier. Studio add-on raises to $49." },
+                { milestone: "500+ users", status: "future", standard: "$24/mo", founding: "$7/mo (still locked)", note: "Enterprise tier. Team accounts. API access." },
+              ].map((row, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "14px 0", borderBottom: i < 3 ? `1px solid ${rowBorder}` : "none" }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: row.status === "current" ? "#10B981" : row.status === "upcoming" ? "#F59E0B" : (isDark ? "#444" : "#E5E7EB"), flexShrink: 0, marginTop: 4 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>{row.milestone}</span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <span style={{ padding: "2px 8px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", color: "#065F46", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Standard: {row.standard}</span>
+                        <span style={{ padding: "2px 8px", background: isDark ? "rgba(245,158,11,0.1)" : "#FFFBEB", color: "#92400E", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Founding: {row.founding}</span>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{row.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Churn Risk */}
+            <div style={{ ...cardStyle, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>⚠️ Churn Risk</h3>
+              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Users who haven't logged in for 14+ days</p>
+              {churnRiskUsers.length === 0 && <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", textAlign: "center", padding: 20 }}>No churn risk users detected 🎉</p>}
+              {churnRiskUsers.map((u: any) => (
+                <div key={u.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${rowBorder}` }}>
+                  <span style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif" }}>{u.email || u.full_name || u.id?.slice(0, 8)}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 12, color: "#EF4444", fontFamily: "Inter, sans-serif" }}>{u.daysSinceLogin}d inactive</span>
+                    <button onClick={async () => {
+                      await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "We miss you! 👋", message: "Come back and check what's new in Digital Home.", read: false });
+                      toast.success("Re-engagement sent!");
+                    }} style={{ padding: "4px 10px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`, borderRadius: 6, fontSize: 11, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Re-engage</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Strategy Notes */}
+            <div style={{ ...cardStyle }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>📝 Strategy Notes</h3>
+              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 14 }}>Private notes only you can see</p>
+              <textarea value={strategyNotes} onChange={e => setStrategyNotes(e.target.value)} placeholder="Write your pricing strategy, what's working, what to change..." rows={6} style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box" as const, lineHeight: "1.6", background: inputBg }}
+                onFocus={e => { e.target.style.borderColor = "#10B981"; }}
+                onBlur={async e => {
+                  e.target.style.borderColor = inputBorder;
+                  await (supabase as any).from("app_settings").upsert({ key: "strategy_notes", value: strategyNotes });
+                }}
+              />
+              <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>✓ Autosaves when you click away</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* GHOST USER PANEL */}
