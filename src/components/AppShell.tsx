@@ -534,7 +534,7 @@ function MobileTabBar() {
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isFullBleed = location.pathname === "/vision" || location.pathname === "/studio";
+  const isFullBleed = location.pathname === "/studio";
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isFinance = location.pathname.startsWith("/finance");
 
