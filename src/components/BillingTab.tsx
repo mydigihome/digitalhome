@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Crown, GraduationCap, Check, Star } from "lucide-react";
+import { Crown, GraduationCap, Check, Star, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { usePlan } from "@/hooks/usePlan";
+import { STRIPE_LINKS, openStripeLink } from "@/lib/stripe";
 
 interface BillingTabProps {
   profile: any;
@@ -38,6 +40,8 @@ export default function BillingTab({
   verifying, setVerifying,
 }: BillingTabProps) {
   const [foundingCount, setFoundingCount] = useState(0);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const plan = usePlan();
 
   useEffect(() => {
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("founding_member", true)
@@ -83,6 +87,36 @@ export default function BillingTab({
 
   return (
     <>
+      {/* Current Plan Status */}
+      {!plan.isLoading && plan.tier !== "free" && !isFoundingMember && (
+        <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <CreditCard size={18} className="text-primary" />
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: 0, fontFamily: "Inter, sans-serif" }}>
+                {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)} Plan
+              </p>
+              <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontFamily: "Inter, sans-serif" }}>
+                {plan.billingCycle === "annual" && plan.renewalDate
+                  ? `Renews ${plan.renewalDate}`
+                  : `Billed ${plan.billingCycle}`}
+                {plan.studioUnlocked ? " · Studio unlocked ✓" : ""}
+                {plan.studentVerified ? " · Student discount active" : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {plan.studioUnlocked && (
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 999, background: "#F5F3FF", color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>
+                Studio ✓
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Trial Status Card */}
       {!isFoundingMember && !isSubscribed && prefs?.trial_end_date && (() => {
         const endDate = new Date(prefs.trial_end_date);
@@ -233,7 +267,7 @@ export default function BillingTab({
 
           <button
             disabled={checkingOut}
-            onClick={() => handleSubscribe("founding")}
+            onClick={() => openStripeLink(STRIPE_LINKS.founding_monthly)}
             className="w-full mt-5 py-3.5 rounded-full font-bold text-sm transition-all hover:-translate-y-px"
             style={{ background: "#fff", color: "#111827" }}
           >
@@ -297,7 +331,9 @@ export default function BillingTab({
           <Button
             className="w-full h-12 text-base font-semibold"
             disabled={checkingOut}
-            onClick={() => handleSubscribe(studentDiscount ? "student" : "pro")}
+            onClick={() => openStripeLink(
+              studentDiscount ? STRIPE_LINKS.standard_annual : STRIPE_LINKS.standard_annual
+            )}
           >
             {checkingOut ? "Redirecting to checkout..." : `Subscribe — $${studentDiscount ? "49" : "99"}/year`}
           </Button>

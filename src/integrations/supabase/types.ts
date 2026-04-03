@@ -3841,6 +3841,7 @@ export type Database = {
           onboarding_focus: string | null
           onboarding_skipped_steps: string[] | null
           onboarding_step: number | null
+          plan_tier: string | null
           preferred_broker: string | null
           profile_photo: string | null
           religion: string | null
@@ -3852,6 +3853,7 @@ export type Database = {
           studio_unlocked: boolean | null
           subscription_type: string | null
           template_notifications: boolean | null
+          templates_unlocked: boolean | null
           theme_color: string | null
           trial_end_date: string | null
           trial_start_date: string | null
@@ -3903,6 +3905,7 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          plan_tier?: string | null
           preferred_broker?: string | null
           profile_photo?: string | null
           religion?: string | null
@@ -3914,6 +3917,7 @@ export type Database = {
           studio_unlocked?: boolean | null
           subscription_type?: string | null
           template_notifications?: boolean | null
+          templates_unlocked?: boolean | null
           theme_color?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -3965,6 +3969,7 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          plan_tier?: string | null
           preferred_broker?: string | null
           profile_photo?: string | null
           religion?: string | null
@@ -3976,6 +3981,7 @@ export type Database = {
           studio_unlocked?: boolean | null
           subscription_type?: string | null
           template_notifications?: boolean | null
+          templates_unlocked?: boolean | null
           theme_color?: string | null
           trial_end_date?: string | null
           trial_start_date?: string | null

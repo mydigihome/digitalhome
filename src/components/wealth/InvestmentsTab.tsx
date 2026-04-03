@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { loadStoredJson, saveStoredJson } from "@/lib/localStorage";
+import { usePlan } from "@/hooks/usePlan";
+import LockedFeature from "@/components/LockedFeature";
 
 interface InvestmentInfo {
   ticker: string;
@@ -53,6 +55,8 @@ export default function InvestmentsTab() {
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<InvestmentInfo | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { tier, isLoading: planLoading } = usePlan();
+  const investingUnlocked = tier === "standard" || tier === "founding";
 
   const persist = (next: WatchlistItem[]) => { setWatchlist(next); saveWatchlist(next); };
 
@@ -106,7 +110,7 @@ export default function InvestmentsTab() {
 
   const totalMonthlyCommitment = watchlist.reduce((s, w) => s + (w.perPaycheckAmount * 2), 0); // assuming bi-weekly pay
 
-  return (
+  const content = (
     <div className="space-y-6">
       {/* Search */}
       <div className="flex gap-3">
@@ -236,5 +240,13 @@ export default function InvestmentsTab() {
         </>
       )}
     </div>
+  );
+
+  if (planLoading || investingUnlocked) return content;
+
+  return (
+    <LockedFeature feature="investing">
+      {content}
+    </LockedFeature>
   );
 }
