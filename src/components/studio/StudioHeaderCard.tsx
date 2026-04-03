@@ -600,7 +600,8 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
             <div key={i} style={{
               padding: "16px 24px",
               borderRight: i < 3 ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` : "none",
-            }}>
+              cursor: "pointer",
+            }} onClick={() => { if (editingStat !== stat.key) setEditingStat(stat.key); }} title={!stat.raw ? stat.hint : "Click to edit"}>
               <p style={{
                 fontSize: "11px", fontWeight: 500,
                 color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
@@ -609,15 +610,32 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
               }}>
                 {stat.label}
               </p>
-              <p style={{
-                fontSize: "20px", fontWeight: 700,
-                color: isDark ? "#F2F2F2" : "#111827",
-                margin: "0 0 2px", fontFamily: "Inter, sans-serif",
-                fontVariantNumeric: "tabular-nums",
-              }}>
-                {stat.value}
-              </p>
-              {stat.change && (
+              {editingStat === stat.key ? (
+                <input
+                  autoFocus
+                  type="number"
+                  defaultValue={stat.raw || 0}
+                  onBlur={e => handleStatSave(stat.key, parseInt(e.target.value) || 0)}
+                  onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingStat(null); }}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    fontSize: "20px", fontWeight: 700, border: "none",
+                    borderBottom: "2px solid #10B981", outline: "none",
+                    background: "transparent", width: "120px",
+                    fontFamily: "Inter, sans-serif", color: isDark ? "#F2F2F2" : "#111827",
+                  }}
+                />
+              ) : (
+                <p style={{
+                  fontSize: "20px", fontWeight: 700,
+                  color: isDark ? "#F2F2F2" : "#111827",
+                  margin: "0 0 2px", fontFamily: "Inter, sans-serif",
+                  fontVariantNumeric: "tabular-nums",
+                }}>
+                  {stat.value}
+                </p>
+              )}
+              {stat.change && editingStat !== stat.key && (
                 <p style={{
                   fontSize: "11px", fontWeight: 600,
                   color: "#10B981", margin: 0,
