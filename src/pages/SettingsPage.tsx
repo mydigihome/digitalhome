@@ -387,7 +387,7 @@ export default function SettingsPage() {
         {/* Tab navigation */}
         <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: `1px solid ${border}`, paddingBottom: 0 }}>
           {TABS.map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+            <button key={tab.key} data-tab={tab.key} onClick={() => setActiveTab(tab.key)} style={{
               padding: "8px 16px", fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
               color: activeTab === tab.key ? (localStorage.getItem("dh_accent_color") || "#10B981") : text2,
               borderBottom: activeTab === tab.key ? `2px solid ${localStorage.getItem("dh_accent_color") || "#10B981"}` : "2px solid transparent",
@@ -870,7 +870,7 @@ export default function SettingsPage() {
             </div>
 
             {/* FEEDBACK FORM */}
-            <div style={sectionStyle}>
+            <div id="feedback-form" style={sectionStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <MessageSquare size={18} color="#F59E0B" />
                 <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Send Feedback</span>

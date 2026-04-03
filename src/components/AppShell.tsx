@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard, Bell } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard, Bell, BookOpen } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -91,6 +91,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
     { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
+    { icon: BookOpen, label: "Resources", path: "/resources", active: location.pathname.startsWith("/resources") },
     { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio") },
   ];
 
@@ -363,18 +364,26 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 </button>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    go("/settings?tab=support");
-                    setProfileMenuOpen(false);
-                  }}
-                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
-                 >
-                   <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
-                     <MessageSquare className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
-                  </div>
-                  Feedback
-                </button>
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     setProfileMenuOpen(false);
+                     navigate("/settings");
+                     setTimeout(() => {
+                       const supportTab = document.querySelector('[data-tab="support"]');
+                       if (supportTab) (supportTab as HTMLElement).click();
+                       setTimeout(() => {
+                         const feedbackForm = document.getElementById("feedback-form");
+                         if (feedbackForm) feedbackForm.scrollIntoView({ behavior: "smooth", block: "start" });
+                       }, 300);
+                     }, 200);
+                   }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
+                      <MessageSquare className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
+                   </div>
+                   Feedback
+                 </button>
 
                 <div className="my-1 border-t border-border" />
 
@@ -431,6 +440,7 @@ function MobileTabBar() {
 
   const moreItems = [
     { icon: Sparkles, label: "Content Planner", path: "/vision" },
+    { icon: BookOpen, label: "Resources", path: "/resources" },
     { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
@@ -439,7 +449,7 @@ function MobileTabBar() {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
     if (path === "/relationships") return location.pathname.startsWith("/relationships");
-    if (path === "/__more__") return ["/vision", "/studio", "/settings"].some(p => location.pathname.startsWith(p));
+    if (path === "/__more__") return ["/vision", "/resources", "/studio", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
 
