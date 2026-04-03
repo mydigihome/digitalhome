@@ -275,27 +275,18 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const TABS = ["Overview", "HQ", "Platforms", "Deals", "Revenue"];
 
   const statItems = [
-    {
-      label: "Combined Followers",
-      value: studioStats?.combined_followers?.toLocaleString() || "—",
-      change: studioStats?.followers_change ? `+${studioStats.followers_change} YTD` : null,
-    },
-    {
-      label: "30D Reach",
-      value: studioStats?.reach_30d?.toLocaleString() || "—",
-      change: studioStats?.reach_change ? `+${studioStats.reach_change}%` : null,
-    },
-    {
-      label: "30D Interactions",
-      value: studioStats?.interactions_30d?.toLocaleString() || "—",
-      change: studioStats?.interactions_change ? `+${studioStats.interactions_change}%` : null,
-    },
-    {
-      label: "Avg Engagement",
-      value: studioStats?.avg_engagement ? `${studioStats.avg_engagement}%` : "—",
-      change: studioStats?.engagement_change ? `+${studioStats.engagement_change}%` : null,
-    },
+    { label: "Combined Followers", key: "combined_followers", value: studioStats?.combined_followers?.toLocaleString() || "—", raw: studioStats?.combined_followers, change: studioStats?.followers_change ? `+${studioStats.followers_change} YTD` : null, hint: "Connect platforms" },
+    { label: "30D Reach", key: "reach_30d", value: studioStats?.reach_30d?.toLocaleString() || "—", raw: studioStats?.reach_30d, change: studioStats?.reach_change ? `+${studioStats.reach_change}%` : null, hint: "Click to edit" },
+    { label: "30D Interactions", key: "interactions_30d", value: studioStats?.interactions_30d?.toLocaleString() || "—", raw: studioStats?.interactions_30d, change: studioStats?.interactions_change ? `+${studioStats.interactions_change}%` : null, hint: "Click to edit" },
+    { label: "Avg Engagement", key: "avg_engagement", value: studioStats?.avg_engagement ? `${studioStats.avg_engagement}%` : "—", raw: studioStats?.avg_engagement, change: studioStats?.engagement_change ? `+${studioStats.engagement_change}%` : null, hint: "Click to edit" },
   ];
+
+  const handleStatSave = async (key: string, val: number) => {
+    if (!user) return;
+    await supabase.from("studio_profile").upsert({ user_id: user.id, [key]: val } as any, { onConflict: "user_id" });
+    setStudioStats(prev => ({ ...prev, [key]: val }));
+    setEditingStat(null);
+  };
 
   return (
     <>
