@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Crown, GraduationCap, Check, Star } from "lucide-react";
+import { Crown, GraduationCap, Check, Star, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { usePlan } from "@/hooks/usePlan";
+import { STRIPE_LINKS, openStripeLink } from "@/lib/stripe";
 
 interface BillingTabProps {
   profile: any;
