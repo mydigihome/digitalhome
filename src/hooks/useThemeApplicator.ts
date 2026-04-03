@@ -100,8 +100,9 @@ export function useThemeApplicator() {
     if (!prefs) return;
     const root = document.documentElement;
 
-    // Apply accent/primary color
+    // Apply accent/primary color and sync to localStorage
     if (prefs.theme_color) {
+      localStorage.setItem("dh_accent_color", prefs.theme_color);
       const hsl = hexToHsl(prefs.theme_color);
       root.style.setProperty("--primary", hsl);
       root.style.setProperty("--ring", hsl);
