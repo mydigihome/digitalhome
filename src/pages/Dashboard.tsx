@@ -473,15 +473,17 @@ export default function Dashboard() {
 
   const renderLeftCard = (id: string) => {
     switch (id) {
-      case "networth-projects":
+      case "networth-projects": {
+        const mobile = window.innerWidth < 768;
         return (
            <SortableCard key={id} id={id}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
-              <div style={{ width: '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
+            <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
+              <div style={{ width: mobile ? '100%' : '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
               <div style={{ flex: 1, flexGrow: 1, minWidth: 0 }}>{compactProjects}</div>
             </div>
           </SortableCard>
         );
+      }
 
       case "market":
         return (
