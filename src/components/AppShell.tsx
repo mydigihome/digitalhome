@@ -86,7 +86,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     { icon: LayoutGrid, label: "Applications", path: "/finance/applications", active: location.pathname === "/finance/applications" },
   ];
 
-  const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
+  // Content Planner removed from sidebar
 
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
