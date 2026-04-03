@@ -25,7 +25,6 @@ import SettingsPage from "./pages/SettingsPage";
 import WealthTrackerPage from "./pages/WealthTrackerPage";
 import ApplicationsTrackerPage from "./pages/ApplicationsTrackerPage";
 import NotFound from "./pages/NotFound";
-import ContentPlanner from "./pages/ContentPlanner";
 import StudioPage from "./pages/StudioPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
