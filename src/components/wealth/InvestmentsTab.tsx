@@ -110,7 +110,7 @@ export default function InvestmentsTab() {
 
   const totalMonthlyCommitment = watchlist.reduce((s, w) => s + (w.perPaycheckAmount * 2), 0); // assuming bi-weekly pay
 
-  return (
+  const content = (
     <div className="space-y-6">
       {/* Search */}
       <div className="flex gap-3">
