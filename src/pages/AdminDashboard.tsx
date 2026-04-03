@@ -148,7 +148,12 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [isAdmin]);
+  const loadAnnouncementHistory = async () => {
+    const { data } = await (supabase as any).from("announcements").select("*").order("created_at", { ascending: false }).limit(10);
+    setAnnouncementHistory(data || []);
+  };
+
+  useEffect(() => { loadData(); loadAnnouncementHistory(); }, [isAdmin]);
 
   if (!isAdmin) {
     return (
