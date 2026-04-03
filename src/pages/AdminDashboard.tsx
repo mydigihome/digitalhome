@@ -73,6 +73,11 @@ export default function AdminDashboard() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [ghostUser, setGhostUser] = useState<any>(null);
   const [ghostPanelOpen, setGhostPanelOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [announcementType, setAnnouncementType] = useState("system");
+  const [announcementSending, setAnnouncementSending] = useState(false);
+  const [announcementHistory, setAnnouncementHistory] = useState<any[]>([]);
 
   const text1 = isDark ? "#F2F2F2" : "#111827";
   const text2 = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";
