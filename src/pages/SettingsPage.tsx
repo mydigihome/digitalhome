@@ -104,7 +104,13 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(isDark);
   const [selectedTheme, setSelectedTheme] = useState("Emerald");
-  const [currentPlan] = useState("free");
+  const [currentPlan, setCurrentPlan] = useState("standard");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const [annualLocked, setAnnualLocked] = useState(false);
+  const [renewalDate, setRenewalDate] = useState<string | null>(null);
+  const [studioUnlocked, setStudioUnlocked] = useState(false);
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
+  const [eduEmail, setEduEmail] = useState("");
   const [substackModalOpen, setSubstackModalOpen] = useState(false);
   const [substackEmail, setSubstackEmail] = useState("");
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
