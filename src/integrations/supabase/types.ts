@@ -3230,20 +3230,37 @@ export type Database = {
       }
       studio_profile: {
         Row: {
+          avg_engagement: number | null
           business_license: string | null
+          combined_followers: number | null
           created_at: string | null
           description: string | null
           ein_number: string | null
           handle: string | null
           id: string
           images: string[] | null
+          instagram_connected: boolean | null
+          instagram_followers: number | null
           instagram_handle: string | null
+          instagram_post_count: number | null
+          instagram_synced_at: string | null
+          interactions_30d: number | null
           llc_document: string | null
           pitch_deck: string | null
+          reach_30d: number | null
           studio_name: string | null
+          substack_subscriber_count: number | null
+          substack_url: string | null
+          tiktok_connected: boolean | null
+          tiktok_followers: number | null
           tiktok_handle: string | null
+          tiktok_synced_at: string | null
+          tiktok_total_likes: number | null
           total_followers: number | null
+          twitter_connected: boolean | null
+          twitter_followers: number | null
           twitter_handle: string | null
+          twitter_synced_at: string | null
           updated_at: string | null
           user_id: string
           youtube_channel_id: string | null
@@ -3257,20 +3274,37 @@ export type Database = {
           youtube_video_count: number | null
         }
         Insert: {
+          avg_engagement?: number | null
           business_license?: string | null
+          combined_followers?: number | null
           created_at?: string | null
           description?: string | null
           ein_number?: string | null
           handle?: string | null
           id?: string
           images?: string[] | null
+          instagram_connected?: boolean | null
+          instagram_followers?: number | null
           instagram_handle?: string | null
+          instagram_post_count?: number | null
+          instagram_synced_at?: string | null
+          interactions_30d?: number | null
           llc_document?: string | null
           pitch_deck?: string | null
+          reach_30d?: number | null
           studio_name?: string | null
+          substack_subscriber_count?: number | null
+          substack_url?: string | null
+          tiktok_connected?: boolean | null
+          tiktok_followers?: number | null
           tiktok_handle?: string | null
+          tiktok_synced_at?: string | null
+          tiktok_total_likes?: number | null
           total_followers?: number | null
+          twitter_connected?: boolean | null
+          twitter_followers?: number | null
           twitter_handle?: string | null
+          twitter_synced_at?: string | null
           updated_at?: string | null
           user_id: string
           youtube_channel_id?: string | null
@@ -3284,20 +3318,37 @@ export type Database = {
           youtube_video_count?: number | null
         }
         Update: {
+          avg_engagement?: number | null
           business_license?: string | null
+          combined_followers?: number | null
           created_at?: string | null
           description?: string | null
           ein_number?: string | null
           handle?: string | null
           id?: string
           images?: string[] | null
+          instagram_connected?: boolean | null
+          instagram_followers?: number | null
           instagram_handle?: string | null
+          instagram_post_count?: number | null
+          instagram_synced_at?: string | null
+          interactions_30d?: number | null
           llc_document?: string | null
           pitch_deck?: string | null
+          reach_30d?: number | null
           studio_name?: string | null
+          substack_subscriber_count?: number | null
+          substack_url?: string | null
+          tiktok_connected?: boolean | null
+          tiktok_followers?: number | null
           tiktok_handle?: string | null
+          tiktok_synced_at?: string | null
+          tiktok_total_likes?: number | null
           total_followers?: number | null
+          twitter_connected?: boolean | null
+          twitter_followers?: number | null
           twitter_handle?: string | null
+          twitter_synced_at?: string | null
           updated_at?: string | null
           user_id?: string
           youtube_channel_id?: string | null

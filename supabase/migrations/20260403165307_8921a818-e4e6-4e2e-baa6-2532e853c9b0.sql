@@ -1,0 +1,18 @@
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS instagram_followers int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS instagram_post_count int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS instagram_connected boolean default false;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS instagram_synced_at timestamptz;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS tiktok_handle text;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS tiktok_followers int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS tiktok_total_likes bigint default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS tiktok_connected boolean default false;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS tiktok_synced_at timestamptz;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS twitter_followers int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS twitter_connected boolean default false;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS twitter_synced_at timestamptz;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS substack_url text;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS substack_subscriber_count int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS combined_followers int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS reach_30d int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS interactions_30d int default 0;
+ALTER TABLE studio_profile ADD COLUMN IF NOT EXISTS avg_engagement numeric default 0;
