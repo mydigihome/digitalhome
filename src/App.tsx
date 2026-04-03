@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useThemeApplicator } from "@/hooks/useThemeApplicator";
+import { supabase } from "@/integrations/supabase/client";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
