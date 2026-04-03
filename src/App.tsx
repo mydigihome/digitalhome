@@ -39,6 +39,31 @@ function ThemeApplicator() {
   return null;
 }
 
+function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setChecked(true); return; }
+    const isOnboarding = location.pathname === "/onboarding" || location.pathname === "/welcome";
+    if (!isOnboarding) { setChecked(true); return; }
+
+    supabase.from("user_preferences").select("onboarding_completed").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.onboarding_completed) {
+          navigate("/dashboard", { replace: true });
+        } else {
+          setChecked(true);
+        }
+      });
+  }, [user, location.pathname]);
+
+  if (!checked) return null;
+  return <>{children}</>;
+}
+
 function RootRedirect() {
   const { user, loading } = useAuth();
 
