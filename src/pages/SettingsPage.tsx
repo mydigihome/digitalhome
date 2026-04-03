@@ -588,7 +588,17 @@ export default function SettingsPage() {
                 <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Notifications</span>
               </div>
               <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: "0 0 14px" }}>Notification settings are managed in the notification panel.</p>
-              <button onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+              <button onClick={() => {
+                navigate("/");
+                setTimeout(() => {
+                  const bell = document.querySelector(".notif-bell, [data-notif-bell]") as HTMLElement;
+                  if (bell) bell.click();
+                  setTimeout(() => {
+                    const gear = document.querySelector(".notif-settings-gear, [data-notif-settings]") as HTMLElement;
+                    if (gear) gear.click();
+                  }, 300);
+                }, 400);
+              }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
                 <Bell size={14} /> Open Notification Settings
               </button>
             </div>
