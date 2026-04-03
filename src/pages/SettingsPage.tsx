@@ -398,7 +398,7 @@ export default function SettingsPage() {
         <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif", margin: "4px 0 20px" }}>Manage your account and preferences</p>
 
         {/* Tab navigation */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: `1px solid ${border}`, paddingBottom: 0 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: `1px solid ${border}`, paddingBottom: 0, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           {TABS.map(tab => (
             <button key={tab.key} data-tab={tab.key} onClick={() => setActiveTab(tab.key)} style={{
               padding: "8px 16px", fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
