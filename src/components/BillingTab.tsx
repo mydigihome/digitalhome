@@ -267,7 +267,7 @@ export default function BillingTab({
 
           <button
             disabled={checkingOut}
-            onClick={() => handleSubscribe("founding")}
+            onClick={() => openStripeLink(STRIPE_LINKS.founding_monthly)}
             className="w-full mt-5 py-3.5 rounded-full font-bold text-sm transition-all hover:-translate-y-px"
             style={{ background: "#fff", color: "#111827" }}
           >
