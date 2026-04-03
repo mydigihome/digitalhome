@@ -161,6 +161,14 @@ export default function SettingsPage() {
     if (p.preferred_broker) setPreferredBroker(p.preferred_broker);
     if (p.broker_url) setBrokerUrl(p.broker_url);
     if (p.welcome_video_url) setWelcomeVideoUrl(p.welcome_video_url);
+    if (p.billing_cycle) setBillingCycle(p.billing_cycle as "monthly" | "annual");
+    if (p.studio_unlocked) setStudioUnlocked(true);
+    if (p.billing_cycle === "annual" && p.annual_start_date) {
+      setAnnualLocked(true);
+      const renewal = new Date(p.annual_start_date);
+      renewal.setFullYear(renewal.getFullYear() + 1);
+      setRenewalDate(renewal.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }));
+    }
     setSubstackEmail(localStorage.getItem("substack-email") || "");
   }, [prefs]);
 
