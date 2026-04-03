@@ -12,6 +12,7 @@ import {
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
   Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
   ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
+  Lock as LockIcon, Unlock,
 } from "lucide-react";
 
 const ACCENT_THEMES = [
