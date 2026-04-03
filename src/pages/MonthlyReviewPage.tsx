@@ -105,6 +105,8 @@ export default function MonthlyReviewPage() {
     if (!user) return;
     setSaving(true);
     try {
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
       const snapshot = {
         netWorth, savedAmount, totalSpending, creditScore,
         goals: activeGoals.map(g => ({ name: g.name, pct: g.pct })),
@@ -113,11 +115,11 @@ export default function MonthlyReviewPage() {
         spending: SPENDING,
       };
       const aiSummary = `${monthName} was a solid month. Net worth up $2,341, savings rate 29%, credit score up 12 points.`;
-      await (supabase as any).from("monthly_reviews").upsert({
+      const { error } = await (supabase as any).from("monthly_reviews").upsert({
         user_id: user.id,
         review_month: reviewMonth,
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
+        month: currentMonth,
+        year: currentYear,
         net_worth: netWorth,
         top_spending_category: "Housing",
         goals_progress: activeGoals.length > 0 ? Math.round(activeGoals.reduce((s, g) => s + g.pct, 0) / activeGoals.length) : 0,
@@ -126,14 +128,24 @@ export default function MonthlyReviewPage() {
         credit_score: creditScore,
         ai_summary: aiSummary,
         full_snapshot: snapshot,
+        review_data: snapshot,
         completed_at: new Date().toISOString(),
-      }, { onConflict: "user_id,review_month" });
+      }, { onConflict: "user_id,month,year" });
+
+      if (error) {
+        console.error("Save error:", error);
+        toast.error("Failed to save review: " + error.message);
+        setSaving(false);
+        return;
+      }
 
       upsertPrefs.mutate({ last_review_month: reviewMonth } as any);
       setApproved(true);
+      toast.success("Review approved — find it in Settings → General");
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.8 }, colors: ["#6366f1", "#22c55e", "#f59e0b"] });
       setTimeout(() => navigate("/"), 2000);
-    } catch {
+    } catch (err: any) {
+      console.error("Approve error:", err);
       toast.error("Failed to save review");
     }
     setSaving(false);
