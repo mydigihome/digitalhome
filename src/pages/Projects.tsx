@@ -108,13 +108,16 @@ export default function Projects() {
       await supabase.from("tasks").delete().in("project_id", idsToDelete);
       const { error } = await supabase.from("projects").delete().in("id", idsToDelete);
       if (error) {
-        // Restore on failure
         setProjectCards(prev => [...deletedItems, ...prev]);
         setRemovedProjectIds(prev => prev.filter(id => !idsToDelete.includes(id)));
         toast.error("Delete failed. Please try again.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      // Set query data directly to avoid refetch restoring deleted items
+      queryClient.setQueryData(["projects", user?.id], (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((p: any) => !idsToDelete.includes(p.id));
+      });
       toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
     } catch (err) {
       setProjectCards(prev => [...deletedItems, ...prev]);
