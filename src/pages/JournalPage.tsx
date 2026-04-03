@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
-import { Plus, Search, MoreVertical, FileDown, Mic, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, MoreVertical, FileDown, Mic, Image as ImageIcon, X } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 
@@ -154,11 +154,19 @@ export default function JournalPage() {
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px 100px" }}>
         {/* HEADER */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, padding: "0 12px" }}>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", margin: 0 }}>My Journal</h1>
-            <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontFamily: "Inter, sans-serif", margin: "4px 0 0" }}>
-              {entries.length} entries{currentStreak > 0 ? ` · ${currentStreak} day streak 🔥` : " · Start your streak today"}
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E8E5E0"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+            >
+              <X size={18} color={isDark ? "rgba(255,255,255,0.6)" : "#374151"} />
+            </button>
+            <div>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif", margin: 0 }}>My Journal</h1>
+              <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280", fontFamily: "Inter, sans-serif", margin: "4px 0 0" }}>
+                {entries.length} entries{currentStreak > 0 ? ` · ${currentStreak} day streak` : " · Start your streak today"}
+              </p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div ref={menuRef} style={{ position: "relative" }}>
