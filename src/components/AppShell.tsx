@@ -698,10 +698,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <ContentWrapper>{children}</ContentWrapper>
         </main>
 
+        {/* Mobile bottom tab bar */}
+        <MobileTabBar />
+
         {/* Override padding on mobile */}
         <style>{`
           @media (max-width: 1023px) {
-            main { padding-left: 0 !important; }
+            main { padding-left: 0 !important; padding-bottom: 72px !important; }
           }
         `}</style>
       </div>
