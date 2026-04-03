@@ -62,6 +62,24 @@ export function useThemeApplicator() {
   const { user, signOut } = useAuth();
   const upsertPrefs = useUpsertPreferences();
 
+  // Apply stored theme from localStorage on mount (before prefs load)
+  useEffect(() => {
+    const accent = localStorage.getItem("dh_accent_color");
+    if (accent) {
+      const hsl = hexToHsl(accent);
+      const root = document.documentElement;
+      root.style.setProperty("--primary", hsl);
+      root.style.setProperty("--ring", hsl);
+      root.style.setProperty("--sidebar-primary", hsl);
+      root.style.setProperty("--chart-1", hsl);
+    }
+    const darkMode = localStorage.getItem("dh_dark_mode");
+    if (darkMode === "true") {
+      document.documentElement.classList.add("dark");
+      document.body.classList.add("dark");
+    }
+  }, []);
+
   // Session security: update last_active_at and check for inactivity
   useEffect(() => {
     if (!user || !prefs) return;
