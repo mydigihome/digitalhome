@@ -76,6 +76,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const studioImageInputRef = useRef<HTMLInputElement>(null);
   const [studioStats, setStudioStats] = useState<StudioStats>({});
+  const [editingStat, setEditingStat] = useState<string | null>(null);
 
   // Modals
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -116,13 +117,15 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         if ((profile as any).images) {
           setStudioImages((profile as any).images);
         }
-        // Load YouTube stats into header
-        if ((profile as any).youtube_connected) {
-          setStudioStats(prev => ({
-            ...prev,
-            combined_followers: (profile as any).youtube_subscribers || 0,
-          }));
-        }
+        // Load all platform stats into header
+        const p = profile as any;
+        const combined = (p.combined_followers || 0) || ((p.youtube_subscribers || 0) + (p.instagram_followers || 0) + (p.tiktok_followers || 0) + (p.twitter_followers || 0));
+        setStudioStats({
+          combined_followers: combined || undefined,
+          reach_30d: p.reach_30d || undefined,
+          interactions_30d: p.interactions_30d || undefined,
+          avg_engagement: p.avg_engagement || undefined,
+        });
       }
 
       const { data: goals } = await supabase
@@ -272,27 +275,18 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const TABS = ["Overview", "HQ", "Platforms", "Deals", "Revenue"];
 
   const statItems = [
-    {
-      label: "Combined Followers",
-      value: studioStats?.combined_followers?.toLocaleString() || "—",
-      change: studioStats?.followers_change ? `+${studioStats.followers_change} YTD` : null,
-    },
-    {
-      label: "30D Reach",
-      value: studioStats?.reach_30d?.toLocaleString() || "—",
-      change: studioStats?.reach_change ? `+${studioStats.reach_change}%` : null,
-    },
-    {
-      label: "30D Interactions",
-      value: studioStats?.interactions_30d?.toLocaleString() || "—",
-      change: studioStats?.interactions_change ? `+${studioStats.interactions_change}%` : null,
-    },
-    {
-      label: "Avg Engagement",
-      value: studioStats?.avg_engagement ? `${studioStats.avg_engagement}%` : "—",
-      change: studioStats?.engagement_change ? `+${studioStats.engagement_change}%` : null,
-    },
+    { label: "Combined Followers", key: "combined_followers", value: studioStats?.combined_followers?.toLocaleString() || "—", raw: studioStats?.combined_followers, change: studioStats?.followers_change ? `+${studioStats.followers_change} YTD` : null, hint: "Connect platforms" },
+    { label: "30D Reach", key: "reach_30d", value: studioStats?.reach_30d?.toLocaleString() || "—", raw: studioStats?.reach_30d, change: studioStats?.reach_change ? `+${studioStats.reach_change}%` : null, hint: "Click to edit" },
+    { label: "30D Interactions", key: "interactions_30d", value: studioStats?.interactions_30d?.toLocaleString() || "—", raw: studioStats?.interactions_30d, change: studioStats?.interactions_change ? `+${studioStats.interactions_change}%` : null, hint: "Click to edit" },
+    { label: "Avg Engagement", key: "avg_engagement", value: studioStats?.avg_engagement ? `${studioStats.avg_engagement}%` : "—", raw: studioStats?.avg_engagement, change: studioStats?.engagement_change ? `+${studioStats.engagement_change}%` : null, hint: "Click to edit" },
   ];
+
+  const handleStatSave = async (key: string, val: number) => {
+    if (!user) return;
+    await supabase.from("studio_profile").upsert({ user_id: user.id, [key]: val } as any, { onConflict: "user_id" });
+    setStudioStats(prev => ({ ...prev, [key]: val }));
+    setEditingStat(null);
+  };
 
   return (
     <>
@@ -606,7 +600,8 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
             <div key={i} style={{
               padding: "16px 24px",
               borderRight: i < 3 ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` : "none",
-            }}>
+              cursor: "pointer",
+            }} onClick={() => { if (editingStat !== stat.key) setEditingStat(stat.key); }} title={!stat.raw ? stat.hint : "Click to edit"}>
               <p style={{
                 fontSize: "11px", fontWeight: 500,
                 color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
@@ -615,15 +610,32 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
               }}>
                 {stat.label}
               </p>
-              <p style={{
-                fontSize: "20px", fontWeight: 700,
-                color: isDark ? "#F2F2F2" : "#111827",
-                margin: "0 0 2px", fontFamily: "Inter, sans-serif",
-                fontVariantNumeric: "tabular-nums",
-              }}>
-                {stat.value}
-              </p>
-              {stat.change && (
+              {editingStat === stat.key ? (
+                <input
+                  autoFocus
+                  type="number"
+                  defaultValue={stat.raw || 0}
+                  onBlur={e => handleStatSave(stat.key, parseInt(e.target.value) || 0)}
+                  onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setEditingStat(null); }}
+                  onClick={e => e.stopPropagation()}
+                  style={{
+                    fontSize: "20px", fontWeight: 700, border: "none",
+                    borderBottom: "2px solid #10B981", outline: "none",
+                    background: "transparent", width: "120px",
+                    fontFamily: "Inter, sans-serif", color: isDark ? "#F2F2F2" : "#111827",
+                  }}
+                />
+              ) : (
+                <p style={{
+                  fontSize: "20px", fontWeight: 700,
+                  color: isDark ? "#F2F2F2" : "#111827",
+                  margin: "0 0 2px", fontFamily: "Inter, sans-serif",
+                  fontVariantNumeric: "tabular-nums",
+                }}>
+                  {stat.value}
+                </p>
+              )}
+              {stat.change && editingStat !== stat.key && (
                 <p style={{
                   fontSize: "11px", fontWeight: 600,
                   color: "#10B981", margin: 0,
