@@ -11,8 +11,8 @@ import {
   User, Moon, Sun, Check, Building2, FileText, TrendingUp,
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
   Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
-  ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
-  Lock as LockIcon, Unlock,
+  ChevronLeft, Loader2, Save, BarChart2, Trash2, CalendarDays, Plus, X,
+  Lock as LockIcon, Clapperboard, GraduationCap,
 } from "lucide-react";
 
 const ACCENT_THEMES = [
