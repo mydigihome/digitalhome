@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info, RotateCcw } from "lucide-react";
+import { Plus, Trash2, Pencil, ExternalLink, Paperclip, Upload, Rocket, Calendar, X, FileText, ArrowRight, Download, ChevronLeft, Search, Bell, MoreVertical, FolderOpen, CloudUpload, Folder, FileIcon, MoreHorizontal, Clock, Inbox, GripVertical, Eye, Sparkles, MoreHorizontal as Dots, List, LayoutGrid, Lock, Info, RotateCcw, Briefcase } from "lucide-react";
+import ResourcesPage from "@/pages/ResourcesPage";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -57,6 +58,9 @@ const defaultTemplateData = [
 
 export default function ApplicationsTrackerPage() {
   const navigate = useNavigate();
+  const [appTab, setAppTab] = useState<'applications' | 'resources'>(
+    window.location.search.includes('tab=resources') ? 'resources' : 'applications'
+  );
   const { user } = useAuth();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
@@ -304,7 +308,39 @@ export default function ApplicationsTrackerPage() {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Tab bar */}
+        <div className="max-w-xl lg:max-w-6xl mx-auto px-5">
+          <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, marginBottom: 0 }}>
+            {[
+              { id: 'applications' as const, label: 'Applications', Icon: Briefcase },
+              { id: 'resources' as const, label: 'Resource Center', Icon: Sparkles },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setAppTab(tab.id)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "10px 16px", border: "none",
+                  borderBottom: `2px solid ${appTab === tab.id ? "#10B981" : "transparent"}`,
+                  background: "transparent",
+                  fontSize: 14, fontWeight: appTab === tab.id ? 600 : 400,
+                  color: appTab === tab.id ? (isDark ? "#F2F2F2" : "#111827") : (isDark ? "rgba(255,255,255,0.5)" : "#6B7280"),
+                  cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  marginBottom: -1, transition: "all 150ms",
+                }}
+              >
+                <tab.Icon size={15} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {appTab === 'resources' ? (
+          <div className="max-w-xl lg:max-w-6xl mx-auto px-5 py-8">
+            <ResourcesPage />
+          </div>
+        ) : (
         <div className="max-w-xl lg:max-w-6xl mx-auto px-5 py-8 space-y-10">
 
           {/* SECTION 1: Career Templates */}
@@ -663,6 +699,7 @@ export default function ApplicationsTrackerPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Add/Edit Application Modal */}
         {showForm && (

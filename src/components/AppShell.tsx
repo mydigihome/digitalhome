@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, Sparkles, MessageSquare, Shield, MoreHorizontal, Mail, Moon, Sun, Users, Lock, Clapperboard, Bell, BookOpen } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, MessageSquare, Shield, MoreHorizontal, Moon, Sun, Users, Clapperboard, Bell, BookOpen } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,6 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
-import JournalEntryModal from "@/components/journal/JournalEntryModal";
-import { WaitlistModal } from "@/components/content-planner/WaitlistModal";
 import NotificationPanel from "@/components/notifications/NotificationPanel";
 
 // Context for sidebar collapsed state
@@ -25,7 +23,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   const [isAdmin, setIsAdmin] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -86,12 +84,10 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
     { icon: LayoutGrid, label: "Applications", path: "/finance/applications", active: location.pathname === "/finance/applications" },
   ];
 
-  const hasContentAccess = user?.email === "myslimher@gmail.com" || (prefs as any)?.content_planner_is_admin === true || ((prefs as any)?.signup_number != null && (prefs as any)?.signup_number <= 50) || (prefs as any)?.content_planner_access === true;
+  // Content Planner removed from sidebar
 
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
-    { icon: BookOpen, label: "Resources", path: "/resources", active: location.pathname.startsWith("/resources") },
     { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio") },
   ];
 
@@ -202,30 +198,17 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
-            const isContentPlanner = item.path === "/vision";
-            const isLocked = isContentPlanner && !hasContentAccess;
             return (
               <li key={item.path}>
                 <NavTooltip label={item.label}>
                   <button
-                    onClick={() => {
-                      if (isLocked) {
-                        setShowWaitlistModal(true);
-                      } else {
-                        go(item.path);
-                      }
-                    }}
-                    className={navItemClass(item.active, isLocked)}
+                    onClick={() => go(item.path)}
+                    className={navItemClass(item.active)}
                     style={navItemStyle(item.active)}
                     {...navItemHoverHandlers(item.active)}
                   >
                     <Icon className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(item.active)} strokeWidth={1.5} />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 text-left text-[14px]">{item.label}</span>
-                        {isLocked && <Lock className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />}
-                      </>
-                    )}
+                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
                 </NavTooltip>
               </li>
@@ -409,7 +392,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
         </AnimatePresence>
       </div>
 
-      <WaitlistModal open={showWaitlistModal} onClose={() => setShowWaitlistModal(false)} />
+      
     </div>
   );
 }
@@ -439,8 +422,6 @@ function MobileTabBar() {
   }, []);
 
   const moreItems = [
-    { icon: Sparkles, label: "Content Planner", path: "/vision" },
-    { icon: BookOpen, label: "Resources", path: "/resources" },
     { icon: Clapperboard, label: "Studio", path: "/studio" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
@@ -449,7 +430,7 @@ function MobileTabBar() {
     if (path === "/projects") return location.pathname.startsWith("/projects") || location.pathname.startsWith("/project/");
     if (path === "/finance/wealth") return location.pathname.startsWith("/finance");
     if (path === "/relationships") return location.pathname.startsWith("/relationships");
-    if (path === "/__more__") return ["/vision", "/resources", "/studio", "/settings"].some(p => location.pathname.startsWith(p));
+    if (path === "/__more__") return ["/studio", "/settings"].some(p => location.pathname.startsWith(p));
     return location.pathname.startsWith(path);
   };
 
@@ -538,7 +519,7 @@ function MobileTabBar() {
 
 function ContentWrapper({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isFullBleed = location.pathname === "/vision" || location.pathname === "/studio";
+  const isFullBleed = location.pathname === "/studio";
   const isDashboard = location.pathname.startsWith("/dashboard");
   const isFinance = location.pathname.startsWith("/finance");
 

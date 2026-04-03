@@ -96,28 +96,29 @@ export default function Projects() {
 
     const idsToDelete = [...selectedIds];
     const count = idsToDelete.length;
+    const deletedItems = projectCards.filter(p => idsToDelete.includes(p.id));
 
+    // Step 1 — remove from UI immediately
     setRemovedProjectIds((prev) => [...new Set([...prev, ...idsToDelete])]);
     setProjectCards((prev) => prev.filter((item) => !idsToDelete.includes(item.id)));
     setSelectedIds([]);
     setSelectMode(false);
 
-    console.log("Bulk deleting:", idsToDelete);
-
     try {
-      const { error: tasksError } = await supabase.from("tasks").delete().in("project_id", idsToDelete);
-      if (tasksError) {
-        console.error("Delete from tasks:", tasksError);
-      }
-
+      await supabase.from("tasks").delete().in("project_id", idsToDelete);
       const { error } = await supabase.from("projects").delete().in("id", idsToDelete);
       if (error) {
-        console.error("Delete from projects:", error);
+        // Restore on failure
+        setProjectCards(prev => [...deletedItems, ...prev]);
+        setRemovedProjectIds(prev => prev.filter(id => !idsToDelete.includes(id)));
+        toast.error("Delete failed. Please try again.");
+        return;
       }
-
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
     } catch (err) {
-      console.error("Bulk delete error:", err);
+      setProjectCards(prev => [...deletedItems, ...prev]);
+      setRemovedProjectIds(prev => prev.filter(id => !idsToDelete.includes(id)));
       toast.error("Delete failed. Please try again.");
     }
   };
