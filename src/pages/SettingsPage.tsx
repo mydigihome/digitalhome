@@ -275,16 +275,18 @@ export default function SettingsPage() {
 
     // Apply accent color via CSS variables
     const hsl = hexToHsl(theme.primary);
-    const hslSecondary = hexToHsl(theme.secondary);
     const root = document.documentElement;
     root.style.setProperty("--primary", hsl);
     root.style.setProperty("--ring", hsl);
     root.style.setProperty("--sidebar-primary", hsl);
     root.style.setProperty("--chart-1", hsl);
 
-    // Persist to localStorage for cross-page persistence
+    // Apply comprehensive theme override
+    applyThemeOverride(theme.primary, theme.secondary);
+
+    // Persist to localStorage
     localStorage.setItem("dh_accent_color", theme.primary);
-    localStorage.setItem("dh_secondary_color", theme.secondary);
+    localStorage.setItem("dh_secondary", theme.secondary);
     localStorage.setItem("dh_theme_name", theme.name);
 
     // Dark mode
@@ -296,24 +298,22 @@ export default function SettingsPage() {
       document.body.classList.remove("dark");
     }
 
-    // Fire custom event for any listeners
-    window.dispatchEvent(new CustomEvent("theme-changed", { detail: { accent: theme.primary, secondary: theme.secondary } }));
-
     // Save welcome video to app_settings if admin
     if (user.email === "myslimher@gmail.com" && welcomeVideoUrl) {
       (supabase as any).from("app_settings").upsert({ key: "welcome_video_url", value: welcomeVideoUrl, updated_at: new Date().toISOString() }).then(() => {});
     }
 
-    // Save to DB via upsertPrefs
+    // Save to DB
     upsertPrefs.mutate({
       theme_color: theme.primary,
+      secondary_color: theme.secondary,
       sidebar_theme: isDarkMode ? "dark" : "light",
       religion: selectedReligion || null,
       show_scripture_card: showScripture,
       welcome_video_url: welcomeVideoUrl || null,
     } as any);
 
-    toast.success("Appearance saved! ✓", { description: "Your theme has been applied across the platform." });
+    toast.success("Theme applied ✓", { description: `${selectedTheme} is now active across the platform.` });
   };
 
   const toggleDarkMode = () => {
