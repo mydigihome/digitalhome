@@ -116,6 +116,8 @@ export default function MonthlyReviewPage() {
       await (supabase as any).from("monthly_reviews").upsert({
         user_id: user.id,
         review_month: reviewMonth,
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
         net_worth: netWorth,
         top_spending_category: "Housing",
         goals_progress: activeGoals.length > 0 ? Math.round(activeGoals.reduce((s, g) => s + g.pct, 0) / activeGoals.length) : 0,
@@ -124,6 +126,7 @@ export default function MonthlyReviewPage() {
         credit_score: creditScore,
         ai_summary: aiSummary,
         full_snapshot: snapshot,
+        completed_at: new Date().toISOString(),
       }, { onConflict: "user_id,review_month" });
 
       upsertPrefs.mutate({ last_review_month: reviewMonth } as any);

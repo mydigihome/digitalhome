@@ -246,11 +246,11 @@ export default function SettingsPage() {
     })();
   }, [user, reviewSaved]);
 
-  // Load saved reviews for Archive tab
+  // Load saved reviews for General tab
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       setSavedReviews(data || []);
     })();
   }, [user]);
@@ -464,16 +464,13 @@ export default function SettingsPage() {
                   <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Monthly Reviews</span>
                   {savedReviews.length > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>{savedReviews.length} saved</span>}
                 </div>
-                <button onClick={() => { setEditingReview(null); setArchiveReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); setArchiveReviewMonth(new Date().getMonth() + 1); setArchiveReviewYear(new Date().getFullYear()); setWritingReview(true); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
-                  <Plus size={14} /> Write Review
-                </button>
               </div>
 
               {savedReviews.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <BarChart2 size={40} color={text2} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
                   <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>No reviews yet</p>
-                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Write your first monthly review</p>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Approved monthly reviews will appear here</p>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -487,13 +484,14 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", display: "block" }}>
-                            {new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            {review.month && review.year ? new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : review.review_month || "Review"}
                           </span>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
                             {review.focus_word && <span style={{ padding: "2px 8px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 10, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
-                            <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "Draft"}</span>
+                            {review.ai_summary && <span style={{ padding: "2px 8px", background: isDark ? "rgba(99,102,241,0.15)" : "#EEF2FF", border: `1px solid ${isDark ? "rgba(99,102,241,0.3)" : "#C7D2FE"}`, borderRadius: 999, fontSize: 10, fontWeight: 600, color: "#6366F1", fontFamily: "Inter, sans-serif" }}>Approved</span>}
+                            <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : review.created_at ? new Date(review.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</span>
                           </div>
-                          {review.went_well && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 }}>"{review.went_well.substring(0, 80)}{review.went_well.length > 80 ? "..." : ""}"</p>}
+                          {(review.went_well || review.ai_summary) && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 }}>"{(review.went_well || review.ai_summary || "").substring(0, 80)}{(review.went_well || review.ai_summary || "").length > 80 ? "..." : ""}"</p>}
                         </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
