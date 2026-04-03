@@ -364,18 +364,26 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
                 </button>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    go("/settings?tab=support");
-                    setProfileMenuOpen(false);
-                  }}
-                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
-                 >
-                   <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
-                     <MessageSquare className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
-                  </div>
-                  Feedback
-                </button>
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     setProfileMenuOpen(false);
+                     navigate("/settings");
+                     setTimeout(() => {
+                       const supportTab = document.querySelector('[data-tab="support"]');
+                       if (supportTab) (supportTab as HTMLElement).click();
+                       setTimeout(() => {
+                         const feedbackForm = document.getElementById("feedback-form");
+                         if (feedbackForm) feedbackForm.scrollIntoView({ behavior: "smooth", block: "start" });
+                       }, 300);
+                     }, 200);
+                   }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-secondary transition text-left text-[13px] text-foreground"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-secondary border border-border flex items-center justify-center">
+                      <MessageSquare className="w-[18px] h-[18px] text-muted-foreground" strokeWidth={1.5} />
+                   </div>
+                   Feedback
+                 </button>
 
                 <div className="my-1 border-t border-border" />
 
