@@ -6,6 +6,7 @@ import AppShell from "@/components/AppShell";
 import {
   Shield, Users, Activity, DollarSign, FileText, Target, BookOpen,
   ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock, ChevronRight,
+  X, Trash2, CreditCard, MessageSquare,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
@@ -22,6 +23,42 @@ interface AdminStats {
   totalPurchases: number;
 }
 
+function UserActivityStats({ userId }: { userId: string }) {
+  const [stats, setStats] = useState<any>({});
+  useEffect(() => {
+    (async () => {
+      const [
+        { count: projects },
+        { count: contacts },
+        { count: journals },
+        { count: content },
+      ] = await Promise.all([
+        supabase.from("projects").select("*", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("contacts").select("*", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("journal_entries").select("*", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", userId),
+      ]);
+      setStats({ projects: projects || 0, contacts: contacts || 0, journals: journals || 0, content: content || 0 });
+    })();
+  }, [userId]);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      {[
+        { label: "Projects", value: stats.projects || 0, color: "#10B981" },
+        { label: "Contacts", value: stats.contacts || 0, color: "#EC4899" },
+        { label: "Journal Entries", value: stats.journals || 0, color: "#06B6D4" },
+        { label: "Content Items", value: stats.content || 0, color: "#7B5EA7" },
+      ].map(stat => (
+        <div key={stat.label} style={{ padding: 12, background: "#F9FAFB", borderRadius: 10, border: "1px solid #F3F4F6" }}>
+          <p style={{ fontSize: 20, fontWeight: 800, color: stat.color, fontFamily: "Inter, sans-serif", margin: 0 }}>{stat.value}</p>
+          <p style={{ fontSize: 11, color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>{stat.label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
@@ -32,6 +69,10 @@ export default function AdminDashboard() {
   const [userSearch, setUserSearch] = useState("");
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [growthData, setGrowthData] = useState<any[]>([]);
+  const [feedbackItems, setFeedbackItems] = useState<any[]>([]);
+  const [feedbackFilter, setFeedbackFilter] = useState("all");
+  const [ghostUser, setGhostUser] = useState<any>(null);
+  const [ghostPanelOpen, setGhostPanelOpen] = useState(false);
 
   const text1 = isDark ? "#F2F2F2" : "#111827";
   const text2 = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";
@@ -60,6 +101,7 @@ export default function AdminDashboard() {
         { count: totalProjects },
         { data: purchases },
         { data: activity },
+        { data: feedbackData },
       ] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo.toISOString()),
@@ -70,6 +112,7 @@ export default function AdminDashboard() {
         supabase.from("projects").select("*", { count: "exact", head: true }),
         supabase.from("template_purchases").select("*"),
         supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(10),
+        supabase.from("feedback").select("*").order("created_at", { ascending: false }),
       ]);
 
       const totalRevenue = (purchases || []).reduce((s: number, p: any) => s + (p.amount_paid || 0), 0) / 100;
@@ -79,6 +122,7 @@ export default function AdminDashboard() {
       setStats({ totalUsers: totalUsers || 0, newThisWeek: newThisWeek || 0, activeToday: 0, totalRevenue, thisMonthRevenue, totalContent: totalContent || 0, totalJournals: totalJournals || 0, totalContacts: totalContacts || 0, totalProjects: totalProjects || 0, totalPurchases: (purchases || []).length });
       setUsersList(profilesList || []);
       setRecentActivity(activity || []);
+      setFeedbackItems(feedbackData || []);
 
       const byMonth: Record<string, number> = {};
       (purchases || []).forEach((p: any) => {
@@ -138,19 +182,43 @@ export default function AdminDashboard() {
   const filteredUsers = usersList.filter(u => !userSearch || u.full_name?.toLowerCase().includes(userSearch.toLowerCase()));
 
   const sendGlobalNotification = async () => {
-    const msg = window.prompt("Message to send to all users:");
-    if (!msg) return;
-    const { data: allUsers } = await supabase.from("profiles").select("id");
-    if (!allUsers) return;
-    await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: "system", title: "Message from Digital Home", message: msg, read: false })));
-    toast.success("Sent to all users!");
+    const msg = window.prompt("Message to send to ALL users:");
+    if (!msg || !msg.trim()) return;
+    const { data: allUsers, error } = await supabase.from("profiles").select("id");
+    if (error || !allUsers?.length) {
+      toast.error("Could not load users");
+      return;
+    }
+    const { error: insertError } = await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: "system", title: "Message from Digital Home", message: msg.trim(), read: false })));
+    if (insertError) {
+      toast.error("Send failed: " + insertError.message);
+      return;
+    }
+    toast.success(`Sent to ${allUsers.length} users! ✓`);
   };
 
-  const exportCSV = () => {
-    const csv = ["Name,Joined", ...usersList.map(u => `${u.full_name || ""},${u.created_at}`)].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+  const exportCSV = async () => {
+    const { data: users, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    if (error || !users) { toast.error("Export failed"); return; }
+    const headers = ["ID", "Name", "Plan", "Joined", "Last Active"];
+    const rows = users.map(u => [
+      u.id || "",
+      (u.full_name || "").replace(/,/g, ";"),
+      "free",
+      u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
+      u.last_login ? new Date(u.last_login).toLocaleDateString() : "Never",
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `users-${new Date().toISOString().split("T")[0]}.csv`; a.click();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `digitalhome-users-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${users.length} users`);
   };
 
   const cardStyle: React.CSSProperties = { background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 14, padding: 18 };
@@ -242,20 +310,82 @@ export default function AdminDashboard() {
             <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>All Users ({stats.totalUsers})</h3>
             <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search users..." style={{ padding: "7px 12px", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "Inter, sans-serif", width: 200, background: inputBg, color: text1 }} />
           </div>
-          <div style={{ background: tableBg, borderRadius: 8, padding: "8px 14px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 80px", gap: 8, marginBottom: 4 }}>
+          <div style={{ background: tableBg, borderRadius: 8, padding: "8px 14px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, marginBottom: 4 }}>
             {["Name", "Plan", "Joined", "Actions"].map(h => <span key={h} style={{ fontSize: 11, fontWeight: 700, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</span>)}
           </div>
           {filteredUsers.slice(0, 30).map(u => (
-            <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 80px", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${rowBorder}`, alignItems: "center" }}>
+            <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${rowBorder}`, alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: isDark ? "#252528" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: text2 }}>{(u.full_name || "?").charAt(0).toUpperCase()}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{u.full_name || "No name"}</span>
               </div>
               <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>free</span>
               <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-              <button onClick={async () => { const msg = prompt("Notification message:"); if (!msg) return; await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "Message from Admin", message: msg, read: false }); toast.success("Notification sent!"); }} style={{ padding: "4px 8px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 6, fontSize: 11, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Notify</button>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button onClick={() => { setGhostUser(u); setGhostPanelOpen(true); }} style={{ padding: "4px 8px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 6, fontSize: 11, color: "#1D4ED8", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
+                <button onClick={async () => { const msg = prompt("Notification message:"); if (!msg) return; await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "Message from Admin", message: msg, read: false }); toast.success("Notification sent!"); }} style={{ padding: "4px 8px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 6, fontSize: 11, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Notify</button>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* FEEDBACK INBOX */}
+        <div style={{ ...cardStyle, marginBottom: 20, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>User Feedback</h3>
+              {feedbackItems.filter(f => f.status === "pending").length > 0 && (
+                <span style={{ padding: "2px 8px", background: "#FEF2F2", color: "#DC2626", borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>
+                  {feedbackItems.filter(f => f.status === "pending").length} new
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["all", "Bug Report", "Feature Request", "General Feedback", "Billing Issue"].map(f => (
+                <button key={f} onClick={() => setFeedbackFilter(f)} style={{
+                  padding: "4px 10px", borderRadius: 999, border: "1px solid",
+                  borderColor: feedbackFilter === f ? "#10B981" : inputBorder,
+                  background: feedbackFilter === f ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : cardBg,
+                  color: feedbackFilter === f ? "#065F46" : text2,
+                  fontSize: 11, fontWeight: feedbackFilter === f ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                }}>
+                  {f === "all" ? "All" : f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {(feedbackItems || []).filter(f => feedbackFilter === "all" || f.message?.includes(feedbackFilter)).map(item => (
+            <div key={item.id} style={{ padding: "16px 0", borderBottom: `1px solid ${rowBorder}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {item.status === "pending" && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />}
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>From: {item.email || "Unknown"}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>
+                    {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                  {item.status === "pending" && (
+                    <button onClick={async () => {
+                      await supabase.from("feedback").update({ status: "reviewed" } as any).eq("id", item.id);
+                      setFeedbackItems(prev => prev.map(f => f.id === item.id ? { ...f, status: "reviewed" } : f));
+                    }} style={{ padding: "3px 8px", background: "transparent", border: `1px solid ${inputBorder}`, borderRadius: 6, fontSize: 11, color: text2, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", lineHeight: 1.5, margin: 0 }}>{item.message}</p>
+            </div>
+          ))}
+
+          {feedbackItems.length === 0 && (
+            <div style={{ padding: "48px 20px", textAlign: "center" }}>
+              <MessageSquare size={36} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
+              <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>No feedback submitted yet</p>
+            </div>
+          )}
         </div>
 
         {/* BOTTOM ROW */}
@@ -280,7 +410,15 @@ export default function AdminDashboard() {
             {[
               { label: "Send Global Notification", desc: "Notify all users at once", Icon: Bell, color: "#10B981", action: sendGlobalNotification },
               { label: "Export User Data", desc: "Download users as CSV", Icon: Download, color: "#3B82F6", action: exportCSV },
-              { label: "View Backend Dashboard", desc: "Open database directly", Icon: ExternalLink, color: "#7B5EA7", action: () => toast.success("Use Lovable Cloud to manage your backend") },
+              { label: "View Backend Dashboard", desc: "Open database directly", Icon: ExternalLink, color: "#7B5EA7", action: () => {
+                const link = document.createElement("a");
+                link.href = "https://supabase.com/dashboard";
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }},
             ].map(item => (
               <button key={item.label} onClick={item.action} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><item.Icon size={16} color={item.color} /></div>
@@ -294,6 +432,74 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* GHOST USER PANEL */}
+      {ghostPanelOpen && ghostUser && (
+        <div style={{ position: "fixed", top: 0, right: 0, width: 480, height: "100vh", background: isDark ? "#1C1C1E" : "white", boxShadow: "-8px 0 40px rgba(0,0,0,0.15)", zIndex: 9999, overflow: "auto", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: isDark ? "#1C1C1E" : "white", zIndex: 1 }}>
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>User Details</h2>
+              <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Admin view</p>
+            </div>
+            <button onClick={() => setGhostPanelOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer" }}><X size={20} color={text2} /></button>
+          </div>
+
+          {/* User identity */}
+          <div style={{ padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`, display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#7B5EA7", flexShrink: 0 }}>
+              {(ghostUser.full_name || ghostUser.email || "?").charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{ghostUser.full_name || "No name"}</p>
+              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{ghostUser.email || "No email"}</p>
+              <span style={{ padding: "2px 8px", background: "#F3F4F6", color: text2, borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>free</span>
+            </div>
+          </div>
+
+          {/* Account info */}
+          <div style={{ padding: "20px 24px" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Account Info</p>
+            {[
+              { label: "User ID", value: ghostUser.id },
+              { label: "Joined", value: ghostUser.created_at ? new Date(ghostUser.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Unknown" },
+              { label: "Last Active", value: ghostUser.last_login ? new Date(ghostUser.last_login).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Never" },
+            ].map(item => (
+              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${rowBorder}` }}>
+                <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>{item.label}</span>
+                <span style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", fontWeight: 500, maxWidth: 240, textAlign: "right", wordBreak: "break-all" }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Activity stats */}
+          <div style={{ padding: "0 24px 20px" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Activity</p>
+            <UserActivityStats userId={ghostUser.id} />
+          </div>
+
+          {/* Admin actions */}
+          <div style={{ padding: "20px 24px", borderTop: `1px solid ${cardBorder}`, marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Admin Actions</p>
+            <button onClick={async () => {
+              const msg = window.prompt(`Send notification to ${ghostUser.full_name || ghostUser.email}:`);
+              if (!msg) return;
+              await supabase.from("notifications").insert({ user_id: ghostUser.id, type: "system", title: "Message from Admin", message: msg, read: false });
+              toast.success("Notification sent!");
+            }} style={{ padding: "10px 16px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8, textAlign: "left" }}>
+              <Bell size={14} color="#10B981" /> Send Notification
+            </button>
+            <button onClick={async () => {
+              if (!window.confirm(`Permanently delete ${ghostUser.full_name || ghostUser.email}? Cannot be undone.`)) return;
+              await supabase.from("profiles").delete().eq("id", ghostUser.id);
+              setUsersList(prev => prev.filter(u => u.id !== ghostUser.id));
+              setGhostPanelOpen(false);
+              toast.success(`${ghostUser.full_name || ghostUser.email} deleted`);
+            }} style={{ padding: "10px 16px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#DC2626", cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+              <Trash2 size={14} color="#DC2626" /> Delete Account
+            </button>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
