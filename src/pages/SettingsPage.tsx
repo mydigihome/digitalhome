@@ -246,11 +246,11 @@ export default function SettingsPage() {
     })();
   }, [user, reviewSaved]);
 
-  // Load saved reviews for Archive tab
+  // Load saved reviews for General tab
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       setSavedReviews(data || []);
     })();
   }, [user]);
