@@ -25,39 +25,78 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize: extract handle from URL or clean up input
-    let cleanHandle = handle.trim();
-    // Handle URLs like youtube.com/@handle or youtube.com/channel/ID
-    const handleMatch = cleanHandle.match(/@([\w.-]+)/);
-    const channelIdMatch = cleanHandle.match(/channel\/(UC[\w-]+)/);
+    // Aggressively clean handle
+    const cleanHandle = handle
+      .trim()
+      .replace(/^@/, "")
+      .replace(/https?:\/\/(www\.)?youtube\.com\/@?/, "")
+      .replace(/https?:\/\/(www\.)?youtu\.be\//, "")
+      .replace(/\/.*$/, "")
+      .replace(/\?.*$/, "")
+      .trim();
 
-    let channelId: string | null = null;
+    // Check if it's already a channel ID
+    const channelIdMatch = handle.match(/channel\/(UC[\w-]+)/);
+    let channelId: string | null = channelIdMatch ? channelIdMatch[1] : null;
     let channelData: any = null;
 
-    if (channelIdMatch) {
-      channelId = channelIdMatch[1];
-    } else {
-      // Search by handle
-      const searchHandle = handleMatch ? handleMatch[1] : cleanHandle.replace(/^@/, "");
-      const searchUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=${searchHandle}&key=${apiKey}`;
-      const searchRes = await fetch(searchUrl);
-      const searchData = await searchRes.json();
+    // METHOD 1 — Search API
+    if (!channelId) {
+      try {
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(cleanHandle)}&key=${apiKey}&maxResults=5`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
 
-      if (searchData.items && searchData.items.length > 0) {
-        channelData = searchData.items[0];
-        channelId = channelData.id;
-      } else {
-        // Try as username
-        const userUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forUsername=${searchHandle}&key=${apiKey}`;
+        if (searchData.items && searchData.items.length > 0) {
+          // Try exact match first
+          const exactMatch = searchData.items.find(
+            (item: any) =>
+              item.snippet.channelTitle?.toLowerCase().replace(/\s/g, "") === cleanHandle.toLowerCase().replace(/\s/g, "") ||
+              item.snippet.customUrl?.replace("@", "").toLowerCase() === cleanHandle.toLowerCase()
+          );
+
+          if (exactMatch) {
+            channelId = exactMatch.snippet.channelId;
+          } else {
+            channelId = searchData.items[0].snippet.channelId;
+          }
+        }
+      } catch {
+        // Continue to method 2
+      }
+    }
+
+    // METHOD 2 — forHandle parameter
+    if (!channelId) {
+      try {
+        const handleUrl = `https://www.googleapis.com/youtube/v3/channels?part=id,snippet,statistics&forHandle=${encodeURIComponent(cleanHandle)}&key=${apiKey}`;
+        const handleRes = await fetch(handleUrl);
+        const handleData = await handleRes.json();
+        if (handleData.items && handleData.items.length > 0) {
+          channelData = handleData.items[0];
+          channelId = channelData.id;
+        }
+      } catch {
+        // Continue to method 3
+      }
+    }
+
+    // METHOD 3 — forUsername parameter
+    if (!channelId) {
+      try {
+        const userUrl = `https://www.googleapis.com/youtube/v3/channels?part=id,snippet,statistics&forUsername=${encodeURIComponent(cleanHandle)}&key=${apiKey}`;
         const userRes = await fetch(userUrl);
         const userData = await userRes.json();
         if (userData.items && userData.items.length > 0) {
           channelData = userData.items[0];
           channelId = channelData.id;
         }
+      } catch {
+        // All methods exhausted
       }
     }
 
+    // If we found a channelId but no channelData yet, fetch it
     if (!channelData && channelId) {
       const chUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${channelId}&key=${apiKey}`;
       const chRes = await fetch(chUrl);
@@ -92,7 +131,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       channel: {
         channel_id: channelId,
-        handle: snippet.customUrl || `@${handle.replace(/^@/, "")}`,
+        handle: snippet.customUrl || `@${cleanHandle}`,
         title: snippet.title,
         thumbnail: snippet.thumbnails?.default?.url,
         subscribers: parseInt(stats.subscriberCount || "0", 10),
