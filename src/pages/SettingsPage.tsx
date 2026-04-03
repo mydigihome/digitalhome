@@ -43,14 +43,6 @@ const BILLING_PLANS = [
     features: ["Full dashboard + market watch", "Journal unlimited + voice recording", "Projects + AI stage generation", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings"],
     stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
   },
-  {
-    tier: "pro", name: "Pro", badge: null,
-    monthlyPrice: 29, annualPrice: 199,
-    color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE",
-    description: "For creators and entrepreneurs who want it all.",
-    features: ["Everything in Standard", "Studio — full HQ + collaboration", "Investing tab + trading terminal", "AI trading plans unlimited", "Plaid bank sync", "Broker connect", "Priority support"],
-    stripeMonthly: "PASTE_PRO_MONTHLY_LINK", stripeAnnual: "PASTE_PRO_ANNUAL_LINK",
-  },
 ];
 
 const BROKERS: { name: string; url: string }[] = [
