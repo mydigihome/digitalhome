@@ -632,7 +632,7 @@ export default function Dashboard() {
                   <button onClick={() => navigate("/journal")} className="text-xs font-medium text-success hover:underline mt-2 block">View all →</button>
                 </div>
                 {/* RIGHT — Emotion bars */}
-                <div style={{ flex: "0 0 35%" }}>
+                <div className="sm:flex-[0_0_35%]">
                   {(journalEmotionStats.length > 0 ? journalEmotionStats : [
                     { label: "Calm", percentage: 40 }, { label: "Happy", percentage: 30 }, { label: "Focused", percentage: 20 }, { label: "Sad", percentage: 10 },
                   ]).map(em => (
