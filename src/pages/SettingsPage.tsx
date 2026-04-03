@@ -10,7 +10,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import {
   User, Moon, Sun, Check, Building2, FileText, TrendingUp,
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
-  Heart, BookOpen, MapPin, RotateCcw, Mail,
+  Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
 } from "lucide-react";
 
 const ACCENT_THEMES = [
@@ -102,6 +102,8 @@ export default function SettingsPage() {
   const [showScripture, setShowScripture] = useState(false);
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("");
   const [activeTab, setActiveTab] = useState("general");
+  const [feedbackType, setFeedbackType] = useState("General Feedback");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   // Load profile + preferences on mount
   useEffect(() => {
@@ -135,6 +137,16 @@ export default function SettingsPage() {
     setSubstackEmail(localStorage.getItem("substack-email") || "");
   }, [prefs]);
 
+  // Load welcome video from app_settings (for admin)
+  useEffect(() => {
+    if (user?.email === "myslimher@gmail.com") {
+      (async () => {
+        const { data } = await (supabase as any).from("app_settings").select("value").eq("key", "welcome_video_url").maybeSingle();
+        if (data?.value) setWelcomeVideoUrl(data.value);
+      })();
+    }
+  }, [user]);
+
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
@@ -151,13 +163,19 @@ export default function SettingsPage() {
     const theme = ACCENT_THEMES.find(t => t.name === selectedTheme);
     if (!theme) return;
 
-    // Apply accent color via useThemeApplicator's mechanism
+    // Apply accent color via CSS variables
     const hsl = hexToHsl(theme.primary);
+    const hslSecondary = hexToHsl(theme.secondary);
     const root = document.documentElement;
     root.style.setProperty("--primary", hsl);
     root.style.setProperty("--ring", hsl);
     root.style.setProperty("--sidebar-primary", hsl);
     root.style.setProperty("--chart-1", hsl);
+
+    // Persist to localStorage for cross-page persistence
+    localStorage.setItem("dh_accent_color", theme.primary);
+    localStorage.setItem("dh_secondary_color", theme.secondary);
+    localStorage.setItem("dh_theme_name", theme.name);
 
     // Dark mode
     if (isDarkMode) {
@@ -168,7 +186,15 @@ export default function SettingsPage() {
       document.body.classList.remove("dark");
     }
 
-    // Save to DB via upsertPrefs (uses the existing hook)
+    // Fire custom event for any listeners
+    window.dispatchEvent(new CustomEvent("theme-changed", { detail: { accent: theme.primary, secondary: theme.secondary } }));
+
+    // Save welcome video to app_settings if admin
+    if (user.email === "myslimher@gmail.com" && welcomeVideoUrl) {
+      (supabase as any).from("app_settings").upsert({ key: "welcome_video_url", value: welcomeVideoUrl, updated_at: new Date().toISOString() }).then(() => {});
+    }
+
+    // Save to DB via upsertPrefs
     upsertPrefs.mutate({
       theme_color: theme.primary,
       sidebar_theme: isDarkMode ? "dark" : "light",
@@ -183,6 +209,7 @@ export default function SettingsPage() {
   const toggleDarkMode = () => {
     const next = !isDarkMode;
     setIsDarkMode(next);
+    localStorage.setItem("dh_dark_mode", next.toString());
     if (next) {
       document.documentElement.classList.add("dark");
       document.body.classList.add("dark");
@@ -221,6 +248,24 @@ export default function SettingsPage() {
     toast.success("Substack connected!");
   };
 
+  const submitFeedback = async () => {
+    if (!user) return;
+    if (!feedbackMessage.trim()) {
+      toast.error("Write something first");
+      return;
+    }
+    await supabase.from("feedback").insert({
+      user_id: user.id,
+      email: user.email,
+      message: feedbackMessage.trim(),
+      rating: null,
+      status: "pending",
+    });
+    setFeedbackMessage("");
+    setFeedbackType("General Feedback");
+    toast.success("Feedback sent! 💚", { description: "We'll review it shortly." });
+  };
+
   const bg = isDark ? "#1C1C1E" : "white";
   const border = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6";
   const text1 = isDark ? "#F2F2F2" : "#111827";
@@ -249,7 +294,6 @@ export default function SettingsPage() {
   return (
     <AppShell>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "32px 16px 100px" }}>
-        {/* Clean header — no purple banner */}
         <h1 style={{ fontSize: 28, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Settings</h1>
         <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif", margin: "4px 0 20px" }}>Manage your account and preferences</p>
 
@@ -258,8 +302,8 @@ export default function SettingsPage() {
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
               padding: "8px 16px", fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
-              color: activeTab === tab.key ? "#10B981" : text2,
-              borderBottom: activeTab === tab.key ? "2px solid #10B981" : "2px solid transparent",
+              color: activeTab === tab.key ? (localStorage.getItem("dh_accent_color") || "#10B981") : text2,
+              borderBottom: activeTab === tab.key ? `2px solid ${localStorage.getItem("dh_accent_color") || "#10B981"}` : "2px solid transparent",
               background: "transparent", border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif",
               marginBottom: -1, transition: "all 150ms",
             }}>
@@ -274,7 +318,7 @@ export default function SettingsPage() {
             {/* PROFILE */}
             <div style={sectionStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                <User size={18} color="#10B981" />
+                <User size={18} color={localStorage.getItem("dh_accent_color") || "#10B981"} />
                 <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Profile</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
@@ -363,11 +407,13 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Welcome video */}
-              <div style={{ borderTop: `1px solid ${border}`, paddingTop: 16, marginBottom: 16 }}>
-                <label style={labelStyle}>Welcome Video URL (for new users)</label>
-                <input value={welcomeVideoUrl} onChange={e => setWelcomeVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
-              </div>
+              {/* Welcome video — admin only */}
+              {user?.email === "myslimher@gmail.com" && (
+                <div style={{ borderTop: `1px solid ${border}`, paddingTop: 16, marginBottom: 16 }}>
+                  <label style={labelStyle}>Welcome Video URL (shows to all new users)</label>
+                  <input value={welcomeVideoUrl} onChange={e => setWelcomeVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." style={inputStyle} />
+                </div>
+              )}
 
               <button onClick={saveAppearance} style={{ marginTop: 8, padding: "10px 24px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Save Appearance</button>
             </div>
@@ -492,42 +538,77 @@ export default function SettingsPage() {
 
         {/* ══════════ SUPPORT TAB ══════════ */}
         {activeTab === "support" && (
-          <div style={sectionStyle}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-              <HelpCircle size={18} color="#3B82F6" />
-              <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Support & Help</span>
+          <>
+            <div style={sectionStyle}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+                <HelpCircle size={18} color="#3B82F6" />
+                <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Support & Help</span>
+              </div>
+
+              <Accordion type="single" collapsible className="w-full">
+                {FAQ_ITEMS.map((item, i) => (
+                  <AccordionItem key={i} value={`faq-${i}`} className="border-border">
+                    <AccordionTrigger className="text-sm font-medium text-foreground hover:no-underline py-3">
+                      {item.q}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground">
+                      {item.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+
+              <div style={{ borderTop: `1px solid ${border}`, paddingTop: 20, marginTop: 16 }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>Need more help?</p>
+                <button onClick={() => window.open("mailto:support@mydigitalhome.app")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#3B82F6", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+                  <Mail size={15} /> Contact Support
+                </button>
+              </div>
             </div>
 
-            <Accordion type="single" collapsible className="w-full">
-              {FAQ_ITEMS.map((item, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="border-border">
-                  <AccordionTrigger className="text-sm font-medium text-foreground hover:no-underline py-3">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            {/* FEEDBACK FORM */}
+            <div style={sectionStyle}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <MessageSquare size={18} color="#F59E0B" />
+                <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Send Feedback</span>
+              </div>
+              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: "0 0 16px" }}>Help us improve Digital Home. We read every message.</p>
 
-            <div style={{ borderTop: `1px solid ${border}`, paddingTop: 20, marginTop: 16 }}>
-              <p style={{ fontSize: 15, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>Need more help?</p>
-              <button onClick={() => window.open("mailto:support@mydigitalhome.app")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "#3B82F6", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
-                <Mail size={15} /> Contact Support
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                {["Bug Report", "Feature Request", "General Feedback", "Billing Issue"].map(type => (
+                  <button key={type} onClick={() => setFeedbackType(type)} style={{
+                    padding: "6px 14px", borderRadius: 999, border: "1.5px solid",
+                    borderColor: feedbackType === type ? "#10B981" : inputBorder,
+                    background: feedbackType === type ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : inputBg,
+                    color: feedbackType === type ? (isDark ? "#10B981" : "#065F46") : text2,
+                    fontSize: 12, fontWeight: feedbackType === type ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+                  }}>
+                    {type}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={feedbackMessage}
+                onChange={e => setFeedbackMessage(e.target.value)}
+                placeholder="Tell us what's on your mind..."
+                rows={4}
+                style={{ ...inputStyle, resize: "vertical" as const, marginBottom: 12 }}
+              />
+
+              <button onClick={submitFeedback} style={{ padding: "10px 24px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+                Send Feedback
               </button>
             </div>
 
-            <div style={{ marginTop: 24, padding: "12px 16px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 10, textAlign: "center" }}>
+            <div style={{ padding: "12px 16px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 10, textAlign: "center" }}>
               <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>Digital Home v1.0 · Built with ♥</p>
             </div>
-          </div>
+          </>
         )}
       </div>
 
       {/* ══════════ MODALS ══════════ */}
-
-      {/* Substack Modal */}
       {substackModalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%" }}>
@@ -543,7 +624,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Broker Modal */}
       {brokerModalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%" }}>
@@ -573,7 +653,6 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Plaid Modal */}
       {plaidModalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 400, width: "100%" }}>
