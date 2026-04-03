@@ -70,6 +70,18 @@ Deno.serve(async (req) => {
       generated.push(msg);
     }
 
+    // 5. Monthly review reminder on 1st of month
+    if (now.getDate() === 1) {
+      const lastMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+      const lastYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const monthName = new Date(lastYear, lastMonth - 1).toLocaleDateString("en-US", { month: "long" });
+      const reviewMsg = `Your ${monthName} review is ready. Take 5 minutes to reflect — go to Settings → Profile to complete it.`;
+      if (!(await isDuplicate(reviewMsg))) {
+        await supabase.from("notifications").insert({ user_id, type: "system", title: `${monthName} Review Ready`, message: reviewMsg, category: "Monthly Review", action_url: "/settings" });
+        generated.push(reviewMsg);
+      }
+    }
+
     return new Response(JSON.stringify({ generated: generated.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });

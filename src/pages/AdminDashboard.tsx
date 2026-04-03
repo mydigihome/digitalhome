@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import {
   Shield, Users, Activity, DollarSign, FileText, Target, BookOpen,
   ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock, ChevronRight,
-  X, Trash2, CreditCard, MessageSquare,
+  X, Trash2, CreditCard, MessageSquare, Megaphone, Loader2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
@@ -73,6 +73,11 @@ export default function AdminDashboard() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [ghostUser, setGhostUser] = useState<any>(null);
   const [ghostPanelOpen, setGhostPanelOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [announcementType, setAnnouncementType] = useState("system");
+  const [announcementSending, setAnnouncementSending] = useState(false);
+  const [announcementHistory, setAnnouncementHistory] = useState<any[]>([]);
 
   const text1 = isDark ? "#F2F2F2" : "#111827";
   const text2 = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";
@@ -143,7 +148,12 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, [isAdmin]);
+  const loadAnnouncementHistory = async () => {
+    const { data } = await (supabase as any).from("announcements").select("*").order("created_at", { ascending: false }).limit(10);
+    setAnnouncementHistory(data || []);
+  };
+
+  useEffect(() => { loadData(); loadAnnouncementHistory(); }, [isAdmin]);
 
   if (!isAdmin) {
     return (
@@ -238,6 +248,61 @@ export default function AdminDashboard() {
           <button onClick={loadData} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: cardBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
+        </div>
+
+        {/* ANNOUNCEMENTS */}
+        <div style={{ background: cardBg, borderRadius: 14, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, padding: 24, marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}><Megaphone size={18} color="#10B981" /></div>
+            <div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Send Announcement</h3>
+              <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Broadcasts to all users instantly</p>
+            </div>
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <input value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="Announcement title..." style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" as const, background: inputBg }} />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <textarea value={announcementMessage} onChange={e => setAnnouncementMessage(e.target.value)} placeholder="Write your announcement..." rows={4} style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box" as const, lineHeight: "1.6", background: inputBg }} />
+          </div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            {[
+              { type: "system", label: "📢 General" },
+              { type: "feature", label: "✨ New Feature" },
+              { type: "maintenance", label: "🔧 Maintenance" },
+              { type: "promo", label: "🎉 Special Offer" },
+            ].map(opt => (
+              <button key={opt.type} onClick={() => setAnnouncementType(opt.type)} style={{ padding: "6px 14px", borderRadius: 999, border: `1.5px solid ${announcementType === opt.type ? "#10B981" : inputBorder}`, background: announcementType === opt.type ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : (isDark ? "#252528" : "white"), color: announcementType === opt.type ? "#10B981" : text2, fontSize: 12, fontWeight: announcementType === opt.type ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{opt.label}</button>
+            ))}
+          </div>
+          <button disabled={announcementSending || !announcementTitle.trim() || !announcementMessage.trim()} onClick={async () => {
+            if (!announcementTitle.trim() || !announcementMessage.trim()) return;
+            setAnnouncementSending(true);
+            try {
+              const { data: allUsers } = await supabase.from("profiles").select("id");
+              if (!allUsers?.length) { toast.error("No users found"); return; }
+              await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: announcementType, title: announcementTitle.trim(), message: announcementMessage.trim(), category: "Announcement", read: false })));
+              await (supabase as any).from("announcements").insert({ sent_by: user!.id, title: announcementTitle.trim(), message: announcementMessage.trim(), type: announcementType, recipient_count: allUsers.length });
+              setAnnouncementTitle(""); setAnnouncementMessage(""); setAnnouncementType("system");
+              await loadAnnouncementHistory();
+              toast.success(`Sent to ${allUsers.length} users! 📢`);
+            } catch (err: any) { toast.error("Send failed: " + err.message); } finally { setAnnouncementSending(false); }
+          }} style={{ padding: "11px 28px", background: announcementTitle.trim() && announcementMessage.trim() ? "#10B981" : (isDark ? "#333" : "#F3F4F6"), color: announcementTitle.trim() && announcementMessage.trim() ? "white" : text2, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: announcementTitle.trim() && announcementMessage.trim() ? "pointer" : "not-allowed", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+            {announcementSending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Megaphone size={16} /> Send to All Users</>}
+          </button>
+          {announcementHistory.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10, fontFamily: "Inter, sans-serif" }}>Recently Sent</p>
+              {announcementHistory.slice(0, 5).map((a: any) => (
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB"}` }}>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{a.title}</p>
+                    <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {a.recipient_count} users</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* TOP METRICS */}
