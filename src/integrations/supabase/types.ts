@@ -1953,47 +1953,59 @@ export type Database = {
         Row: {
           ai_summary: string | null
           bills_paid: number | null
+          completed_at: string | null
           contacts_reached: number | null
           created_at: string | null
           credit_score: number | null
           full_snapshot: Json | null
           goals_progress: number | null
           id: string
+          month: number | null
           net_worth: number | null
+          review_data: Json | null
           review_date: string | null
           review_month: string
           top_spending_category: string | null
           user_id: string
+          year: number | null
         }
         Insert: {
           ai_summary?: string | null
           bills_paid?: number | null
+          completed_at?: string | null
           contacts_reached?: number | null
           created_at?: string | null
           credit_score?: number | null
           full_snapshot?: Json | null
           goals_progress?: number | null
           id?: string
+          month?: number | null
           net_worth?: number | null
+          review_data?: Json | null
           review_date?: string | null
           review_month: string
           top_spending_category?: string | null
           user_id: string
+          year?: number | null
         }
         Update: {
           ai_summary?: string | null
           bills_paid?: number | null
+          completed_at?: string | null
           contacts_reached?: number | null
           created_at?: string | null
           credit_score?: number | null
           full_snapshot?: Json | null
           goals_progress?: number | null
           id?: string
+          month?: number | null
           net_worth?: number | null
+          review_data?: Json | null
           review_date?: string | null
           review_month?: string
           top_spending_category?: string | null
           user_id?: string
+          year?: number | null
         }
         Relationships: []
       }
