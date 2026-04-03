@@ -42,24 +42,13 @@ export default function AdminDashboard() {
   const tableBg = isDark ? "#252528" : "#F9FAFB";
   const rowBorder = isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6";
 
-  // ACCESS GATE
-  if (user?.email !== "myslimher@gmail.com") {
-    return (
-      <AppShell>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16 }}>
-          <Lock size={48} color={text2} />
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Admin Access Only</h2>
-          <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>You don't have permission to view this page.</p>
-        </div>
-      </AppShell>
-    );
-  }
+  const isAdmin = user?.email === "myslimher@gmail.com";
 
   const loadData = async () => {
+    if (!isAdmin) return;
     setLoading(true);
     try {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
 
       const [
         { count: totalUsers },
@@ -91,7 +80,6 @@ export default function AdminDashboard() {
       setUsersList(profilesList || []);
       setRecentActivity(activity || []);
 
-      // Revenue by month
       const byMonth: Record<string, number> = {};
       (purchases || []).forEach((p: any) => {
         const m = new Date(p.purchased_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -99,7 +87,6 @@ export default function AdminDashboard() {
       });
       setRevenueData(Object.entries(byMonth).map(([month, amount]) => ({ month, amount })));
 
-      // User growth by month
       const growthMap: Record<string, number> = {};
       (profilesList || []).forEach((u: any) => {
         const m = new Date(u.created_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -112,7 +99,19 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [isAdmin]);
+
+  if (!isAdmin) {
+    return (
+      <AppShell>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16 }}>
+          <Lock size={48} color={text2} />
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Admin Access Only</h2>
+          <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>You don't have permission to view this page.</p>
+        </div>
+      </AppShell>
+    );
+  }
 
   const metricCards = [
     { label: "Total Users", value: stats.totalUsers, change: `+${stats.newThisWeek} this week`, Icon: Users, color: "#3B82F6" },
