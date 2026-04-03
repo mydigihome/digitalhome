@@ -393,108 +393,52 @@ export default function SettingsPage() {
             </div>
 
             {/* MONTHLY REVIEW */}
-            <div style={sectionStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                <BarChart2 size={18} color="#10B981" />
-                <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Monthly Review</span>
-              </div>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>Reflect on your month and set your intention for next month. Saved automatically.</p>
-
-              {/* Month navigation */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 20 }}>
-                <button onClick={() => { if (reviewMonth === 1) { setReviewMonth(12); setReviewYear(y => y - 1); } else { setReviewMonth(m => m - 1); } }} style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ChevronLeft size={16} color={text2} />
-                </button>
-                <span style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", minWidth: 160, textAlign: "center" }}>
-                  {new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                </span>
-                <button onClick={() => { const now = new Date(); if (reviewMonth === now.getMonth() + 1 && reviewYear === now.getFullYear()) return; if (reviewMonth === 12) { setReviewMonth(1); setReviewYear(y => y + 1); } else { setReviewMonth(m => m + 1); } }} style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: reviewMonth === new Date().getMonth() + 1 && reviewYear === new Date().getFullYear() ? 0.3 : 1 }}>
-                  <ChevronRight size={16} color={text2} />
-                </button>
-              </div>
-
-              {/* Auto-pulled stats */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
-                {[
-                  { Icon: DollarSign, label: "Income", value: `$${(monthStats.income || 0).toLocaleString()}`, color: "#10B981", bg: isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4" },
-                  { Icon: CreditCard, label: "Spent", value: `$${(monthStats.expenses || 0).toLocaleString()}`, color: "#EF4444", bg: isDark ? "rgba(239,68,68,0.08)" : "#FEF2F2" },
-                  { Icon: TrendingUp, label: "Saved", value: `$${Math.max(0, monthStats.saved || 0).toLocaleString()}`, color: (monthStats.saved || 0) >= 0 ? "#10B981" : "#EF4444", bg: (monthStats.saved || 0) >= 0 ? (isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4") : (isDark ? "rgba(239,68,68,0.08)" : "#FEF2F2") },
-                  { Icon: Target, label: "Goals Done", value: monthStats.goalsDone || 0, color: "#7B5EA7", bg: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" },
-                  { Icon: BookOpen, label: "Journal Entries", value: monthStats.journalCount || 0, color: "#06B6D4", bg: isDark ? "rgba(6,182,212,0.08)" : "#ECFEFF" },
-                  { Icon: Heart, label: "Top Mood", value: monthStats.topMood || "—", color: "#EC4899", bg: isDark ? "rgba(236,72,153,0.08)" : "#FDF2F8" },
-                  { Icon: Users, label: "Contacts Reached", value: monthStats.contactsReached || 0, color: "#F59E0B", bg: isDark ? "rgba(245,158,11,0.08)" : "#FFFBEB" },
-                  { Icon: FileText, label: "Content Posted", value: monthStats.contentPosted || 0, color: "#F59E0B", bg: isDark ? "rgba(245,158,11,0.08)" : "#FFFBEB" },
-                  { Icon: Receipt, label: "Bills Paid", value: monthStats.billsPaid || 0, color: "#3B82F6", bg: isDark ? "rgba(59,130,246,0.08)" : "#EFF6FF" },
-                ].map((stat, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: stat.bg, borderRadius: 10 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: `${stat.color}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <stat.Icon size={14} color={stat.color} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: stat.color, fontFamily: "Inter, sans-serif" }}>{stat.value}</div>
-                      <div style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{stat.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Reflection questions */}
-              {[
-                { key: "went_well", emoji: "✨", label: "What went well?" , placeholder: "Wins, progress, moments you are proud of..." },
-                { key: "was_hard", emoji: "💪", label: "What was challenging?", placeholder: "What drained you or did not go as planned..." },
-                { key: "proud_of", emoji: "🏆", label: "One thing I am most proud of", placeholder: "If you had to pick just one thing..." },
-                { key: "do_differently", emoji: "🔄", label: "I would do this differently", placeholder: "One thing to change or approach differently..." },
-              ].map(q => (
-                <div key={q.key} style={{ marginBottom: 16 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>{q.emoji} {q.label}</label>
-                  <textarea value={(reviewData as any)[q.key]} onChange={e => setReviewData(prev => ({ ...prev, [q.key]: e.target.value }))} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", background: inputBg, boxSizing: "border-box" as const, lineHeight: "1.6" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+            <div style={{ marginTop: 32, paddingTop: 28, borderTop: `2px solid ${border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <h3 style={{ fontSize: 17, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px", margin: 0 }}>Monthly Reviews</h3>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginTop: 4 }}>Reflect on your month. Saves automatically.</p>
                 </div>
-              ))}
-
-              {/* Focus word */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>🎯 My focus word for next month</label>
-                <input value={reviewData.focus_word} onChange={e => setReviewData(prev => ({ ...prev, focus_word: e.target.value }))} placeholder="e.g. Consistency, Growth, Balance, Discipline..." maxLength={30} style={{ ...inputStyle, fontSize: 16, fontWeight: 600, letterSpacing: "0.3px" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
-              </div>
-
-              {/* Save button */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                <button onClick={async () => {
-                  setReviewSaving(true);
-                  try {
-                    await (supabase as any).from("monthly_reviews").upsert({ user_id: user!.id, month: reviewMonth, year: reviewYear, review_month: `${reviewYear}-${String(reviewMonth).padStart(2, "0")}`, went_well: reviewData.went_well, was_hard: reviewData.was_hard, proud_of: reviewData.proud_of, do_differently: reviewData.do_differently, focus_word: reviewData.focus_word, completed_at: new Date().toISOString() }, { onConflict: "user_id,month,year" });
-                    setReviewSaved(true);
-                    toast.success("Review saved ✓", { description: `Your ${new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long" })} review has been saved.` });
-                  } catch { toast.error("Save failed"); } finally { setReviewSaving(false); }
-                }} style={{ padding: "11px 28px", background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
-                  {reviewSaving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Review</>}
+                <button onClick={() => { setEditingReview(null); setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); setReviewMonth(new Date().getMonth() + 1); setReviewYear(new Date().getFullYear()); setWritingReview(true); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+                  <Plus size={14} /> Write Review
                 </button>
-                {reviewSaved && <span style={{ fontSize: 13, color: "#10B981", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 4, fontWeight: 500 }}><Check size={14} /> Saved</span>}
               </div>
 
-              {/* Past reviews */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Past Reviews</p>
-                {pastReviews.length === 0 ? (
-                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic" }}>Complete your first review to see your history here.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {pastReviews.map((review: any) => (
-                      <button key={review.id} onClick={() => { setReviewMonth(review.month); setReviewYear(review.year); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: isDark ? "#252528" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, borderRadius: 10, cursor: "pointer", textAlign: "left", width: "100%" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"; }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}><BarChart2 size={15} color="#10B981" /></div>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+              {savedReviews.length === 0 ? (
+                <div style={{ padding: "40px 20px", textAlign: "center", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 12, border: `1px dashed ${border}` }}>
+                  <BarChart2 size={32} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
+                  <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>No reviews yet</p>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Write your first monthly review</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {savedReviews.map((review: any) => (
+                    <div key={review.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: isDark ? "#252528" : "white", borderRadius: 12, border: `1px solid ${border}`, transition: "all 150ms" }}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 10, background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <CalendarDays size={20} color="#7B5EA7" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 2 }}>
+                          {new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          {review.focus_word && <span style={{ padding: "1px 8px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
+                          <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? `Saved ${new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Draft"}</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {review.focus_word && <span style={{ padding: "3px 10px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
-                          <ChevronRight size={14} color="#D1D5DB" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                        {review.went_well && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 400 }}>"{review.went_well.substring(0, 80)}{review.went_well.length > 80 ? "..." : ""}"</p>}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => { setEditingReview(review); setReviewData({ went_well: review.went_well || "", was_hard: review.was_hard || "", proud_of: review.proud_of || "", do_differently: review.do_differently || "", focus_word: review.focus_word || "" }); setReviewMonth(review.month); setReviewYear(review.year); setWritingReview(true); }} style={{ padding: "6px 14px", background: "transparent", border: `1px solid ${border}`, borderRadius: 8, fontSize: 13, fontWeight: 500, color: "#7B5EA7", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
+                        <button onClick={async () => { if (!window.confirm("Delete this review?")) return; await (supabase as any).from("monthly_reviews").delete().eq("id", review.id).eq("user_id", user!.id); setSavedReviews(prev => prev.filter(r => r.id !== review.id)); toast.success("Review deleted"); }} style={{ width: 32, height: 32, background: "transparent", border: `1px solid ${border}`, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: text2 }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = "#FECACA"; e.currentTarget.style.color = "#DC2626"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"; }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
 
