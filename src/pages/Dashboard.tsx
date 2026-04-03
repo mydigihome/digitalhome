@@ -331,10 +331,21 @@ export default function Dashboard() {
       })),
   ].sort((a, b) => a.time.localeCompare(b.time)).slice(0, 3);
 
-  const moneyReminders = (expenses || [])
-    .filter(e => e.frequency && e.frequency !== "once")
-    .slice(0, 2)
-    .map(e => ({ name: e.description, amount: e.amount }));
+  const { data: bills = [] } = useBills();
+  const moneyReminders = (() => {
+    const today = new Date();
+    const upcoming = (bills || [])
+      .filter(b => {
+        if (b.status === 'paid') return false;
+        const due = new Date(b.due_date);
+        const diffDays = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+        return diffDays >= -3 && diffDays <= 14;
+      })
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+      .slice(0, 3)
+      .map(b => ({ name: b.merchant, amount: b.amount, dueDate: b.due_date }));
+    return upcoming;
+  })();
 
   const { data: journalEntries = [] } = useQuery({
     queryKey: ["recent_journal", user?.id],
