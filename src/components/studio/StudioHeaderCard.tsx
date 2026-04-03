@@ -116,6 +116,13 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         if ((profile as any).images) {
           setStudioImages((profile as any).images);
         }
+        // Load YouTube stats into header
+        if ((profile as any).youtube_connected) {
+          setStudioStats(prev => ({
+            ...prev,
+            combined_followers: (profile as any).youtube_subscribers || 0,
+          }));
+        }
       }
 
       const { data: goals } = await supabase
