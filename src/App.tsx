@@ -34,7 +34,7 @@ import RelationshipsPage from "./pages/RelationshipsPage";
 import MonthlyReviewPage from "./pages/MonthlyReviewPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
-import ResourcesPage from "./pages/ResourcesPage";
+// ResourcesPage moved under ApplicationsTrackerPage
 
 const queryClient = new QueryClient();
 
