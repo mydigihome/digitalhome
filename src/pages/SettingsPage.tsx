@@ -822,6 +822,7 @@ export default function SettingsPage() {
         )}
 
         {/* ══════════ ARCHIVE TAB ══════════ */}
+        {activeTab === "archive" && (
           <>
           <div style={sectionStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
