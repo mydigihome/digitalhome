@@ -91,7 +91,13 @@ export default function StudioPage() {
               );
             })}
           </div>
-          {renderContent()}
+          {studioUnlocked || planLoading ? (
+            renderContent()
+          ) : (
+            <LockedFeature feature="studio">
+              {renderContent()}
+            </LockedFeature>
+          )}
         </div>
       </div>
     </AppShell>

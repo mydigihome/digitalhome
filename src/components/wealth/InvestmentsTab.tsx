@@ -241,4 +241,12 @@ export default function InvestmentsTab() {
       )}
     </div>
   );
+
+  if (planLoading || investingUnlocked) return content;
+
+  return (
+    <LockedFeature feature="investing">
+      {content}
+    </LockedFeature>
+  );
 }
