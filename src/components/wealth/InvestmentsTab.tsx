@@ -55,6 +55,8 @@ export default function InvestmentsTab() {
   const [searching, setSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<InvestmentInfo | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { tier, isLoading: planLoading } = usePlan();
+  const investingUnlocked = tier === "standard" || tier === "founding";
 
   const persist = (next: WatchlistItem[]) => { setWatchlist(next); saveWatchlist(next); };
 
