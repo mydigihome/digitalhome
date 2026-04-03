@@ -1,11 +1,13 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useThemeApplicator } from "@/hooks/useThemeApplicator";
+import { supabase } from "@/integrations/supabase/client";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -38,6 +40,31 @@ function ThemeApplicator() {
   return null;
 }
 
+function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (!user) { setChecked(true); return; }
+    const isOnboarding = location.pathname === "/onboarding" || location.pathname === "/welcome";
+    if (!isOnboarding) { setChecked(true); return; }
+
+    supabase.from("user_preferences").select("onboarding_completed").eq("user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data?.onboarding_completed) {
+          navigate("/dashboard", { replace: true });
+        } else {
+          setChecked(true);
+        }
+      });
+  }, [user, location.pathname]);
+
+  if (!checked) return null;
+  return <>{children}</>;
+}
+
 function RootRedirect() {
   const { user, loading } = useAuth();
 
@@ -65,8 +92,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/welcome" element={<ProtectedRoute><NewOnboarding /></ProtectedRoute>} />
-            <Route path="/onboarding" element={<ProtectedRoute><NewOnboarding /></ProtectedRoute>} />
+            <Route path="/welcome" element={<ProtectedRoute><OnboardingGuard><NewOnboarding /></OnboardingGuard></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingGuard><NewOnboarding /></OnboardingGuard></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
             <Route path="/journal/new" element={<ProtectedRoute><JournalEntryPage /></ProtectedRoute>} />
