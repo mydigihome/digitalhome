@@ -464,9 +464,6 @@ export default function SettingsPage() {
                   <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Monthly Reviews</span>
                   {savedReviews.length > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>{savedReviews.length} saved</span>}
                 </div>
-                <button onClick={() => { setEditingReview(null); setArchiveReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); setArchiveReviewMonth(new Date().getMonth() + 1); setArchiveReviewYear(new Date().getFullYear()); setWritingReview(true); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
-                  <Plus size={14} /> Write Review
-                </button>
               </div>
 
               {savedReviews.length === 0 ? (
