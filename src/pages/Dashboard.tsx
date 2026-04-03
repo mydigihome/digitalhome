@@ -7,6 +7,7 @@ import { useQuickTodos, useAddQuickTodo, useUpdateQuickTodo, useDeleteQuickTodo 
 import { useHabits, useHabitLogs, useCreateHabit, useLogHabitHours, getCurrentWeekStart } from "@/hooks/useHabits";
 import { useTodayEvents } from "@/hooks/useCalendarEvents";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useBills } from "@/hooks/useBills";
 import { useUserFinances } from "@/hooks/useUserFinances";
 import { useLoans } from "@/hooks/useLoans";
 import { useContacts } from "@/hooks/useContacts";
