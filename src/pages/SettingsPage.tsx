@@ -14,6 +14,7 @@ import {
   ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
   Lock as LockIcon, Unlock, Plus, Trash2, X,
 } from "lucide-react";
+import { applyThemeOverride } from "@/hooks/useThemeApplicator";
 
 const ACCENT_THEMES = [
   { name: "Emerald", primary: "#10B981", secondary: "#7B5EA7", label: "Default" },
