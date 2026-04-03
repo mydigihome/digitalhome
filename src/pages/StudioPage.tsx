@@ -7,10 +7,13 @@ import StudioDealsView from "@/components/studio/StudioDealsView";
 import StudioRevenueView from "@/components/studio/StudioRevenueView";
 import StudioHeaderCard from "@/components/studio/StudioHeaderCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePlan } from "@/hooks/usePlan";
+import LockedFeature from "@/components/LockedFeature";
 
 export default function StudioPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const isMobile = useIsMobile();
+  const { studioUnlocked, isLoading: planLoading } = usePlan();
 
   const renderContent = () => {
     switch (activeTab) {
