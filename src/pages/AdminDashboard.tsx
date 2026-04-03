@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import {
   Shield, Users, Activity, DollarSign, FileText, Target, BookOpen,
   ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock, ChevronRight,
-  X, Trash2, CreditCard, MessageSquare,
+  X, Trash2, CreditCard, MessageSquare, Megaphone, Loader2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
