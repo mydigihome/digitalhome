@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import AppShell from "@/components/AppShell";
-import { Plus, Search, MoreVertical, FileDown, Mic, Image as ImageIcon } from "lucide-react";
+import { Plus, Search, MoreVertical, FileDown, Mic, Image as ImageIcon, X } from "lucide-react";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 
