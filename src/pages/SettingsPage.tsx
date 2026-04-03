@@ -958,60 +958,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Write/Edit Review Modal */}
-      {writingReview && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setWritingReview(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 28, maxWidth: 520, width: "100%", maxHeight: "85vh", overflowY: "auto" as const }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
-                {editingReview ? `${new Date(archiveReviewYear, archiveReviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })} Review` : "Write Monthly Review"}
-              </h3>
-              <button onClick={() => setWritingReview(false)} style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${inputBorder}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={16} color={text2} /></button>
-            </div>
 
-            {!editingReview && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 20 }}>
-                <button onClick={() => { if (archiveReviewMonth === 1) { setArchiveReviewMonth(12); setArchiveReviewYear(y => y - 1); } else { setArchiveReviewMonth(m => m - 1); } }} style={{ width: 28, height: 28, borderRadius: "50%", border: `1px solid ${inputBorder}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronLeft size={14} color={text2} /></button>
-                <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", minWidth: 140, textAlign: "center" }}>{new Date(archiveReviewYear, archiveReviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
-                <button onClick={() => { const now = new Date(); if (archiveReviewMonth === now.getMonth() + 1 && archiveReviewYear === now.getFullYear()) return; if (archiveReviewMonth === 12) { setArchiveReviewMonth(1); setArchiveReviewYear(y => y + 1); } else { setArchiveReviewMonth(m => m + 1); } }} style={{ width: 28, height: 28, borderRadius: "50%", border: `1px solid ${inputBorder}`, background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><ChevronRight size={14} color={text2} /></button>
-              </div>
-            )}
 
-            {[
-              { key: "went_well", emoji: "✨", label: "What went well?", placeholder: "Wins, progress, moments you are proud of..." },
-              { key: "was_hard", emoji: "💪", label: "What was challenging?", placeholder: "What drained you or did not go as planned..." },
-              { key: "proud_of", emoji: "🏆", label: "One thing I am most proud of", placeholder: "If you had to pick just one thing..." },
-              { key: "do_differently", emoji: "🔄", label: "I would do this differently", placeholder: "One thing to change or approach differently..." },
-            ].map(q => (
-              <div key={q.key} style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>{q.emoji} {q.label}</label>
-                <textarea value={(archiveReviewData as any)[q.key]} onChange={e => setArchiveReviewData(prev => ({ ...prev, [q.key]: e.target.value }))} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical" as const, outline: "none", background: inputBg, boxSizing: "border-box" as const, lineHeight: "1.6" }} />
-              </div>
-            ))}
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>🎯 Focus word for next month</label>
-              <input value={archiveReviewData.focus_word} onChange={e => setArchiveReviewData(prev => ({ ...prev, focus_word: e.target.value }))} placeholder="e.g. Consistency, Growth, Balance..." maxLength={30} style={{ ...inputStyle, fontSize: 15, fontWeight: 600 }} />
-            </div>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setWritingReview(false)} style={{ flex: 1, padding: 10, border: `1.5px solid ${inputBorder}`, borderRadius: 10, background: inputBg, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Cancel</button>
-              <button disabled={archiveReviewSaving} onClick={async () => {
-                setArchiveReviewSaving(true);
-                try {
-                  await (supabase as any).from("monthly_reviews").upsert({ user_id: user!.id, month: archiveReviewMonth, year: archiveReviewYear, review_month: `${archiveReviewYear}-${String(archiveReviewMonth).padStart(2, "0")}`, went_well: archiveReviewData.went_well, was_hard: archiveReviewData.was_hard, proud_of: archiveReviewData.proud_of, do_differently: archiveReviewData.do_differently, focus_word: archiveReviewData.focus_word, completed_at: new Date().toISOString() }, { onConflict: "user_id,month,year" });
-                  const { data: refreshed } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user!.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
-                  setSavedReviews(refreshed || []);
-                  setWritingReview(false);
-                  toast.success("Review saved ✓");
-                } catch { toast.error("Save failed"); } finally { setArchiveReviewSaving(false); }
-              }} style={{ flex: 1, padding: 10, background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                {archiveReviewSaving ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : <><Save size={14} /> Save Review</>}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </AppShell>
   );
