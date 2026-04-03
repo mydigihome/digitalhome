@@ -43,14 +43,6 @@ const BILLING_PLANS = [
     features: ["Full dashboard + market watch", "Journal unlimited + voice recording", "Projects + AI stage generation", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings"],
     stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
   },
-  {
-    tier: "pro", name: "Pro", badge: null,
-    monthlyPrice: 29, annualPrice: 199,
-    color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE",
-    description: "For creators and entrepreneurs who want it all.",
-    features: ["Everything in Standard", "Studio — full HQ + collaboration", "Investing tab + trading terminal", "AI trading plans unlimited", "Plaid bank sync", "Broker connect", "Priority support"],
-    stripeMonthly: "PASTE_PRO_MONTHLY_LINK", stripeAnnual: "PASTE_PRO_ANNUAL_LINK",
-  },
 ];
 
 const BROKERS: { name: string; url: string }[] = [
@@ -647,11 +639,11 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            {/* Plan cards — 3 columns */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, maxWidth: 720, margin: "0 auto 24px" }}>
+            {/* Plan cards — 2 columns */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 600, margin: "0 auto 24px" }}>
               {BILLING_PLANS.map(plan => {
-                const basePrice = billingCycle === "annual" ? Math.round(plan.annualPrice / 12) : plan.monthlyPrice;
-                const discountedPrice = studentDiscount && plan.monthlyPrice > 0 ? (basePrice * 0.5).toFixed(basePrice % 1 === 0 ? 0 : 2) : null;
+                const discountedMonthly = studentDiscount ? (plan.monthlyPrice * 0.5) : null;
+                const discountedAnnual = studentDiscount ? (plan.annualPrice * 0.5) : null;
                 return (
                 <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
                   {plan.badge && (
@@ -664,22 +656,40 @@ export default function SettingsPage() {
                     </div>
                   )}
                   <p style={{ fontSize: 13, fontWeight: 700, color: plan.color, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</p>
-                  <div style={{ marginBottom: 6 }}>
-                    {discountedPrice ? (
-                      <>
-                        <span style={{ fontSize: 20, fontWeight: 800, color: text2, fontFamily: "Inter, sans-serif", textDecoration: "line-through", marginRight: 6 }}>${basePrice}</span>
-                        <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${discountedPrice}</span>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${basePrice === 0 ? "0" : basePrice}</span>
-                    )}
-                    <span style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>/month</span>
-                  </div>
-                  {billingCycle === "annual" && plan.annualPrice > 0 && (
+
+                  {billingCycle === "annual" ? (
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
+                        <span style={{ fontSize: 14, color: "#9CA3AF", textDecoration: "line-through", fontFamily: "Inter, sans-serif" }}>${plan.monthlyPrice * 12}/yr</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#065F46", background: "#F0FDF4", padding: "1px 6px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Save ${(plan.monthlyPrice * 12) - plan.annualPrice}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                        {discountedAnnual ? (
+                          <>
+                            <span style={{ fontSize: 20, fontWeight: 800, color: text2, fontFamily: "Inter, sans-serif", textDecoration: "line-through", marginRight: 4 }}>${plan.annualPrice}</span>
+                            <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${discountedAnnual.toFixed(0)}</span>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${plan.annualPrice}</span>
+                        )}
+                        <span style={{ fontSize: 13, color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>/year</span>
+                      </div>
+                      <p style={{ fontSize: 11, color: "#9CA3AF", fontFamily: "Inter, sans-serif", marginTop: 2 }}>${(plan.annualPrice / 12).toFixed(2)}/mo · billed annually</p>
+                    </div>
+                  ) : (
                     <div style={{ marginBottom: 6 }}>
-                      <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>${studentDiscount ? (plan.annualPrice * 0.5).toFixed(0) : plan.annualPrice} billed annually</span>
+                      {discountedMonthly ? (
+                        <>
+                          <span style={{ fontSize: 20, fontWeight: 800, color: text2, fontFamily: "Inter, sans-serif", textDecoration: "line-through", marginRight: 6 }}>${plan.monthlyPrice}</span>
+                          <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${discountedMonthly.toFixed(0)}</span>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${plan.monthlyPrice}</span>
+                      )}
+                      <span style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>/month</span>
                     </div>
                   )}
+
                   <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 14, lineHeight: 1.5 }}>{plan.description}</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
                     {plan.features.map((f, i) => (
@@ -690,7 +700,7 @@ export default function SettingsPage() {
                     ))}
                   </div>
                   {currentPlan === plan.tier ? (
-                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif" }}>Current Plan ✓</div>
+                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif" }}>Current Plan</div>
                   ) : plan.stripeMonthly ? (
                     <button onClick={() => {
                       const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
@@ -700,9 +710,7 @@ export default function SettingsPage() {
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                       Get {plan.name}
                     </button>
-                  ) : (
-                    <div style={{ padding: 10, background: isDark ? "#252528" : "#F3F4F6", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 600, color: text2, fontFamily: "Inter, sans-serif" }}>Free Forever</div>
-                  )}
+                  ) : null}
                 </div>
               );})}
             </div>

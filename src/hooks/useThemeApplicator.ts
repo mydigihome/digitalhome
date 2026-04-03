@@ -54,67 +54,141 @@ function applyThemeOverride(primary: string, secondary: string) {
   style.id = "dh-theme-override";
   style.innerHTML = `
     :root {
-      --accent-hex: ${primary} !important;
-      --accent-secondary-hex: ${secondary} !important;
+      --accent: ${primary} !important;
+      --accent-secondary: ${secondary} !important;
     }
-    .bg-green-500, .bg-green-600,
-    .bg-emerald-500, .bg-emerald-600,
+    /* ALL green/emerald backgrounds */
+    .bg-green-400, .bg-green-500,
+    .bg-green-600, .bg-green-700,
+    .bg-emerald-400, .bg-emerald-500,
+    .bg-emerald-600, .bg-emerald-700,
     [class*="bg-green-"],
     [class*="bg-emerald-"] {
       background-color: ${primary} !important;
     }
-    .text-green-500, .text-green-600,
-    .text-emerald-500, .text-emerald-600,
+    /* ALL green/emerald text */
+    .text-green-400, .text-green-500,
+    .text-green-600, .text-green-700,
+    .text-emerald-400, .text-emerald-500,
+    .text-emerald-600, .text-emerald-700,
     [class*="text-green-"],
     [class*="text-emerald-"] {
       color: ${primary} !important;
     }
-    .border-green-500, .border-green-600,
-    .border-emerald-500,
+    /* ALL green/emerald borders */
+    .border-green-400, .border-green-500,
+    .border-green-600,
+    .border-emerald-400, .border-emerald-500,
+    .border-emerald-600,
     [class*="border-green-"],
     [class*="border-emerald-"] {
       border-color: ${primary} !important;
     }
+    /* Light tint backgrounds */
     .bg-green-50, .bg-green-100,
     .bg-emerald-50, .bg-emerald-100 {
-      background-color: ${primary}15 !important;
+      background-color: ${primary}18 !important;
+    }
+    /* HOVER states */
+    .hover\\:bg-green-500:hover,
+    .hover\\:bg-green-600:hover,
+    .hover\\:bg-green-700:hover,
+    .hover\\:bg-emerald-500:hover,
+    .hover\\:bg-emerald-600:hover,
+    .hover\\:bg-emerald-700:hover {
+      background-color: ${primary}dd !important;
+    }
+    .hover\\:text-green-500:hover,
+    .hover\\:text-green-600:hover,
+    .hover\\:text-emerald-500:hover,
+    .hover\\:text-emerald-600:hover {
+      color: ${primary} !important;
+    }
+    .hover\\:border-green-500:hover,
+    .hover\\:border-emerald-500:hover {
+      border-color: ${primary} !important;
+    }
+    /* Focus rings */
+    .focus\\:ring-green-500:focus,
+    .focus\\:ring-emerald-500:focus,
+    .focus\\:border-green-500:focus,
+    .focus\\:border-emerald-500:focus {
+      --tw-ring-color: ${primary} !important;
+      border-color: ${primary} !important;
     }
     .ring-green-500, .ring-emerald-500 {
       --tw-ring-color: ${primary} !important;
     }
-    .hover\\:bg-green-600:hover,
-    .hover\\:bg-emerald-600:hover {
-      background-color: ${primary}dd !important;
+    /* Active/selected states */
+    [data-state="checked"],
+    [data-state="active"],
+    [aria-checked="true"],
+    [aria-selected="true"],
+    [data-active="true"] {
+      background-color: ${primary} !important;
+      color: white !important;
     }
-    [data-active="true"],
+    /* Toggle switches */
+    [role="switch"][data-state="checked"],
+    [role="checkbox"][data-state="checked"] {
+      background-color: ${primary} !important;
+    }
+    /* Progress bars */
+    [class*="bg-green-"][style],
+    [class*="bg-emerald-"][style] {
+      background-color: ${primary} !important;
+    }
+    /* Underline tab active */
+    .border-b-green-500,
+    .border-b-emerald-500,
+    [class*="border-b-green-"],
+    [class*="border-b-emerald-"] {
+      border-bottom-color: ${primary} !important;
+    }
+    /* Ring on focus-visible */
+    *:focus-visible {
+      outline-color: ${primary} !important;
+    }
+    /* Sidebar active nav item */
+    nav [aria-current="page"],
+    nav [data-active="true"],
     .nav-active,
-    [aria-current="page"] {
+    .sidebar-active {
       background-color: ${primary}20 !important;
       color: ${primary} !important;
+      border-color: ${primary} !important;
     }
+    /* Buttons with green/emerald */
     button[class*="bg-green"],
     button[class*="bg-emerald"],
     a[class*="bg-green"],
     a[class*="bg-emerald"] {
       background-color: ${primary} !important;
     }
-    [class*="bg-green-"][style*="width"],
     .progress-fill {
       background-color: ${primary} !important;
     }
-    [data-state="checked"],
-    [aria-checked="true"] {
-      background-color: ${primary} !important;
-    }
+    /* Purple secondary */
     .bg-purple-500, .bg-violet-500,
+    .bg-purple-600, .bg-violet-600,
     [class*="bg-purple-"],
     [class*="bg-violet-"] {
       background-color: ${secondary} !important;
     }
     .text-purple-500, .text-violet-500,
+    .text-purple-600, .text-violet-600,
     [class*="text-purple-"],
     [class*="text-violet-"] {
       color: ${secondary} !important;
+    }
+    .border-purple-500, .border-violet-500,
+    [class*="border-purple-"],
+    [class*="border-violet-"] {
+      border-color: ${secondary} !important;
+    }
+    .hover\\:bg-purple-600:hover,
+    .hover\\:bg-violet-600:hover {
+      background-color: ${secondary}dd !important;
     }
   `;
   document.head.appendChild(style);
