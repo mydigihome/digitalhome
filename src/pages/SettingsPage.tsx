@@ -11,8 +11,8 @@ import {
   User, Moon, Sun, Check, Building2, FileText, TrendingUp,
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
   Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
-  ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
-  Lock as LockIcon, Unlock,
+  ChevronLeft, Loader2, Save, BarChart2, Trash2, CalendarDays, Plus, X,
+  Lock as LockIcon, Clapperboard, GraduationCap,
 } from "lucide-react";
 
 const ACCENT_THEMES = [
@@ -127,13 +127,13 @@ export default function SettingsPage() {
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
   // Monthly Review state
+  const [writingReview, setWritingReview] = useState(false);
+  const [editingReview, setEditingReview] = useState<any>(null);
   const [reviewMonth, setReviewMonth] = useState(new Date().getMonth() + 1);
   const [reviewYear, setReviewYear] = useState(new Date().getFullYear());
   const [reviewData, setReviewData] = useState({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
-  const [reviewSaved, setReviewSaved] = useState(false);
   const [reviewSaving, setReviewSaving] = useState(false);
-  const [monthStats, setMonthStats] = useState<any>({});
-  const [pastReviews, setPastReviews] = useState<any[]>([]);
+  const [savedReviews, setSavedReviews] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
     (async () => {
@@ -183,56 +183,14 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  // Monthly review: load stats & existing review when month changes
-  useEffect(() => {
-    if (!user) return;
-    const start = new Date(reviewYear, reviewMonth - 1, 1).toISOString();
-    const end = new Date(reviewYear, reviewMonth, 0, 23, 59, 59).toISOString();
-    (async () => {
-      const [
-        { data: txns },
-        { count: goalsDone },
-        { data: journals },
-        { count: contactsReached },
-        { count: contentPosted },
-        { count: billsPaid },
-      ] = await Promise.all([
-        (supabase as any).from("transactions").select("amount, category").eq("user_id", user.id).gte("date", start).lte("date", end),
-        supabase.from("projects").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("archived", true).gte("updated_at", start).lte("updated_at", end),
-        supabase.from("journal_entries").select("mood").eq("user_id", user.id).gte("created_at", start).lte("created_at", end),
-        supabase.from("contacts").select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("last_contacted_date", start).lte("last_contacted_date", end),
-        supabase.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("stage", "posted").gte("updated_at", start).lte("updated_at", end),
-        supabase.from("bills").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "paid").gte("due_date", start.split("T")[0]).lte("due_date", end.split("T")[0]),
-      ]);
-      const income = (txns || []).filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0);
-      const expenses = (txns || []).filter((t: any) => (t.amount || 0) < 0).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0);
-      const moodCounts: Record<string, number> = {};
-      (journals || []).forEach((j: any) => { if (j.mood) moodCounts[j.mood] = (moodCounts[j.mood] || 0) + 1; });
-      const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-      setMonthStats({ income, expenses, saved: income - expenses, goalsDone: goalsDone || 0, journalCount: (journals || []).length, topMood, contactsReached: contactsReached || 0, contentPosted: contentPosted || 0, billsPaid: billsPaid || 0 });
-    })();
-
-    // Load existing review
-    (async () => {
-      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).eq("month", reviewMonth).eq("year", reviewYear).maybeSingle();
-      if (data) {
-        setReviewData({ went_well: data.went_well || "", was_hard: data.was_hard || "", proud_of: data.proud_of || "", do_differently: data.do_differently || "", focus_word: data.focus_word || "" });
-        setReviewSaved(true);
-      } else {
-        setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
-        setReviewSaved(false);
-      }
-    })();
-  }, [user, reviewMonth, reviewYear]);
-
-  // Load past reviews
+  // Load saved reviews on mount
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
-      setPastReviews(data || []);
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).order("year", { ascending: false }).order("month", { ascending: false });
+      setSavedReviews(data || []);
     })();
-  }, [user, reviewSaved]);
+  }, [user]);
 
   const saveProfile = async () => {
     if (!user) return;
@@ -435,108 +393,52 @@ export default function SettingsPage() {
             </div>
 
             {/* MONTHLY REVIEW */}
-            <div style={sectionStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                <BarChart2 size={18} color="#10B981" />
-                <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Monthly Review</span>
-              </div>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>Reflect on your month and set your intention for next month. Saved automatically.</p>
-
-              {/* Month navigation */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 20 }}>
-                <button onClick={() => { if (reviewMonth === 1) { setReviewMonth(12); setReviewYear(y => y - 1); } else { setReviewMonth(m => m - 1); } }} style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <ChevronLeft size={16} color={text2} />
-                </button>
-                <span style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", minWidth: 160, textAlign: "center" }}>
-                  {new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                </span>
-                <button onClick={() => { const now = new Date(); if (reviewMonth === now.getMonth() + 1 && reviewYear === now.getFullYear()) return; if (reviewMonth === 12) { setReviewMonth(1); setReviewYear(y => y + 1); } else { setReviewMonth(m => m + 1); } }} style={{ width: 32, height: 32, borderRadius: "50%", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, background: isDark ? "#252528" : "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: reviewMonth === new Date().getMonth() + 1 && reviewYear === new Date().getFullYear() ? 0.3 : 1 }}>
-                  <ChevronRight size={16} color={text2} />
-                </button>
-              </div>
-
-              {/* Auto-pulled stats */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 24 }}>
-                {[
-                  { Icon: DollarSign, label: "Income", value: `$${(monthStats.income || 0).toLocaleString()}`, color: "#10B981", bg: isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4" },
-                  { Icon: CreditCard, label: "Spent", value: `$${(monthStats.expenses || 0).toLocaleString()}`, color: "#EF4444", bg: isDark ? "rgba(239,68,68,0.08)" : "#FEF2F2" },
-                  { Icon: TrendingUp, label: "Saved", value: `$${Math.max(0, monthStats.saved || 0).toLocaleString()}`, color: (monthStats.saved || 0) >= 0 ? "#10B981" : "#EF4444", bg: (monthStats.saved || 0) >= 0 ? (isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4") : (isDark ? "rgba(239,68,68,0.08)" : "#FEF2F2") },
-                  { Icon: Target, label: "Goals Done", value: monthStats.goalsDone || 0, color: "#7B5EA7", bg: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" },
-                  { Icon: BookOpen, label: "Journal Entries", value: monthStats.journalCount || 0, color: "#06B6D4", bg: isDark ? "rgba(6,182,212,0.08)" : "#ECFEFF" },
-                  { Icon: Heart, label: "Top Mood", value: monthStats.topMood || "—", color: "#EC4899", bg: isDark ? "rgba(236,72,153,0.08)" : "#FDF2F8" },
-                  { Icon: Users, label: "Contacts Reached", value: monthStats.contactsReached || 0, color: "#F59E0B", bg: isDark ? "rgba(245,158,11,0.08)" : "#FFFBEB" },
-                  { Icon: FileText, label: "Content Posted", value: monthStats.contentPosted || 0, color: "#F59E0B", bg: isDark ? "rgba(245,158,11,0.08)" : "#FFFBEB" },
-                  { Icon: Receipt, label: "Bills Paid", value: monthStats.billsPaid || 0, color: "#3B82F6", bg: isDark ? "rgba(59,130,246,0.08)" : "#EFF6FF" },
-                ].map((stat, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: stat.bg, borderRadius: 10 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: 8, background: `${stat.color}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <stat.Icon size={14} color={stat.color} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: stat.color, fontFamily: "Inter, sans-serif" }}>{stat.value}</div>
-                      <div style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{stat.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Reflection questions */}
-              {[
-                { key: "went_well", emoji: "✨", label: "What went well?" , placeholder: "Wins, progress, moments you are proud of..." },
-                { key: "was_hard", emoji: "💪", label: "What was challenging?", placeholder: "What drained you or did not go as planned..." },
-                { key: "proud_of", emoji: "🏆", label: "One thing I am most proud of", placeholder: "If you had to pick just one thing..." },
-                { key: "do_differently", emoji: "🔄", label: "I would do this differently", placeholder: "One thing to change or approach differently..." },
-              ].map(q => (
-                <div key={q.key} style={{ marginBottom: 16 }}>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>{q.emoji} {q.label}</label>
-                  <textarea value={(reviewData as any)[q.key]} onChange={e => setReviewData(prev => ({ ...prev, [q.key]: e.target.value }))} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", background: inputBg, boxSizing: "border-box" as const, lineHeight: "1.6" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+            <div style={{ marginTop: 32, paddingTop: 28, borderTop: `2px solid ${border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div>
+                  <h3 style={{ fontSize: 17, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-0.3px", margin: 0 }}>Monthly Reviews</h3>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginTop: 4 }}>Reflect on your month. Saves automatically.</p>
                 </div>
-              ))}
-
-              {/* Focus word */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 13, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>🎯 My focus word for next month</label>
-                <input value={reviewData.focus_word} onChange={e => setReviewData(prev => ({ ...prev, focus_word: e.target.value }))} placeholder="e.g. Consistency, Growth, Balance, Discipline..." maxLength={30} style={{ ...inputStyle, fontSize: 16, fontWeight: 600, letterSpacing: "0.3px" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
-              </div>
-
-              {/* Save button */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                <button onClick={async () => {
-                  setReviewSaving(true);
-                  try {
-                    await (supabase as any).from("monthly_reviews").upsert({ user_id: user!.id, month: reviewMonth, year: reviewYear, review_month: `${reviewYear}-${String(reviewMonth).padStart(2, "0")}`, went_well: reviewData.went_well, was_hard: reviewData.was_hard, proud_of: reviewData.proud_of, do_differently: reviewData.do_differently, focus_word: reviewData.focus_word, completed_at: new Date().toISOString() }, { onConflict: "user_id,month,year" });
-                    setReviewSaved(true);
-                    toast.success("Review saved ✓", { description: `Your ${new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long" })} review has been saved.` });
-                  } catch { toast.error("Save failed"); } finally { setReviewSaving(false); }
-                }} style={{ padding: "11px 28px", background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
-                  {reviewSaving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Review</>}
+                <button onClick={() => { setEditingReview(null); setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); setReviewMonth(new Date().getMonth() + 1); setReviewYear(new Date().getFullYear()); setWritingReview(true); }} style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", background: "#10B981", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+                  <Plus size={14} /> Write Review
                 </button>
-                {reviewSaved && <span style={{ fontSize: 13, color: "#10B981", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 4, fontWeight: 500 }}><Check size={14} /> Saved</span>}
               </div>
 
-              {/* Past reviews */}
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Past Reviews</p>
-                {pastReviews.length === 0 ? (
-                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic" }}>Complete your first review to see your history here.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {pastReviews.map((review: any) => (
-                      <button key={review.id} onClick={() => { setReviewMonth(review.month); setReviewYear(review.year); }} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: isDark ? "#252528" : "white", border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, borderRadius: 10, cursor: "pointer", textAlign: "left", width: "100%" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"; }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 8, background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}><BarChart2 size={15} color="#10B981" /></div>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+              {savedReviews.length === 0 ? (
+                <div style={{ padding: "40px 20px", textAlign: "center", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 12, border: `1px dashed ${border}` }}>
+                  <BarChart2 size={32} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
+                  <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>No reviews yet</p>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Write your first monthly review</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {savedReviews.map((review: any) => (
+                    <div key={review.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", background: isDark ? "#252528" : "white", borderRadius: 12, border: `1px solid ${border}`, transition: "all 150ms" }}
+                      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)"; }} onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 10, background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <CalendarDays size={20} color="#7B5EA7" />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 2 }}>
+                          {new Date(review.year, review.month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          {review.focus_word && <span style={{ padding: "1px 8px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
+                          <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{review.completed_at ? `Saved ${new Date(review.completed_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : "Draft"}</span>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {review.focus_word && <span style={{ padding: "3px 10px", background: isDark ? "rgba(123,94,167,0.15)" : "#F5F3FF", border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#DDD6FE"}`, borderRadius: 999, fontSize: 11, fontWeight: 600, color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>{review.focus_word}</span>}
-                          <ChevronRight size={14} color="#D1D5DB" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                        {review.went_well && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 400 }}>"{review.went_well.substring(0, 80)}{review.went_well.length > 80 ? "..." : ""}"</p>}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <button onClick={() => { setEditingReview(review); setReviewData({ went_well: review.went_well || "", was_hard: review.was_hard || "", proud_of: review.proud_of || "", do_differently: review.do_differently || "", focus_word: review.focus_word || "" }); setReviewMonth(review.month); setReviewYear(review.year); setWritingReview(true); }} style={{ padding: "6px 14px", background: "transparent", border: `1px solid ${border}`, borderRadius: 8, fontSize: 13, fontWeight: 500, color: "#7B5EA7", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
+                        <button onClick={async () => { if (!window.confirm("Delete this review?")) return; await (supabase as any).from("monthly_reviews").delete().eq("id", review.id).eq("user_id", user!.id); setSavedReviews(prev => prev.filter(r => r.id !== review.id)); toast.success("Review deleted"); }} style={{ width: 32, height: 32, background: "transparent", border: `1px solid ${border}`, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: text2 }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor = "#FECACA"; e.currentTarget.style.color = "#DC2626"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"; }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
 
@@ -659,129 +561,72 @@ export default function SettingsPage() {
               <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Plan & Billing</span>
             </div>
 
-            {/* Billing cycle toggle or locked state */}
-            {annualLocked ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4", border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`, borderRadius: 12, marginBottom: 28 }}>
-                <LockIcon size={16} color="#10B981" />
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#065F46", fontFamily: "Inter, sans-serif", margin: 0 }}>Annual Plan Active</p>
-                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Your plan renews {renewalDate} · You can upgrade anytime but cannot switch to monthly until renewal</p>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 28, background: isDark ? "#252528" : "#F3F4F6", borderRadius: 12, padding: 5, width: "fit-content", margin: "0 auto 28px" }}>
-                <button onClick={() => setBillingCycle("monthly")} style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: billingCycle === "monthly" ? (isDark ? "#333" : "white") : "transparent", fontSize: 14, fontWeight: billingCycle === "monthly" ? 600 : 400, color: billingCycle === "monthly" ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: billingCycle === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 150ms" }}>Monthly</button>
-                <button onClick={() => setBillingCycle("annual")} style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: billingCycle === "annual" ? (isDark ? "#333" : "white") : "transparent", fontSize: 14, fontWeight: billingCycle === "annual" ? 600 : 400, color: billingCycle === "annual" ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: billingCycle === "annual" ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 150ms", display: "flex", alignItems: "center", gap: 6 }}>
-                  Annual
-                  <span style={{ padding: "2px 8px", background: billingCycle === "annual" ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : (isDark ? "#333" : "#E5E7EB"), color: billingCycle === "annual" ? "#065F46" : text2, borderRadius: 999, fontSize: 10, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Save 28%</span>
+            {/* Billing cycle toggle */}
+            <div style={{ display: "flex", background: isDark ? "#252528" : "#F3F4F6", borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 24 }}>
+              {(["monthly", "annual"] as const).map(cycle => (
+                <button key={cycle} onClick={() => { if (cycle === "annual" || !annualLocked) setBillingCycle(cycle); }} style={{ padding: "8px 20px", borderRadius: 7, border: "none", background: billingCycle === cycle ? (isDark ? "#333" : "white") : "transparent", fontSize: 14, fontWeight: billingCycle === cycle ? 600 : 400, color: billingCycle === cycle ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: billingCycle === cycle ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 150ms", display: "flex", alignItems: "center", gap: 6, textTransform: "capitalize" }}>
+                  {cycle}
+                  {cycle === "annual" && <span style={{ padding: "1px 6px", background: billingCycle === "annual" ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : (isDark ? "#333" : "#E5E7EB"), color: billingCycle === "annual" ? "#065F46" : text2, borderRadius: 999, fontSize: 10, fontWeight: 700 }}>Save 28%</span>}
                 </button>
-              </div>
-            )}
-            {billingCycle === "annual" && !annualLocked && (
-              <p style={{ textAlign: "center", fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20, marginTop: -16 }}>Billed annually · Cancel anytime after your year ends</p>
-            )}
+              ))}
+            </div>
+            {annualLocked && <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16, display: "flex", alignItems: "center", gap: 5 }}><LockIcon size={12} color="#10B981" /> Annual plan active · Renews {renewalDate} · Billed annually · Cancel anytime after year ends</p>}
 
-            {/* Plan cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 680, margin: "0 auto 24px" }}>
-              {BILLING_PLANS.map(plan => (
-                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 24, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
-                  {plan.badge && (
-                    <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
-                  )}
-                  {plan.limited && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 10 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#EF4444" }} />
-                      <span style={{ fontSize: 11, color: "#EF4444", fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Limited — first 50 users only</span>
-                    </div>
-                  )}
-                  <p style={{ fontSize: 13, fontWeight: 700, color: plan.color, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</p>
-                  <div style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 36, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${billingCycle === "annual" ? plan.annualMonthly : plan.monthlyPrice}</span>
-                    <span style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>/month</span>
+            {/* Plan selection */}
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>Select plan</h3>
+            <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Simple pricing. Full access.</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+              {[
+                { tier: "founding", name: "Founding Member", monthlyPrice: "$7", annualMonthly: "$4", annualPrice: "$49", color: "#F59E0B", border: "#FDE68A", bg: "#FFFBEB", stripe_monthly: "PASTE_FOUNDING_MONTHLY", stripe_annual: "PASTE_FOUNDING_ANNUAL", limited: true },
+                { tier: "standard", name: "Standard", monthlyPrice: "$12", annualMonthly: "$8", annualPrice: "$99", color: "#10B981", border: "#BBF7D0", bg: "#F0FDF4", stripe_monthly: "PASTE_STANDARD_MONTHLY", stripe_annual: "PASTE_STANDARD_ANNUAL", limited: false },
+              ].map(plan => (
+                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 14, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), cursor: "pointer", transition: "all 150ms" }}
+                  onMouseEnter={e => { if (currentPlan !== plan.tier) { e.currentTarget.style.borderColor = plan.color; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : plan.bg; } }}
+                  onMouseLeave={e => { if (currentPlan !== plan.tier) { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"; e.currentTarget.style.background = isDark ? "#1C1C1E" : "white"; } }}>
+                  {currentPlan === plan.tier && <div style={{ position: "absolute", top: 14, right: 14, width: 22, height: 22, borderRadius: "50%", background: plan.color, display: "flex", alignItems: "center", justifyContent: "center" }}><Check size={13} color="white" /></div>}
+                  {plan.limited && <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 8 }}><div style={{ width: 6, height: 6, borderRadius: "50%", background: "#EF4444" }} /><span style={{ fontSize: 11, color: "#EF4444", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>First 50 users only</span></div>}
+                  <p style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 10 }}>{plan.name}</p>
+                  <div style={{ marginBottom: 4 }}>
+                    <span style={{ fontSize: 32, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>{billingCycle === "annual" ? plan.annualMonthly : plan.monthlyPrice}</span>
+                    <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>/month</span>
                   </div>
-                  {billingCycle === "annual" && (
-                    <div style={{ marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>${plan.annualPrice} billed annually</span>
-                      <span style={{ marginLeft: 8, padding: "2px 7px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", color: "#065F46", borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Save ${plan.monthlyPerYear - plan.annualPrice}/yr</span>
-                    </div>
-                  )}
-                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16, lineHeight: 1.5 }}>{plan.description}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
-                    {plan.features.map((f, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
-                        <Check size={13} color={plan.color} style={{ flexShrink: 0, marginTop: 2 }} />
-                        <span style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.6)" : "#374151", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {billingCycle === "annual" && <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 14 }}>{plan.annualPrice} billed annually</p>}
                   {currentPlan === plan.tier ? (
-                    <div>
-                      <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>Current Plan ✓</div>
-                      {annualLocked && <p style={{ textAlign: "center", fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}><LockIcon size={10} /> Renews {renewalDate}</p>}
-                    </div>
+                    <div style={{ padding: 8, background: `${plan.color}20`, borderRadius: 8, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginTop: 12 }}>Current Plan ✓</div>
                   ) : (
-                    <button onClick={() => {
-                      const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
-                      if (billingCycle === "annual") {
-                        (supabase as any).from("user_preferences").upsert({ user_id: user!.id, billing_cycle: "annual", annual_start_date: new Date().toISOString() });
-                      }
-                      const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                    }} style={{ width: "100%", padding: 12, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
-                      Get {plan.name}{billingCycle === "annual" ? " — Annual" : ""}
-                    </button>
+                    <button onClick={() => { const url = billingCycle === "annual" ? plan.stripe_annual : plan.stripe_monthly; const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ width: "100%", padding: 9, background: plan.color, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", marginTop: 12 }}>Upgrade</button>
                   )}
                 </div>
               ))}
             </div>
 
             {/* Studio Add-on */}
-            <div style={{ maxWidth: 680, margin: "0 auto 24px", background: "linear-gradient(135deg, #1C1C1E, #2D2B3D)", borderRadius: 18, padding: 24, position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 50%, rgba(123,94,167,0.2) 0%, transparent 60%)" }} />
-              <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <FileText size={18} color="#C4B5FD" />
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "#C4B5FD", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", margin: 0 }}>Studio Add-on</p>
-                  </div>
-                  <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", fontFamily: "Inter, sans-serif", marginBottom: 6, letterSpacing: "-0.3px" }}>
-                    Unlock Studio — $29.99<span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>one-time</span>
-                  </h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 20px", marginTop: 10 }}>
-                    {["Full Studio HQ", "Content pipeline (8 stages)", "Invite your editor", "Real-time collaboration", "Content calendar", "Platform analytics", "Brand document storage", "Studio goals tracker"].map((f, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Check size={12} color="#A78BFA" />
-                        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", fontFamily: "Inter, sans-serif" }}>{f}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div style={{ flexShrink: 0 }}>
-                  {studioUnlocked ? (
-                    <div style={{ padding: "12px 24px", background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 10, textAlign: "center" }}>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#C4B5FD", fontFamily: "Inter, sans-serif", margin: 0, display: "flex", alignItems: "center", gap: 6 }}><Check size={16} /> Studio Unlocked</p>
-                    </div>
-                  ) : (
-                    <button onClick={() => { const link = document.createElement("a"); link.href = "PASTE_STUDIO_ADDON_LINK"; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
-                      <LockIcon size={16} /> Unlock Studio
-                    </button>
-                  )}
-                  <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.3)", fontFamily: "Inter, sans-serif", marginTop: 6 }}>One-time payment · Yours forever</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 18px", background: "#1C1C1E", borderRadius: 12, marginBottom: 20, gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(123,94,167,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}><Clapperboard size={17} color="#C4B5FD" /></div>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "white", fontFamily: "Inter, sans-serif", margin: 0 }}>Studio Add-on</p>
+                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", fontFamily: "Inter, sans-serif", margin: 0 }}>Full Studio HQ · Collaboration · Content pipeline</p>
                 </div>
               </div>
+              {studioUnlocked ? (
+                <span style={{ padding: "6px 14px", background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#C4B5FD", fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>Unlocked ✓</span>
+              ) : (
+                <button onClick={() => { const link = document.createElement("a"); link.href = "PASTE_STUDIO_LINK"; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ padding: "8px 16px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>$29.99 one-time</button>
+              )}
             </div>
 
-            {/* Student discount */}
-            <div style={{ maxWidth: 680, margin: "0 auto 16px", padding: "16px 20px", background: isDark ? "rgba(59,130,246,0.08)" : "#EFF6FF", border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`, borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+            {/* Student Discount */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", background: isDark ? "rgba(59,130,246,0.08)" : "#EFF6FF", borderRadius: 10, marginBottom: 20, gap: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <BookOpen size={20} color="#3B82F6" />
+                <GraduationCap size={18} color="#3B82F6" />
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1D4ED8", fontFamily: "Inter, sans-serif", margin: 0 }}>Student? Get 50% off</p>
-                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Verify your .edu email address</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1D4ED8", fontFamily: "Inter, sans-serif", margin: 0 }}>Student? 50% off</p>
+                  <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Verify with your .edu email</p>
                 </div>
               </div>
-              <button onClick={() => setStudentModalOpen(true)} style={{ padding: "8px 18px", background: "#3B82F6", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>Verify Status</button>
+              <button onClick={() => setStudentModalOpen(true)} style={{ padding: "7px 14px", background: "#3B82F6", color: "white", border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>Verify</button>
             </div>
 
             {/* Student modal */}
@@ -791,12 +636,7 @@ export default function SettingsPage() {
                   <h3 style={{ fontSize: 18, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>Verify Student Status</h3>
                   <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Enter your .edu email to verify</p>
                   <input value={eduEmail} onChange={e => setEduEmail(e.target.value)} placeholder="you@university.edu" style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" as const, background: inputBg, marginBottom: 12 }} />
-                  <button onClick={async () => {
-                    if (!eduEmail.endsWith(".edu")) { toast.error("Please use a .edu email address"); return; }
-                    await (supabase as any).from("user_preferences").upsert({ user_id: user!.id, student_verified: true, student_email: eduEmail });
-                    toast.success("Student status verified! 🎓 50% discount applied. Use code STUDENT50 at checkout.");
-                    setStudentModalOpen(false);
-                  }} style={{ width: "100%", padding: 10, background: "#3B82F6", color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Verify & Apply Discount</button>
+                  <button onClick={async () => { if (!eduEmail.endsWith(".edu")) { toast.error("Please use a .edu email address"); return; } await (supabase as any).from("user_preferences").upsert({ user_id: user!.id, student_verified: true, student_email: eduEmail }); toast.success("Student status verified! 🎓 50% discount applied. Use code STUDENT50 at checkout."); setStudentModalOpen(false); }} style={{ width: "100%", padding: 10, background: "#3B82F6", color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Verify & Apply Discount</button>
                 </div>
               </div>
             )}
@@ -966,6 +806,59 @@ export default function SettingsPage() {
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => window.open("https://plaid.com", "_blank")} style={{ flex: 1, padding: 10, background: "#3B82F6", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Learn More</button>
               <button onClick={() => setPlaidModalOpen(false)} style={{ flex: 1, padding: 10, border: `1.5px solid ${inputBorder}`, borderRadius: 10, background: inputBg, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Got it</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Write Review Modal */}
+      {writingReview && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
+          <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 20, width: "min(600px, 95vw)", maxHeight: "90vh", overflow: "auto", boxShadow: "0 24px 80px rgba(0,0,0,0.2)" }}>
+            {/* Modal header */}
+            <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: isDark ? "#1C1C1E" : "white", zIndex: 1 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
+                  {new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })} Review
+                </h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                  <button onClick={() => { if (reviewMonth === 1) { setReviewMonth(12); setReviewYear(y => y - 1); } else { setReviewMonth(m => m - 1); } }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: text2 }}><ChevronLeft size={14} /></button>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>Change month</span>
+                  <button onClick={() => { const now = new Date(); if (reviewMonth === now.getMonth() + 1 && reviewYear === now.getFullYear()) return; if (reviewMonth === 12) { setReviewMonth(1); setReviewYear(y => y + 1); } else { setReviewMonth(m => m + 1); } }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: text2 }}><ChevronRight size={14} /></button>
+                </div>
+              </div>
+              <button onClick={() => { setWritingReview(false); setEditingReview(null); setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); }} style={{ background: "transparent", border: "none", cursor: "pointer" }}><X size={20} color={text2} /></button>
+            </div>
+            {/* Questions */}
+            <div style={{ padding: "20px 24px" }}>
+              {[
+                { key: "went_well", emoji: "✨", label: "What went well?", placeholder: "Wins, progress, moments you are proud of..." },
+                { key: "was_hard", emoji: "💪", label: "What was challenging?", placeholder: "What drained you or did not go as planned..." },
+                { key: "proud_of", emoji: "🏆", label: "One thing I am most proud of", placeholder: "If you had to pick just one thing..." },
+                { key: "do_differently", emoji: "🔄", label: "I would do this differently", placeholder: "One thing to change next month..." },
+              ].map(q => (
+                <div key={q.key} style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 14, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>{q.emoji} {q.label}</label>
+                  <textarea value={(reviewData as any)[q.key]} onChange={e => setReviewData(prev => ({ ...prev, [q.key]: e.target.value }))} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", background: inputBg, boxSizing: "border-box" as const, lineHeight: "1.6", transition: "border 150ms" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+                </div>
+              ))}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontSize: 14, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>🎯 My focus word for next month</label>
+                <input value={reviewData.focus_word} onChange={e => setReviewData(prev => ({ ...prev, focus_word: e.target.value }))} placeholder="e.g. Consistency, Growth, Balance..." maxLength={30} style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 15, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", outline: "none", background: inputBg, boxSizing: "border-box" as const, transition: "border 150ms" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+              </div>
+              <button onClick={async () => {
+                setReviewSaving(true);
+                try {
+                  await (supabase as any).from("monthly_reviews").upsert({ user_id: user!.id, month: reviewMonth, year: reviewYear, went_well: reviewData.went_well, was_hard: reviewData.was_hard, proud_of: reviewData.proud_of, do_differently: reviewData.do_differently, focus_word: reviewData.focus_word, completed_at: new Date().toISOString() }, { onConflict: "user_id,month,year" });
+                  const { data: reviews } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user!.id).order("year", { ascending: false }).order("month", { ascending: false });
+                  setSavedReviews(reviews || []);
+                  setWritingReview(false);
+                  setEditingReview(null);
+                  toast.success("Review saved ✓", { description: `Your ${new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long" })} review has been saved.` });
+                } catch { toast.error("Save failed"); } finally { setReviewSaving(false); }
+              }} style={{ width: "100%", padding: 13, background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {reviewSaving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Review</>}
+              </button>
             </div>
           </div>
         </div>
