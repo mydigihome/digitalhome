@@ -401,7 +401,7 @@ export default function SettingsPage() {
         <div style={{ display: "flex", gap: 4, marginBottom: 24, borderBottom: `1px solid ${border}`, paddingBottom: 0, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           {TABS.map(tab => (
             <button key={tab.key} data-tab={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-              padding: "8px 16px", fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500,
+              padding: "8px 16px", fontSize: 13, fontWeight: activeTab === tab.key ? 600 : 500, whiteSpace: "nowrap" as const,
               color: activeTab === tab.key ? (localStorage.getItem("dh_accent_color") || "#10B981") : text2,
               borderBottom: activeTab === tab.key ? `2px solid ${localStorage.getItem("dh_accent_color") || "#10B981"}` : "2px solid transparent",
               background: "transparent", border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif",
