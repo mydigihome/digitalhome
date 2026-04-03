@@ -273,7 +273,7 @@
 /* ══════════════════════════════════════════════════════════
    MOBILE APP EXPERIENCE — max-width: 767px ONLY
    ══════════════════════════════════════════════════════════ */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   input, select, textarea {
     font-size: 16px !important;
   }
@@ -285,8 +285,8 @@
 
   .mobile-main-content {
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 
   .mobile-tab-bar nav {
@@ -319,8 +319,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
   }
 
-  .grid-cols-2,
-  .grid-cols-3,
+  /* Force single column on mobile for common grids */
   .sm\:grid-cols-2,
   .sm\:grid-cols-3,
   .sm\:grid-cols-4,
@@ -339,8 +338,18 @@
     height: 52px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
+
+  /* Settings sidebar becomes horizontal on mobile */
+  .settings-sidebar-desktop {
+    display: none !important;
+  }
 }
 
+@media (min-width: 1024px) {
+  .settings-sidebar-mobile {
+    display: none !important;
+  }
+}
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
