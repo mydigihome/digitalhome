@@ -536,10 +536,11 @@ export default function Dashboard() {
           </SortableCard>
         );
 
-      case "momentum":
+      case "momentum": {
+        const mobile = window.innerWidth < 768;
         return (
           <SortableCard key={id} id={id}>
-            <div className="flex gap-4">
+            <div className={mobile ? "flex flex-col gap-3" : "flex gap-4"}>
               <div className="flex-1 p-5 flex items-center gap-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                 <ProgressRing progress={momentum} size={72} strokeWidth={6} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
                   <span className="text-base font-bold text-foreground">{momentum}%</span>
@@ -564,6 +565,7 @@ export default function Dashboard() {
             </div>
           </SortableCard>
         );
+      }
 
       case "links":
         return (
