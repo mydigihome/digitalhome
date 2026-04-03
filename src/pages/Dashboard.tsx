@@ -851,8 +851,8 @@ export default function Dashboard() {
                 return (
                   <button key={action.key} onClick={(e) => { e.stopPropagation(); action.onClick(); }}
                     className="flex flex-col items-center gap-1 group/action">
-                    <div className="w-[52px] h-[52px] rounded-full bg-white flex items-center justify-center transition-transform group-hover/action:scale-110 shadow-md">
-                      <Icon className="w-5 h-5" style={{ color: "#059669" }} strokeWidth={1.8} />
+                    <div className="w-10 h-10 sm:w-[52px] sm:h-[52px] rounded-full bg-white flex items-center justify-center transition-transform group-hover/action:scale-110 shadow-md">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "#059669" }} strokeWidth={1.8} />
                     </div>
                     <span className="text-[11px] font-medium text-white">{action.label}</span>
                   </button>
