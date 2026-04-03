@@ -117,13 +117,15 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         if ((profile as any).images) {
           setStudioImages((profile as any).images);
         }
-        // Load YouTube stats into header
-        if ((profile as any).youtube_connected) {
-          setStudioStats(prev => ({
-            ...prev,
-            combined_followers: (profile as any).youtube_subscribers || 0,
-          }));
-        }
+        // Load all platform stats into header
+        const p = profile as any;
+        const combined = (p.combined_followers || 0) || ((p.youtube_subscribers || 0) + (p.instagram_followers || 0) + (p.tiktok_followers || 0) + (p.twitter_followers || 0));
+        setStudioStats({
+          combined_followers: combined || undefined,
+          reach_30d: p.reach_30d || undefined,
+          interactions_30d: p.interactions_30d || undefined,
+          avg_engagement: p.avg_engagement || undefined,
+        });
       }
 
       const { data: goals } = await supabase
