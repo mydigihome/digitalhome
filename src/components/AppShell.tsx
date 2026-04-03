@@ -90,8 +90,6 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   const bottomNavItems = [
     { icon: Users, label: "Contacts", path: "/relationships", active: location.pathname.startsWith("/relationships") },
-    { icon: Sparkles, label: "Content Planner", path: "/vision", active: location.pathname.startsWith("/vision") },
-    { icon: BookOpen, label: "Resources", path: "/resources", active: location.pathname.startsWith("/resources") },
     { icon: Clapperboard, label: "Studio", path: "/studio", active: location.pathname.startsWith("/studio") },
   ];
 
