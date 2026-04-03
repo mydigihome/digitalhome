@@ -470,7 +470,7 @@ export default function SettingsPage() {
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <BarChart2 size={40} color={text2} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
                   <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>No reviews yet</p>
-                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Write your first monthly review</p>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>Approved monthly reviews will appear here</p>
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
