@@ -106,7 +106,14 @@ export default function SettingsPage() {
   const [feedbackType, setFeedbackType] = useState("General Feedback");
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
-  // Load profile + preferences on mount
+  // Monthly Review state
+  const [reviewMonth, setReviewMonth] = useState(new Date().getMonth() + 1);
+  const [reviewYear, setReviewYear] = useState(new Date().getFullYear());
+  const [reviewData, setReviewData] = useState({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
+  const [reviewSaved, setReviewSaved] = useState(false);
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [monthStats, setMonthStats] = useState<any>({});
+  const [pastReviews, setPastReviews] = useState<any[]>([]);
   useEffect(() => {
     if (!user) return;
     (async () => {
