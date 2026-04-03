@@ -813,7 +813,7 @@ export default function SettingsPage() {
         )}
 
         {/* ══════════ ARCHIVE TAB ══════════ */}
-        {activeTab === "archive" && (
+          <>
           <div style={sectionStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
               <Archive size={18} color="#6B7280" />
