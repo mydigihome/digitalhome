@@ -572,13 +572,28 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
               <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3AF" }}>AI-generated preparation tasks will appear here after event creation.</p>
+              <p style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 16 }}>Generate AI preparation stages based on your event details.</p>
+              <button
+                onClick={handleGenerateAIStages}
+                disabled={generatingStages}
+                className="cursor-pointer"
+                style={{ fontSize: 13, fontWeight: 600, color: "white", background: "#8B5CF6", border: "none", borderRadius: 8, padding: "8px 18px", marginBottom: 8 }}
+              >
+                {generatingStages ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...
+                  </span>
+                ) : (
+                  "✨ Generate AI Prep Stages"
+                )}
+              </button>
+              <br />
               <button
                 onClick={() => setShowAddStage(true)}
-                className="mt-3 cursor-pointer"
+                className="mt-2 cursor-pointer"
                 style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
               >
-                + Add Stage
+                + Add Stage Manually
               </button>
             </div>
           ) : (
