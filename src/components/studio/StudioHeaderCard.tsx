@@ -75,7 +75,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const [studioImages, setStudioImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const studioImageInputRef = useRef<HTMLInputElement>(null);
-  const [studioStats] = useState<StudioStats>({});
+  const [studioStats, setStudioStats] = useState<StudioStats>({});
 
   // Modals
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -115,6 +115,13 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         setFormProfile(profile);
         if ((profile as any).images) {
           setStudioImages((profile as any).images);
+        }
+        // Load YouTube stats into header
+        if ((profile as any).youtube_connected) {
+          setStudioStats(prev => ({
+            ...prev,
+            combined_followers: (profile as any).youtube_subscribers || 0,
+          }));
         }
       }
 

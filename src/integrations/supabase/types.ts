@@ -3246,7 +3246,15 @@ export type Database = {
           twitter_handle: string | null
           updated_at: string | null
           user_id: string
+          youtube_channel_id: string | null
+          youtube_connected: boolean | null
+          youtube_handle: string | null
+          youtube_recent_videos: Json | null
+          youtube_subscribers: number | null
+          youtube_synced_at: string | null
+          youtube_total_views: number | null
           youtube_url: string | null
+          youtube_video_count: number | null
         }
         Insert: {
           business_license?: string | null
@@ -3265,7 +3273,15 @@ export type Database = {
           twitter_handle?: string | null
           updated_at?: string | null
           user_id: string
+          youtube_channel_id?: string | null
+          youtube_connected?: boolean | null
+          youtube_handle?: string | null
+          youtube_recent_videos?: Json | null
+          youtube_subscribers?: number | null
+          youtube_synced_at?: string | null
+          youtube_total_views?: number | null
           youtube_url?: string | null
+          youtube_video_count?: number | null
         }
         Update: {
           business_license?: string | null
@@ -3284,7 +3300,15 @@ export type Database = {
           twitter_handle?: string | null
           updated_at?: string | null
           user_id?: string
+          youtube_channel_id?: string | null
+          youtube_connected?: boolean | null
+          youtube_handle?: string | null
+          youtube_recent_videos?: Json | null
+          youtube_subscribers?: number | null
+          youtube_synced_at?: string | null
+          youtube_total_views?: number | null
           youtube_url?: string | null
+          youtube_video_count?: number | null
         }
         Relationships: []
       }
