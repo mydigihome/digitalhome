@@ -113,13 +113,21 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(isDark);
   const [selectedTheme, setSelectedTheme] = useState("Emerald");
-  const [currentPlan, setCurrentPlan] = useState("standard");
+  const [currentPlan, setCurrentPlan] = useState("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
-  const [annualLocked, setAnnualLocked] = useState(false);
-  const [renewalDate, setRenewalDate] = useState<string | null>(null);
   const [studioUnlocked, setStudioUnlocked] = useState(false);
-  const [studentModalOpen, setStudentModalOpen] = useState(false);
-  const [eduEmail, setEduEmail] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [studentVerified, setStudentVerified] = useState(false);
+  const [showStudentInput, setShowStudentInput] = useState(false);
+  const [studentDiscount, setStudentDiscount] = useState(false);
+  // Archive tab: monthly reviews
+  const [savedReviews, setSavedReviews] = useState<any[]>([]);
+  const [writingReview, setWritingReview] = useState(false);
+  const [editingReview, setEditingReview] = useState<any>(null);
+  const [archiveReviewData, setArchiveReviewData] = useState({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
+  const [archiveReviewMonth, setArchiveReviewMonth] = useState(new Date().getMonth() + 1);
+  const [archiveReviewYear, setArchiveReviewYear] = useState(new Date().getFullYear());
+  const [archiveReviewSaving, setArchiveReviewSaving] = useState(false);
   const [substackModalOpen, setSubstackModalOpen] = useState(false);
   const [substackEmail, setSubstackEmail] = useState("");
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
