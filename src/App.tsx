@@ -83,9 +83,9 @@ const App = () => (
             <Route path="/finance" element={<Navigate to="/finance/wealth" replace />} />
             <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
-            <Route path="/vision" element={<ProtectedRoute><ContentPlanner /></ProtectedRoute>} />
+            <Route path="/vision" element={<Navigate to="/dashboard" replace />} />
             <Route path="/studio" element={<ProtectedRoute><StudioPage /></ProtectedRoute>} />
-            <Route path="/resources" element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
+            <Route path="/resources" element={<Navigate to="/finance/applications" replace />} />
             <Route path="/inbox" element={<Navigate to="/relationships" replace />} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

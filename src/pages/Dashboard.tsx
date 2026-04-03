@@ -665,38 +665,35 @@ export default function Dashboard() {
       case "reminders":
         return (
           <SortableCard key={id} id={id}>
-            <div className="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600">
+            <button onClick={() => navigate("/finance/wealth")} className="w-full text-left p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 dark:from-slate-700 dark:to-slate-600 hover:from-slate-700 hover:to-slate-600 transition-all cursor-pointer border-0">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
                   <Receipt className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-base font-semibold text-white">Money Reminders</h2>
+                <h2 className="text-base font-semibold text-white">Bills & Recurring</h2>
+                <ExternalLink className="w-3.5 h-3.5 text-white/40 ml-auto" />
               </div>
               {moneyReminders.length > 0 ? (
                 <div className="space-y-0">
-                  {moneyReminders.map((bill, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
-                      <div>
-                        <p className="text-sm font-medium text-white">{bill.name}</p>
-                        <p className="text-xs text-white/50">Due soon</p>
+                  {moneyReminders.map((bill, idx) => {
+                    const due = new Date(bill.dueDate);
+                    const diffDays = Math.ceil((due.getTime() - Date.now()) / 86400000);
+                    const dueLabel = diffDays < 0 ? "Overdue" : diffDays === 0 ? "Due today" : diffDays === 1 ? "Due tomorrow" : `Due ${format(due, "MMM d")}`;
+                    return (
+                      <div key={idx} className="flex items-center justify-between py-3 border-b border-white/10 last:border-b-0">
+                        <div>
+                          <p className="text-sm font-medium text-white">{bill.name}</p>
+                          <p className={`text-xs ${diffDays < 0 ? "text-red-400" : diffDays <= 2 ? "text-amber-400" : "text-white/50"}`}>{dueLabel}</p>
+                        </div>
+                        <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
                       </div>
-                      <span className="text-base font-bold text-red-400">${bill.amount.toFixed(2)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="space-y-0">
-                  <div className="flex items-center justify-between py-3 border-b border-white/10">
-                    <div><p className="text-sm font-medium text-white">Credit Card Due</p><p className="text-xs text-white/50">March 5th</p></div>
-                    <span className="text-base font-bold text-red-400">$1,240.00</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <div><p className="text-sm font-medium text-white">Rent Payment</p><p className="text-xs text-white/50">March 1st</p></div>
-                    <span className="text-base font-bold text-red-400">$2,800.00</span>
-                  </div>
-                </div>
+                <p className="text-sm text-white/50 text-center py-4">No upcoming bills</p>
               )}
-            </div>
+            </button>
           </SortableCard>
         );
 

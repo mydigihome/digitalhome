@@ -200,30 +200,17 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
-            const isContentPlanner = item.path === "/vision";
-            const isLocked = isContentPlanner && !hasContentAccess;
             return (
               <li key={item.path}>
                 <NavTooltip label={item.label}>
                   <button
-                    onClick={() => {
-                      if (isLocked) {
-                        setShowWaitlistModal(true);
-                      } else {
-                        go(item.path);
-                      }
-                    }}
-                    className={navItemClass(item.active, isLocked)}
+                    onClick={() => go(item.path)}
+                    className={navItemClass(item.active)}
                     style={navItemStyle(item.active)}
                     {...navItemHoverHandlers(item.active)}
                   >
                     <Icon className="w-[20px] h-[20px] flex-shrink-0" style={iconStyle(item.active)} strokeWidth={1.5} />
-                    {!collapsed && (
-                      <>
-                        <span className="flex-1 text-left text-[14px]">{item.label}</span>
-                        {isLocked && <Lock className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} />}
-                      </>
-                    )}
+                    {!collapsed && <span className="flex-1 text-left text-[14px]">{item.label}</span>}
                   </button>
                 </NavTooltip>
               </li>
