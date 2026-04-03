@@ -78,9 +78,7 @@ export default function AdminDashboard() {
   const [announcementType, setAnnouncementType] = useState("system");
   const [announcementSending, setAnnouncementSending] = useState(false);
   const [announcementHistory, setAnnouncementHistory] = useState<any[]>([]);
-  const [adminTab, setAdminTab] = useState<"overview" | "strategy">("overview");
-  const [churnRiskUsers, setChurnRiskUsers] = useState<any[]>([]);
-  const [strategyNotes, setStrategyNotes] = useState("");
+  const [adminTab] = useState<"overview">("overview");
 
   const text1 = isDark ? "#F2F2F2" : "#111827";
   const text2 = isDark ? "rgba(255,255,255,0.4)" : "#6B7280";

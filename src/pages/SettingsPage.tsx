@@ -810,6 +810,59 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Write Review Modal */}
+      {writingReview && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, overflowY: "auto" }}>
+          <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 20, width: "min(600px, 95vw)", maxHeight: "90vh", overflow: "auto", boxShadow: "0 24px 80px rgba(0,0,0,0.2)" }}>
+            {/* Modal header */}
+            <div style={{ padding: "20px 24px 16px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6"}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: isDark ? "#1C1C1E" : "white", zIndex: 1 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
+                  {new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })} Review
+                </h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+                  <button onClick={() => { if (reviewMonth === 1) { setReviewMonth(12); setReviewYear(y => y - 1); } else { setReviewMonth(m => m - 1); } }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: text2 }}><ChevronLeft size={14} /></button>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>Change month</span>
+                  <button onClick={() => { const now = new Date(); if (reviewMonth === now.getMonth() + 1 && reviewYear === now.getFullYear()) return; if (reviewMonth === 12) { setReviewMonth(1); setReviewYear(y => y + 1); } else { setReviewMonth(m => m + 1); } }} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, color: text2 }}><ChevronRight size={14} /></button>
+                </div>
+              </div>
+              <button onClick={() => { setWritingReview(false); setEditingReview(null); setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" }); }} style={{ background: "transparent", border: "none", cursor: "pointer" }}><X size={20} color={text2} /></button>
+            </div>
+            {/* Questions */}
+            <div style={{ padding: "20px 24px" }}>
+              {[
+                { key: "went_well", emoji: "✨", label: "What went well?", placeholder: "Wins, progress, moments you are proud of..." },
+                { key: "was_hard", emoji: "💪", label: "What was challenging?", placeholder: "What drained you or did not go as planned..." },
+                { key: "proud_of", emoji: "🏆", label: "One thing I am most proud of", placeholder: "If you had to pick just one thing..." },
+                { key: "do_differently", emoji: "🔄", label: "I would do this differently", placeholder: "One thing to change next month..." },
+              ].map(q => (
+                <div key={q.key} style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 14, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>{q.emoji} {q.label}</label>
+                  <textarea value={(reviewData as any)[q.key]} onChange={e => setReviewData(prev => ({ ...prev, [q.key]: e.target.value }))} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", background: inputBg, boxSizing: "border-box" as const, lineHeight: "1.6", transition: "border 150ms" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+                </div>
+              ))}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontSize: 14, fontWeight: 600, color: text1, display: "block", marginBottom: 6, fontFamily: "Inter, sans-serif" }}>🎯 My focus word for next month</label>
+                <input value={reviewData.focus_word} onChange={e => setReviewData(prev => ({ ...prev, focus_word: e.target.value }))} placeholder="e.g. Consistency, Growth, Balance..." maxLength={30} style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 15, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", outline: "none", background: inputBg, boxSizing: "border-box" as const, transition: "border 150ms" }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+              </div>
+              <button onClick={async () => {
+                setReviewSaving(true);
+                try {
+                  await (supabase as any).from("monthly_reviews").upsert({ user_id: user!.id, month: reviewMonth, year: reviewYear, went_well: reviewData.went_well, was_hard: reviewData.was_hard, proud_of: reviewData.proud_of, do_differently: reviewData.do_differently, focus_word: reviewData.focus_word, completed_at: new Date().toISOString() }, { onConflict: "user_id,month,year" });
+                  const { data: reviews } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user!.id).order("year", { ascending: false }).order("month", { ascending: false });
+                  setSavedReviews(reviews || []);
+                  setWritingReview(false);
+                  setEditingReview(null);
+                  toast.success("Review saved ✓", { description: `Your ${new Date(reviewYear, reviewMonth - 1).toLocaleDateString("en-US", { month: "long" })} review has been saved.` });
+                } catch { toast.error("Save failed"); } finally { setReviewSaving(false); }
+              }} style={{ width: "100%", padding: 13, background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {reviewSaving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Review</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
