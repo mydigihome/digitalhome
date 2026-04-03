@@ -251,14 +251,7 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* TAB NAV */}
-        <div style={{ display: "flex", gap: 0, marginBottom: 24, background: isDark ? "#252528" : "#F3F4F6", borderRadius: 10, padding: 4, width: "fit-content" }}>
-          {(["overview", "strategy"] as const).map(tab => (
-            <button key={tab} onClick={() => setAdminTab(tab)} style={{ padding: "8px 20px", borderRadius: 7, border: "none", background: adminTab === tab ? (isDark ? "#333" : "white") : "transparent", fontSize: 13, fontWeight: adminTab === tab ? 600 : 400, color: adminTab === tab ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: adminTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none", textTransform: "capitalize" }}>{tab === "strategy" ? "📈 Strategy" : "Overview"}</button>
-          ))}
-        </div>
-
-        {adminTab === "overview" && (<>
+        {(<>
         {/* ANNOUNCEMENTS */}
         <div style={{ background: cardBg, borderRadius: 14, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, padding: 24, marginBottom: 28 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
