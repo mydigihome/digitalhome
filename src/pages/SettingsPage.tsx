@@ -155,7 +155,58 @@ export default function SettingsPage() {
     }
   }, [user]);
 
-  const saveProfile = async () => {
+  // Monthly review: load stats & existing review when month changes
+  useEffect(() => {
+    if (!user) return;
+    const start = new Date(reviewYear, reviewMonth - 1, 1).toISOString();
+    const end = new Date(reviewYear, reviewMonth, 0, 23, 59, 59).toISOString();
+    (async () => {
+      const [
+        { data: txns },
+        { count: goalsDone },
+        { data: journals },
+        { count: contactsReached },
+        { count: contentPosted },
+        { count: billsPaid },
+      ] = await Promise.all([
+        (supabase as any).from("transactions").select("amount, category").eq("user_id", user.id).gte("date", start).lte("date", end),
+        supabase.from("projects").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("archived", true).gte("updated_at", start).lte("updated_at", end),
+        supabase.from("journal_entries").select("mood").eq("user_id", user.id).gte("created_at", start).lte("created_at", end),
+        supabase.from("contacts").select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("last_contacted_date", start).lte("last_contacted_date", end),
+        supabase.from("content_items").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("stage", "posted").gte("updated_at", start).lte("updated_at", end),
+        supabase.from("bills").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "paid").gte("due_date", start.split("T")[0]).lte("due_date", end.split("T")[0]),
+      ]);
+      const income = (txns || []).filter((t: any) => (t.amount || 0) > 0).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0);
+      const expenses = (txns || []).filter((t: any) => (t.amount || 0) < 0).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0);
+      const moodCounts: Record<string, number> = {};
+      (journals || []).forEach((j: any) => { if (j.mood) moodCounts[j.mood] = (moodCounts[j.mood] || 0) + 1; });
+      const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+      setMonthStats({ income, expenses, saved: income - expenses, goalsDone: goalsDone || 0, journalCount: (journals || []).length, topMood, contactsReached: contactsReached || 0, contentPosted: contentPosted || 0, billsPaid: billsPaid || 0 });
+    })();
+
+    // Load existing review
+    (async () => {
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).eq("month", reviewMonth).eq("year", reviewYear).maybeSingle();
+      if (data) {
+        setReviewData({ went_well: data.went_well || "", was_hard: data.was_hard || "", proud_of: data.proud_of || "", do_differently: data.do_differently || "", focus_word: data.focus_word || "" });
+        setReviewSaved(true);
+      } else {
+        setReviewData({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
+        setReviewSaved(false);
+      }
+    })();
+  }, [user, reviewMonth, reviewYear]);
+
+  // Load past reviews
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
+      setPastReviews(data || []);
+    })();
+  }, [user, reviewSaved]);
+
+
     if (!user) return;
     setSaving(true);
     await supabase.from("profiles").upsert({ id: user.id, full_name: profileData.full_name, updated_at: new Date().toISOString() } as any);
