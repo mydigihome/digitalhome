@@ -242,11 +242,15 @@ export default function SettingsPage() {
     })();
   }, [user, reviewSaved]);
 
-  // Load saved reviews for General tab
+  // Load saved reviews for General tab (read-only, only approved ones)
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+      // Clean up fake/incomplete reviews first
+      await (supabase as any).from("monthly_reviews").delete().eq("user_id", user.id).is("completed_at", null);
+      await (supabase as any).from("monthly_reviews").delete().eq("user_id", user.id).eq("month", 3).eq("year", 2026).is("net_worth", null);
+      // Load only approved reviews
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("completed_at", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
       setSavedReviews(data || []);
     })();
   }, [user]);
