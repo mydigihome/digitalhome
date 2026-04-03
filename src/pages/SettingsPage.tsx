@@ -657,37 +657,148 @@ export default function SettingsPage() {
               <TrendingUp size={18} color="#F59E0B" />
               <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Plan & Billing</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
-              {PLANS.map(plan => (
-                <div key={plan.tier} style={{ padding: 18, border: `2px solid ${currentPlan === plan.tier ? plan.color : border}`, borderRadius: 14, background: currentPlan === plan.tier ? (isDark ? "#252528" : "#FAFAFA") : inputBg, position: "relative" }}>
-                  {plan.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 9, fontWeight: 700, padding: "3px 10px", borderRadius: 999, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>MOST POPULAR</div>}
-                  <div style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</div>
-                  <div style={{ marginBottom: 14 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif" }}>{plan.price}</span>
-                    <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>{plan.period}</span>
+
+            {/* Billing cycle toggle or locked state */}
+            {annualLocked ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: isDark ? "rgba(16,185,129,0.08)" : "#F0FDF4", border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`, borderRadius: 12, marginBottom: 28 }}>
+                <Lock size={16} color="#10B981" />
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#065F46", fontFamily: "Inter, sans-serif", margin: 0 }}>Annual Plan Active</p>
+                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Your plan renews {renewalDate} · You can upgrade anytime but cannot switch to monthly until renewal</p>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 28, background: isDark ? "#252528" : "#F3F4F6", borderRadius: 12, padding: 5, width: "fit-content", margin: "0 auto 28px" }}>
+                <button onClick={() => setBillingCycle("monthly")} style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: billingCycle === "monthly" ? (isDark ? "#333" : "white") : "transparent", fontSize: 14, fontWeight: billingCycle === "monthly" ? 600 : 400, color: billingCycle === "monthly" ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: billingCycle === "monthly" ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 150ms" }}>Monthly</button>
+                <button onClick={() => setBillingCycle("annual")} style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: billingCycle === "annual" ? (isDark ? "#333" : "white") : "transparent", fontSize: 14, fontWeight: billingCycle === "annual" ? 600 : 400, color: billingCycle === "annual" ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: billingCycle === "annual" ? "0 1px 3px rgba(0,0,0,0.1)" : "none", transition: "all 150ms", display: "flex", alignItems: "center", gap: 6 }}>
+                  Annual
+                  <span style={{ padding: "2px 8px", background: billingCycle === "annual" ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : (isDark ? "#333" : "#E5E7EB"), color: billingCycle === "annual" ? "#065F46" : text2, borderRadius: 999, fontSize: 10, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Save 28%</span>
+                </button>
+              </div>
+            )}
+            {billingCycle === "annual" && !annualLocked && (
+              <p style={{ textAlign: "center", fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20, marginTop: -16 }}>Billed annually · Cancel anytime after your year ends</p>
+            )}
+
+            {/* Plan cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 680, margin: "0 auto 24px" }}>
+              {BILLING_PLANS.map(plan => (
+                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 24, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
+                  {plan.badge && (
+                    <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
+                  )}
+                  {plan.limited && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 10 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#EF4444" }} />
+                      <span style={{ fontSize: 11, color: "#EF4444", fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Limited — first 50 users only</span>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 13, fontWeight: 700, color: plan.color, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</p>
+                  <div style={{ marginBottom: 6 }}>
+                    <span style={{ fontSize: 36, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif", letterSpacing: "-1px" }}>${billingCycle === "annual" ? plan.annualMonthly : plan.monthlyPrice}</span>
+                    <span style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>/month</span>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+                  {billingCycle === "annual" && (
+                    <div style={{ marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>${plan.annualPrice} billed annually</span>
+                      <span style={{ marginLeft: 8, padding: "2px 7px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", color: "#065F46", borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>Save ${plan.monthlyPerYear - plan.annualPrice}/yr</span>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16, lineHeight: 1.5 }}>{plan.description}</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
                     {plan.features.map((f, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <Check size={14} color={plan.color} />
-                        <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{f}</span>
+                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
+                        <Check size={13} color={plan.color} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.6)" : "#374151", fontFamily: "Inter, sans-serif", lineHeight: 1.5 }}>{f}</span>
                       </div>
                     ))}
                   </div>
                   {currentPlan === plan.tier ? (
-                    <div style={{ textAlign: "center", fontSize: 12, fontWeight: 600, color: plan.color, fontFamily: "Inter, sans-serif", padding: 8 }}>Current Plan ✓</div>
+                    <div>
+                      <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginBottom: 8 }}>Current Plan ✓</div>
+                      {annualLocked && <p style={{ textAlign: "center", fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}><Lock size={10} /> Renews {renewalDate}</p>}
+                    </div>
                   ) : (
-                    <button onClick={() => toast.success("Upgrade coming soon!")} style={{ width: "100%", padding: 8, background: plan.color, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
-                      {currentPlan === "free" ? "Upgrade" : "Switch Plan"}
+                    <button onClick={() => {
+                      const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
+                      if (billingCycle === "annual") {
+                        (supabase as any).from("user_preferences").upsert({ user_id: user!.id, billing_cycle: "annual", annual_start_date: new Date().toISOString() });
+                      }
+                      const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    }} style={{ width: "100%", padding: 12, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
+                      Get {plan.name}{billingCycle === "annual" ? " — Annual" : ""}
                     </button>
                   )}
                 </div>
               ))}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>
-              <FileText size={14} color={text2} />
-              <span>Templates are available on all plans: <strong style={{ color: text1 }}>$8 single · $25 bundle</strong></span>
+
+            {/* Studio Add-on */}
+            <div style={{ maxWidth: 680, margin: "0 auto 24px", background: "linear-gradient(135deg, #1C1C1E, #2D2B3D)", borderRadius: 18, padding: 24, position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(ellipse at 80% 50%, rgba(123,94,167,0.2) 0%, transparent 60%)" }} />
+              <div style={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <FileText size={18} color="#C4B5FD" />
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#C4B5FD", textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", margin: 0 }}>Studio Add-on</p>
+                  </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: "white", fontFamily: "Inter, sans-serif", marginBottom: 6, letterSpacing: "-0.3px" }}>
+                    Unlock Studio — $29.99<span style={{ fontSize: 13, fontWeight: 400, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>one-time</span>
+                  </h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 20px", marginTop: 10 }}>
+                    {["Full Studio HQ", "Content pipeline (8 stages)", "Invite your editor", "Real-time collaboration", "Content calendar", "Platform analytics", "Brand document storage", "Studio goals tracker"].map((f, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <Check size={12} color="#A78BFA" />
+                        <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", fontFamily: "Inter, sans-serif" }}>{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ flexShrink: 0 }}>
+                  {studioUnlocked ? (
+                    <div style={{ padding: "12px 24px", background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.3)", borderRadius: 10, textAlign: "center" }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#C4B5FD", fontFamily: "Inter, sans-serif", margin: 0, display: "flex", alignItems: "center", gap: 6 }}><Check size={16} /> Studio Unlocked</p>
+                    </div>
+                  ) : (
+                    <button onClick={() => { const link = document.createElement("a"); link.href = "PASTE_STUDIO_ADDON_LINK"; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                      <Lock size={16} /> Unlock Studio
+                    </button>
+                  )}
+                  <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.3)", fontFamily: "Inter, sans-serif", marginTop: 6 }}>One-time payment · Yours forever</p>
+                </div>
+              </div>
             </div>
+
+            {/* Student discount */}
+            <div style={{ maxWidth: 680, margin: "0 auto 16px", padding: "16px 20px", background: isDark ? "rgba(59,130,246,0.08)" : "#EFF6FF", border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`, borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <BookOpen size={20} color="#3B82F6" />
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1D4ED8", fontFamily: "Inter, sans-serif", margin: 0 }}>Student? Get 50% off</p>
+                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Verify your .edu email address</p>
+                </div>
+              </div>
+              <button onClick={() => setStudentModalOpen(true)} style={{ padding: "8px 18px", background: "#3B82F6", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>Verify Status</button>
+            </div>
+
+            {/* Student modal */}
+            {studentModalOpen && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setStudentModalOpen(false)}>
+                <div onClick={e => e.stopPropagation()} style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 28, width: "90%", maxWidth: 400 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>Verify Student Status</h3>
+                  <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Enter your .edu email to verify</p>
+                  <input value={eduEmail} onChange={e => setEduEmail(e.target.value)} placeholder="you@university.edu" style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" as const, background: inputBg, marginBottom: 12 }} />
+                  <button onClick={async () => {
+                    if (!eduEmail.endsWith(".edu")) { toast.error("Please use a .edu email address"); return; }
+                    await (supabase as any).from("user_preferences").upsert({ user_id: user!.id, student_verified: true, student_email: eduEmail });
+                    toast.success("Student status verified! 🎓 50% discount applied. Use code STUDENT50 at checkout.");
+                    setStudentModalOpen(false);
+                  }} style={{ width: "100%", padding: 10, background: "#3B82F6", color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Verify & Apply Discount</button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
