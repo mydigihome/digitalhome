@@ -206,7 +206,7 @@ export default function SettingsPage() {
     })();
   }, [user, reviewSaved]);
 
-
+  const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
     await supabase.from("profiles").upsert({ id: user.id, full_name: profileData.full_name, updated_at: new Date().toISOString() } as any);
