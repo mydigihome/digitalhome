@@ -122,14 +122,8 @@ export default function SettingsPage() {
   const [studentVerified, setStudentVerified] = useState(false);
   const [showStudentInput, setShowStudentInput] = useState(false);
   const [studentDiscount, setStudentDiscount] = useState(false);
-  // Archive tab: monthly reviews
+  // Monthly reviews (read-only display)
   const [savedReviews, setSavedReviews] = useState<any[]>([]);
-  const [writingReview, setWritingReview] = useState(false);
-  const [editingReview, setEditingReview] = useState<any>(null);
-  const [archiveReviewData, setArchiveReviewData] = useState({ went_well: "", was_hard: "", proud_of: "", do_differently: "", focus_word: "" });
-  const [archiveReviewMonth, setArchiveReviewMonth] = useState(new Date().getMonth() + 1);
-  const [archiveReviewYear, setArchiveReviewYear] = useState(new Date().getFullYear());
-  const [archiveReviewSaving, setArchiveReviewSaving] = useState(false);
   const [substackModalOpen, setSubstackModalOpen] = useState(false);
   const [substackEmail, setSubstackEmail] = useState("");
   const [brokerModalOpen, setBrokerModalOpen] = useState(false);
