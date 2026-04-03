@@ -331,7 +331,9 @@ export default function BillingTab({
           <Button
             className="w-full h-12 text-base font-semibold"
             disabled={checkingOut}
-            onClick={() => handleSubscribe(studentDiscount ? "student" : "pro")}
+            onClick={() => openStripeLink(
+              studentDiscount ? STRIPE_LINKS.standard_annual : STRIPE_LINKS.standard_annual
+            )}
           >
             {checkingOut ? "Redirecting to checkout..." : `Subscribe — $${studentDiscount ? "49" : "99"}/year`}
           </Button>
