@@ -156,7 +156,19 @@ export default function AdminDashboard() {
     setAnnouncementHistory(data || []);
   };
 
-  useEffect(() => { loadData(); loadAnnouncementHistory(); }, [isAdmin]);
+  const loadStrategyData = async () => {
+    const { data: allUsers } = await supabase.from("profiles").select("id, email, last_login, created_at");
+    const churnRisk = (allUsers || []).filter((u: any) => {
+      if (!u.last_login) return true;
+      const days = Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000);
+      return days >= 14;
+    }).map((u: any) => ({ ...u, daysSinceLogin: u.last_login ? Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000) : 999 })).sort((a: any, b: any) => b.daysSinceLogin - a.daysSinceLogin);
+    setChurnRiskUsers(churnRisk.slice(0, 20));
+    const { data: notes } = await (supabase as any).from("app_settings").select("value").eq("key", "strategy_notes").maybeSingle();
+    if (notes?.value) setStrategyNotes(notes.value);
+  };
+
+  useEffect(() => { loadData(); loadAnnouncementHistory(); loadStrategyData(); }, [isAdmin]);
 
   if (!isAdmin) {
     return (
