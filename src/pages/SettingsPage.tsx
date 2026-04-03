@@ -246,6 +246,15 @@ export default function SettingsPage() {
     })();
   }, [user, reviewSaved]);
 
+  // Load saved reviews for Archive tab
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).from("monthly_reviews").select("*").eq("user_id", user.id).not("month", "is", null).order("year", { ascending: false }).order("month", { ascending: false });
+      setSavedReviews(data || []);
+    })();
+  }, [user]);
+
   const saveProfile = async () => {
     if (!user) return;
     setSaving(true);
