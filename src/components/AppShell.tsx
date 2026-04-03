@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import FloatingCloud from "@/components/journal/FloatingCloud";
 import NotificationPanel from "@/components/notifications/NotificationPanel";
-import NotificationPanel from "@/components/notifications/NotificationPanel";
 
 // Context for sidebar collapsed state
 const SidebarContext = createContext({ collapsed: false, setCollapsed: (_: boolean) => {} });
