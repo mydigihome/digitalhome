@@ -322,7 +322,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                     fontSize: "12px", fontWeight: 500,
                     color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
                     fontFamily: "Inter, sans-serif",
-                  }}>@{studioHandle}</span>
+                  }}>@{studioHandle.replace(/^@/, '')}</span>
                 </>
               )}
             </div>
