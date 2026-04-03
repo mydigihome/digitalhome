@@ -26,20 +26,28 @@ const ACCENT_THEMES = [
 
 const BILLING_PLANS = [
   {
-    tier: "founding", name: "Founding Member", badge: "🏆 First 50 Only",
-    monthlyPrice: 7, annualPrice: 49, monthlyPerYear: 84, annualMonthly: 4,
-    color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A",
-    description: "Locked forever · Never increases · First 50 users only",
-    features: ["✦ Everything in Standard", "✦ Price locked forever at $7/mo", "✦ Founding Member gold badge", "✦ Direct line to the founder", "✦ First access to every new feature", "✦ Your name in the founding members wall"],
-    stripeMonthly: "PASTE_FOUNDING_MONTHLY_LINK", stripeAnnual: "PASTE_FOUNDING_ANNUAL_LINK", limited: true,
+    tier: "free", name: "Free", badge: null,
+    monthlyPrice: 0, annualPrice: 0,
+    color: "#6B7280", bg: "#F9FAFB", border: "#E5E7EB",
+    description: "Get started and explore the basics",
+    features: ["Dashboard overview", "1 active project", "Basic journal (5 entries/mo)", "Money snapshot", "Calendar view"],
+    stripeMonthly: "", stripeAnnual: "",
   },
   {
-    tier: "standard", name: "Standard", badge: "⭐ Full Platform Access",
-    monthlyPrice: 12, annualPrice: 99, monthlyPerYear: 144, annualMonthly: 8,
+    tier: "standard", name: "Standard", badge: "⭐ Most Popular",
+    monthlyPrice: 12, annualPrice: 99,
     color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0",
-    description: "Complete access to everything we built. No feature locks.",
-    features: ["Dashboard — all widgets + market watch", "Journal unlimited + voice + Substack", "Projects unlimited + AI stages", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings", "Resource Center"],
+    description: "Full access to everything. No feature locks.",
+    features: ["Everything in Free", "Unlimited projects + AI stages", "Unlimited journal + voice", "Full finance suite", "Contacts CRM + import", "Content Planner", "Monthly Review", "Resource Center"],
     stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
+  },
+  {
+    tier: "pro", name: "Pro", badge: "🚀 Power User",
+    monthlyPrice: 29, annualPrice: 199,
+    color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE",
+    description: "For creators and entrepreneurs who want it all.",
+    features: ["Everything in Standard", "Studio HQ included", "Priority AI features", "Team collaboration", "Advanced analytics", "API access (coming soon)", "Founding member perks"],
+    stripeMonthly: "PASTE_PRO_MONTHLY_LINK", stripeAnnual: "PASTE_PRO_ANNUAL_LINK",
   },
 ];
 
