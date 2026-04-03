@@ -10,9 +10,6 @@ import { useThemeApplicator } from "@/hooks/useThemeApplicator";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-// Old onboarding disabled — replaced by NewOnboarding (Phase 5)
-// import OnboardingPage from "./pages/OnboardingPage";
-// import Welcome from "./pages/Welcome";
 import NewOnboarding from "./pages/NewOnboarding";
 import Dashboard from "./pages/Dashboard";
 import JournalPage from "./pages/JournalPage";
@@ -20,11 +17,10 @@ import JournalEntryPage from "./pages/JournalEntryPage";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import CalendarPage from "./pages/CalendarPage";
-
+import ContentPlanner from "./pages/ContentPlanner";
 import SettingsPage from "./pages/SettingsPage";
 import WealthTrackerPage from "./pages/WealthTrackerPage";
 import ApplicationsTrackerPage from "./pages/ApplicationsTrackerPage";
-import NotFound from "./pages/NotFound";
 import StudioPage from "./pages/StudioPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import PriorityInbox from "./pages/PriorityInbox";
@@ -34,7 +30,6 @@ import RelationshipsPage from "./pages/RelationshipsPage";
 import MonthlyReviewPage from "./pages/MonthlyReviewPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
-// ResourcesPage moved under ApplicationsTrackerPage
 
 const queryClient = new QueryClient();
 
@@ -70,8 +65,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            {/* Old onboarding route disabled */}
             <Route path="/welcome" element={<ProtectedRoute><NewOnboarding /></ProtectedRoute>} />
+            <Route path="/onboarding" element={<ProtectedRoute><NewOnboarding /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
             <Route path="/journal/new" element={<ProtectedRoute><JournalEntryPage /></ProtectedRoute>} />
@@ -79,14 +74,17 @@ const App = () => (
             <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
             <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
             <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
-            
+            <Route path="/content-planner" element={<ProtectedRoute><ContentPlanner /></ProtectedRoute>} />
             <Route path="/finance" element={<Navigate to="/finance/wealth" replace />} />
             <Route path="/finance/wealth" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
+            <Route path="/money" element={<ProtectedRoute><WealthTrackerPage /></ProtectedRoute>} />
             <Route path="/finance/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
+            <Route path="/applications" element={<ProtectedRoute><ApplicationsTrackerPage /></ProtectedRoute>} />
             <Route path="/vision" element={<Navigate to="/dashboard" replace />} />
             <Route path="/studio" element={<ProtectedRoute><StudioPage /></ProtectedRoute>} />
             <Route path="/resources" element={<Navigate to="/finance/applications" replace />} />
             <Route path="/inbox" element={<Navigate to="/relationships" replace />} />
+            <Route path="/contacts" element={<Navigate to="/relationships" replace />} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/events/:token" element={<PublicEventPage />} />
@@ -95,9 +93,8 @@ const App = () => (
             <Route path="/monthly-review" element={<ProtectedRoute><MonthlyReviewPage /></ProtectedRoute>} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
