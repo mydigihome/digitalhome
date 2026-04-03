@@ -900,6 +900,7 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+          </>
         )}
 
         {/* ══════════ SUPPORT TAB ══════════ */}
