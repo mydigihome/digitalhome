@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import {
   Shield, Users, Activity, DollarSign, FileText, Target, BookOpen,
-  ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock,
+  ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock, ChevronRight,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
