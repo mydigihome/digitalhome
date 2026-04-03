@@ -87,6 +87,36 @@ export default function BillingTab({
 
   return (
     <>
+      {/* Current Plan Status */}
+      {!plan.isLoading && plan.tier !== "free" && !isFoundingMember && (
+        <div className="rounded-xl border border-border bg-card p-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <CreditCard size={18} className="text-primary" />
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: 0, fontFamily: "Inter, sans-serif" }}>
+                {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)} Plan
+              </p>
+              <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontFamily: "Inter, sans-serif" }}>
+                {plan.billingCycle === "annual" && plan.renewalDate
+                  ? `Renews ${plan.renewalDate}`
+                  : `Billed ${plan.billingCycle}`}
+                {plan.studioUnlocked ? " · Studio unlocked ✓" : ""}
+                {plan.studentVerified ? " · Student discount active" : ""}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {plan.studioUnlocked && (
+              <span style={{ fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 999, background: "#F5F3FF", color: "#7B5EA7", fontFamily: "Inter, sans-serif" }}>
+                Studio ✓
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Trial Status Card */}
       {!isFoundingMember && !isSubscribed && prefs?.trial_end_date && (() => {
         const endDate = new Date(prefs.trial_end_date);
