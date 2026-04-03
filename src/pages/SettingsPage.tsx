@@ -870,7 +870,7 @@ export default function SettingsPage() {
             </div>
 
             {/* FEEDBACK FORM */}
-            <div style={sectionStyle}>
+            <div id="feedback-form" style={sectionStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <MessageSquare size={18} color="#F59E0B" />
                 <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Send Feedback</span>
