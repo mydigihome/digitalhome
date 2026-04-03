@@ -58,11 +58,9 @@ const defaultTemplateData = [
 
 export default function ApplicationsTrackerPage() {
   const navigate = useNavigate();
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const [appTab, setAppTab] = useState<'applications' | 'resources'>(
-    searchParams.get('tab') === 'resources' ? 'resources' : 'applications'
+    window.location.search.includes('tab=resources') ? 'resources' : 'applications'
   );
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { data: prefs } = useUserPreferences();
   const upsertPrefs = useUpsertPreferences();
