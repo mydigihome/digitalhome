@@ -14,6 +14,7 @@ import {
   ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
   Lock as LockIcon, Unlock, Plus, Trash2, X,
 } from "lucide-react";
+import { applyThemeOverride } from "@/hooks/useThemeApplicator";
 
 const ACCENT_THEMES = [
   { name: "Emerald", primary: "#10B981", secondary: "#7B5EA7", label: "Default" },
@@ -26,27 +27,28 @@ const ACCENT_THEMES = [
 
 const BILLING_PLANS = [
   {
-    tier: "free", name: "Free", badge: null,
-    monthlyPrice: 0, annualPrice: 0,
-    color: "#6B7280", bg: "#F9FAFB", border: "#E5E7EB",
-    description: "Get started and explore the basics",
-    features: ["Dashboard overview", "1 active project", "Basic journal (5 entries/mo)", "Money snapshot", "Calendar view"],
-    stripeMonthly: "", stripeAnnual: "",
+    tier: "founding", name: "Founding Member", badge: null,
+    monthlyPrice: 7, annualPrice: 49,
+    color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A",
+    description: "Locked forever at $7/mo for the first 50 users.",
+    features: ["Price locked forever at $7/mo", "Everything in Standard", "Founding Member badge on profile", "Direct line to the founder", "First access to every new feature"],
+    stripeMonthly: "PASTE_FOUNDING_MONTHLY_LINK", stripeAnnual: "PASTE_FOUNDING_ANNUAL_LINK",
+    badgeCustom: "First 50 users only",
   },
   {
-    tier: "standard", name: "Standard", badge: "⭐ Most Popular",
+    tier: "standard", name: "Standard", badge: "Most Popular",
     monthlyPrice: 12, annualPrice: 99,
     color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0",
-    description: "Full access to everything. No feature locks.",
-    features: ["Everything in Free", "Unlimited projects + AI stages", "Unlimited journal + voice", "Full finance suite", "Contacts CRM + import", "Content Planner", "Monthly Review", "Resource Center"],
+    description: "Full access to everything you need.",
+    features: ["Full dashboard + market watch", "Journal unlimited + voice recording", "Projects + AI stage generation", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings"],
     stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
   },
   {
-    tier: "pro", name: "Pro", badge: "🚀 Power User",
+    tier: "pro", name: "Pro", badge: null,
     monthlyPrice: 29, annualPrice: 199,
     color: "#7B5EA7", bg: "#F5F3FF", border: "#DDD6FE",
     description: "For creators and entrepreneurs who want it all.",
-    features: ["Everything in Standard", "Studio HQ included", "Priority AI features", "Team collaboration", "Advanced analytics", "API access (coming soon)", "Founding member perks"],
+    features: ["Everything in Standard", "Studio — full HQ + collaboration", "Investing tab + trading terminal", "AI trading plans unlimited", "Plaid bank sync", "Broker connect", "Priority support"],
     stripeMonthly: "PASTE_PRO_MONTHLY_LINK", stripeAnnual: "PASTE_PRO_ANNUAL_LINK",
   },
 ];
@@ -273,16 +275,18 @@ export default function SettingsPage() {
 
     // Apply accent color via CSS variables
     const hsl = hexToHsl(theme.primary);
-    const hslSecondary = hexToHsl(theme.secondary);
     const root = document.documentElement;
     root.style.setProperty("--primary", hsl);
     root.style.setProperty("--ring", hsl);
     root.style.setProperty("--sidebar-primary", hsl);
     root.style.setProperty("--chart-1", hsl);
 
-    // Persist to localStorage for cross-page persistence
+    // Apply comprehensive theme override
+    applyThemeOverride(theme.primary, theme.secondary);
+
+    // Persist to localStorage
     localStorage.setItem("dh_accent_color", theme.primary);
-    localStorage.setItem("dh_secondary_color", theme.secondary);
+    localStorage.setItem("dh_secondary", theme.secondary);
     localStorage.setItem("dh_theme_name", theme.name);
 
     // Dark mode
@@ -294,24 +298,22 @@ export default function SettingsPage() {
       document.body.classList.remove("dark");
     }
 
-    // Fire custom event for any listeners
-    window.dispatchEvent(new CustomEvent("theme-changed", { detail: { accent: theme.primary, secondary: theme.secondary } }));
-
     // Save welcome video to app_settings if admin
     if (user.email === "myslimher@gmail.com" && welcomeVideoUrl) {
       (supabase as any).from("app_settings").upsert({ key: "welcome_video_url", value: welcomeVideoUrl, updated_at: new Date().toISOString() }).then(() => {});
     }
 
-    // Save to DB via upsertPrefs
+    // Save to DB
     upsertPrefs.mutate({
       theme_color: theme.primary,
+      secondary_color: theme.secondary,
       sidebar_theme: isDarkMode ? "dark" : "light",
       religion: selectedReligion || null,
       show_scripture_card: showScripture,
       welcome_video_url: welcomeVideoUrl || null,
     } as any);
 
-    toast.success("Appearance saved! ✓", { description: "Your theme has been applied across the platform." });
+    toast.success("Theme applied ✓", { description: `${selectedTheme} is now active across the platform.` });
   };
 
   const toggleDarkMode = () => {
@@ -586,7 +588,17 @@ export default function SettingsPage() {
                 <span style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Notifications</span>
               </div>
               <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: "0 0 14px" }}>Notification settings are managed in the notification panel.</p>
-              <button onClick={() => navigate("/")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
+              <button onClick={() => {
+                navigate("/");
+                setTimeout(() => {
+                  const bell = document.querySelector(".notif-bell, [data-notif-bell]") as HTMLElement;
+                  if (bell) bell.click();
+                  setTimeout(() => {
+                    const gear = document.querySelector(".notif-settings-gear, [data-notif-settings]") as HTMLElement;
+                    if (gear) gear.click();
+                  }, 300);
+                }, 400);
+              }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
                 <Bell size={14} /> Open Notification Settings
               </button>
             </div>
@@ -646,6 +658,12 @@ export default function SettingsPage() {
                 <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
                   {plan.badge && (
                     <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
+                  )}
+                  {(plan as any).badgeCustom && !plan.badge && (
+                    <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: "#FEF2F2", color: "#DC2626", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 4, border: "1px solid #FECACA" }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#DC2626", display: "inline-block" }} />
+                      {(plan as any).badgeCustom}
+                    </div>
                   )}
                   <p style={{ fontSize: 13, fontWeight: 700, color: plan.color, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>{plan.name}</p>
                   <div style={{ marginBottom: 6 }}>

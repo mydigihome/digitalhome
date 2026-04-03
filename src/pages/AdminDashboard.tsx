@@ -7,6 +7,7 @@ import {
   Shield, Users, Activity, DollarSign, FileText, Target, BookOpen,
   ShoppingBag, UserCheck, Bell, Download, ExternalLink, RefreshCw, Lock, ChevronRight,
   X, Trash2, CreditCard, MessageSquare, Megaphone, Loader2,
+  TrendingUp, UserMinus, Check, Send, Hash, Calendar, Clock, MapPin, Mail, Folder, Film,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
@@ -41,22 +42,7 @@ function UserActivityStats({ userId }: { userId: string }) {
       setStats({ projects: projects || 0, contacts: contacts || 0, journals: journals || 0, content: content || 0 });
     })();
   }, [userId]);
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-      {[
-        { label: "Projects", value: stats.projects || 0, color: "#10B981" },
-        { label: "Contacts", value: stats.contacts || 0, color: "#EC4899" },
-        { label: "Journal Entries", value: stats.journals || 0, color: "#06B6D4" },
-        { label: "Content Items", value: stats.content || 0, color: "#7B5EA7" },
-      ].map(stat => (
-        <div key={stat.label} style={{ padding: 12, background: "#F9FAFB", borderRadius: 10, border: "1px solid #F3F4F6" }}>
-          <p style={{ fontSize: 20, fontWeight: 800, color: stat.color, fontFamily: "Inter, sans-serif", margin: 0 }}>{stat.value}</p>
-          <p style={{ fontSize: 11, color: "#9CA3AF", fontFamily: "Inter, sans-serif", margin: 0 }}>{stat.label}</p>
-        </div>
-      ))}
-    </div>
-  );
+  return stats;
 }
 
 export default function AdminDashboard() {
@@ -73,6 +59,7 @@ export default function AdminDashboard() {
   const [feedbackFilter, setFeedbackFilter] = useState("all");
   const [ghostUser, setGhostUser] = useState<any>(null);
   const [ghostPanelOpen, setGhostPanelOpen] = useState(false);
+  const [userDetail, setUserDetail] = useState<any>({});
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [announcementType, setAnnouncementType] = useState("system");
@@ -98,7 +85,6 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-
       const [
         { count: totalUsers },
         { count: newThisWeek },
@@ -122,32 +108,20 @@ export default function AdminDashboard() {
         supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(10),
         supabase.from("feedback").select("*").order("created_at", { ascending: false }),
       ]);
-
       const totalRevenue = (purchases || []).reduce((s: number, p: any) => s + (p.amount_paid || 0), 0) / 100;
       const now = new Date();
       const thisMonthRevenue = (purchases || []).filter((p: any) => { const d = new Date(p.purchased_at); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).reduce((s: number, p: any) => s + (p.amount_paid || 0), 0) / 100;
-
       setStats({ totalUsers: totalUsers || 0, newThisWeek: newThisWeek || 0, activeToday: 0, totalRevenue, thisMonthRevenue, totalContent: totalContent || 0, totalJournals: totalJournals || 0, totalContacts: totalContacts || 0, totalProjects: totalProjects || 0, totalPurchases: (purchases || []).length });
       setUsersList(profilesList || []);
       setRecentActivity(activity || []);
       setFeedbackItems(feedbackData || []);
-
       const byMonth: Record<string, number> = {};
-      (purchases || []).forEach((p: any) => {
-        const m = new Date(p.purchased_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-        byMonth[m] = (byMonth[m] || 0) + (p.amount_paid || 0) / 100;
-      });
+      (purchases || []).forEach((p: any) => { const m = new Date(p.purchased_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" }); byMonth[m] = (byMonth[m] || 0) + (p.amount_paid || 0) / 100; });
       setRevenueData(Object.entries(byMonth).map(([month, amount]) => ({ month, amount })));
-
       const growthMap: Record<string, number> = {};
-      (profilesList || []).forEach((u: any) => {
-        const m = new Date(u.created_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-        growthMap[m] = (growthMap[m] || 0) + 1;
-      });
+      (profilesList || []).forEach((u: any) => { const m = new Date(u.created_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" }); growthMap[m] = (growthMap[m] || 0) + 1; });
       setGrowthData(Object.entries(growthMap).reverse().map(([month, count]) => ({ month, count })));
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
@@ -158,14 +132,27 @@ export default function AdminDashboard() {
 
   const loadStrategyData = async () => {
     const { data: allUsers } = await supabase.from("profiles").select("id, email, last_login, created_at");
-    const churnRisk = (allUsers || []).filter((u: any) => {
-      if (!u.last_login) return true;
-      const days = Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000);
-      return days >= 14;
-    }).map((u: any) => ({ ...u, daysSinceLogin: u.last_login ? Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000) : 999 })).sort((a: any, b: any) => b.daysSinceLogin - a.daysSinceLogin);
+    const churnRisk = (allUsers || []).filter((u: any) => { if (!u.last_login) return true; const days = Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000); return days >= 14; }).map((u: any) => ({ ...u, daysSinceLogin: u.last_login ? Math.floor((Date.now() - new Date(u.last_login).getTime()) / 86400000) : 999 })).sort((a: any, b: any) => b.daysSinceLogin - a.daysSinceLogin);
     setChurnRiskUsers(churnRisk.slice(0, 20));
     const { data: notes } = await (supabase as any).from("app_settings").select("value").eq("key", "strategy_notes").maybeSingle();
     if (notes?.value) setStrategyNotes(notes.value);
+  };
+
+  const loadUserDetail = async (userId: string) => {
+    const [
+      { data: projects },
+      { data: contacts },
+      { data: journals },
+      { data: content },
+      { data: feedback },
+    ] = await Promise.all([
+      supabase.from("projects").select("id, name, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("contacts").select("id, name, created_at").eq("user_id", userId).limit(5),
+      supabase.from("journal_entries").select("id, title, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("content_items").select("id, title, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+      supabase.from("feedback").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5),
+    ]);
+    setUserDetail({ projects: projects || [], contacts: contacts || [], journals: journals || [], content: content || [], feedback: feedback || [] });
   };
 
   useEffect(() => { loadData(); loadAnnouncementHistory(); loadStrategyData(); }, [isAdmin]);
@@ -204,44 +191,33 @@ export default function AdminDashboard() {
   ];
   const maxUsage = Math.max(...usageItems.map(i => i.count), 1);
 
-  const filteredUsers = usersList.filter(u => !userSearch || u.full_name?.toLowerCase().includes(userSearch.toLowerCase()));
+  const filteredUsers = usersList.filter(u => !userSearch || u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()));
 
-  const sendGlobalNotification = async () => {
-    const msg = window.prompt("Message to send to ALL users:");
-    if (!msg || !msg.trim()) return;
-    const { data: allUsers, error } = await supabase.from("profiles").select("id");
-    if (error || !allUsers?.length) {
-      toast.error("Could not load users");
-      return;
-    }
-    const { error: insertError } = await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: "system", title: "Message from Digital Home", message: msg.trim(), read: false })));
-    if (insertError) {
-      toast.error("Send failed: " + insertError.message);
-      return;
-    }
-    toast.success(`Sent to ${allUsers.length} users! ✓`);
+  const sendAnnouncementHandler = async () => {
+    if (!announcementTitle.trim() || !announcementMessage.trim()) return;
+    setAnnouncementSending(true);
+    try {
+      const { data: allUsers } = await supabase.from("profiles").select("id");
+      if (!allUsers?.length) { toast.error("No users found"); return; }
+      await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: announcementType, title: announcementTitle.trim(), message: announcementMessage.trim(), category: "Announcement", read: false })));
+      await (supabase as any).from("announcements").insert({ sent_by: user!.id, title: announcementTitle.trim(), message: announcementMessage.trim(), type: announcementType, recipient_count: allUsers.length });
+      setAnnouncementTitle(""); setAnnouncementMessage(""); setAnnouncementType("system");
+      await loadAnnouncementHistory();
+      toast.success(`Sent to ${allUsers.length} users!`);
+    } catch (err: any) { toast.error("Send failed: " + err.message); } finally { setAnnouncementSending(false); }
   };
 
   const exportCSV = async () => {
     const { data: users, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
     if (error || !users) { toast.error("Export failed"); return; }
     const headers = ["ID", "Name", "Plan", "Joined", "Last Active"];
-    const rows = users.map(u => [
-      u.id || "",
-      (u.full_name || "").replace(/,/g, ";"),
-      "free",
-      u.created_at ? new Date(u.created_at).toLocaleDateString() : "",
-      u.last_login ? new Date(u.last_login).toLocaleDateString() : "Never",
-    ]);
+    const rows = users.map(u => [u.id || "", (u.full_name || "").replace(/,/g, ";"), "free", u.created_at ? new Date(u.created_at).toLocaleDateString() : "", u.last_login ? new Date(u.last_login).toLocaleDateString() : "Never"]);
     const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
-    link.download = `digitalhome-users-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.href = url; link.download = `digitalhome-users-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success(`Exported ${users.length} users`);
   };
@@ -268,60 +244,33 @@ export default function AdminDashboard() {
         {/* TAB NAV */}
         <div style={{ display: "flex", gap: 0, marginBottom: 24, background: isDark ? "#252528" : "#F3F4F6", borderRadius: 10, padding: 4, width: "fit-content" }}>
           {(["overview", "strategy"] as const).map(tab => (
-            <button key={tab} onClick={() => setAdminTab(tab)} style={{ padding: "8px 20px", borderRadius: 7, border: "none", background: adminTab === tab ? (isDark ? "#333" : "white") : "transparent", fontSize: 13, fontWeight: adminTab === tab ? 600 : 400, color: adminTab === tab ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: adminTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none", textTransform: "capitalize" }}>{tab === "strategy" ? "📈 Strategy" : "Overview"}</button>
+            <button key={tab} onClick={() => setAdminTab(tab)} style={{ padding: "8px 20px", borderRadius: 7, border: "none", background: adminTab === tab ? (isDark ? "#333" : "white") : "transparent", fontSize: 13, fontWeight: adminTab === tab ? 600 : 400, color: adminTab === tab ? text1 : text2, cursor: "pointer", fontFamily: "Inter, sans-serif", boxShadow: adminTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none", textTransform: "capitalize" as const }}>{tab === "strategy" ? "Strategy" : "Overview"}</button>
           ))}
         </div>
 
         {adminTab === "overview" && (<>
-        {/* ANNOUNCEMENTS */}
-        <div style={{ background: cardBg, borderRadius: 14, border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`, padding: 24, marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", display: "flex", alignItems: "center", justifyContent: "center" }}><Megaphone size={18} color="#10B981" /></div>
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Send Announcement</h3>
-              <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>Broadcasts to all users instantly</p>
+        {/* COMPACT ANNOUNCEMENTS */}
+        <div style={{ background: cardBg, borderRadius: 12, border: `1px solid ${cardBorder}`, padding: "16px 20px", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <Megaphone size={15} color="#10B981" />
+            <span style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Broadcast to All Users</span>
+            {announcementHistory.length > 0 && <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginLeft: "auto" }}>{announcementHistory.length} sent</span>}
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <div style={{ flex: 1 }}>
+              <input value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="Title" style={{ width: "100%", padding: "8px 12px", border: `1px solid ${inputBorder}`, borderRadius: 7, fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" as const, marginBottom: 6, background: inputBg }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
+              <textarea value={announcementMessage} onChange={e => setAnnouncementMessage(e.target.value)} placeholder="Write your message to all users..." rows={2} style={{ width: "100%", padding: "8px 12px", border: `1px solid ${inputBorder}`, borderRadius: 7, fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", resize: "none" as const, outline: "none", boxSizing: "border-box" as const, lineHeight: "1.5", background: inputBg }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={e => { e.target.style.borderColor = inputBorder; }} />
             </div>
+            <button onClick={sendAnnouncementHandler} disabled={announcementSending || !announcementTitle.trim() || !announcementMessage.trim()} style={{ padding: "8px 16px", background: announcementTitle.trim() && announcementMessage.trim() ? "#10B981" : (isDark ? "#333" : "#F3F4F6"), color: announcementTitle.trim() && announcementMessage.trim() ? "white" : text2, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: announcementTitle.trim() && announcementMessage.trim() ? "pointer" : "not-allowed", fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" as const, flexShrink: 0, alignSelf: "flex-end", marginBottom: 1, display: "flex", alignItems: "center", gap: 6, transition: "all 150ms" }}>
+              {announcementSending ? <><Loader2 size={14} className="animate-spin" /> Sending...</> : <><Send size={14} /> Send</>}
+            </button>
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <input value={announcementTitle} onChange={e => setAnnouncementTitle(e.target.value)} placeholder="Announcement title..." style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", outline: "none", boxSizing: "border-box" as const, background: inputBg }} />
-          </div>
-          <div style={{ marginBottom: 14 }}>
-            <textarea value={announcementMessage} onChange={e => setAnnouncementMessage(e.target.value)} placeholder="Write your announcement..." rows={4} style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box" as const, lineHeight: "1.6", background: inputBg }} />
-          </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-            {[
-              { type: "system", label: "📢 General" },
-              { type: "feature", label: "✨ New Feature" },
-              { type: "maintenance", label: "🔧 Maintenance" },
-              { type: "promo", label: "🎉 Special Offer" },
-            ].map(opt => (
-              <button key={opt.type} onClick={() => setAnnouncementType(opt.type)} style={{ padding: "6px 14px", borderRadius: 999, border: `1.5px solid ${announcementType === opt.type ? "#10B981" : inputBorder}`, background: announcementType === opt.type ? (isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4") : (isDark ? "#252528" : "white"), color: announcementType === opt.type ? "#10B981" : text2, fontSize: 12, fontWeight: announcementType === opt.type ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{opt.label}</button>
-            ))}
-          </div>
-          <button disabled={announcementSending || !announcementTitle.trim() || !announcementMessage.trim()} onClick={async () => {
-            if (!announcementTitle.trim() || !announcementMessage.trim()) return;
-            setAnnouncementSending(true);
-            try {
-              const { data: allUsers } = await supabase.from("profiles").select("id");
-              if (!allUsers?.length) { toast.error("No users found"); return; }
-              await supabase.from("notifications").insert(allUsers.map((u: any) => ({ user_id: u.id, type: announcementType, title: announcementTitle.trim(), message: announcementMessage.trim(), category: "Announcement", read: false })));
-              await (supabase as any).from("announcements").insert({ sent_by: user!.id, title: announcementTitle.trim(), message: announcementMessage.trim(), type: announcementType, recipient_count: allUsers.length });
-              setAnnouncementTitle(""); setAnnouncementMessage(""); setAnnouncementType("system");
-              await loadAnnouncementHistory();
-              toast.success(`Sent to ${allUsers.length} users! 📢`);
-            } catch (err: any) { toast.error("Send failed: " + err.message); } finally { setAnnouncementSending(false); }
-          }} style={{ padding: "11px 28px", background: announcementTitle.trim() && announcementMessage.trim() ? "#10B981" : (isDark ? "#333" : "#F3F4F6"), color: announcementTitle.trim() && announcementMessage.trim() ? "white" : text2, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: announcementTitle.trim() && announcementMessage.trim() ? "pointer" : "not-allowed", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
-            {announcementSending ? <><Loader2 size={16} className="animate-spin" /> Sending...</> : <><Megaphone size={16} /> Send to All Users</>}
-          </button>
           {announcementHistory.length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 10, fontFamily: "Inter, sans-serif" }}>Recently Sent</p>
-              {announcementHistory.slice(0, 5).map((a: any) => (
-                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#F9FAFB"}` }}>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{a.title}</p>
-                    <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {a.recipient_count} users</p>
-                  </div>
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F9FAFB"}` }}>
+              {announcementHistory.slice(0, 3).map((a: any) => (
+                <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0" }}>
+                  <span style={{ fontSize: 12, fontWeight: 500, color: text1, fontFamily: "Inter, sans-serif" }}>{a.title}</span>
+                  <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(a.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {a.recipient_count} users</span>
                 </div>
               ))}
             </div>
@@ -333,7 +282,7 @@ export default function AdminDashboard() {
           {metricCards.map((s, i) => (
             <div key={i} style={cardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{s.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{s.label}</span>
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: `${s.color}15`, display: "flex", alignItems: "center", justifyContent: "center" }}><s.Icon size={16} color={s.color} /></div>
               </div>
               <div style={{ fontSize: 26, fontWeight: 800, color: text1, fontFamily: "Inter, sans-serif" }}>{loading ? "—" : s.value}</div>
@@ -342,7 +291,6 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* SECOND ROW */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
           {secondRow.map((s, i) => (
             <div key={i} style={{ ...cardStyle, display: "flex", alignItems: "center", gap: 12 }}>
@@ -399,7 +347,7 @@ export default function AdminDashboard() {
             <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search users..." style={{ padding: "7px 12px", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "Inter, sans-serif", width: 200, background: inputBg, color: text1 }} />
           </div>
           <div style={{ background: tableBg, borderRadius: 8, padding: "8px 14px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, marginBottom: 4 }}>
-            {["Name", "Plan", "Joined", "Actions"].map(h => <span key={h} style={{ fontSize: 11, fontWeight: 700, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</span>)}
+            {["Name", "Plan", "Joined", "Actions"].map(h => <span key={h} style={{ fontSize: 11, fontWeight: 700, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</span>)}
           </div>
           {filteredUsers.slice(0, 30).map(u => (
             <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${rowBorder}`, alignItems: "center" }}>
@@ -410,7 +358,7 @@ export default function AdminDashboard() {
               <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>free</span>
               <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <div style={{ display: "flex", gap: 4 }}>
-                <button onClick={() => { setGhostUser(u); setGhostPanelOpen(true); }} style={{ padding: "4px 8px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 6, fontSize: 11, color: "#1D4ED8", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
+                <button onClick={() => { setGhostUser(u); setGhostPanelOpen(true); loadUserDetail(u.id); }} style={{ padding: "4px 8px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 6, fontSize: 11, color: "#1D4ED8", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
                 <button onClick={async () => { const msg = prompt("Notification message:"); if (!msg) return; await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "Message from Admin", message: msg, read: false }); toast.success("Notification sent!"); }} style={{ padding: "4px 8px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 6, fontSize: 11, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Notify</button>
               </div>
             </div>
@@ -423,26 +371,15 @@ export default function AdminDashboard() {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>User Feedback</h3>
               {feedbackItems.filter(f => f.status === "pending").length > 0 && (
-                <span style={{ padding: "2px 8px", background: "#FEF2F2", color: "#DC2626", borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>
-                  {feedbackItems.filter(f => f.status === "pending").length} new
-                </span>
+                <span style={{ padding: "2px 8px", background: "#FEF2F2", color: "#DC2626", borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif" }}>{feedbackItems.filter(f => f.status === "pending").length} new</span>
               )}
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               {["all", "Bug Report", "Feature Request", "General Feedback", "Billing Issue"].map(f => (
-                <button key={f} onClick={() => setFeedbackFilter(f)} style={{
-                  padding: "4px 10px", borderRadius: 999, border: "1px solid",
-                  borderColor: feedbackFilter === f ? "#10B981" : inputBorder,
-                  background: feedbackFilter === f ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : cardBg,
-                  color: feedbackFilter === f ? "#065F46" : text2,
-                  fontSize: 11, fontWeight: feedbackFilter === f ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif",
-                }}>
-                  {f === "all" ? "All" : f}
-                </button>
+                <button key={f} onClick={() => setFeedbackFilter(f)} style={{ padding: "4px 10px", borderRadius: 999, border: "1px solid", borderColor: feedbackFilter === f ? "#10B981" : inputBorder, background: feedbackFilter === f ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : cardBg, color: feedbackFilter === f ? "#065F46" : text2, fontSize: 11, fontWeight: feedbackFilter === f ? 600 : 400, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{f === "all" ? "All" : f}</button>
               ))}
             </div>
           </div>
-
           {(feedbackItems || []).filter(f => feedbackFilter === "all" || f.message?.includes(feedbackFilter)).map(item => (
             <div key={item.id} style={{ padding: "16px 0", borderBottom: `1px solid ${rowBorder}` }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
@@ -451,23 +388,15 @@ export default function AdminDashboard() {
                   <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>From: {item.email || "Unknown"}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>
-                    {new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-                  </span>
+                  <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(item.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
                   {item.status === "pending" && (
-                    <button onClick={async () => {
-                      await supabase.from("feedback").update({ status: "reviewed" } as any).eq("id", item.id);
-                      setFeedbackItems(prev => prev.map(f => f.id === item.id ? { ...f, status: "reviewed" } : f));
-                    }} style={{ padding: "3px 8px", background: "transparent", border: `1px solid ${inputBorder}`, borderRadius: 6, fontSize: 11, color: text2, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>
-                      Mark read
-                    </button>
+                    <button onClick={async () => { await supabase.from("feedback").update({ status: "reviewed" } as any).eq("id", item.id); setFeedbackItems(prev => prev.map(f => f.id === item.id ? { ...f, status: "reviewed" } : f)); }} style={{ padding: "3px 8px", background: "transparent", border: `1px solid ${inputBorder}`, borderRadius: 6, fontSize: 11, color: text2, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Mark read</button>
                   )}
                 </div>
               </div>
               <p style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", lineHeight: 1.5, margin: 0 }}>{item.message}</p>
             </div>
           ))}
-
           {feedbackItems.length === 0 && (
             <div style={{ padding: "48px 20px", textAlign: "center" }}>
               <MessageSquare size={36} color="#D1D5DB" style={{ margin: "0 auto 12px" }} />
@@ -478,7 +407,6 @@ export default function AdminDashboard() {
 
         {/* BOTTOM ROW */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          {/* RECENT ACTIVITY */}
           <div style={cardStyle}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Recent Platform Activity</h3>
             {recentActivity.map((a, i) => (
@@ -491,24 +419,12 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
-
-          {/* ADMIN ACTIONS */}
           <div style={cardStyle}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Admin Actions</h3>
             {[
-              { label: "Send Global Notification", desc: "Notify all users at once", Icon: Bell, color: "#10B981", action: sendGlobalNotification },
               { label: "Export User Data", desc: "Download users as CSV", Icon: Download, color: "#3B82F6", action: exportCSV },
-              { label: "View Backend Dashboard", desc: "Open database directly", Icon: ExternalLink, color: "#7B5EA7", action: () => {
-                const link = document.createElement("a");
-                link.href = "https://supabase.com/dashboard";
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              }},
             ].map(item => (
-              <button key={item.label} onClick={item.action} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, cursor: "pointer", marginBottom: 8, textAlign: "left" }}>
+              <button key={item.label} onClick={item.action} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 14px", background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 10, cursor: "pointer", marginBottom: 8, textAlign: "left" as const }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: `${item.color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><item.Icon size={16} color={item.color} /></div>
                 <div style={{ flex: 1 }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", display: "block" }}>{item.label}</span>
@@ -523,70 +439,74 @@ export default function AdminDashboard() {
 
         {/* STRATEGY TAB */}
         {adminTab === "strategy" && (
-          <div style={{ padding: "0" }}>
-            {/* Price Roadmap */}
-            <div style={{ ...cardStyle, marginBottom: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>📈 Price Roadmap</h3>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 20 }}>When to raise prices based on user milestones</p>
-              {[
-                { milestone: "0–50 users", status: "current", standard: "$12/mo", founding: "$7/mo (locked)", note: "Build trust, gather feedback, onboard founding members" },
-                { milestone: "51–150 users", status: "upcoming", standard: "$15/mo", founding: "$7/mo (still locked)", note: "Raise Standard after founding closes. Signal growth." },
-                { milestone: "150–500 users", status: "future", standard: "$19/mo", founding: "$7/mo (still locked)", note: "Add Pro tier. Studio add-on raises to $49." },
-                { milestone: "500+ users", status: "future", standard: "$24/mo", founding: "$7/mo (still locked)", note: "Enterprise tier. Team accounts. API access." },
-              ].map((row, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 16, padding: "14px 0", borderBottom: i < 3 ? `1px solid ${rowBorder}` : "none" }}>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: row.status === "current" ? "#10B981" : row.status === "upcoming" ? "#F59E0B" : (isDark ? "#444" : "#E5E7EB"), flexShrink: 0, marginTop: 4 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, flexWrap: "wrap", gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>{row.milestone}</span>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <span style={{ padding: "2px 8px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", color: "#065F46", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Standard: {row.standard}</span>
-                        <span style={{ padding: "2px 8px", background: isDark ? "rgba(245,158,11,0.1)" : "#FFFBEB", color: "#92400E", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>Founding: {row.founding}</span>
+          <div>
+            {/* Pricing Roadmap — Horizontal Timeline */}
+            <div style={{ background: cardBg, borderRadius: 12, border: `1px solid ${cardBorder}`, padding: 24, marginBottom: 16 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                <TrendingUp size={16} color="#10B981" />
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Pricing Roadmap</h3>
+                <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginLeft: "auto" }}>Based on user milestones</span>
+              </div>
+              <div style={{ position: "relative", paddingBottom: 8 }}>
+                <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, background: "linear-gradient(90deg, #10B981, #F59E0B, #3B82F6, #7B5EA7)", zIndex: 0 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, position: "relative", zIndex: 1 }}>
+                  {[
+                    { range: "0 – 50", label: "Launch", standard: "$12", note: "Founding closes at 50", status: "current", color: "#10B981" },
+                    { range: "51 – 150", label: "Growth", standard: "$15", note: "Raise after founding closes", status: "next", color: "#F59E0B" },
+                    { range: "150 – 500", label: "Scale", standard: "$19", note: "Add Pro tier, Studio $49", status: "future", color: "#3B82F6" },
+                    { range: "500+", label: "Enterprise", standard: "$24", note: "Team accounts, API", status: "future", color: "#7B5EA7" },
+                  ].map((stage, i) => (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: "50%", background: stage.status === "current" ? stage.color : cardBg, border: `2px solid ${stage.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        {stage.status === "current" ? <Check size={14} color="white" /> : <div style={{ width: 8, height: 8, borderRadius: "50%", background: stage.color }} />}
+                      </div>
+                      <div style={{ textAlign: "center", padding: "10px 8px", background: stage.status === "current" ? stage.color + "08" : (isDark ? "#252528" : "#F9FAFB"), borderRadius: 8, border: `1px solid ${stage.status === "current" ? stage.color + "30" : cardBorder}`, width: "100%", boxSizing: "border-box" as const }}>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: text2, textTransform: "uppercase" as const, letterSpacing: "0.5px", fontFamily: "Inter, sans-serif", marginBottom: 2 }}>{stage.range} users</p>
+                        <p style={{ fontSize: 13, fontWeight: 800, color: stage.color, fontFamily: "Inter, sans-serif", marginBottom: 2 }}>{stage.standard}/mo</p>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>{stage.label}</p>
+                        <p style={{ fontSize: 10, color: text2, fontFamily: "Inter, sans-serif", lineHeight: "1.3" }}>{stage.note}</p>
                       </div>
                     </div>
-                    <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{row.note}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
 
-            {/* Churn Risk */}
-            <div style={{ ...cardStyle, marginBottom: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>⚠️ Churn Risk</h3>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16 }}>Users who haven't logged in for 14+ days</p>
-              {churnRiskUsers.length === 0 && <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", textAlign: "center", padding: 20 }}>No churn risk users detected 🎉</p>}
-              {churnRiskUsers.map((u: any) => (
-                <div key={u.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${rowBorder}` }}>
-                  <span style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif" }}>{u.email || u.full_name || u.id?.slice(0, 8)}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 12, color: "#EF4444", fontFamily: "Inter, sans-serif" }}>{u.daysSinceLogin}d inactive</span>
-                    <button onClick={async () => {
-                      await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "We miss you! 👋", message: "Come back and check what's new in Digital Home.", read: false });
-                      toast.success("Re-engagement sent!");
-                    }} style={{ padding: "4px 10px", background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4", border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`, borderRadius: 6, fontSize: 11, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Re-engage</button>
+            {/* Churn Risk — compact table */}
+            <div style={{ background: cardBg, borderRadius: 12, border: `1px solid ${cardBorder}`, overflow: "hidden", marginBottom: 16 }}>
+              <div style={{ padding: "14px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}`, display: "flex", alignItems: "center", gap: 8 }}>
+                <UserMinus size={15} color="#EF4444" />
+                <span style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Churn Risk</span>
+                <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", marginLeft: "auto" }}>Inactive 14+ days</span>
+              </div>
+              {churnRiskUsers.length === 0 ? (
+                <div style={{ padding: 20, textAlign: "center", fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>No at-risk users right now</div>
+              ) : (
+                churnRiskUsers.slice(0, 8).map((u: any) => (
+                  <div key={u.id} style={{ display: "flex", alignItems: "center", padding: "10px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB"}`, gap: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#EF4444", flexShrink: 0 }}>{(u.email || "?").charAt(0).toUpperCase()}</div>
+                    <span style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{u.email || u.full_name || u.id?.slice(0, 8)}</span>
+                    <span style={{ fontSize: 12, color: "#EF4444", fontFamily: "Inter, sans-serif", fontWeight: 500, flexShrink: 0 }}>{u.daysSinceLogin}d</span>
+                    <button onClick={async () => { await supabase.from("notifications").insert({ user_id: u.id, type: "system", title: "We miss you", message: "Come back and check what's new in Digital Home.", read: false, created_at: new Date().toISOString() }); toast.success("Re-engagement sent"); }} style={{ padding: "4px 10px", background: "transparent", border: `1px solid ${inputBorder}`, borderRadius: 6, fontSize: 11, color: text2, cursor: "pointer", fontFamily: "Inter, sans-serif", flexShrink: 0 }}>Ping</button>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
-            {/* Strategy Notes */}
-            <div style={{ ...cardStyle }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", marginBottom: 4 }}>📝 Strategy Notes</h3>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 14 }}>Private notes only you can see</p>
-              <textarea value={strategyNotes} onChange={e => setStrategyNotes(e.target.value)} placeholder="Write your pricing strategy, what's working, what to change..." rows={6} style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical", outline: "none", boxSizing: "border-box" as const, lineHeight: "1.6", background: inputBg }}
-                onFocus={e => { e.target.style.borderColor = "#10B981"; }}
-                onBlur={async e => {
-                  e.target.style.borderColor = inputBorder;
-                  await (supabase as any).from("app_settings").upsert({ key: "strategy_notes", value: strategyNotes });
-                }}
-              />
-              <p style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginTop: 4, display: "flex", alignItems: "center", gap: 3 }}>✓ Autosaves when you click away</p>
+            {/* Strategy Notes — minimal */}
+            <div style={{ background: cardBg, borderRadius: 12, border: `1px solid ${cardBorder}`, padding: "16px 20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <FileText size={15} color={text2} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif" }}>Founder Notes</span>
+                <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", marginLeft: "auto" }}>Private · autosaves</span>
+              </div>
+              <textarea value={strategyNotes} onChange={e => setStrategyNotes(e.target.value)} placeholder="Pricing strategy, what's working, what to change..." rows={4} style={{ width: "100%", padding: "10px 12px", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", resize: "vertical" as const, outline: "none", boxSizing: "border-box" as const, lineHeight: "1.6", background: inputBg }} onFocus={e => { e.target.style.borderColor = "#10B981"; }} onBlur={async e => { e.target.style.borderColor = inputBorder; await (supabase as any).from("app_settings").upsert({ key: "strategy_notes", value: strategyNotes }); }} />
             </div>
           </div>
         )}
       </div>
 
-      {/* GHOST USER PANEL */}
+      {/* GHOST USER PANEL — Clean Professional */}
       {ghostPanelOpen && ghostUser && (
         <div style={{ position: "fixed", top: 0, right: 0, width: 480, height: "100vh", background: isDark ? "#1C1C1E" : "white", boxShadow: "-8px 0 40px rgba(0,0,0,0.15)", zIndex: 9999, overflow: "auto", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: isDark ? "#1C1C1E" : "white", zIndex: 1 }}>
@@ -597,59 +517,104 @@ export default function AdminDashboard() {
             <button onClick={() => setGhostPanelOpen(false)} style={{ background: "transparent", border: "none", cursor: "pointer" }}><X size={20} color={text2} /></button>
           </div>
 
-          {/* User identity */}
-          <div style={{ padding: "20px 24px", borderBottom: `1px solid ${cardBorder}`, display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 800, color: "#7B5EA7", flexShrink: 0 }}>
-              {(ghostUser.full_name || ghostUser.email || "?").charAt(0).toUpperCase()}
+          {/* Identity */}
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, color: "#7B5EA7", flexShrink: 0, overflow: "hidden" }}>
+                {ghostUser.avatar_url ? <img src={ghostUser.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (ghostUser.full_name || ghostUser.email || "?").charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 2 }}>{ghostUser.full_name || "No name"}</p>
+                <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: 0, display: "flex", alignItems: "center", gap: 5 }}><Mail size={12} color={text2} />{ghostUser.email || "No email"}</p>
+              </div>
+              <span style={{ padding: "3px 10px", background: ghostUser.plan_tier === "pro" ? "#F5F3FF" : ghostUser.plan_tier === "standard" ? "#F0FDF4" : ghostUser.plan_tier === "founding" ? "#FFFBEB" : (isDark ? "#252528" : "#F3F4F6"), color: ghostUser.plan_tier === "pro" ? "#7B5EA7" : ghostUser.plan_tier === "standard" ? "#065F46" : ghostUser.plan_tier === "founding" ? "#92400E" : text2, borderRadius: 999, fontSize: 11, fontWeight: 700, fontFamily: "Inter, sans-serif", flexShrink: 0 }}>{ghostUser.plan_tier || "free"}</span>
             </div>
-            <div>
-              <p style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{ghostUser.full_name || "No name"}</p>
-              <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", margin: 0 }}>{ghostUser.email || "No email"}</p>
-              <span style={{ padding: "2px 8px", background: "#F3F4F6", color: text2, borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif" }}>free</span>
-            </div>
-          </div>
-
-          {/* Account info */}
-          <div style={{ padding: "20px 24px" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Account Info</p>
             {[
-              { label: "User ID", value: ghostUser.id },
-              { label: "Joined", value: ghostUser.created_at ? new Date(ghostUser.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Unknown" },
-              { label: "Last Active", value: ghostUser.last_login ? new Date(ghostUser.last_login).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Never" },
+              { Icon: Hash, label: "User ID", value: ghostUser.id?.substring(0, 16) + "...", mono: true, highlight: false },
+              { Icon: Calendar, label: "Joined", value: ghostUser.created_at ? new Date(ghostUser.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Unknown", mono: false, highlight: false },
+              { Icon: Clock, label: "Last Login", value: ghostUser.last_login ? new Date(ghostUser.last_login).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "Never", mono: false, highlight: !ghostUser.last_login || Math.floor((Date.now() - new Date(ghostUser.last_login).getTime()) / 86400000) > 14 },
+              { Icon: MapPin, label: "Location", value: ghostUser.location || "Not set", mono: false, highlight: false },
             ].map(item => (
-              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${rowBorder}` }}>
-                <span style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif" }}>{item.label}</span>
-                <span style={{ fontSize: 13, color: text1, fontFamily: "Inter, sans-serif", fontWeight: 500, maxWidth: 240, textAlign: "right", wordBreak: "break-all" }}>{item.value}</span>
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB"}` }}>
+                <item.Icon size={13} color={text2} style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", width: 72, flexShrink: 0 }}>{item.label}</span>
+                <span style={{ fontSize: 12, color: item.highlight ? "#EF4444" : text1, fontFamily: item.mono ? "monospace" : "Inter, sans-serif", fontWeight: item.highlight ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>{item.value}</span>
               </div>
             ))}
           </div>
 
-          {/* Activity stats */}
-          <div style={{ padding: "0 24px 20px" }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, fontFamily: "Inter, sans-serif" }}>Activity</p>
-            <UserActivityStats userId={ghostUser.id} />
+          {/* Activity Stats — 2x2 grid */}
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}` }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: text2, textTransform: "uppercase" as const, letterSpacing: "0.6px", fontFamily: "Inter, sans-serif", marginBottom: 10 }}>Activity</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[
+                { label: "Projects", value: userDetail.projects?.length || 0, Icon: Folder },
+                { label: "Contacts", value: userDetail.contacts?.length || 0, Icon: Users },
+                { label: "Journal Entries", value: userDetail.journals?.length || 0, Icon: BookOpen },
+                { label: "Content Items", value: userDetail.content?.length || 0, Icon: Film },
+              ].map(stat => (
+                <div key={stat.label} style={{ padding: "10px 12px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  <stat.Icon size={14} color={text2} />
+                  <div>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0, lineHeight: 1 }}>{stat.value}</p>
+                    <p style={{ fontSize: 10, color: text2, fontFamily: "Inter, sans-serif", margin: 0, marginTop: 1 }}>{stat.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Admin actions */}
-          <div style={{ padding: "20px 24px", borderTop: `1px solid ${cardBorder}`, marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: text2, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "Inter, sans-serif" }}>Admin Actions</p>
-            <button onClick={async () => {
-              const msg = window.prompt(`Send notification to ${ghostUser.full_name || ghostUser.email}:`);
-              if (!msg) return;
-              await supabase.from("notifications").insert({ user_id: ghostUser.id, type: "system", title: "Message from Admin", message: msg, read: false });
-              toast.success("Notification sent!");
-            }} style={{ padding: "10px 16px", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#065F46", cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8, textAlign: "left" }}>
-              <Bell size={14} color="#10B981" /> Send Notification
-            </button>
-            <button onClick={async () => {
-              if (!window.confirm(`Permanently delete ${ghostUser.full_name || ghostUser.email}? Cannot be undone.`)) return;
-              await supabase.from("profiles").delete().eq("id", ghostUser.id);
-              setUsersList(prev => prev.filter(u => u.id !== ghostUser.id));
-              setGhostPanelOpen(false);
-              toast.success(`${ghostUser.full_name || ghostUser.email} deleted`);
-            }} style={{ padding: "10px 16px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, fontSize: 13, fontWeight: 600, color: "#DC2626", cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
-              <Trash2 size={14} color="#DC2626" /> Delete Account
-            </button>
+          {/* Recent Activity — timeline */}
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}` }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: text2, textTransform: "uppercase" as const, letterSpacing: "0.6px", fontFamily: "Inter, sans-serif", marginBottom: 10 }}>Recent Activity</p>
+            {(() => {
+              const items = [
+                ...(userDetail.journals || []).slice(0, 2).map((j: any) => ({ label: `Journal: ${j.title || "Untitled"}`, date: j.created_at, Icon: BookOpen, color: "#06B6D4" })),
+                ...(userDetail.projects || []).slice(0, 2).map((p: any) => ({ label: `Project: ${p.name}`, date: p.created_at, Icon: Folder, color: "#10B981" })),
+                ...(userDetail.content || []).slice(0, 1).map((c: any) => ({ label: `Content: ${c.title}`, date: c.created_at, Icon: Film, color: "#7B5EA7" })),
+              ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+              return items.length === 0 ? <p style={{ fontSize: 12, color: text2, fontStyle: "italic", fontFamily: "Inter, sans-serif" }}>No recent activity</p> : items.map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: i < items.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB"}` : "none" }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: item.color + "15", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><item.Icon size={12} color={item.color} /></div>
+                  <span style={{ fontSize: 12, color: text1, fontFamily: "Inter, sans-serif", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{item.label}</span>
+                  <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif", flexShrink: 0 }}>{new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                </div>
+              ));
+            })()}
+          </div>
+
+          {/* Feedback from this user */}
+          <div style={{ padding: "14px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.04)" : "#F3F4F6"}` }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: text2, textTransform: "uppercase" as const, letterSpacing: "0.6px", fontFamily: "Inter, sans-serif", marginBottom: 8 }}>Submitted Feedback</p>
+            {(userDetail.feedback?.length || 0) === 0 ? (
+              <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", fontStyle: "italic" }}>No feedback submitted</p>
+            ) : (
+              userDetail.feedback?.map((f: any) => (
+                <div key={f.id} style={{ padding: "8px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.02)" : "#F9FAFB"}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: text2, fontFamily: "Inter, sans-serif" }}>{f.status}</span>
+                    <span style={{ fontSize: 10, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(f.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: text1, fontFamily: "Inter, sans-serif", lineHeight: "1.4", margin: 0 }}>{f.message}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Admin Actions */}
+          <div style={{ padding: "14px 20px" }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: text2, textTransform: "uppercase" as const, letterSpacing: "0.6px", fontFamily: "Inter, sans-serif", marginBottom: 10 }}>Admin Actions</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <button onClick={async () => { const msg = window.prompt(`Notification to ${ghostUser.email}:`); if (!msg) return; await supabase.from("notifications").insert({ user_id: ghostUser.id, type: "system", title: "Message from Admin", message: msg, read: false, created_at: new Date().toISOString() }); toast.success("Notification sent"); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left" as const }}>
+                <Bell size={13} color="#10B981" /> Send notification
+              </button>
+              <button onClick={async () => { const plan = window.prompt("Set plan (founding/standard/pro):"); if (!["founding", "standard", "pro"].includes(plan || "")) { toast.error("Invalid plan"); return; } await supabase.from("profiles").update({ plan_tier: plan } as any).eq("id", ghostUser.id); setGhostUser((prev: any) => ({ ...prev, plan_tier: plan })); setUsersList((prev: any) => prev.map((u: any) => u.id === ghostUser.id ? { ...u, plan_tier: plan } : u)); toast.success(`Plan set to ${plan}`); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: isDark ? "#252528" : "#F9FAFB", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left" as const }}>
+                <CreditCard size={13} color="#3B82F6" /> Change plan tier
+              </button>
+              <button onClick={async () => { if (!window.confirm(`Permanently delete ${ghostUser.email}? Cannot be undone.`)) return; await supabase.from("profiles").delete().eq("id", ghostUser.id); setUsersList(prev => prev.filter(u => u.id !== ghostUser.id)); setGhostPanelOpen(false); toast.success("Account deleted"); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 14px", background: "transparent", border: "1px solid #FECACA", borderRadius: 8, fontSize: 13, fontWeight: 500, color: "#DC2626", cursor: "pointer", fontFamily: "Inter, sans-serif", textAlign: "left" as const }}>
+                <Trash2 size={13} color="#DC2626" /> Delete account
+              </button>
+            </div>
           </div>
         </div>
       )}
