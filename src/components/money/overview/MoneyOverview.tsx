@@ -3,33 +3,36 @@ import TotalSpendingsCard from "./TotalSpendingsCard";
 import TotalEarningsCard from "./TotalEarningsCard";
 import BillsRecurringCard from "./BillsRecurringCard";
 import CreditScoreGaugeCard from "./CreditScoreGaugeCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MoneyOverview() {
+  const isMobile = useIsMobile();
+
   return (
     <div className="space-y-6">
-      {/* Top: Transaction History (left 380px) + Spendings/Earnings (right) */}
+      {/* Top: Transaction History + Spendings/Earnings */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '380px 1fr',
-          gap: '24px',
+          gridTemplateColumns: isMobile ? '1fr' : '380px 1fr',
+          gap: isMobile ? '16px' : '24px',
           alignItems: 'start',
           width: '100%',
         }}
       >
         <TransactionHistoryPanel />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '16px' : '24px' }}>
           <TotalSpendingsCard />
           <TotalEarningsCard />
         </div>
       </div>
 
-      {/* Bottom: Bills + Credit Score side by side */}
+      {/* Bottom: Bills + Credit Score */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '24px',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? '16px' : '24px',
         }}
       >
         <BillsRecurringCard />

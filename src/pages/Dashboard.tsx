@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -472,15 +473,17 @@ export default function Dashboard() {
 
   const renderLeftCard = (id: string) => {
     switch (id) {
-      case "networth-projects":
+      case "networth-projects": {
+        const mobile = window.innerWidth < 768;
         return (
            <SortableCard key={id} id={id}>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
-              <div style={{ width: '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
+            <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
+              <div style={{ width: mobile ? '100%' : '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
               <div style={{ flex: 1, flexGrow: 1, minWidth: 0 }}>{compactProjects}</div>
             </div>
           </SortableCard>
         );
+      }
 
       case "market":
         return (
@@ -533,10 +536,11 @@ export default function Dashboard() {
           </SortableCard>
         );
 
-      case "momentum":
+      case "momentum": {
+        const mobile = window.innerWidth < 768;
         return (
           <SortableCard key={id} id={id}>
-            <div className="flex gap-4">
+            <div className={mobile ? "flex flex-col gap-3" : "flex gap-4"}>
               <div className="flex-1 p-5 flex items-center gap-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
                 <ProgressRing progress={momentum} size={72} strokeWidth={6} gradientId="m-grad" color1="#6366F1" color2="#8B5CF6">
                   <span className="text-base font-bold text-foreground">{momentum}%</span>
@@ -561,6 +565,7 @@ export default function Dashboard() {
             </div>
           </SortableCard>
         );
+      }
 
       case "links":
         return (
@@ -605,9 +610,9 @@ export default function Dashboard() {
                 </div>
                 <button onClick={() => navigate("/journal/new")} className="text-sm font-medium text-success hover:underline">New Journal Entry</button>
               </div>
-              <div className="px-5 pb-5" style={{ display: "flex", gap: 20 }}>
+              <div className="px-5 pb-5 flex flex-col sm:flex-row gap-5">
                 {/* LEFT — Entry list */}
-                <div style={{ flex: "0 0 60%" }}>
+                <div className="flex-1 sm:flex-[0_0_60%]">
                   {(journalEntries.length > 0 ? journalEntries : [
                     { id: "sample1", title: "The Clarity of Morning", created_at: new Date().toISOString(), mood_emoji: "", mood: "Calm" },
                     { id: "sample2", title: "Stormy Decisions", created_at: new Date(Date.now() - 86400000).toISOString(), mood_emoji: "", mood: "Anxious" },
@@ -627,7 +632,7 @@ export default function Dashboard() {
                   <button onClick={() => navigate("/journal")} className="text-xs font-medium text-success hover:underline mt-2 block">View all →</button>
                 </div>
                 {/* RIGHT — Emotion bars */}
-                <div style={{ flex: "0 0 35%" }}>
+                <div className="sm:flex-[0_0_35%]">
                   {(journalEmotionStats.length > 0 ? journalEmotionStats : [
                     { label: "Calm", percentage: 40 }, { label: "Happy", percentage: 30 }, { label: "Focused", percentage: 20 }, { label: "Sad", percentage: 10 },
                   ]).map(em => (
@@ -791,7 +796,7 @@ export default function Dashboard() {
           {/* ═══ HERO BANNER ═══ */}
           <div
             className="relative w-full overflow-hidden rounded-2xl mb-6 group cursor-pointer"
-            style={{ height: 220 }}
+            style={{ height: window.innerWidth < 768 ? 160 : 220 }}
             onClick={() => {
               const input = document.createElement("input");
               input.type = "file"; input.accept = "image/*";
@@ -840,14 +845,14 @@ export default function Dashboard() {
             </div>
 
             {/* Quick-action circles at bottom of hero */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-5">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 sm:gap-5">
               {heroActions.map((action) => {
                 const Icon = action.icon;
                 return (
                   <button key={action.key} onClick={(e) => { e.stopPropagation(); action.onClick(); }}
                     className="flex flex-col items-center gap-1 group/action">
-                    <div className="w-[52px] h-[52px] rounded-full bg-white flex items-center justify-center transition-transform group-hover/action:scale-110 shadow-md">
-                      <Icon className="w-5 h-5" style={{ color: "#059669" }} strokeWidth={1.8} />
+                    <div className="w-10 h-10 sm:w-[52px] sm:h-[52px] rounded-full bg-white flex items-center justify-center transition-transform group-hover/action:scale-110 shadow-md">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: "#059669" }} strokeWidth={1.8} />
                     </div>
                     <span className="text-[11px] font-medium text-white">{action.label}</span>
                   </button>
