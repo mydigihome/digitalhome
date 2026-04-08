@@ -583,15 +583,16 @@ export default function ContactsPage() {
                           <span style={{
                             display: "inline-flex", padding: "3px 10px", borderRadius: "6px",
                             fontSize: "12px", fontWeight: 500,
-                            background: isDark
-                              ? (status === "Hot Lead" ? "rgba(234,179,8,0.15)" : status === "Customer" ? "rgba(16,185,129,0.15)" : status === "Partially Interested" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)")
-                              : (status === "Hot Lead" ? "#FEF9C3" : status === "Customer" ? "#DCFCE7" : status === "Partially Interested" ? "#FEF3C7" : "#F3F4F6"),
-                            color: status === "Hot Lead" ? "#854D0E" : status === "Customer" ? "#166534" : status === "Partially Interested" ? "#92400E" : (isDark ? "rgba(255,255,255,0.5)" : "#374151"),
-                            border: `1px solid ${
-                              isDark
-                                ? (status === "Hot Lead" ? "rgba(234,179,8,0.3)" : status === "Customer" ? "rgba(16,185,129,0.3)" : status === "Partially Interested" ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")
-                                : (status === "Hot Lead" ? "#FDE047" : status === "Customer" ? "#86EFAC" : status === "Partially Interested" ? "#FCD34D" : "#E5E7EB")
-                            }`,
+                            ...(status === "Hot Lead" || status === "Hot"
+                              ? { background: "#FEE2E2", color: "#DC2626", border: "1px solid #FECACA" }
+                              : status === "Warm" || status === "Partially Interested"
+                              ? { background: "#FEF3C7", color: "#92400E", border: "1px solid #FDE68A" }
+                              : status === "Cold" || status === "Just Enquiry"
+                              ? { background: "#F3F4F6", color: "#6B7280", border: "1px solid #E5E7EB" }
+                              : status === "Customer"
+                              ? { background: "#DCFCE7", color: "#166534", border: "1px solid #86EFAC" }
+                              : { background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", color: isDark ? "rgba(255,255,255,0.5)" : "#374151", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}` }
+                            ),
                           }}>
                             {status}
                           </span>
