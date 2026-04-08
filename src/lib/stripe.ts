@@ -9,5 +9,5 @@ export const STRIPE_LINKS = {
 };
 
 export const openStripeLink = (url: string) => {
-  window.open(url, '_blank', 'noopener,noreferrer');
+  window.location.href = url;
 };
