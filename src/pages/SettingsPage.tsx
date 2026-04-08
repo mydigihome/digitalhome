@@ -32,7 +32,7 @@ const BILLING_PLANS = [
     color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A",
     description: "Locked forever at $7/mo for the first 50 users.",
     features: ["Price locked forever at $7/mo", "Everything in Standard", "Founding Member badge on profile", "Direct line to the founder", "First access to every new feature"],
-    stripeMonthly: "PASTE_FOUNDING_MONTHLY_LINK", stripeAnnual: "PASTE_FOUNDING_ANNUAL_LINK",
+    stripeMonthly: "https://buy.stripe.com/aFa3cvf0eagu0CM55Eak001", stripeAnnual: "https://buy.stripe.com/fZueVd4lA60e1GQdCaak000",
     badgeCustom: "First 50 users only",
   },
   {
@@ -41,7 +41,7 @@ const BILLING_PLANS = [
     color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0",
     description: "Full access to everything you need.",
     features: ["Full dashboard + market watch", "Journal unlimited + voice recording", "Projects + AI stage generation", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings"],
-    stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
+    stripeMonthly: "https://buy.stripe.com/00w5kDdWa74i71a55Eak002", stripeAnnual: "https://buy.stripe.com/9B6aEXdWa60ecludCaak003",
   },
 ];
 
@@ -640,12 +640,12 @@ export default function SettingsPage() {
             </div>
 
             {/* Plan cards — 2 columns */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 600, margin: "0 auto 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 600, margin: "0 auto 24px", alignItems: "stretch" }}>
               {BILLING_PLANS.map(plan => {
                 const discountedMonthly = studentDiscount ? (plan.monthlyPrice * 0.5) : null;
                 const discountedAnnual = studentDiscount ? (plan.annualPrice * 0.5) : null;
                 return (
-                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
+                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms", display: "flex", flexDirection: "column" as const, height: "100%" }}>
                   {plan.badge && (
                     <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
                   )}
@@ -700,12 +700,12 @@ export default function SettingsPage() {
                     ))}
                   </div>
                   {currentPlan === plan.tier ? (
-                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif" }}>Current Plan</div>
+                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginTop: "auto" }}>Current Plan</div>
                   ) : plan.stripeMonthly ? (
                     <button onClick={() => {
                       const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
-                      const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms" }}
+                      window.location.href = url;
+                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms", marginTop: "auto" }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                       Get {plan.name}
@@ -742,7 +742,7 @@ export default function SettingsPage() {
                       <p style={{ fontSize: 14, fontWeight: 700, color: "#C4B5FD", fontFamily: "Inter, sans-serif", margin: 0, display: "flex", alignItems: "center", gap: 6 }}><Check size={16} /> Studio Unlocked</p>
                     </div>
                   ) : (
-                    <button onClick={() => { const link = document.createElement("a"); link.href = "PASTE_STUDIO_ADDON_LINK"; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                    <button onClick={() => { window.location.href = "https://buy.stripe.com/7sY7sL9FUagu4T2fKiak004"; }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                       <LockIcon size={16} /> Unlock Studio
                     </button>
                   )}
