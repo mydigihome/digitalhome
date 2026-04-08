@@ -413,8 +413,8 @@ export default function CreateEventModal({ open, onClose }: Props) {
     </div>,
   ];
 
-  // If showing AI stages after creation
-  if (showStages) {
+  // If on step 3 (AI generation step), render that instead of the normal flow
+  if (step === 3) {
     return (
       <AnimatePresence>
         <motion.div
@@ -427,51 +427,80 @@ export default function CreateEventModal({ open, onClose }: Props) {
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-xl"
+            className="w-full max-w-[580px] max-h-[85vh] overflow-y-auto rounded-2xl bg-card p-6 shadow-xl"
             style={{ border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "rgba(123,94,167,0.2)"}` }}
           >
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: purpleLight }}>
-                <Target size={24} style={{ color: purple }} />
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Target className="h-5 w-5" style={{ color: purple }} /> AI Prep Stages
+                </h2>
+                <p className="text-sm text-muted-foreground">Step 4 of 4</p>
               </div>
-              <h2 className="text-xl font-bold text-foreground">AI Prep Stages</h2>
-              <p className="text-sm text-muted-foreground mt-1">Here's your event preparation plan</p>
             </div>
-            <div className="space-y-3 mb-6">
-              {aiStages.map((stage, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-xl"
-                  style={{ background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" }}
-                >
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: purple, color: "white", fontSize: 13, fontWeight: 700 }}
-                  >
-                    {i + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{stage.title}</p>
-                    <p className="text-xs text-muted-foreground">{stage.category}</p>
-                  </div>
-                </div>
+
+            {/* Progress */}
+            <div className="flex gap-1 mb-6">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="h-1 flex-1 rounded-full" style={{ background: purple }} />
               ))}
             </div>
-            <button
-              onClick={() => {
-                setShowStages(false);
-                onClose();
-                if (createdProjectId) navigate(`/project/${createdProjectId}`);
-              }}
-              style={{
-                width: "100%", padding: "12px 20px",
-                background: purple, border: "none", borderRadius: "10px",
-                fontSize: "14px", fontWeight: "600", color: "white",
-                cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}
-            >
-              View My Event →
-            </button>
+
+            {aiLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <div className="w-12 h-12 rounded-full border-3 border-t-transparent animate-spin" style={{ borderColor: purple, borderTopColor: "transparent" }} />
+                <p className="text-sm font-medium text-muted-foreground">Generating your prep plan...</p>
+              </div>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+                  {aiStages.map((stage, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 rounded-lg border p-4"
+                      style={{
+                        borderColor: isDark ? "rgba(123,94,167,0.2)" : "rgba(123,94,167,0.15)",
+                        background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF",
+                      }}
+                    >
+                      <span
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold flex-shrink-0 mt-0.5"
+                        style={{ background: purple, color: "white" }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{stage.task}</p>
+                        {stage.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{stage.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {aiStages.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No prep tasks generated. You can add them manually later.</p>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      if (createdProjectId) navigate(`/project/${createdProjectId}`);
+                    }}
+                    style={{
+                      width: "100%", padding: "12px 20px",
+                      background: purple, border: "none", borderRadius: "10px",
+                      fontSize: "14px", fontWeight: "600", color: "white",
+                      cursor: "pointer", fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    Take me to my event →
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
       </AnimatePresence>
