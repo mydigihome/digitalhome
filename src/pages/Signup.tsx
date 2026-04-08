@@ -44,9 +44,18 @@ export default function Signup() {
     };
     check();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user && !cancelled) {
-        navigate("/dashboard", { replace: true });
+        const { data: prefs } = await supabase
+          .from("user_preferences")
+          .select("onboarding_completed")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (!prefs?.onboarding_completed) {
+          navigate("/welcome", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
       }
     });
 

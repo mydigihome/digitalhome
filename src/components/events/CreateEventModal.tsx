@@ -159,9 +159,11 @@ export default function CreateEventModal({ open, onClose }: Props) {
     }
   };
 
-  const generateAIEventStages = async (event: any) => {
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+
+  const generateAIEventStages = async (event: any): Promise<{ title: string; category: string }[] | null> => {
     const eventDate = event.event_date;
-    if (!eventDate) return;
+    if (!eventDate) return null;
     const date = new Date(eventDate);
     const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
 
@@ -182,29 +184,26 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
       const text = data?.plan || "";
       const start = text.indexOf("[");
       const end = text.lastIndexOf("]");
-      if (start === -1 || end === -1) return;
+      if (start === -1 || end === -1) return null;
       const stages = JSON.parse(text.substring(start, end + 1));
-      if (!Array.isArray(stages)) return;
+      if (!Array.isArray(stages)) return null;
 
-      const tasks = stages.slice(0, 5).map((s: any, i: number) => {
-        const due = new Date(date);
-        due.setDate(due.getDate() - (s.days_before || 7));
-        const today = new Date();
-        return {
-          project_id: event.id,
-          user_id: event.user_id,
-          title: s.title,
-          status: "backlog",
-          priority: "medium",
-          position: i,
-          ai_generated: true,
-        };
-      });
+      const tasks = stages.slice(0, 5).map((s: any, i: number) => ({
+        project_id: event.id,
+        user_id: event.user_id,
+        title: s.title,
+        status: "backlog",
+        priority: "medium",
+        position: i,
+        ai_generated: true,
+      }));
 
       await supabase.from("tasks").insert(tasks);
       toast.success(`${tasks.length} AI prep tasks created!`);
+      return stages.slice(0, 5).map((s: any) => ({ title: s.title, category: s.category || "Planning" }));
     } catch (e) {
       console.error("Stage gen error:", e);
+      return null;
     }
   };
 

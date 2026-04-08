@@ -101,7 +101,7 @@ export default function Login() {
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Something went wrong. Try again or use a different email.");
     } else {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
