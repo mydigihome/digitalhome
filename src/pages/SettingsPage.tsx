@@ -640,7 +640,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Plan cards — 2 columns */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 600, margin: "0 auto 24px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 600, margin: "0 auto 24px", alignItems: "stretch" }}>
               {BILLING_PLANS.map(plan => {
                 const discountedMonthly = studentDiscount ? (plan.monthlyPrice * 0.5) : null;
                 const discountedAnnual = studentDiscount ? (plan.annualPrice * 0.5) : null;
