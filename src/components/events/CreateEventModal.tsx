@@ -73,8 +73,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
     toast.success("Cover uploaded");
   };
 
-  const [aiStages, setAiStages] = useState<{ title: string; category: string }[]>([]);
-  const [showStages, setShowStages] = useState(false);
+  const [aiStages, setAiStages] = useState<{ task: string; description: string }[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [aiTriggered, setAiTriggered] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Event name is required"); return; }
@@ -129,29 +131,8 @@ export default function CreateEventModal({ open, onClose }: Props) {
         }
       }
 
-      toast.success("Event created! Generating AI prep stages...");
-
-      // Generate AI prep stages and show them before navigating
-      if (project && form.event_date) {
-        const stages = await generateAIEventStages({
-          id: project.id,
-          name: form.name,
-          event_date: form.event_date,
-          location: form.location,
-          description: form.description,
-          user_id: user!.id,
-        });
-        if (stages && stages.length > 0) {
-          setAiStages(stages);
-          setShowStages(true);
-          // Store project id for navigation after viewing stages
-          setCreatedProjectId(project.id);
-          return; // Don't close yet - show stages first
-        }
-      }
-
-      onClose();
-      navigate(`/project/${project.id}`);
+      setCreatedProjectId(project.id);
+      setStep(3); // Move to Step 4 (AI generation)
     } catch (err) {
       toast.error("Failed to create event");
     } finally {
@@ -159,51 +140,52 @@ export default function CreateEventModal({ open, onClose }: Props) {
     }
   };
 
-  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  // Auto-trigger AI generation when step 4 is shown
+  useEffect(() => {
+    if (step === 3 && !aiTriggered && createdProjectId) {
+      setAiTriggered(true);
+      generateAIEventStages();
+    }
+  }, [step, aiTriggered, createdProjectId]);
 
-  const generateAIEventStages = async (event: any): Promise<{ title: string; category: string }[] | null> => {
-    const eventDate = event.event_date;
-    if (!eventDate) return null;
-    const date = new Date(eventDate);
-    const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
-
-    const prompt = `You are an event planning expert. Create exactly 5 simple preparation tasks for this event:
-Event: ${event.name}
-Date: ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-Days until event: ${daysUntil}
-${event.location ? `Location: ${event.location}` : ""}
-${event.description ? `Details: ${event.description}` : ""}
-
-Return ONLY valid JSON array, nothing else:
-[{"title":"Task name","days_before":14,"category":"Category"}]
-Keep tasks simple and practical. 5 tasks maximum.
-Categories: Planning / Guests / Venue / Food / Day-of`;
-
+  const generateAIEventStages = async () => {
+    setAiLoading(true);
     try {
+      const guestEmails = form.guest_emails.split(/[,;\n]+/).filter(e => e.trim() && e.includes("@"));
+      const guestCount = guestEmails.length || "unknown number of";
+      const eventDate = form.event_date
+        ? new Date(form.event_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : "TBD";
+
+      const prompt = `Generate exactly 5 preparation tasks for an event called "${form.name}" on ${eventDate} at ${form.location || "TBD"} with approximately ${guestCount} guests. Return JSON array: [{"task":"task name","description":"short description"}]`;
+
       const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
       const text = data?.plan || "";
       const start = text.indexOf("[");
       const end = text.lastIndexOf("]");
-      if (start === -1 || end === -1) return null;
-      const stages = JSON.parse(text.substring(start, end + 1));
-      if (!Array.isArray(stages)) return null;
+      if (start !== -1 && end !== -1) {
+        const parsed = JSON.parse(text.substring(start, end + 1));
+        if (Array.isArray(parsed)) {
+          const stages = parsed.slice(0, 5);
+          setAiStages(stages);
 
-      const tasks = stages.slice(0, 5).map((s: any, i: number) => ({
-        project_id: event.id,
-        user_id: event.user_id,
-        title: s.title,
-        status: "backlog",
-        priority: "medium",
-        position: i,
-        ai_generated: true,
-      }));
-
-      await supabase.from("tasks").insert(tasks);
-      toast.success(`${tasks.length} AI prep tasks created!`);
-      return stages.slice(0, 5).map((s: any) => ({ title: s.title, category: s.category || "Planning" }));
+          // Save tasks to Supabase
+          const tasks = stages.map((s: any, i: number) => ({
+            project_id: createdProjectId,
+            user_id: user!.id,
+            title: s.task || s.title,
+            status: "backlog",
+            priority: "medium",
+            position: i,
+            ai_generated: true,
+          }));
+          await supabase.from("tasks").insert(tasks);
+        }
+      }
     } catch (e) {
-      console.error("Stage gen error:", e);
-      return null;
+      console.error("AI stage generation error:", e);
+    } finally {
+      setAiLoading(false);
     }
   };
 
