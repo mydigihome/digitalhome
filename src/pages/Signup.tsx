@@ -30,7 +30,16 @@ export default function Signup() {
       }
       const { data: { session } } = await supabase.auth.getSession();
       if (!cancelled && session?.user) {
-        navigate("/dashboard", { replace: true });
+        const { data: prefs } = await supabase
+          .from("user_preferences")
+          .select("onboarding_completed")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (!prefs?.onboarding_completed) {
+          navigate("/welcome", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
       }
     };
     check();
