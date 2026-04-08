@@ -225,7 +225,7 @@ export default function StudioPlatformsView() {
 
       {/* Inline Connect Panel */}
       {showConnect && (
-        <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+        <div className="bg-card border border-border rounded-xl p-4 space-y-3" style={{ WebkitBackfaceVisibility: "hidden", WebkitTransform: "translateZ(0)" }}>
           <p className="text-xs font-semibold text-foreground">Connect a platform</p>
 
           <div className="flex items-center gap-1.5 flex-wrap">
