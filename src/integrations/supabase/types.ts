@@ -149,6 +149,7 @@ export type Database = {
           frequency: string
           id: string
           merchant: string
+          receipt_url: string | null
           status: string
           user_id: string
         }
@@ -160,6 +161,7 @@ export type Database = {
           frequency?: string
           id?: string
           merchant: string
+          receipt_url?: string | null
           status?: string
           user_id: string
         }
@@ -171,6 +173,7 @@ export type Database = {
           frequency?: string
           id?: string
           merchant?: string
+          receipt_url?: string | null
           status?: string
           user_id?: string
         }
