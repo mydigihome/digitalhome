@@ -3844,6 +3844,8 @@ export type Database = {
           onboarding_focus: string | null
           onboarding_skipped_steps: string[] | null
           onboarding_step: number | null
+          plaid_access_token: string | null
+          plaid_connected: boolean | null
           plan_tier: string | null
           preferred_broker: string | null
           profile_photo: string | null
@@ -3908,6 +3910,8 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          plaid_access_token?: string | null
+          plaid_connected?: boolean | null
           plan_tier?: string | null
           preferred_broker?: string | null
           profile_photo?: string | null
@@ -3972,6 +3976,8 @@ export type Database = {
           onboarding_focus?: string | null
           onboarding_skipped_steps?: string[] | null
           onboarding_step?: number | null
+          plaid_access_token?: string | null
+          plaid_connected?: boolean | null
           plan_tier?: string | null
           preferred_broker?: string | null
           profile_photo?: string | null
