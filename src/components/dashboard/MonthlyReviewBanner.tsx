@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useMonthlyReviews } from "@/hooks/useMonthlyReviews";
@@ -13,14 +14,22 @@ export default function MonthlyReviewBanner() {
   const isSubscribed = prefs?.is_subscribed === true;
   if (!isFoundingMember && !isSubscribed) return null;
 
-  const today = new Date();
-  const dayOfMonth = today.getDate();
-  const month = today.getMonth();
-  const year = today.getFullYear();
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const isLastThreeDays = dayOfMonth >= lastDay - 2;
-  const isFirstSevenDays = dayOfMonth <= 7;
-  const monthName = today.toLocaleString("default", { month: "long" });
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  const isFirstOfMonth = dayOfMonth === 1;
+
+  // Never show to new users (no prefs or recently onboarded)
+  if (!prefs?.onboarding_completed) return null;
+
+  // Check localStorage dismiss
+  const dismissKey = `review_prompt_${year}_${month + 1}`;
+  const alreadySeen = localStorage.getItem(dismissKey);
+
+  // Only show on the 1st of the month and if not already dismissed
+  if (!isFirstOfMonth || alreadySeen) return null;
+
   const prevMonthName = new Date(year, month - 1, 1).toLocaleString("default", { month: "long" });
 
   const prevMonthReview = reviews.find((r: any) => {
@@ -29,8 +38,19 @@ export default function MonthlyReviewBanner() {
   });
   const reviewApproved = !!prevMonthReview;
 
-  // Temporarily force banner visible for testing — remove after confirming
-  const showBanner = true;
+  // Never show if user has no data at all (no reviews ever, brand new user)
+  if (reviews.length === 0 && !reviewApproved) {
+    // Check if user has been around for at least a month
+    const createdAt = prefs?.created_at ? new Date(prefs.created_at) : null;
+    if (!createdAt || (now.getTime() - createdAt.getTime()) < 25 * 24 * 60 * 60 * 1000) {
+      return null;
+    }
+  }
+
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    localStorage.setItem(dismissKey, 'seen');
+  };
 
   const baseStyle: React.CSSProperties = {
     width: "100%",
@@ -44,33 +64,13 @@ export default function MonthlyReviewBanner() {
     cursor: "pointer",
   };
 
-  // STATE A: last 3 days of current month
-  if (isLastThreeDays) {
+  if (!reviewApproved) {
     return (
       <div
-        onClick={() => navigate("/monthly-review")}
-        style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe" }}
-      >
-        <p style={{ margin: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#4338ca" }}>
-            Almost done with {monthName} —
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 400, color: "#6366f1" }}>
-            {" "}your review will be ready on the 1st.
-          </span>
-        </p>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#4f46e5", cursor: "pointer" }}>
-          Preview →
-        </span>
-      </div>
-    );
-  }
-
-  // STATE B: first 7 days OR forced, review not approved
-  if ((isFirstSevenDays || showBanner) && !reviewApproved) {
-    return (
-      <div
-        onClick={() => navigate("/monthly-review")}
+        onClick={(e) => {
+          handleDismiss(e);
+          navigate("/monthly-review");
+        }}
         style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe", justifyContent: "center" }}
       >
         <span style={{ fontSize: 13, fontWeight: 600, color: "#312e81" }}>
@@ -83,8 +83,7 @@ export default function MonthlyReviewBanner() {
     );
   }
 
-  // STATE C: first 7 days, approved
-  if ((isFirstSevenDays || showBanner) && reviewApproved) {
+  if (reviewApproved) {
     return (
       <div
         style={{ ...baseStyle, background: "#f0fdf4", borderBottom: "1px solid #bbf7d0", cursor: "default" }}
