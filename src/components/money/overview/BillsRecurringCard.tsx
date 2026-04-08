@@ -1,22 +1,93 @@
-import { useState } from "react";
-import { CreditCard, Plus, MoreVertical, Pencil, Trash2, AlertTriangle } from "lucide-react";
-import { useBills, useAddBill, useDeleteBill, type Bill } from "@/hooks/useBills";
+import { useState, useRef } from "react";
+import { CreditCard, Plus, MoreVertical, Pencil, Trash2, AlertTriangle, Paperclip } from "lucide-react";
+import { useBills, useAddBill, useDeleteBill, useUpdateBill, type Bill } from "@/hooks/useBills";
 import { toast } from "sonner";
 import { format, isBefore, addDays } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const STATUS_CYCLE = ["upcoming", "paid", "overdue"] as const;
+
+function getMerchantDomain(merchant: string): string | null {
+  const map: Record<string, string> = {
+    spotify: "spotify.com", netflix: "netflix.com", hulu: "hulu.com",
+    amazon: "amazon.com", apple: "apple.com", google: "google.com",
+    "at&t": "att.com", verizon: "verizon.com", tmobile: "t-mobile.com",
+    comcast: "comcast.com", xfinity: "xfinity.com", "state farm": "statefarm.com",
+    geico: "geico.com", adobe: "adobe.com", microsoft: "microsoft.com",
+    dropbox: "dropbox.com", gym: null, rent: null,
+  };
+  const lower = merchant.toLowerCase();
+  for (const [key, domain] of Object.entries(map)) {
+    if (lower.includes(key)) return domain;
+  }
+  return null;
+}
+
+function MerchantLogo({ merchant }: { merchant: string }) {
+  const [failed, setFailed] = useState(false);
+  const domain = getMerchantDomain(merchant);
+
+  if (!domain || failed) {
+    const letter = merchant.charAt(0).toUpperCase();
+    const colors = ["hsl(var(--primary))", "#f59e0b", "#ef4444", "#06b6d4", "#8b5cf6"];
+    const color = colors[letter.charCodeAt(0) % colors.length];
+    return (
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+        style={{ background: `${color}20`, color }}
+      >
+        {letter}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={`https://logo.clearbit.com/${domain}`}
+      alt={merchant}
+      className="w-8 h-8 rounded-lg object-contain shrink-0"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function StatusBadge({ status, onClick }: { status: string; onClick: () => void }) {
+  const styles: Record<string, { bg: string; text: string }> = {
+    upcoming: { bg: "hsl(var(--muted))", text: "hsl(var(--muted-foreground))" },
+    paid: { bg: "hsl(var(--primary) / 0.1)", text: "hsl(var(--primary))" },
+    overdue: { bg: "hsl(var(--destructive) / 0.1)", text: "hsl(var(--destructive))" },
+  };
+  const s = styles[status] || styles.upcoming;
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className="text-[10px] font-semibold px-2 py-0.5 rounded-full cursor-pointer border-none transition-transform hover:scale-105"
+      style={{ background: s.bg, color: s.text }}
+      title="Click to change status"
+    >
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </button>
+  );
+}
+
 export default function BillsRecurringCard() {
+  const { user } = useAuth();
   const { data: bills = [] } = useBills();
   const addBill = useAddBill();
   const deleteBill = useDeleteBill();
+  const updateBill = useUpdateBill();
   const [showAdd, setShowAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [form, setForm] = useState({ merchant: "", amount: "", due_date: format(new Date(), "yyyy-MM-dd"), frequency: "monthly", category: "" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingBillId, setUploadingBillId] = useState<string | null>(null);
 
   const handleAdd = async () => {
     if (!form.merchant || !form.amount) return;
@@ -48,12 +119,33 @@ export default function BillsRecurringCard() {
     } catch { toast.error("Failed to delete"); }
   };
 
-  const getStatus = (dueDate: string) => {
-    const d = new Date(dueDate);
-    const now = new Date();
-    if (isBefore(d, now)) return { label: "Overdue", cls: "bg-destructive/10 text-destructive" };
-    if (isBefore(d, addDays(now, 7))) return { label: "Due Soon", cls: "bg-warning/10 text-warning" };
-    return { label: "Upcoming", cls: "bg-muted text-muted-foreground" };
+  const cycleStatus = async (bill: Bill) => {
+    const currentIdx = STATUS_CYCLE.indexOf(bill.status as any);
+    const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
+    try {
+      await updateBill.mutateAsync({ id: bill.id, status: nextStatus });
+      toast.success(`Status changed to ${nextStatus}`);
+    } catch { toast.error("Failed to update status"); }
+  };
+
+  const handleReceiptUpload = async (billId: string, file: File) => {
+    if (!user) return;
+    setUploadingBillId(billId);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/receipts/${billId}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("user-assets")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("user-assets").getPublicUrl(path);
+      await updateBill.mutateAsync({ id: billId, receipt_url: urlData.publicUrl } as any);
+      toast.success("Receipt uploaded");
+    } catch {
+      toast.error("Failed to upload receipt");
+    } finally {
+      setUploadingBillId(null);
+    }
   };
 
   return (
@@ -72,36 +164,66 @@ export default function BillsRecurringCard() {
         </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
-          {bills.map(bill => {
-            const status = getStatus(bill.due_date);
-            return (
-              <div key={bill.id} className="relative flex-shrink-0 w-[200px] h-[120px] rounded-xl border border-border bg-muted/30 p-4 flex flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <p className="text-sm font-semibold text-foreground truncate pr-6">{bill.merchant}</p>
-                  <button onClick={() => setMenuOpen(menuOpen === bill.id ? null : bill.id)} className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground">
-                    <MoreVertical className="w-3.5 h-3.5" />
-                  </button>
-                  {menuOpen === bill.id && (
-                    <div className="absolute right-3 top-10 bg-card border border-border rounded-lg shadow-lg z-10 py-1 min-w-[100px]">
-                      <button className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted text-foreground"><Pencil className="w-3 h-3" /> Edit</button>
-                      <button onClick={() => { setDeleteTarget(bill.id); setMenuOpen(null); }} className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted text-destructive"><Trash2 className="w-3 h-3" /> Delete</button>
-                    </div>
-                  )}
+          {bills.map(bill => (
+            <div key={bill.id} className="relative flex-shrink-0 w-[200px] h-[130px] rounded-xl border border-border bg-muted/30 p-4 flex flex-col justify-between">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <MerchantLogo merchant={bill.merchant} />
+                  <p className="text-sm font-semibold text-foreground truncate">{bill.merchant}</p>
                 </div>
-                <p className="text-base font-bold text-destructive">${bill.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${status.cls}`}>{status.label}</span>
+                <button onClick={() => setMenuOpen(menuOpen === bill.id ? null : bill.id)} className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground shrink-0">
+                  <MoreVertical className="w-3.5 h-3.5" />
+                </button>
+                {menuOpen === bill.id && (
+                  <div className="absolute right-3 top-10 bg-card border border-border rounded-lg shadow-lg z-10 py-1 min-w-[100px]">
+                    <button className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted text-foreground"><Pencil className="w-3 h-3" /> Edit</button>
+                    <button
+                      onClick={() => {
+                        setMenuOpen(null);
+                        setUploadingBillId(bill.id);
+                        fileInputRef.current?.click();
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted text-foreground"
+                    >
+                      <Paperclip className="w-3 h-3" /> Receipt
+                    </button>
+                    <button onClick={() => { setDeleteTarget(bill.id); setMenuOpen(null); }} className="w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 hover:bg-muted text-destructive"><Trash2 className="w-3 h-3" /> Delete</button>
+                  </div>
+                )}
+              </div>
+              <p className="text-base font-bold text-destructive">${bill.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Due {format(new Date(bill.due_date), "MMM d")}</span>
+                <div className="flex items-center gap-1">
+                  {(bill as any).receipt_url && (
+                    <Paperclip className="w-3 h-3 text-primary" />
+                  )}
+                  <StatusBadge status={bill.status} onClick={() => cycleStatus(bill)} />
                 </div>
               </div>
-            );
-          })}
-          <button onClick={() => setShowAdd(true)} className="flex-shrink-0 w-[200px] h-[120px] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/30 transition">
+            </div>
+          ))}
+          <button onClick={() => setShowAdd(true)} className="flex-shrink-0 w-[200px] h-[130px] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/30 transition">
             <Plus className="w-5 h-5" />
             <span className="text-xs font-medium">Add Bill</span>
           </button>
         </div>
       )}
+
+      {/* Hidden file input for receipt upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && uploadingBillId) {
+            handleReceiptUpload(uploadingBillId, file);
+          }
+          e.target.value = "";
+        }}
+      />
 
       {/* Add modal */}
       {showAdd && (
