@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -73,8 +73,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
     toast.success("Cover uploaded");
   };
 
-  const [aiStages, setAiStages] = useState<{ title: string; category: string }[]>([]);
-  const [showStages, setShowStages] = useState(false);
+  const [aiStages, setAiStages] = useState<{ task: string; description: string }[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [aiTriggered, setAiTriggered] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Event name is required"); return; }
@@ -129,29 +131,8 @@ export default function CreateEventModal({ open, onClose }: Props) {
         }
       }
 
-      toast.success("Event created! Generating AI prep stages...");
-
-      // Generate AI prep stages and show them before navigating
-      if (project && form.event_date) {
-        const stages = await generateAIEventStages({
-          id: project.id,
-          name: form.name,
-          event_date: form.event_date,
-          location: form.location,
-          description: form.description,
-          user_id: user!.id,
-        });
-        if (stages && stages.length > 0) {
-          setAiStages(stages);
-          setShowStages(true);
-          // Store project id for navigation after viewing stages
-          setCreatedProjectId(project.id);
-          return; // Don't close yet - show stages first
-        }
-      }
-
-      onClose();
-      navigate(`/project/${project.id}`);
+      setCreatedProjectId(project.id);
+      setStep(3); // Move to Step 4 (AI generation)
     } catch (err) {
       toast.error("Failed to create event");
     } finally {
@@ -159,51 +140,52 @@ export default function CreateEventModal({ open, onClose }: Props) {
     }
   };
 
-  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  // Auto-trigger AI generation when step 4 is shown
+  useEffect(() => {
+    if (step === 3 && !aiTriggered && createdProjectId) {
+      setAiTriggered(true);
+      generateAIEventStages();
+    }
+  }, [step, aiTriggered, createdProjectId]);
 
-  const generateAIEventStages = async (event: any): Promise<{ title: string; category: string }[] | null> => {
-    const eventDate = event.event_date;
-    if (!eventDate) return null;
-    const date = new Date(eventDate);
-    const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
-
-    const prompt = `You are an event planning expert. Create exactly 5 simple preparation tasks for this event:
-Event: ${event.name}
-Date: ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-Days until event: ${daysUntil}
-${event.location ? `Location: ${event.location}` : ""}
-${event.description ? `Details: ${event.description}` : ""}
-
-Return ONLY valid JSON array, nothing else:
-[{"title":"Task name","days_before":14,"category":"Category"}]
-Keep tasks simple and practical. 5 tasks maximum.
-Categories: Planning / Guests / Venue / Food / Day-of`;
-
+  const generateAIEventStages = async () => {
+    setAiLoading(true);
     try {
+      const guestEmails = form.guest_emails.split(/[,;\n]+/).filter(e => e.trim() && e.includes("@"));
+      const guestCount = guestEmails.length || "unknown number of";
+      const eventDate = form.event_date
+        ? new Date(form.event_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : "TBD";
+
+      const prompt = `Generate exactly 5 preparation tasks for an event called "${form.name}" on ${eventDate} at ${form.location || "TBD"} with approximately ${guestCount} guests. Return JSON array: [{"task":"task name","description":"short description"}]`;
+
       const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
       const text = data?.plan || "";
       const start = text.indexOf("[");
       const end = text.lastIndexOf("]");
-      if (start === -1 || end === -1) return null;
-      const stages = JSON.parse(text.substring(start, end + 1));
-      if (!Array.isArray(stages)) return null;
+      if (start !== -1 && end !== -1) {
+        const parsed = JSON.parse(text.substring(start, end + 1));
+        if (Array.isArray(parsed)) {
+          const stages = parsed.slice(0, 5);
+          setAiStages(stages);
 
-      const tasks = stages.slice(0, 5).map((s: any, i: number) => ({
-        project_id: event.id,
-        user_id: event.user_id,
-        title: s.title,
-        status: "backlog",
-        priority: "medium",
-        position: i,
-        ai_generated: true,
-      }));
-
-      await supabase.from("tasks").insert(tasks);
-      toast.success(`${tasks.length} AI prep tasks created!`);
-      return stages.slice(0, 5).map((s: any) => ({ title: s.title, category: s.category || "Planning" }));
+          // Save tasks to Supabase
+          const tasks = stages.map((s: any, i: number) => ({
+            project_id: createdProjectId,
+            user_id: user!.id,
+            title: s.task || s.title,
+            status: "backlog",
+            priority: "medium",
+            position: i,
+            ai_generated: true,
+          }));
+          await supabase.from("tasks").insert(tasks);
+        }
+      }
     } catch (e) {
-      console.error("Stage gen error:", e);
-      return null;
+      console.error("AI stage generation error:", e);
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -431,8 +413,8 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
     </div>,
   ];
 
-  // If showing AI stages after creation
-  if (showStages) {
+  // If on step 3 (AI generation step), render that instead of the normal flow
+  if (step === 3) {
     return (
       <AnimatePresence>
         <motion.div
@@ -445,51 +427,80 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
-            className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-xl"
+            className="w-full max-w-[580px] max-h-[85vh] overflow-y-auto rounded-2xl bg-card p-6 shadow-xl"
             style={{ border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "rgba(123,94,167,0.2)"}` }}
           >
-            <div className="text-center mb-6">
-              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: purpleLight }}>
-                <Target size={24} style={{ color: purple }} />
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Target className="h-5 w-5" style={{ color: purple }} /> AI Prep Stages
+                </h2>
+                <p className="text-sm text-muted-foreground">Step 4 of 4</p>
               </div>
-              <h2 className="text-xl font-bold text-foreground">AI Prep Stages</h2>
-              <p className="text-sm text-muted-foreground mt-1">Here's your event preparation plan</p>
             </div>
-            <div className="space-y-3 mb-6">
-              {aiStages.map((stage, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-xl"
-                  style={{ background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" }}
-                >
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: purple, color: "white", fontSize: 13, fontWeight: 700 }}
-                  >
-                    {i + 1}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{stage.title}</p>
-                    <p className="text-xs text-muted-foreground">{stage.category}</p>
-                  </div>
-                </div>
+
+            {/* Progress */}
+            <div className="flex gap-1 mb-6">
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="h-1 flex-1 rounded-full" style={{ background: purple }} />
               ))}
             </div>
-            <button
-              onClick={() => {
-                setShowStages(false);
-                onClose();
-                if (createdProjectId) navigate(`/project/${createdProjectId}`);
-              }}
-              style={{
-                width: "100%", padding: "12px 20px",
-                background: purple, border: "none", borderRadius: "10px",
-                fontSize: "14px", fontWeight: "600", color: "white",
-                cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}
-            >
-              View My Event →
-            </button>
+
+            {aiLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <div className="w-12 h-12 rounded-full border-3 border-t-transparent animate-spin" style={{ borderColor: purple, borderTopColor: "transparent" }} />
+                <p className="text-sm font-medium text-muted-foreground">Generating your prep plan...</p>
+              </div>
+            ) : (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+                  {aiStages.map((stage, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 rounded-lg border p-4"
+                      style={{
+                        borderColor: isDark ? "rgba(123,94,167,0.2)" : "rgba(123,94,167,0.15)",
+                        background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF",
+                      }}
+                    >
+                      <span
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold flex-shrink-0 mt-0.5"
+                        style={{ background: purple, color: "white" }}
+                      >
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{stage.task}</p>
+                        {stage.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{stage.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {aiStages.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No prep tasks generated. You can add them manually later.</p>
+                  )}
+                </div>
+
+                <div className="pt-4 border-t border-border">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      if (createdProjectId) navigate(`/project/${createdProjectId}`);
+                    }}
+                    style={{
+                      width: "100%", padding: "12px 20px",
+                      background: purple, border: "none", borderRadius: "10px",
+                      fontSize: "14px", fontWeight: "600", color: "white",
+                      cursor: "pointer", fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    Take me to my event →
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
       </AnimatePresence>
