@@ -48,38 +48,7 @@ export default function BillingTab({
       .then(({ count }) => setFoundingCount(count || 0));
   }, []);
 
-  const handleSubscribe = async (plan: "pro" | "student" | "founding") => {
-    setCheckingOut(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const baseUrl = window.location.origin;
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            plan,
-            successUrl: `${baseUrl}/dashboard?payment=success&plan=${plan}`,
-            cancelUrl: `${baseUrl}/settings?tab=billing`,
-          }),
-        }
-      );
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error(data.error || "Failed to create checkout session");
-      }
-    } catch {
-      toast.error("Failed to start checkout");
-    } finally {
-      setCheckingOut(false);
-    }
-  };
+  // All billing buttons use openStripeLink(STRIPE_LINKS.xxx) directly — no redirects
 
   const isFoundingMember = profile?.founding_member === true || (prefs as any)?.subscription_type === "founding";
   const isSubscribed = prefs?.is_subscribed === true;
