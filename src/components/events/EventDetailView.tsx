@@ -147,72 +147,45 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     updated_at: projectData.updated_at,
   } as any : null);
 
-  // Load existing tasks only — no auto-generation
+  // Load existing tasks only
   useEffect(() => {
-    if (!effectiveEvent || !user) return;
+    if (!projectId || !user) return;
     let cancelled = false;
     const loadTasks = async () => {
       const { data: existingTasks } = await supabase
         .from("tasks")
         .select("*")
-        .eq("project_id", effectiveEvent.id)
-        .order("due_date", { ascending: true });
+        .eq("project_id", projectId)
+        .order("position", { ascending: true });
       if (cancelled) return;
       setPrepTasks(sortPrepTasks((existingTasks as PrepTask[] | null) || []));
     };
     loadTasks();
     return () => { cancelled = true; };
-  }, [effectiveEvent, user]);
+  }, [projectId, user]);
 
-  // Manual AI generation handler
-  const handleGenerateAIStages = async () => {
-    if (!effectiveEvent || !user) return;
-    const resolvedEventDate = effectiveEvent.event_date || projectData?.date;
-    if (!resolvedEventDate) {
-      toast.error("Set an event date first to generate prep stages");
-      return;
-    }
-    setGeneratingStages(true);
+  const handleDeleteEvent = async () => {
+    if (!user) return;
+    setDeleting(true);
     try {
-      const eventDate = new Date(resolvedEventDate);
-      const today = new Date();
-      const daysUntil = Math.max(0, Math.floor((eventDate.getTime() - today.getTime()) / 86400000));
-      const prompt = `You are an expert event planner.\nCreate exactly 5 preparation tasks for this event.\nEvent: ${projectName}\nDate: ${eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\nDays until: ${daysUntil}\n${effectiveEvent.location ? `Location: ${effectiveEvent.location}` : ''}\n${effectiveEvent.description ? `About: ${effectiveEvent.description}` : ''}\nReturn ONLY a JSON array, nothing else:\n[{"title": "Book the venue", "days_before": 30, "category": "Venue"}]\n5 tasks maximum. Make them specific to this event.`;
-      const { data } = await supabase.functions.invoke('generate-trading-plan', { body: { prompt } });
-      const text = data?.plan || '';
-      const start = text.indexOf('[');
-      const end = text.lastIndexOf(']');
-      if (start !== -1 && end !== -1) {
-        const stages = JSON.parse(text.substring(start, end + 1));
-        if (Array.isArray(stages)) {
-          const tasksToInsert = stages.slice(0, 5).map((s: any, i: number) => {
-            const due = new Date(eventDate);
-            due.setDate(due.getDate() - (s.days_before || 7));
-            const finalDue = due < today ? today : due;
-            return {
-              project_id: effectiveEvent.id,
-              user_id: user.id,
-              title: s.title,
-              due_date: finalDue.toISOString().split('T')[0],
-              status: 'backlog',
-              priority: 'medium',
-              position: i,
-              ai_generated: true,
-              labels: s.category ? [String(s.category)] : [],
-            };
-          });
-          const { data: inserted, error } = await supabase.from('tasks').insert(tasksToInsert).select();
-          if (!error && inserted) {
-            setPrepTasks(prev => sortPrepTasks([...prev, ...(inserted as PrepTask[])]));
-            toast.success('Prep stages ready ✨', { description: `${inserted.length} tasks generated for your event`, duration: 4000 });
-          }
-        }
+      // Delete tasks linked to this project
+      await supabase.from("tasks").delete().eq("project_id", projectId);
+      // Delete event guests
+      if (event?.id) {
+        await supabase.from("event_rsvp_questions").delete().eq("event_id", event.id);
+        await supabase.from("event_guests").delete().eq("event_id", event.id);
+        await supabase.from("event_details").delete().eq("id", event.id);
       }
+      // Delete the project
+      await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id);
+      toast.success("Event deleted");
+      navigate("/projects");
     } catch (e) {
-      console.error('Stage gen error:', e);
-      toast.error("Failed to generate stages");
+      console.error("Delete error:", e);
+      toast.error("Delete failed. Try again.");
     } finally {
-      setGeneratingStages(false);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
