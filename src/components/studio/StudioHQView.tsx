@@ -239,10 +239,10 @@ export default function StudioHQView() {
       user_id: user.id, title: idea.text,
       platform: idea.platform || null,
       content_type: idea.contentType || null,
-      stage: "script", created_by: user.id,
+      stage: "idea", created_by: user.id,
     });
     setIdeas(prev => prev.filter(i => i.id !== idea.id));
-    toast.success("Moved to Pipeline → Script");
+    toast.success("Moved to Pipeline - Ideas");
     const { data } = await supabase.from("content_items").select("*")
       .eq("user_id", user.id).order("created_at", { ascending: false });
     if (data) setContentItems(data as ContentItem[]);

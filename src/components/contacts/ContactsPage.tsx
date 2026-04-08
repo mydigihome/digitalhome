@@ -311,16 +311,17 @@ export default function ContactsPage() {
             <div style={{
               display: "flex", alignItems: "center", gap: "8px",
               background: isDark ? "#252528" : "white",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
               borderRadius: "8px", padding: "8px 14px", width: "280px",
             }}>
-              <Search size={15} color="#9CA3AF" />
+              <Search size={15} color={isDark ? "#9CA3AF" : "#6B7280"} />
               <input
-                type="text" placeholder="Search contacts..."
+                type="text" placeholder="Search by name, email, or company..."
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 style={{
                   border: "none", outline: "none", fontSize: "14px",
                   color: isDark ? "#F2F2F2" : "#374151", background: "transparent", width: "100%",
+                  fontFamily: "Inter, sans-serif",
                 }}
               />
             </div>
@@ -533,10 +534,17 @@ export default function ContactsPage() {
                         background: isSelected
                           ? (isDark ? "rgba(59,130,246,0.1)" : "#EFF6FF")
                           : (isDark ? "#1C1C1E" : "white"),
-                        transition: "background 100ms",
+                        transition: "background 100ms, border-left 100ms",
+                        borderLeft: "3px solid transparent",
                       }}
-                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#252528" : "#FAFAFA"; }}
-                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#1C1C1E" : "white"; }}
+                      onMouseEnter={e => {
+                        if (!isSelected) e.currentTarget.style.background = isDark ? "#252528" : "#FAFAFA";
+                        e.currentTarget.style.borderLeft = "3px solid #10B981";
+                      }}
+                      onMouseLeave={e => {
+                        if (!isSelected) e.currentTarget.style.background = isDark ? "#1C1C1E" : "white";
+                        e.currentTarget.style.borderLeft = "3px solid transparent";
+                      }}
                     >
                       {/* Checkbox */}
                       <input
@@ -558,7 +566,7 @@ export default function ContactsPage() {
                             <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                           ) : contact.name?.charAt(0).toUpperCase()}
                         </div>
-                        <span style={{ fontSize: "14px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827" }}>
+                        <span style={{ fontSize: "15px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
                           {contact.name}
                         </span>
                         {isOverdue && (
@@ -575,15 +583,16 @@ export default function ContactsPage() {
                           <span style={{
                             display: "inline-flex", padding: "3px 10px", borderRadius: "6px",
                             fontSize: "12px", fontWeight: 500,
-                            background: isDark
-                              ? (status === "Hot Lead" ? "rgba(234,179,8,0.15)" : status === "Customer" ? "rgba(16,185,129,0.15)" : status === "Partially Interested" ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.05)")
-                              : (status === "Hot Lead" ? "#FEF9C3" : status === "Customer" ? "#DCFCE7" : status === "Partially Interested" ? "#FEF3C7" : "#F3F4F6"),
-                            color: status === "Hot Lead" ? "#854D0E" : status === "Customer" ? "#166534" : status === "Partially Interested" ? "#92400E" : (isDark ? "rgba(255,255,255,0.5)" : "#374151"),
-                            border: `1px solid ${
-                              isDark
-                                ? (status === "Hot Lead" ? "rgba(234,179,8,0.3)" : status === "Customer" ? "rgba(16,185,129,0.3)" : status === "Partially Interested" ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")
-                                : (status === "Hot Lead" ? "#FDE047" : status === "Customer" ? "#86EFAC" : status === "Partially Interested" ? "#FCD34D" : "#E5E7EB")
-                            }`,
+                            ...(status === "Hot Lead" || status === "Hot"
+                              ? { background: "#FEE2E2", color: "#DC2626", border: "1px solid #FECACA" }
+                              : status === "Warm" || status === "Partially Interested"
+                              ? { background: "#FEF3C7", color: "#92400E", border: "1px solid #FDE68A" }
+                              : status === "Cold" || status === "Just Enquiry"
+                              ? { background: "#F3F4F6", color: "#6B7280", border: "1px solid #E5E7EB" }
+                              : status === "Customer"
+                              ? { background: "#DCFCE7", color: "#166534", border: "1px solid #86EFAC" }
+                              : { background: isDark ? "rgba(255,255,255,0.05)" : "#F3F4F6", color: isDark ? "rgba(255,255,255,0.5)" : "#374151", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}` }
+                            ),
                           }}>
                             {status}
                           </span>
