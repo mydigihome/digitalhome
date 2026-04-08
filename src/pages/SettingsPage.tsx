@@ -41,7 +41,7 @@ const BILLING_PLANS = [
     color: "#10B981", bg: "#F0FDF4", border: "#BBF7D0",
     description: "Full access to everything you need.",
     features: ["Full dashboard + market watch", "Journal unlimited + voice recording", "Projects + AI stage generation", "Contacts unlimited + import + CRM", "Money — full finance suite", "Content Planner", "Monthly Review", "Notifications + settings"],
-    stripeMonthly: "PASTE_STANDARD_MONTHLY_LINK", stripeAnnual: "PASTE_STANDARD_ANNUAL_LINK",
+    stripeMonthly: "https://buy.stripe.com/00w5kDdWa74i71a55Eak002", stripeAnnual: "https://buy.stripe.com/9B6aEXdWa60ecludCaak003",
   },
 ];
 
