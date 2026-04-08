@@ -700,12 +700,12 @@ export default function SettingsPage() {
                     ))}
                   </div>
                   {currentPlan === plan.tier ? (
-                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif" }}>Current Plan</div>
+                    <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginTop: "auto" }}>Current Plan</div>
                   ) : plan.stripeMonthly ? (
                     <button onClick={() => {
                       const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
-                      const link = document.createElement("a"); link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms" }}
+                      window.location.href = url;
+                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms", marginTop: "auto" }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                       Get {plan.name}
