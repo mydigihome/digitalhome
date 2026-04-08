@@ -311,16 +311,17 @@ export default function ContactsPage() {
             <div style={{
               display: "flex", alignItems: "center", gap: "8px",
               background: isDark ? "#252528" : "white",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+              border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#D1D5DB"}`,
               borderRadius: "8px", padding: "8px 14px", width: "280px",
             }}>
-              <Search size={15} color="#9CA3AF" />
+              <Search size={15} color={isDark ? "#9CA3AF" : "#6B7280"} />
               <input
-                type="text" placeholder="Search contacts..."
+                type="text" placeholder="Search by name, email, or company..."
                 value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 style={{
                   border: "none", outline: "none", fontSize: "14px",
                   color: isDark ? "#F2F2F2" : "#374151", background: "transparent", width: "100%",
+                  fontFamily: "Inter, sans-serif",
                 }}
               />
             </div>
