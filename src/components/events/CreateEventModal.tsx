@@ -73,6 +73,9 @@ export default function CreateEventModal({ open, onClose }: Props) {
     toast.success("Cover uploaded");
   };
 
+  const [aiStages, setAiStages] = useState<{ title: string; category: string }[]>([]);
+  const [showStages, setShowStages] = useState(false);
+
   const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Event name is required"); return; }
     setSubmitting(true);
@@ -127,11 +130,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
       }
 
       toast.success("Event created! Generating AI prep stages...");
-      onClose();
 
-      // Generate AI prep stages in background
+      // Generate AI prep stages and show them before navigating
       if (project && form.event_date) {
-        generateAIEventStages({
+        const stages = await generateAIEventStages({
           id: project.id,
           name: form.name,
           event_date: form.event_date,
@@ -139,8 +141,16 @@ export default function CreateEventModal({ open, onClose }: Props) {
           description: form.description,
           user_id: user!.id,
         });
+        if (stages && stages.length > 0) {
+          setAiStages(stages);
+          setShowStages(true);
+          // Store project id for navigation after viewing stages
+          setCreatedProjectId(project.id);
+          return; // Don't close yet - show stages first
+        }
       }
 
+      onClose();
       navigate(`/project/${project.id}`);
     } catch (err) {
       toast.error("Failed to create event");
