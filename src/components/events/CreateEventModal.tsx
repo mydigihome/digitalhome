@@ -431,6 +431,71 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
     </div>,
   ];
 
+  // If showing AI stages after creation
+  if (showStages) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-xl"
+            style={{ border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "rgba(123,94,167,0.2)"}` }}
+          >
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: purpleLight }}>
+                <Target size={24} style={{ color: purple }} />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">AI Prep Stages</h2>
+              <p className="text-sm text-muted-foreground mt-1">Here's your event preparation plan</p>
+            </div>
+            <div className="space-y-3 mb-6">
+              {aiStages.map((stage, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-xl"
+                  style={{ background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" }}
+                >
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: purple, color: "white", fontSize: 13, fontWeight: 700 }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{stage.title}</p>
+                    <p className="text-xs text-muted-foreground">{stage.category}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setShowStages(false);
+                onClose();
+                if (createdProjectId) navigate(`/project/${createdProjectId}`);
+              }}
+              style={{
+                width: "100%", padding: "12px 20px",
+                background: purple, border: "none", borderRadius: "10px",
+                fontSize: "14px", fontWeight: "600", color: "white",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}
+            >
+              View My Event →
+            </button>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
   return (
     <AnimatePresence>
       <motion.div
