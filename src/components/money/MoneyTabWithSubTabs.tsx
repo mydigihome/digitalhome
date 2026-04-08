@@ -230,10 +230,30 @@ export default function MoneyTabWithSubTabs() {
               <p className="text-sm text-muted-foreground mt-1">Your complete financial picture</p>
             </div>
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-2 border border-border text-foreground rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-muted">
-                <Landmark className="w-4 h-4" />
-                Connect Bank
-              </button>
+              {plaidConnected ? (
+                <span className="flex items-center gap-2 border border-primary/30 text-primary rounded-xl px-4 py-2.5 text-sm font-semibold bg-primary/5">
+                  <Landmark className="w-4 h-4" />
+                  {plaidAccountName || "Bank Connected"}
+                </span>
+              ) : (
+                <button
+                  onClick={handleConnectBank}
+                  disabled={plaidConnecting}
+                  className="flex items-center gap-2 border border-border text-foreground rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-muted"
+                >
+                  {plaidConnecting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-muted-foreground/30 border-t-foreground rounded-full animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Landmark className="w-4 h-4" />
+                      Connect Bank
+                    </>
+                  )}
+                </button>
+              )}
               {activeTab !== "overview" && (
                 <button
                   onClick={() => setTrackFinanceOpen(true)}
