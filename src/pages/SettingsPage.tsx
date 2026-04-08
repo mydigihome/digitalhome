@@ -32,7 +32,7 @@ const BILLING_PLANS = [
     color: "#F59E0B", bg: "#FFFBEB", border: "#FDE68A",
     description: "Locked forever at $7/mo for the first 50 users.",
     features: ["Price locked forever at $7/mo", "Everything in Standard", "Founding Member badge on profile", "Direct line to the founder", "First access to every new feature"],
-    stripeMonthly: "PASTE_FOUNDING_MONTHLY_LINK", stripeAnnual: "PASTE_FOUNDING_ANNUAL_LINK",
+    stripeMonthly: "https://buy.stripe.com/aFa3cvf0eagu0CM55Eak001", stripeAnnual: "https://buy.stripe.com/fZueVd4lA60e1GQdCaak000",
     badgeCustom: "First 50 users only",
   },
   {
