@@ -156,8 +156,16 @@ export default function CreateEventModal({ open, onClose }: Props) {
       const eventDate = form.event_date
         ? new Date(form.event_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
         : "TBD";
+      const eventTypeName = EVENT_TYPES.find(t => t.value === form.event_type)?.label || form.event_type;
 
-      const prompt = `Generate exactly 5 preparation tasks for an event called "${form.name}" on ${eventDate} at ${form.location || "TBD"} with approximately ${guestCount} guests. Return JSON array: [{"task":"task name","description":"short description"}]`;
+      const prompt = `Generate exactly 5 specific preparation tasks for the following event:
+- Event name: ${form.name}
+- Event type: ${eventTypeName}
+- Date: ${eventDate}
+- Location: ${form.location || "TBD"}
+- Guest count: ${guestCount}
+${form.description ? `- Description: ${form.description}` : ""}
+The tasks must be specific to THIS type of event. A birthday party needs different prep than a business conference or a dinner party. Return a JSON array of exactly 5 objects: [{"task":"string","description":"string"}]`;
 
       const { data } = await supabase.functions.invoke("generate-trading-plan", { body: { prompt } });
       const text = data?.plan || "";
@@ -169,15 +177,14 @@ export default function CreateEventModal({ open, onClose }: Props) {
           const stages = parsed.slice(0, 5);
           setAiStages(stages);
 
-          // Save tasks to Supabase
           const tasks = stages.map((s: any, i: number) => ({
             project_id: createdProjectId,
             user_id: user!.id,
             title: s.task || s.title,
+            description: s.description || null,
             status: "backlog",
             priority: "medium",
             position: i,
-            ai_generated: true,
           }));
           await supabase.from("tasks").insert(tasks);
         }
