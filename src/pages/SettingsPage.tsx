@@ -742,7 +742,7 @@ export default function SettingsPage() {
                       <p style={{ fontSize: 14, fontWeight: 700, color: "#C4B5FD", fontFamily: "Inter, sans-serif", margin: 0, display: "flex", alignItems: "center", gap: 6 }}><Check size={16} /> Studio Unlocked</p>
                     </div>
                   ) : (
-                    <button onClick={() => { const link = document.createElement("a"); link.href = "PASTE_STUDIO_ADDON_LINK"; link.target = "_blank"; link.rel = "noopener noreferrer"; document.body.appendChild(link); link.click(); document.body.removeChild(link); }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
+                    <button onClick={() => { window.location.href = "https://buy.stripe.com/7sY7sL9FUagu4T2fKiak004"; }} style={{ padding: "14px 28px", background: "#7B5EA7", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "flex", alignItems: "center", gap: 8 }}>
                       <LockIcon size={16} /> Unlock Studio
                     </button>
                   )}
