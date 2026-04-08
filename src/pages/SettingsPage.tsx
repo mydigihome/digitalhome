@@ -645,7 +645,7 @@ export default function SettingsPage() {
                 const discountedMonthly = studentDiscount ? (plan.monthlyPrice * 0.5) : null;
                 const discountedAnnual = studentDiscount ? (plan.annualPrice * 0.5) : null;
                 return (
-                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms" }}>
+                <div key={plan.tier} style={{ border: `2px solid ${currentPlan === plan.tier ? plan.color : (isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB")}`, borderRadius: 18, padding: 20, position: "relative", background: currentPlan === plan.tier ? (isDark ? "rgba(255,255,255,0.03)" : plan.bg) : (isDark ? "#1C1C1E" : "white"), transition: "all 150ms", display: "flex", flexDirection: "column" as const, height: "100%" }}>
                   {plan.badge && (
                     <div style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "white", fontSize: 10, fontWeight: 700, padding: "3px 12px", borderRadius: 999, fontFamily: "Inter, sans-serif", whiteSpace: "nowrap" }}>{plan.badge}</div>
                   )}
