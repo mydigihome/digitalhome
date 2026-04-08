@@ -601,7 +601,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
               padding: "16px 24px",
               borderRight: i < 3 ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` : "none",
               cursor: "pointer",
-            }} onClick={() => { if (editingStat !== stat.key) setEditingStat(stat.key); }} title={!stat.raw ? stat.hint : "Click to edit"}>
+            }} onClick={() => { if (editingStat !== stat.key) setEditingStat(stat.key); }} title={!stat.raw ? "Add in Platforms tab" : "Click to edit"}>
               <p style={{
                 fontSize: "11px", fontWeight: 500,
                 color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
