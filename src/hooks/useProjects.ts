@@ -71,6 +71,10 @@ export function useDeleteProject() {
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Optimistic: remove from cache immediately
+      qc.setQueryData<Project[]>(["projects", user?.id], (old) =>
+        old ? old.filter((p) => p.id !== id) : []
+      );
       const { error } = await supabase.from("projects").delete().eq("id", id);
       if (error) throw error;
     },

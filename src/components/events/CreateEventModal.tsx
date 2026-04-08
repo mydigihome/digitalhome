@@ -73,6 +73,9 @@ export default function CreateEventModal({ open, onClose }: Props) {
     toast.success("Cover uploaded");
   };
 
+  const [aiStages, setAiStages] = useState<{ title: string; category: string }[]>([]);
+  const [showStages, setShowStages] = useState(false);
+
   const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Event name is required"); return; }
     setSubmitting(true);
@@ -127,11 +130,10 @@ export default function CreateEventModal({ open, onClose }: Props) {
       }
 
       toast.success("Event created! Generating AI prep stages...");
-      onClose();
 
-      // Generate AI prep stages in background
+      // Generate AI prep stages and show them before navigating
       if (project && form.event_date) {
-        generateAIEventStages({
+        const stages = await generateAIEventStages({
           id: project.id,
           name: form.name,
           event_date: form.event_date,
@@ -139,8 +141,16 @@ export default function CreateEventModal({ open, onClose }: Props) {
           description: form.description,
           user_id: user!.id,
         });
+        if (stages && stages.length > 0) {
+          setAiStages(stages);
+          setShowStages(true);
+          // Store project id for navigation after viewing stages
+          setCreatedProjectId(project.id);
+          return; // Don't close yet - show stages first
+        }
       }
 
+      onClose();
       navigate(`/project/${project.id}`);
     } catch (err) {
       toast.error("Failed to create event");
@@ -149,9 +159,11 @@ export default function CreateEventModal({ open, onClose }: Props) {
     }
   };
 
-  const generateAIEventStages = async (event: any) => {
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+
+  const generateAIEventStages = async (event: any): Promise<{ title: string; category: string }[] | null> => {
     const eventDate = event.event_date;
-    if (!eventDate) return;
+    if (!eventDate) return null;
     const date = new Date(eventDate);
     const daysUntil = Math.max(0, Math.floor((date.getTime() - Date.now()) / 86400000));
 
@@ -172,29 +184,26 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
       const text = data?.plan || "";
       const start = text.indexOf("[");
       const end = text.lastIndexOf("]");
-      if (start === -1 || end === -1) return;
+      if (start === -1 || end === -1) return null;
       const stages = JSON.parse(text.substring(start, end + 1));
-      if (!Array.isArray(stages)) return;
+      if (!Array.isArray(stages)) return null;
 
-      const tasks = stages.slice(0, 5).map((s: any, i: number) => {
-        const due = new Date(date);
-        due.setDate(due.getDate() - (s.days_before || 7));
-        const today = new Date();
-        return {
-          project_id: event.id,
-          user_id: event.user_id,
-          title: s.title,
-          status: "backlog",
-          priority: "medium",
-          position: i,
-          ai_generated: true,
-        };
-      });
+      const tasks = stages.slice(0, 5).map((s: any, i: number) => ({
+        project_id: event.id,
+        user_id: event.user_id,
+        title: s.title,
+        status: "backlog",
+        priority: "medium",
+        position: i,
+        ai_generated: true,
+      }));
 
       await supabase.from("tasks").insert(tasks);
       toast.success(`${tasks.length} AI prep tasks created!`);
+      return stages.slice(0, 5).map((s: any) => ({ title: s.title, category: s.category || "Planning" }));
     } catch (e) {
       console.error("Stage gen error:", e);
+      return null;
     }
   };
 
@@ -421,6 +430,71 @@ Categories: Planning / Guests / Venue / Food / Day-of`;
       </div>
     </div>,
   ];
+
+  // If showing AI stages after creation
+  if (showStages) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="w-full max-w-[480px] rounded-2xl bg-card p-6 shadow-xl"
+            style={{ border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "rgba(123,94,167,0.2)"}` }}
+          >
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: purpleLight }}>
+                <Target size={24} style={{ color: purple }} />
+              </div>
+              <h2 className="text-xl font-bold text-foreground">AI Prep Stages</h2>
+              <p className="text-sm text-muted-foreground mt-1">Here's your event preparation plan</p>
+            </div>
+            <div className="space-y-3 mb-6">
+              {aiStages.map((stage, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-xl"
+                  style={{ background: isDark ? "rgba(123,94,167,0.08)" : "#F5F3FF" }}
+                >
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: purple, color: "white", fontSize: 13, fontWeight: 700 }}
+                  >
+                    {i + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{stage.title}</p>
+                    <p className="text-xs text-muted-foreground">{stage.category}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setShowStages(false);
+                onClose();
+                if (createdProjectId) navigate(`/project/${createdProjectId}`);
+              }}
+              style={{
+                width: "100%", padding: "12px 20px",
+                background: purple, border: "none", borderRadius: "10px",
+                fontSize: "14px", fontWeight: "600", color: "white",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}
+            >
+              View My Event →
+            </button>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   return (
     <AnimatePresence>

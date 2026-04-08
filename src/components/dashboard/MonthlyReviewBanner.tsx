@@ -9,6 +9,7 @@ export default function MonthlyReviewBanner() {
   const { user, profile } = useAuth();
   const { data: reviews = [] } = useMonthlyReviews();
   const { data: prefs } = useUserPreferences();
+  const [dismissed, setDismissed] = useState(false);
 
   const isFoundingMember = profile?.founding_member === true;
   const isSubscribed = prefs?.is_subscribed === true;
@@ -28,7 +29,7 @@ export default function MonthlyReviewBanner() {
   const alreadySeen = localStorage.getItem(dismissKey);
 
   // Only show on the 1st of the month and if not already dismissed
-  if (!isFirstOfMonth || alreadySeen) return null;
+  if (!isFirstOfMonth || alreadySeen || dismissed) return null;
 
   const prevMonthName = new Date(year, month - 1, 1).toLocaleString("default", { month: "long" });
 
@@ -38,18 +39,17 @@ export default function MonthlyReviewBanner() {
   });
   const reviewApproved = !!prevMonthReview;
 
-  // Never show if user has no data at all (no reviews ever, brand new user)
+  // Never show if user has no data at all (brand new user)
   if (reviews.length === 0 && !reviewApproved) {
-    // Check if user has been around for at least a month
     const createdAt = prefs?.created_at ? new Date(prefs.created_at) : null;
     if (!createdAt || (now.getTime() - createdAt.getTime()) < 25 * 24 * 60 * 60 * 1000) {
       return null;
     }
   }
 
-  const handleDismiss = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDismiss = () => {
     localStorage.setItem(dismissKey, 'seen');
+    setDismissed(true);
   };
 
   const baseStyle: React.CSSProperties = {
@@ -67,8 +67,8 @@ export default function MonthlyReviewBanner() {
   if (!reviewApproved) {
     return (
       <div
-        onClick={(e) => {
-          handleDismiss(e);
+        onClick={() => {
+          handleDismiss();
           navigate("/monthly-review");
         }}
         style={{ ...baseStyle, background: "#eef2ff", borderBottom: "1px solid #c7d2fe", justifyContent: "center" }}
@@ -89,7 +89,7 @@ export default function MonthlyReviewBanner() {
         style={{ ...baseStyle, background: "#f0fdf4", borderBottom: "1px solid #bbf7d0", cursor: "default" }}
       >
         <span style={{ fontSize: 13, fontWeight: 500, color: "#15803d" }}>
-           {prevMonthName} review approved. Saved to your archive.
+          {prevMonthName} review approved. Saved to your archive.
         </span>
         <span
           onClick={() => navigate("/monthly-review?mode=read")}
