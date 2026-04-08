@@ -123,7 +123,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [newStageDueDate, setNewStageDueDate] = useState("");
   const [addingStage, setAddingStage] = useState(false);
   const [prepTasks, setPrepTasks] = useState<PrepTask[]>([]);
-  const [generatingStages, setGeneratingStages] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
