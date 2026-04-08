@@ -74,7 +74,7 @@ export default function Signup() {
     const { error } = await signUp(email, password, fullName);
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Something went wrong. Try again or use a different email.");
     } else {
       setSuccess(true);
     }
