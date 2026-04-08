@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
   CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link, Loader2,
+  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,7 +123,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [newStageDueDate, setNewStageDueDate] = useState("");
   const [addingStage, setAddingStage] = useState(false);
   const [prepTasks, setPrepTasks] = useState<PrepTask[]>([]);
-  const [generatingStages, setGeneratingStages] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
@@ -146,72 +147,45 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     updated_at: projectData.updated_at,
   } as any : null);
 
-  // Load existing tasks only — no auto-generation
+  // Load existing tasks only
   useEffect(() => {
-    if (!effectiveEvent || !user) return;
+    if (!projectId || !user) return;
     let cancelled = false;
     const loadTasks = async () => {
       const { data: existingTasks } = await supabase
         .from("tasks")
         .select("*")
-        .eq("project_id", effectiveEvent.id)
-        .order("due_date", { ascending: true });
+        .eq("project_id", projectId)
+        .order("position", { ascending: true });
       if (cancelled) return;
       setPrepTasks(sortPrepTasks((existingTasks as PrepTask[] | null) || []));
     };
     loadTasks();
     return () => { cancelled = true; };
-  }, [effectiveEvent, user]);
+  }, [projectId, user]);
 
-  // Manual AI generation handler
-  const handleGenerateAIStages = async () => {
-    if (!effectiveEvent || !user) return;
-    const resolvedEventDate = effectiveEvent.event_date || projectData?.date;
-    if (!resolvedEventDate) {
-      toast.error("Set an event date first to generate prep stages");
-      return;
-    }
-    setGeneratingStages(true);
+  const handleDeleteEvent = async () => {
+    if (!user) return;
+    setDeleting(true);
     try {
-      const eventDate = new Date(resolvedEventDate);
-      const today = new Date();
-      const daysUntil = Math.max(0, Math.floor((eventDate.getTime() - today.getTime()) / 86400000));
-      const prompt = `You are an expert event planner.\nCreate exactly 5 preparation tasks for this event.\nEvent: ${projectName}\nDate: ${eventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}\nDays until: ${daysUntil}\n${effectiveEvent.location ? `Location: ${effectiveEvent.location}` : ''}\n${effectiveEvent.description ? `About: ${effectiveEvent.description}` : ''}\nReturn ONLY a JSON array, nothing else:\n[{"title": "Book the venue", "days_before": 30, "category": "Venue"}]\n5 tasks maximum. Make them specific to this event.`;
-      const { data } = await supabase.functions.invoke('generate-trading-plan', { body: { prompt } });
-      const text = data?.plan || '';
-      const start = text.indexOf('[');
-      const end = text.lastIndexOf(']');
-      if (start !== -1 && end !== -1) {
-        const stages = JSON.parse(text.substring(start, end + 1));
-        if (Array.isArray(stages)) {
-          const tasksToInsert = stages.slice(0, 5).map((s: any, i: number) => {
-            const due = new Date(eventDate);
-            due.setDate(due.getDate() - (s.days_before || 7));
-            const finalDue = due < today ? today : due;
-            return {
-              project_id: effectiveEvent.id,
-              user_id: user.id,
-              title: s.title,
-              due_date: finalDue.toISOString().split('T')[0],
-              status: 'backlog',
-              priority: 'medium',
-              position: i,
-              ai_generated: true,
-              labels: s.category ? [String(s.category)] : [],
-            };
-          });
-          const { data: inserted, error } = await supabase.from('tasks').insert(tasksToInsert).select();
-          if (!error && inserted) {
-            setPrepTasks(prev => sortPrepTasks([...prev, ...(inserted as PrepTask[])]));
-            toast.success('Prep stages ready ✨', { description: `${inserted.length} tasks generated for your event`, duration: 4000 });
-          }
-        }
+      // Delete tasks linked to this project
+      await supabase.from("tasks").delete().eq("project_id", projectId);
+      // Delete event guests
+      if (event?.id) {
+        await supabase.from("event_rsvp_questions").delete().eq("event_id", event.id);
+        await supabase.from("event_guests").delete().eq("event_id", event.id);
+        await supabase.from("event_details").delete().eq("id", event.id);
       }
+      // Delete the project
+      await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id);
+      toast.success("Event deleted");
+      navigate("/projects");
     } catch (e) {
-      console.error('Stage gen error:', e);
-      toast.error("Failed to generate stages");
+      console.error("Delete error:", e);
+      toast.error("Delete failed. Try again.");
     } finally {
-      setGeneratingStages(false);
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -571,30 +545,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           {prepTasks.length === 0 && !showAddStage ? (
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
-              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 16 }}>Generate AI preparation stages based on your event details.</p>
-              <button
-                onClick={handleGenerateAIStages}
-                disabled={generatingStages}
-                className="cursor-pointer"
-                style={{ fontSize: 13, fontWeight: 600, color: "white", background: "#8B5CF6", border: "none", borderRadius: 8, padding: "8px 18px", marginBottom: 8 }}
-              >
-                {generatingStages ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...
-                  </span>
-                ) : (
-                  "✨ Generate AI Prep Stages"
-                )}
-              </button>
-              <br />
-              <button
-                onClick={() => setShowAddStage(true)}
-                className="mt-2 cursor-pointer"
-                style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-              >
-                + Add Stage Manually
-              </button>
+              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No stages yet.</p>
             </div>
           ) : (
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
@@ -663,23 +614,13 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
 
               <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none", display: "flex", gap: 12, alignItems: "center" }}>
                 {!showAddStage ? (
-                  <>
-                    <button
-                      onClick={() => setShowAddStage(true)}
-                      className="cursor-pointer"
-                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                    >
-                      + Add Stage
-                    </button>
-                    <button
-                      onClick={handleGenerateAIStages}
-                      disabled={generatingStages}
-                      className="cursor-pointer"
-                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                    >
-                      {generatingStages ? "Generating..." : "✨ Generate AI Stages"}
-                    </button>
-                  </>
+                  <button
+                    onClick={() => setShowAddStage(true)}
+                    className="cursor-pointer"
+                    style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+                  >
+                    + Add Stage
+                  </button>
                 ) : (
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 150 }}>
@@ -746,6 +687,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
         {/* ═══ DELETE SECTION ═══ */}
         <div className="text-center" style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #F3F4F6" }}>
           <button
+            onClick={() => setShowDeleteConfirm(true)}
             className="cursor-pointer transition-all duration-200"
             style={{ background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#EF4444", padding: "12px 24px", borderRadius: 8 }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.05)")}
@@ -754,6 +696,45 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             Delete Event
           </button>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                className="w-full max-w-sm"
+                style={{ background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold mb-2" style={{ color: "#1F2937" }}>Delete this event?</h3>
+                <p className="text-sm mb-6" style={{ color: "#6B7280" }}>This cannot be undone.</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold"
+                    style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteEvent}
+                    disabled={deleting}
+                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white"
+                    style={{ background: "#EF4444", fontSize: 14, opacity: deleting ? 0.7 : 1 }}
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
 
