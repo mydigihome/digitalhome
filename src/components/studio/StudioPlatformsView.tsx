@@ -251,7 +251,7 @@ export default function StudioPlatformsView() {
               onChange={(e) => setConnectHandle(e.target.value)}
               placeholder={getPlaceholder()}
               onKeyDown={(e) => { if (e.key === "Enter") handleConnect(); }}
-              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary" style={{ WebkitAppearance: "none", minWidth: 0 }}
             />
             <button
               onClick={handleConnect}

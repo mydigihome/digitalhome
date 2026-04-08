@@ -298,7 +298,7 @@ export default function BillingTab({
           </div>
 
           <Button
-            className="w-full h-12 text-base font-semibold"
+            className="w-full h-12 text-base font-semibold mt-auto"
             disabled={checkingOut}
             onClick={() => openStripeLink(
               studentDiscount ? STRIPE_LINKS.standard_annual : STRIPE_LINKS.standard_annual
