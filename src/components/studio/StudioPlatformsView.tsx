@@ -104,9 +104,12 @@ export default function StudioPlatformsView() {
       if (connectPlatform === "youtube") {
         const input = connectHandle.trim();
         const channelIdMatch = input.match(/channel\/(UC[a-zA-Z0-9_-]{22})/);
+        const isDirectId = input.startsWith("UC") && input.length === 24;
 
         const body = channelIdMatch
-          ? { handle: channelIdMatch[1] }
+          ? { channel_id: channelIdMatch[1] }
+          : isDirectId
+          ? { channel_id: input }
           : { handle: input };
 
         const { data, error } = await supabase.functions.invoke("fetch-youtube-stats", { body });
