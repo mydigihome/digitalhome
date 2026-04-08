@@ -545,30 +545,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           {prepTasks.length === 0 && !showAddStage ? (
             <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
               <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
-              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No prep tasks yet</p>
-              <p style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 16 }}>Generate AI preparation stages based on your event details.</p>
-              <button
-                onClick={handleGenerateAIStages}
-                disabled={generatingStages}
-                className="cursor-pointer"
-                style={{ fontSize: 13, fontWeight: 600, color: "white", background: "#8B5CF6", border: "none", borderRadius: 8, padding: "8px 18px", marginBottom: 8 }}
-              >
-                {generatingStages ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...
-                  </span>
-                ) : (
-                  "✨ Generate AI Prep Stages"
-                )}
-              </button>
-              <br />
-              <button
-                onClick={() => setShowAddStage(true)}
-                className="mt-2 cursor-pointer"
-                style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-              >
-                + Add Stage Manually
-              </button>
+              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No stages yet.</p>
             </div>
           ) : (
             <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
@@ -637,23 +614,13 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
 
               <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none", display: "flex", gap: 12, alignItems: "center" }}>
                 {!showAddStage ? (
-                  <>
-                    <button
-                      onClick={() => setShowAddStage(true)}
-                      className="cursor-pointer"
-                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                    >
-                      + Add Stage
-                    </button>
-                    <button
-                      onClick={handleGenerateAIStages}
-                      disabled={generatingStages}
-                      className="cursor-pointer"
-                      style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                    >
-                      {generatingStages ? "Generating..." : "✨ Generate AI Stages"}
-                    </button>
-                  </>
+                  <button
+                    onClick={() => setShowAddStage(true)}
+                    className="cursor-pointer"
+                    style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
+                  >
+                    + Add Stage
+                  </button>
                 ) : (
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 150 }}>
@@ -720,6 +687,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
         {/* ═══ DELETE SECTION ═══ */}
         <div className="text-center" style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #F3F4F6" }}>
           <button
+            onClick={() => setShowDeleteConfirm(true)}
             className="cursor-pointer transition-all duration-200"
             style={{ background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#EF4444", padding: "12px 24px", borderRadius: 8 }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.05)")}
@@ -728,6 +696,45 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             Delete Event
           </button>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                className="w-full max-w-sm"
+                style={{ background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+                onClick={e => e.stopPropagation()}
+              >
+                <h3 className="text-lg font-semibold mb-2" style={{ color: "#1F2937" }}>Delete this event?</h3>
+                <p className="text-sm mb-6" style={{ color: "#6B7280" }}>This cannot be undone.</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold"
+                    style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteEvent}
+                    disabled={deleting}
+                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white"
+                    style={{ background: "#EF4444", fontSize: 14, opacity: deleting ? 0.7 : 1 }}
+                  >
+                    {deleting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
 
