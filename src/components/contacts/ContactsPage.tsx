@@ -534,10 +534,17 @@ export default function ContactsPage() {
                         background: isSelected
                           ? (isDark ? "rgba(59,130,246,0.1)" : "#EFF6FF")
                           : (isDark ? "#1C1C1E" : "white"),
-                        transition: "background 100ms",
+                        transition: "background 100ms, border-left 100ms",
+                        borderLeft: "3px solid transparent",
                       }}
-                      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#252528" : "#FAFAFA"; }}
-                      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isDark ? "#1C1C1E" : "white"; }}
+                      onMouseEnter={e => {
+                        if (!isSelected) e.currentTarget.style.background = isDark ? "#252528" : "#FAFAFA";
+                        e.currentTarget.style.borderLeft = "3px solid #10B981";
+                      }}
+                      onMouseLeave={e => {
+                        if (!isSelected) e.currentTarget.style.background = isDark ? "#1C1C1E" : "white";
+                        e.currentTarget.style.borderLeft = "3px solid transparent";
+                      }}
                     >
                       {/* Checkbox */}
                       <input
