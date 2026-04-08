@@ -871,13 +871,11 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
 
   const openStripeForSingle = (template: any) => {
     const url = template.stripe_single_url || "https://buy.stripe.com/PLACEHOLDER_SINGLE";
-    window.open(url, "_blank", "noopener,noreferrer");
-    toast("Redirecting to checkout...", { description: `$8 for ${template.title}` });
+    window.location.href = url;
   };
 
   const openStripeForBundle = () => {
-    window.open(BUNDLE_STRIPE_URL, "_blank", "noopener,noreferrer");
-    toast("Redirecting to checkout...", { description: "All 4 templates for $25" });
+    window.location.href = BUNDLE_STRIPE_URL;
   };
 
   const handleDeleteFile = async (templateId: string, fileUrl: string) => {
