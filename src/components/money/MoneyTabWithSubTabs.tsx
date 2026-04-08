@@ -406,7 +406,7 @@ export default function MoneyTabWithSubTabs() {
         onClose={() => setTrackFinanceOpen(false)}
         existingCardIds={cardOrder}
         onAddCards={handleAddCards}
-        plaidConnected={false}
+        plaidConnected={plaidConnected}
       />
     </div>
   );
