@@ -566,7 +566,7 @@ export default function ContactsPage() {
                             <img src={contact.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                           ) : contact.name?.charAt(0).toUpperCase()}
                         </div>
-                        <span style={{ fontSize: "14px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#111827" }}>
+                        <span style={{ fontSize: "15px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
                           {contact.name}
                         </span>
                         {isOverdue && (
