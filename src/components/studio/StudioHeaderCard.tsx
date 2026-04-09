@@ -453,12 +453,13 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                 }}>Preview</button>
               <button
                 onClick={() => {
-                  const shareUrl = `${window.location.origin}/studio/${user?.id}`;
+                  const shareUrl = `https://digitalhome.lovable.app/studio/${user?.id}`;
+                  const shareTitle = `${studioName || "My Studio"} Studio Profile`;
+                  const shareText = `Check out ${studioName || "my studio"} on Digital Home`;
                   if (navigator.share) {
-                    navigator.share({ title: studioName || "My Studio", text: "Check out my studio on Digital Home", url: shareUrl }).catch(() => {});
+                    navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
                   } else {
-                    navigator.clipboard.writeText(shareUrl);
-                    toast("Link copied!", { description: "Studio link copied to clipboard." });
+                    setShareLinkModalOpen(true);
                   }
                 }}
                 style={{
