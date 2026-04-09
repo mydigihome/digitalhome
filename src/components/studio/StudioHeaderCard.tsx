@@ -76,6 +76,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const studioImageInputRef = useRef<HTMLInputElement>(null);
   const [studioStats, setStudioStats] = useState<StudioStats>({});
+  const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
   const [editingStat, setEditingStat] = useState<string | null>(null);
 
   // Modals
