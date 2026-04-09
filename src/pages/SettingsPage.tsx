@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useArchivedProjects, useRestoreProject } from "@/hooks/useArchivedProjects";
 import { supabase } from "@/integrations/supabase/client";
+import { useGoogleCalendarConnection, useConnectGoogleCalendar, useDisconnectGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -12,7 +13,7 @@ import {
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
   Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
   ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
-  Lock as LockIcon, Unlock, Plus, Trash2, X,
+  Lock as LockIcon, Unlock, Plus, Trash2, X, Calendar,
 } from "lucide-react";
 import { applyThemeOverride } from "@/hooks/useThemeApplicator";
 
@@ -129,6 +130,11 @@ export default function SettingsPage() {
   const [preferredBroker, setPreferredBroker] = useState("");
   const [brokerUrl, setBrokerUrl] = useState("");
   const [plaidModalOpen, setPlaidModalOpen] = useState(false);
+  const [appleCalModalOpen, setAppleCalModalOpen] = useState(false);
+  const [caldavUrl, setCaldavUrl] = useState("");
+  const gcalConnection = useGoogleCalendarConnection();
+  const { startConnect: connectGcal, connecting: gcalConnecting } = useConnectGoogleCalendar();
+  const disconnectGcal = useDisconnectGoogleCalendar();
   const [saving, setSaving] = useState(false);
   const [selectedReligion, setSelectedReligion] = useState("");
   const [showScripture, setShowScripture] = useState(() => localStorage.getItem("dh_scripture") === "true");
@@ -621,7 +627,7 @@ export default function SettingsPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{item.title}</span>
-                      {item.connected && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected ✓</span>}
+                      {item.connected && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
                     </div>
                     <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{item.detail || item.desc}</span>
                   </div>
@@ -629,6 +635,52 @@ export default function SettingsPage() {
                 <button onClick={item.action} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{item.actionLabel}</button>
               </div>
             ))}
+
+            {/* Google Calendar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(66,133,244,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  <img src="https://logo.clearbit.com/calendar.google.com" alt="" style={{ width: 22, height: 22, objectFit: "contain" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; (e.currentTarget.parentElement as HTMLElement).innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4285F4" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'; }} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>Google Calendar</span>
+                    {gcalConnection.data && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
+                  </div>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>
+                    {gcalConnection.data?.calendar_email || "Sync your Google Calendar events to Today's Agenda on your dashboard"}
+                  </span>
+                </div>
+              </div>
+              {gcalConnection.data ? (
+                <button onClick={() => disconnectGcal.mutate()} disabled={disconnectGcal.isPending} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#DC2626", cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                  {disconnectGcal.isPending ? "..." : "Disconnect"}
+                </button>
+              ) : (
+                <button onClick={connectGcal} disabled={gcalConnecting} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                  {gcalConnecting ? "Connecting..." : "Connect"}
+                </button>
+              )}
+            </div>
+
+            {/* Apple Calendar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,59,48,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Calendar size={18} color="#FF3B30" />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>Apple Calendar</span>
+                    {!!localStorage.getItem("dh_caldav_url") && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
+                  </div>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>Sync your Apple Calendar events to Today's Agenda on your dashboard</span>
+                </div>
+              </div>
+              <button onClick={() => setAppleCalModalOpen(true)} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                {localStorage.getItem("dh_caldav_url") ? "Change" : "Connect"}
+              </button>
+            </div>
           </div>
         )}
 
@@ -987,6 +1039,25 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {appleCalModalOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 440, width: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Connect Apple Calendar</h3>
+              <button onClick={() => setAppleCalModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: text2, padding: 4 }}><X size={18} /></button>
+            </div>
+            <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16, lineHeight: 1.6 }}>
+              To connect Apple Calendar, enable CalDAV sync in your Apple Calendar settings and paste your CalDAV URL below.
+            </p>
+            <label style={labelStyle}>CalDAV URL</label>
+            <input value={caldavUrl} onChange={e => setCaldavUrl(e.target.value)} placeholder="https://caldav.icloud.com/..." style={inputStyle} />
+            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              <button onClick={() => { if (!caldavUrl.trim()) { toast.error("Please enter a CalDAV URL"); return; } localStorage.setItem("dh_caldav_url", caldavUrl.trim()); setAppleCalModalOpen(false); toast.success("Apple Calendar connected"); }} style={{ flex: 1, padding: "10px 16px", background: "#FF3B30", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>Save</button>
+              <button onClick={() => setAppleCalModalOpen(false)} style={{ flex: 1, padding: "10px 16px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, background: inputBg, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
 
