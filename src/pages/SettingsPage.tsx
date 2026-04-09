@@ -106,7 +106,14 @@ export default function SettingsPage() {
   const [profileData, setProfileData] = useState({ full_name: "", handle: "", email: "", location: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(isDark);
-  const [selectedTheme, setSelectedTheme] = useState("Emerald");
+  const [selectedTheme, setSelectedTheme] = useState(() => {
+    const savedName = localStorage.getItem("dh_theme_name");
+    if (savedName) {
+      const match = ACCENT_THEMES.find(t => t.name === savedName);
+      if (match) return match.name;
+    }
+    return "Emerald";
+  });
   const [currentPlan, setCurrentPlan] = useState("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [studioUnlocked, setStudioUnlocked] = useState(false);
@@ -124,9 +131,12 @@ export default function SettingsPage() {
   const [plaidModalOpen, setPlaidModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedReligion, setSelectedReligion] = useState("");
-  const [showScripture, setShowScripture] = useState(false);
+  const [showScripture, setShowScripture] = useState(() => localStorage.getItem("dh_scripture") === "true");
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("");
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") || "general";
+  });
   const [feedbackType, setFeedbackType] = useState("General Feedback");
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
@@ -552,7 +562,7 @@ export default function SettingsPage() {
                   <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "10px 14px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 10 }}>
                       <span style={{ fontSize: 13, fontWeight: 500, color: text1, fontFamily: "Inter, sans-serif" }}>Daily Scripture</span>
-                      <button onClick={() => setShowScripture(!showScripture)} style={{ width: 44, height: 24, borderRadius: 12, border: "none", background: showScripture ? "#10B981" : "#D1D5DB", cursor: "pointer", position: "relative", transition: "background 200ms" }}>
+                      <button onClick={() => { const next = !showScripture; setShowScripture(next); localStorage.setItem("dh_scripture", next.toString()); upsertPrefs.mutate({ show_scripture_card: next } as any); }} style={{ width: 44, height: 24, borderRadius: 12, border: "none", background: showScripture ? "#10B981" : "#D1D5DB", cursor: "pointer", position: "relative", transition: "background 200ms" }}>
                         <div style={{ width: 18, height: 18, borderRadius: "50%", background: "white", position: "absolute", top: 3, left: showScripture ? 23 : 3, transition: "left 200ms" }} />
                       </button>
                     </div>

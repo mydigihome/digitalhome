@@ -68,14 +68,35 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     setBody(drafts[next].replace(/{name}/g, firstName));
   };
 
-  const handleMailto = () => {
+  const handleMailto = async () => {
     if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
+    // Track sent email
+    if (user) {
+      await (supabase as any).from("contact_emails").insert({
+        user_id: user.id,
+        contact_id: active.id,
+        content: `Subject: ${subject}\n\n${body}`,
+        tone: "professional",
+        sent_at: new Date().toISOString(),
+      });
+    }
     const mailto = `mailto:${encodeURIComponent(active.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailto;
     toast.success("Email app opened");
+  };
+
+  const handleSaveDraft = async () => {
+    if (!user) return;
+    await (supabase as any).from("email_drafts").insert({
+      user_id: user.id,
+      contact_id: active.id,
+      content: `Subject: ${subject}\n\n${body}`,
+      tone: "professional",
+    });
+    toast.success("Draft saved");
   };
 
   const handleGmailDraft = async () => {
@@ -207,10 +228,16 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
               onClick={handleMailto}
               className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5"
             >
-              <Mail className="w-3 h-3" /> Open in Email App
+              <Mail className="w-3 h-3" /> Open in Mail
             </button>
           )}
         </div>
+        <button
+          onClick={handleSaveDraft}
+          className="w-full bg-[#f3f3f8] text-[#374151] rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 hover:bg-[#e5e7eb] transition-colors"
+        >
+          Save Draft
+        </button>
         <p className="text-[10px] text-[#9ca3af] text-center">
           Your email will open pre-filled and ready to send.
         </p>

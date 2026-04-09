@@ -141,9 +141,9 @@ export default function MonthlyReviewPage() {
 
       upsertPrefs.mutate({ last_review_month: reviewMonth } as any);
       setApproved(true);
-      toast.success("Review approved — find it in Settings → General");
+      toast.success("Review saved");
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.8 }, colors: ["#6366f1", "#22c55e", "#f59e0b"] });
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate("/settings?tab=archive"), 2000);
     } catch (err: any) {
       console.error("Approve error:", err);
       toast.error("Failed to save review");
