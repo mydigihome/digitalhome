@@ -1,539 +1,628 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plus, Trash2, DollarSign, CreditCard, PiggyBank, TrendingUp, Sparkles, Quote } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, ArrowRight, Plus, Trash2, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUpsertUserFinances } from "@/hooks/useUserFinances";
-import { useCreateExpense } from "@/hooks/useExpenses";
-import { useCreateLoan } from "@/hooks/useLoans";
-import { useCreateInvestment } from "@/hooks/useInvestments";
-import { useCreateChildInvestment } from "@/hooks/useChildInvestments";
-import { getRandomQuote } from "./quotes";
+import { useAddBill } from "@/hooks/useBills";
+import { useAddDebt } from "@/hooks/useDebts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { useQueryClient } from "@tanstack/react-query";
 
-const EXPENSE_CATEGORIES = ["Rent/Mortgage", "Utilities", "Subscriptions", "Insurance", "Food", "Transportation", "Other"];
-const INVESTMENT_TYPES = ["Stocks", "401k", "IRA", "Real Estate", "Crypto", "Other"];
-const PIE_COLORS = [
-  "hsl(258, 89%, 66%)", "hsl(263, 70%, 50%)", "hsl(206, 52%, 55%)",
-  "hsl(168, 80%, 27%)", "hsl(36, 100%, 57%)", "hsl(0, 65%, 55%)", "hsl(320, 60%, 50%)",
+const TOTAL_STEPS = 7;
+
+const BILL_SUGGESTIONS = ["Rent", "Car Payment", "Internet", "Phone", "Insurance", "Subscriptions", "Utilities"];
+
+const DEBT_TYPES = [
+  { id: "student_loan", label: "Student Loans" },
+  { id: "auto_loan", label: "Auto Loan" },
+  { id: "credit_card", label: "Credit Card" },
+  { id: "other", label: "Other Loan" },
+  { id: "none", label: "No debt" },
 ];
 
-interface LocalExpense {
-  description: string;
-  amount: string;
-  category: string;
-  frequency: string;
-  expense_date: string;
-}
-
-interface LocalLoan {
-  loan_type: string;
-  amount: string;
-  interest_rate: string;
-  monthly_payment: string;
-  provider_name: string;
-  provider_phone: string;
-  provider_website: string;
-  start_date: string;
-}
-
-interface LocalChildInv {
-  child_name: string;
-  investment_type: string;
+interface IncomeSource {
+  name: string;
   amount: string;
 }
 
-const TOTAL_PAGES = 5; // welcome + 4 form pages
+interface BillRow {
+  name: string;
+  amount: string;
+  dueDay: string;
+}
+
+interface DebtRow {
+  type: string;
+  balance: string;
+  interestRate: string;
+  monthlyPayment: string;
+  lender: string;
+}
 
 export default function WealthOnboarding({ onComplete }: { onComplete: () => void }) {
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const upsertFinances = useUpsertUserFinances();
-  const createExpense = useCreateExpense();
-  const createLoan = useCreateLoan();
-  const createInvestment = useCreateInvestment();
-  const createChildInv = useCreateChildInvestment();
+  const addBill = useAddBill();
+  const addDebt = useAddDebt();
+  const queryClient = useQueryClient();
 
-  const [page, setPage] = useState(0);
+  const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
-  const quote = useMemo(() => getRandomQuote(), []);
 
-  // Page 1 - Expenses
-  const [expenses, setExpenses] = useState<LocalExpense[]>([
-    { description: "", amount: "", category: "Other", frequency: "monthly", expense_date: new Date().toISOString().split("T")[0] },
-  ]);
-
-  // Page 2 - Debt
-  const [hasStudentLoans, setHasStudentLoans] = useState(false);
-  const [loans, setLoans] = useState<LocalLoan[]>([]);
-  const [totalDebt, setTotalDebt] = useState("");
-
-  // Page 3 - Credit & Savings
-  const [creditScore, setCreditScore] = useState("");
-  const [savingsGoal, setSavingsGoal] = useState("");
-  const [currentSavings, setCurrentSavings] = useState("");
-
-  // Page 4 - Income & Investment
+  // Step 1 — Income
   const [monthlyIncome, setMonthlyIncome] = useState("");
-  const [invests, setInvests] = useState(false);
-  const [investmentTypes, setInvestmentTypes] = useState<string[]>([]);
-  const [childInvestments, setChildInvestments] = useState<LocalChildInv[]>([]);
+  const [hasMultipleSources, setHasMultipleSources] = useState(false);
+  const [incomeSources, setIncomeSources] = useState<IncomeSource[]>([{ name: "Salary", amount: "" }]);
 
-  const firstName = profile?.full_name?.split(" ")[0] || "there";
+  // Step 2 — Bills
+  const [bills, setBills] = useState<BillRow[]>([]);
 
-  const addExpense = () => setExpenses(prev => [...prev, { description: "", amount: "", category: "Other", frequency: "monthly", expense_date: new Date().toISOString().split("T")[0] }]);
-  const removeExpense = (i: number) => setExpenses(prev => prev.filter((_, idx) => idx !== i));
-  const updateExpense = (i: number, field: keyof LocalExpense, value: string) => {
-    setExpenses(prev => prev.map((e, idx) => idx === i ? { ...e, [field]: value } : e));
+  // Step 3 — Debt
+  const [selectedDebtTypes, setSelectedDebtTypes] = useState<string[]>([]);
+  const [debts, setDebts] = useState<DebtRow[]>([]);
+
+  // Step 4 — Savings
+  const [emergencyFund, setEmergencyFund] = useState("");
+  const [generalSavings, setGeneralSavings] = useState("");
+  const [investmentsSavings, setInvestmentsSavings] = useState("");
+
+  // Step 5 — Credit Score
+  const [creditScore, setCreditScore] = useState("");
+  const [skipCredit, setSkipCredit] = useState(false);
+
+  // Step 6 — Savings Goal
+  const [savingsGoal, setSavingsGoal] = useState("");
+
+  const totalIncome = hasMultipleSources
+    ? incomeSources.reduce((s, src) => s + (parseFloat(src.amount) || 0), 0)
+    : parseFloat(monthlyIncome) || 0;
+
+  const totalBills = bills.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
+  const totalDebtBalance = debts.reduce((s, d) => s + (parseFloat(d.balance) || 0), 0);
+  const totalSavings = (parseFloat(emergencyFund) || 0) + (parseFloat(generalSavings) || 0) + (parseFloat(investmentsSavings) || 0);
+
+  const canContinue = () => {
+    switch (step) {
+      case 1: return hasMultipleSources ? incomeSources.some(s => parseFloat(s.amount) > 0) : parseFloat(monthlyIncome) > 0;
+      case 2: return true; // bills are optional
+      case 3: return selectedDebtTypes.length > 0;
+      case 4: return true; // savings optional
+      case 5: return true; // can skip
+      case 6: return true; // optional
+      default: return true;
+    }
   };
 
-  const addLoan = () => setLoans(prev => [...prev, { loan_type: "student", amount: "", interest_rate: "", monthly_payment: "", provider_name: "", provider_phone: "", provider_website: "", start_date: "" }]);
-  const removeLoan = (i: number) => setLoans(prev => prev.filter((_, idx) => idx !== i));
-  const updateLoan = (i: number, field: keyof LocalLoan, value: string) => {
-    setLoans(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
-  };
-
-  const addChildInv = () => setChildInvestments(prev => [...prev, { child_name: "", investment_type: "Stocks", amount: "" }]);
-  const removeChildInv = (i: number) => setChildInvestments(prev => prev.filter((_, idx) => idx !== i));
-
-  const toggleInvestmentType = (type: string) => {
-    setInvestmentTypes(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
-  };
-
-  const expenseChartData = useMemo(() => {
-    const byCategory: Record<string, number> = {};
-    expenses.forEach(e => {
-      const amt = parseFloat(e.amount) || 0;
-      if (amt > 0) byCategory[e.category] = (byCategory[e.category] || 0) + amt;
+  const toggleDebtType = (id: string) => {
+    if (id === "none") {
+      setSelectedDebtTypes(["none"]);
+      setDebts([]);
+      return;
+    }
+    setSelectedDebtTypes(prev => {
+      const filtered = prev.filter(t => t !== "none");
+      const next = filtered.includes(id) ? filtered.filter(t => t !== id) : [...filtered, id];
+      // Sync debt rows
+      const newDebts = next.map(type => {
+        const existing = debts.find(d => d.type === type);
+        return existing || { type, balance: "", interestRate: "", monthlyPayment: "", lender: "" };
+      });
+      setDebts(newDebts);
+      return next;
     });
-    return Object.entries(byCategory).map(([name, value]) => ({ name, value }));
-  }, [expenses]);
+  };
 
-  const progressPercent = (page / (TOTAL_PAGES - 1)) * 100;
+  const addBillRow = (name = "") => {
+    setBills(prev => [...prev, { name, amount: "", dueDay: "" }]);
+  };
 
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      // Save expenses
-      for (const exp of expenses) {
-        if (exp.description && parseFloat(exp.amount) > 0) {
-          await createExpense.mutateAsync({
-            description: exp.description,
-            amount: parseFloat(exp.amount),
-            category: exp.category,
-            frequency: exp.frequency,
-            expense_date: exp.expense_date,
-            priority: "medium",
+      // Save bills to bills table
+      for (const bill of bills) {
+        if (bill.name && parseFloat(bill.amount) > 0) {
+          const day = parseInt(bill.dueDay) || 1;
+          const now = new Date();
+          const dueDate = new Date(now.getFullYear(), now.getMonth(), day);
+          if (dueDate < now) dueDate.setMonth(dueDate.getMonth() + 1);
+
+          await addBill.mutateAsync({
+            merchant: bill.name,
+            amount: parseFloat(bill.amount),
+            due_date: dueDate.toISOString().split("T")[0],
+            frequency: "monthly",
+            category: null,
+            status: "upcoming",
           });
         }
       }
 
-      // Save loans
-      for (const loan of loans) {
-        if (parseFloat(loan.amount) > 0) {
-          await createLoan.mutateAsync({
-            loan_type: loan.loan_type,
-            amount: parseFloat(loan.amount),
-            interest_rate: parseFloat(loan.interest_rate) || 0,
-            monthly_payment: parseFloat(loan.monthly_payment) || 0,
-            provider_name: loan.provider_name || null,
-            provider_phone: loan.provider_phone || null,
-            provider_website: loan.provider_website || null,
-            start_date: loan.start_date || null,
+      // Save debts
+      for (const debt of debts) {
+        if (parseFloat(debt.balance) > 0) {
+          await addDebt.mutateAsync({
+            creditor: debt.lender || debt.type,
+            type: debt.type,
+            balance: parseFloat(debt.balance),
+            interest_rate: parseFloat(debt.interestRate) || 0,
+            monthly_payment: parseFloat(debt.monthlyPayment) || 0,
+            due_date: null,
+            status: "current",
+            notes: null,
+            payment_url: null,
           });
         }
       }
 
-      // Save child investments
-      for (const ci of childInvestments) {
-        if (ci.child_name && parseFloat(ci.amount) > 0) {
-          await createChildInv.mutateAsync({
-            child_name: ci.child_name,
-            investment_type: ci.investment_type,
-            amount: parseFloat(ci.amount),
-          });
-        }
-      }
-
-      // Save main financial profile
+      // Save user_finances
       await upsertFinances.mutateAsync({
-        monthly_income: parseFloat(monthlyIncome) || 0,
-        total_debt: parseFloat(totalDebt) || 0,
-        credit_score: parseInt(creditScore) || null,
+        monthly_income: totalIncome,
+        total_debt: totalDebtBalance,
+        credit_score: skipCredit ? null : (parseInt(creditScore) || null),
         savings_goal: parseFloat(savingsGoal) || 0,
-        current_savings: parseFloat(currentSavings) || 0,
-        has_student_loans: hasStudentLoans,
-        invests,
-        investment_types: investmentTypes,
+        current_savings: totalSavings,
+        has_student_loans: selectedDebtTypes.includes("student_loan"),
+        invests: parseFloat(investmentsSavings) > 0,
+        investment_types: [],
         onboarding_completed: true,
       });
+
+      // Invalidate all money-related queries
+      queryClient.invalidateQueries({ queryKey: ["bills"] });
+      queryClient.invalidateQueries({ queryKey: ["debts"] });
+      queryClient.invalidateQueries({ queryKey: ["user_finances"] });
 
       toast.success("Your financial plan is ready!");
       onComplete();
     } catch (err: any) {
-      toast.error("Failed to save: " + (err.message || "Unknown error"));
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const pageVariants = {
-    enter: { opacity: 0, x: 40 },
-    center: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -40 },
-  };
+  const progress = (step / TOTAL_STEPS) * 100;
+
+  const inputClass = "w-full h-11 px-3 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition";
+  const currencyInputClass = "w-full h-11 pl-7 pr-3 rounded-lg border border-border bg-background text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/20 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        {/* Progress */}
-        {page > 0 && (
-          <div className="mb-6">
-            <div className="flex justify-between text-xs text-muted-foreground mb-2">
-              <span>Step 1 of 3 — Financial Intake</span>
-              <span>Page {page} of {TOTAL_PAGES - 1}</span>
-            </div>
-            <Progress value={progressPercent} className="h-2" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div
+        className="w-full max-w-[520px] bg-card rounded-xl shadow-2xl border border-border overflow-hidden"
+        style={{ fontFamily: "Inter, sans-serif" }}
+      >
+        {/* Progress bar */}
+        <div className="px-6 pt-5 pb-0">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+            <span>Step {step} of {TOTAL_STEPS}</span>
+            <span>{Math.round(progress)}%</span>
           </div>
-        )}
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+        </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={page}
-            variants={pageVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.25 }}
-          >
-            <div className="bg-card rounded-3xl border border-border shadow-lg p-8">
-              {/* PAGE 0 - Welcome */}
-              {page === 0 && (
-                <div className="text-center space-y-6 py-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                    <Sparkles className="w-4 h-4" />
-                    Financial Freedom Plan
+        {/* Content */}
+        <div className="px-6 pt-5 pb-6" style={{ minHeight: 320 }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* STEP 1 — Income */}
+              {step === 1 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">What's your monthly take-home income?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">After taxes, what hits your account each month?</p>
                   </div>
-                  <h1 className="text-3xl font-bold text-foreground">
-                    Build Your Financial Freedom Plan
-                  </h1>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    This will take 15–30 minutes. Ready to take control of your finances, {firstName}?
-                  </p>
-                  <div className="bg-accent/30 rounded-2xl p-6 max-w-md mx-auto">
-                    <Quote className="w-5 h-5 text-primary mb-2 mx-auto" />
-                    <p className="text-sm italic text-foreground">"{quote.text}"</p>
-                    <p className="text-xs text-muted-foreground mt-2">— {quote.author}</p>
-                  </div>
-                  <Button
-                    onClick={() => setPage(1)}
-                    className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground px-8 py-3 rounded-xl text-base font-semibold"
-                  >
-                    Let's Begin <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+
+                  {!hasMultipleSources && (
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        placeholder="4,000"
+                        className={currencyInputClass}
+                        value={monthlyIncome}
+                        onChange={e => setMonthlyIncome(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div
+                      onClick={() => setHasMultipleSources(!hasMultipleSources)}
+                      className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${hasMultipleSources ? "bg-primary" : "bg-muted"}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${hasMultipleSources ? "translate-x-4" : "translate-x-0.5"}`} />
+                    </div>
+                    <span className="text-sm text-foreground">I have multiple income sources</span>
+                  </label>
+
+                  {hasMultipleSources && (
+                    <div className="space-y-3">
+                      {incomeSources.map((src, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <input
+                            placeholder="Source name"
+                            className={inputClass}
+                            style={{ flex: 1 }}
+                            value={src.name}
+                            onChange={e => {
+                              const next = [...incomeSources];
+                              next[i] = { ...next[i], name: e.target.value };
+                              setIncomeSources(next);
+                            }}
+                          />
+                          <div className="relative" style={{ flex: 1 }}>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                            <input
+                              type="number"
+                              placeholder="Amount"
+                              className={currencyInputClass}
+                              value={src.amount}
+                              onChange={e => {
+                                const next = [...incomeSources];
+                                next[i] = { ...next[i], amount: e.target.value };
+                                setIncomeSources(next);
+                              }}
+                            />
+                          </div>
+                          {incomeSources.length > 1 && (
+                            <button
+                              onClick={() => setIncomeSources(prev => prev.filter((_, idx) => idx !== i))}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition bg-transparent border-none cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setIncomeSources(prev => [...prev, { name: "", amount: "" }])}
+                        className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline bg-transparent border-none cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add source
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* PAGE 1 - Bills & Expenses */}
-              {page === 1 && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-destructive/10">
-                      <DollarSign className="w-5 h-5 text-destructive" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Bills & Expenses</h2>
-                      <p className="text-sm text-muted-foreground">What are your monthly expenses?</p>
-                    </div>
+              {/* STEP 2 — Monthly Bills */}
+              {step === 2 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">What are your recurring monthly bills?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Add each bill you pay every month</p>
                   </div>
 
-                  <div className="space-y-4 max-h-[45vh] overflow-y-auto pr-1">
-                    {expenses.map((exp, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 rounded-xl bg-muted/30 border border-border">
-                        <div className="col-span-4">
-                          <Label className="text-xs">Name</Label>
-                          <Input placeholder="Netflix" value={exp.description} onChange={e => updateExpense(i, "description", e.target.value)} />
+                  {/* Suggestion pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {BILL_SUGGESTIONS.filter(s => !bills.some(b => b.name === s)).map(s => (
+                      <button
+                        key={s}
+                        onClick={() => addBillRow(s)}
+                        className="px-3 py-1.5 rounded-full text-xs font-medium border border-border text-foreground hover:bg-primary/10 hover:border-primary/30 transition bg-transparent cursor-pointer"
+                      >
+                        + {s}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Bill rows */}
+                  <div className="space-y-2 max-h-[240px] overflow-y-auto">
+                    {bills.map((bill, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          placeholder="Bill name"
+                          className={inputClass}
+                          style={{ flex: 2 }}
+                          value={bill.name}
+                          onChange={e => {
+                            const next = [...bills];
+                            next[i] = { ...next[i], name: e.target.value };
+                            setBills(next);
+                          }}
+                        />
+                        <div className="relative" style={{ flex: 1 }}>
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                          <input
+                            type="number"
+                            placeholder="Amount"
+                            className={currencyInputClass}
+                            value={bill.amount}
+                            onChange={e => {
+                              const next = [...bills];
+                              next[i] = { ...next[i], amount: e.target.value };
+                              setBills(next);
+                            }}
+                          />
                         </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Amount</Label>
-                          <Input type="number" placeholder="15" value={exp.amount} onChange={e => updateExpense(i, "amount", e.target.value)} />
-                        </div>
-                        <div className="col-span-3">
-                          <Label className="text-xs">Category</Label>
-                          <Select value={exp.category} onValueChange={v => updateExpense(i, "category", v)}>
-                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {EXPENSE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Freq</Label>
-                          <Select value={exp.frequency} onValueChange={v => updateExpense(i, "frequency", v)}>
-                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="monthly">Monthly</SelectItem>
-                              <SelectItem value="yearly">Yearly</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-1 flex justify-center">
-                          <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => removeExpense(i)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <input
+                          type="number"
+                          placeholder="Day"
+                          min={1}
+                          max={31}
+                          className={inputClass}
+                          style={{ width: 64, flex: "none" }}
+                          value={bill.dueDay}
+                          onChange={e => {
+                            const next = [...bills];
+                            next[i] = { ...next[i], dueDay: e.target.value };
+                            setBills(next);
+                          }}
+                        />
+                        <button
+                          onClick={() => setBills(prev => prev.filter((_, idx) => idx !== i))}
+                          className="w-9 h-9 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition bg-transparent border-none cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
 
-                  <Button variant="outline" size="sm" onClick={addExpense} className="rounded-xl">
-                    <Plus className="w-4 h-4 mr-1" /> Add Expense
-                  </Button>
-
-                  {expenseChartData.length > 0 && (
-                    <div className="h-48">
-                      <p className="text-xs text-muted-foreground mb-2 font-medium">Spending Breakdown</p>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={expenseChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
-                            {expenseChartData.map((_, idx) => (
-                              <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => addBillRow()}
+                    className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add bill
+                  </button>
                 </div>
               )}
 
-              {/* PAGE 2 - Debt & Loans */}
-              {page === 2 && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-warning/10">
-                      <CreditCard className="w-5 h-5 text-warning" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Debt & Loans</h2>
-                      <p className="text-sm text-muted-foreground">Let's understand your debt situation</p>
-                    </div>
+              {/* STEP 3 — Debt */}
+              {step === 3 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">Do you carry any debt?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Include loans, credit cards, anything with a balance</p>
                   </div>
 
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border">
-                    <Label className="text-sm font-medium">Do you have student loans?</Label>
-                    <Switch checked={hasStudentLoans} onCheckedChange={v => { setHasStudentLoans(v); if (v && loans.length === 0) addLoan(); }} />
+                  <div className="flex flex-wrap gap-2">
+                    {DEBT_TYPES.map(dt => {
+                      const isSelected = selectedDebtTypes.includes(dt.id);
+                      return (
+                        <button
+                          key={dt.id}
+                          onClick={() => toggleDebtType(dt.id)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium border transition cursor-pointer ${
+                            isSelected
+                              ? "bg-primary/10 border-primary/40 text-primary"
+                              : "bg-transparent border-border text-foreground hover:border-primary/30"
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 inline mr-1.5" />}
+                          {dt.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {hasStudentLoans && (
-                    <div className="space-y-4 max-h-[35vh] overflow-y-auto pr-1">
-                      {loans.map((loan, i) => (
-                        <div key={i} className="p-4 rounded-xl bg-muted/30 border border-border space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-foreground">Loan {i + 1}</span>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLoan(i)}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label className="text-xs">Amount</Label>
-                              <Input type="number" placeholder="25000" value={loan.amount} onChange={e => updateLoan(i, "amount", e.target.value)} />
+                  {debts.length > 0 && (
+                    <div className="space-y-3 max-h-[220px] overflow-y-auto">
+                      {debts.map((debt, i) => (
+                        <div key={i} className="p-3 rounded-lg border border-border bg-muted/20 space-y-2">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            {DEBT_TYPES.find(d => d.id === debt.type)?.label}
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                              <input type="number" placeholder="Balance" className={currencyInputClass}
+                                value={debt.balance}
+                                onChange={e => { const n = [...debts]; n[i] = { ...n[i], balance: e.target.value }; setDebts(n); }}
+                              />
                             </div>
-                            <div>
-                              <Label className="text-xs">Interest Rate %</Label>
-                              <Input type="number" placeholder="5.5" value={loan.interest_rate} onChange={e => updateLoan(i, "interest_rate", e.target.value)} />
+                            <input type="number" placeholder="Interest %" className={inputClass}
+                              value={debt.interestRate}
+                              onChange={e => { const n = [...debts]; n[i] = { ...n[i], interestRate: e.target.value }; setDebts(n); }}
+                            />
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                              <input type="number" placeholder="Monthly payment" className={currencyInputClass}
+                                value={debt.monthlyPayment}
+                                onChange={e => { const n = [...debts]; n[i] = { ...n[i], monthlyPayment: e.target.value }; setDebts(n); }}
+                              />
                             </div>
-                            <div>
-                              <Label className="text-xs">Monthly Payment</Label>
-                              <Input type="number" placeholder="300" value={loan.monthly_payment} onChange={e => updateLoan(i, "monthly_payment", e.target.value)} />
-                            </div>
-                            <div>
-                              <Label className="text-xs">Provider Name</Label>
-                              <Input placeholder="Navient" value={loan.provider_name} onChange={e => updateLoan(i, "provider_name", e.target.value)} />
-                            </div>
+                            <input placeholder="Lender name" className={inputClass}
+                              value={debt.lender}
+                              onChange={e => { const n = [...debts]; n[i] = { ...n[i], lender: e.target.value }; setDebts(n); }}
+                            />
                           </div>
                         </div>
                       ))}
-                      <Button variant="outline" size="sm" onClick={addLoan} className="rounded-xl">
-                        <Plus className="w-4 h-4 mr-1" /> Add Loan
-                      </Button>
                     </div>
                   )}
+                </div>
+              )}
 
+              {/* STEP 4 — Savings */}
+              {step === 4 && (
+                <div className="space-y-5">
                   <div>
-                    <Label className="text-sm font-medium">Total Debt (credit cards, car loans, etc.)</Label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input type="number" placeholder="0" className="pl-7" value={totalDebt} onChange={e => setTotalDebt(e.target.value)} />
-                    </div>
+                    <h2 className="text-xl font-bold text-foreground">How much do you currently have saved?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Approximate is fine</p>
                   </div>
 
-                  {(parseFloat(totalDebt) > 0 || loans.some(l => parseFloat(l.amount) > 0)) && (
-                    <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
-                      <p className="text-sm font-medium text-foreground">Total Debt:</p>
-                      <p className="text-2xl font-bold text-warning">
-                        ${((parseFloat(totalDebt) || 0) + loans.reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0)).toLocaleString()}
-                      </p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Emergency fund</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input type="number" placeholder="0" className={currencyInputClass}
+                          value={emergencyFund} onChange={e => setEmergencyFund(e.target.value)} />
+                      </div>
                     </div>
-                  )}
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">General savings</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input type="number" placeholder="0" className={currencyInputClass}
+                          value={generalSavings} onChange={e => setGeneralSavings(e.target.value)} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-1.5 block">Investments / retirement</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input type="number" placeholder="0" className={currencyInputClass}
+                          value={investmentsSavings} onChange={e => setInvestmentsSavings(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* PAGE 3 - Credit & Savings */}
-              {page === 3 && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-success/10">
-                      <PiggyBank className="w-5 h-5 text-success" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Credit & Savings</h2>
-                      <p className="text-sm text-muted-foreground">Your credit health and savings goals</p>
-                    </div>
-                  </div>
-
+              {/* STEP 5 — Credit Score */}
+              {step === 5 && (
+                <div className="space-y-5">
                   <div>
-                    <Label className="text-sm font-medium">Credit Score (300–850)</Label>
-                    <Input type="number" min={300} max={850} placeholder="720" value={creditScore} onChange={e => setCreditScore(e.target.value)} className="mt-1" />
-                    {creditScore && (
-                      <CreditScoreGauge score={parseInt(creditScore)} />
-                    )}
+                    <h2 className="text-xl font-bold text-foreground">What's your current credit score?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">You can find this in your bank app or Credit Karma</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium">Savings Goal This Year</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                        <Input type="number" placeholder="5000" className="pl-7" value={savingsGoal} onChange={e => setSavingsGoal(e.target.value)} />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium">Current Savings</Label>
-                      <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                        <Input type="number" placeholder="1000" className="pl-7" value={currentSavings} onChange={e => setCurrentSavings(e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
+                  {!skipCredit && (
+                    <input
+                      type="number"
+                      min={300}
+                      max={850}
+                      placeholder="e.g. 720"
+                      className={inputClass}
+                      value={creditScore}
+                      onChange={e => setCreditScore(e.target.value)}
+                      autoFocus
+                    />
+                  )}
 
-                  {parseFloat(savingsGoal) > 0 && parseFloat(currentSavings) >= 0 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium text-foreground">
-                          {Math.min(100, Math.round((parseFloat(currentSavings) / parseFloat(savingsGoal)) * 100))}%
-                        </span>
-                      </div>
-                      <Progress value={Math.min(100, (parseFloat(currentSavings) / parseFloat(savingsGoal)) * 100)} className="h-3" />
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div
+                      onClick={() => { setSkipCredit(!skipCredit); if (!skipCredit) setCreditScore(""); }}
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition ${
+                        skipCredit ? "bg-primary border-primary" : "border-border bg-transparent"
+                      }`}
+                    >
+                      {skipCredit && <Check className="w-3 h-3 text-primary-foreground" />}
                     </div>
+                    <span className="text-sm text-muted-foreground">I don't know my score</span>
+                  </label>
+
+                  {creditScore && !skipCredit && parseInt(creditScore) >= 300 && parseInt(creditScore) <= 850 && (
+                    <CreditScoreGauge score={parseInt(creditScore)} />
                   )}
                 </div>
               )}
 
-              {/* PAGE 4 - Income & Investment */}
-              {page === 4 && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-primary/10">
-                      <TrendingUp className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-foreground">Income & Investments</h2>
-                      <p className="text-sm text-muted-foreground">Your earning and investment profile</p>
-                    </div>
-                  </div>
-
+              {/* STEP 6 — Savings Goal */}
+              {step === 6 && (
+                <div className="space-y-5">
                   <div>
-                    <Label className="text-sm font-medium">Monthly Income (after tax)</Label>
-                    <div className="relative mt-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input type="number" placeholder="4000" className="pl-7" value={monthlyIncome} onChange={e => setMonthlyIncome(e.target.value)} />
-                    </div>
+                    <h2 className="text-xl font-bold text-foreground">What's your savings goal for this year?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">How much do you want to save total by December?</p>
                   </div>
 
-                  <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border border-border">
-                    <Label className="text-sm font-medium">Do you invest?</Label>
-                    <Switch checked={invests} onCheckedChange={setInvests} />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                    <input
+                      type="number"
+                      placeholder="10,000"
+                      className={currencyInputClass}
+                      value={savingsGoal}
+                      onChange={e => setSavingsGoal(e.target.value)}
+                      autoFocus
+                    />
                   </div>
-
-                  {invests && (
-                    <div className="space-y-4">
-                      <Label className="text-sm font-medium">Investment Types</Label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {INVESTMENT_TYPES.map(type => (
-                          <label key={type} className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border cursor-pointer hover:bg-accent/20 transition-colors">
-                            <Checkbox checked={investmentTypes.includes(type)} onCheckedChange={() => toggleInvestmentType(type)} />
-                            <span className="text-sm">{type}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <div className="pt-2">
-                        <Label className="text-sm font-medium">Child Investments (optional)</Label>
-                        <div className="space-y-3 mt-2">
-                          {childInvestments.map((ci, i) => (
-                            <div key={i} className="grid grid-cols-12 gap-2 items-end p-3 rounded-xl bg-muted/30 border border-border">
-                              <div className="col-span-4">
-                                <Input placeholder="Child name" value={ci.child_name} onChange={e => setChildInvestments(prev => prev.map((c, idx) => idx === i ? { ...c, child_name: e.target.value } : c))} />
-                              </div>
-                              <div className="col-span-4">
-                                <Select value={ci.investment_type} onValueChange={v => setChildInvestments(prev => prev.map((c, idx) => idx === i ? { ...c, investment_type: v } : c))}>
-                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    {INVESTMENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="col-span-3">
-                                <Input type="number" placeholder="Amount" value={ci.amount} onChange={e => setChildInvestments(prev => prev.map((c, idx) => idx === i ? { ...c, amount: e.target.value } : c))} />
-                              </div>
-                              <div className="col-span-1">
-                                <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => removeChildInv(i)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                          <Button variant="outline" size="sm" onClick={addChildInv} className="rounded-xl">
-                            <Plus className="w-4 h-4 mr-1" /> Add Child Investment
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Navigation */}
-              {page > 0 && (
-                <div className="flex justify-between mt-8 pt-4 border-t border-border">
-                  <Button variant="ghost" onClick={() => setPage(p => p - 1)} className="rounded-xl">
-                    <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                  </Button>
-                  {page < TOTAL_PAGES - 1 ? (
-                    <Button onClick={() => setPage(p => p + 1)} className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground rounded-xl">
-                      Continue <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  ) : (
-                    <Button onClick={handleSubmit} disabled={saving} className="bg-gradient-to-r from-primary to-accent-foreground text-primary-foreground rounded-xl px-8">
-                      {saving ? "Saving…" : "Complete Setup"} <Sparkles className="w-4 h-4 ml-1" />
-                    </Button>
-                  )}
+              {/* STEP 7 — Summary */}
+              {step === 7 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">Your financial plan is ready</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Here's a summary of everything you entered</p>
+                  </div>
+
+                  <div className="rounded-lg border border-border divide-y divide-border">
+                    <SummaryRow label="Monthly income" value={`$${totalIncome.toLocaleString()}`} />
+                    <SummaryRow label="Total bills" value={`$${totalBills.toLocaleString()}/mo`} />
+                    <SummaryRow label="Total debt" value={totalDebtBalance > 0 ? `$${totalDebtBalance.toLocaleString()}` : "None"} />
+                    <SummaryRow label="Current savings" value={`$${totalSavings.toLocaleString()}`} />
+                    <SummaryRow label="Credit score" value={skipCredit || !creditScore ? "Not provided" : creditScore} />
+                    <SummaryRow label="Savings goal" value={savingsGoal ? `$${parseFloat(savingsGoal).toLocaleString()}` : "Not set"} />
+                  </div>
                 </div>
               )}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Footer — Back / Continue */}
+        <div className="px-6 pb-5 flex items-center justify-between">
+          {step > 1 ? (
+            <button
+              onClick={() => setStep(s => s - 1)}
+              className="flex items-center gap-1.5 px-4 h-11 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition bg-transparent border border-border cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {step < 7 ? (
+            <button
+              onClick={() => setStep(s => s + 1)}
+              disabled={!canContinue()}
+              className={`flex items-center gap-1.5 px-6 h-11 rounded-lg text-sm font-semibold transition cursor-pointer border-none ${
+                canContinue()
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              }`}
+            >
+              Continue <ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 h-11 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition cursor-pointer border-none"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Building plan...
+                </>
+              ) : (
+                <>Build my financial plan <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
+          )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/* ── Summary Row ── */
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold text-foreground">{value}</span>
     </div>
   );
 }
@@ -547,11 +636,9 @@ function CreditScoreGauge({ score }: { score: number }) {
   const label = clampedScore >= 670 ? "Good" : clampedScore >= 580 ? "Fair" : "Poor";
 
   return (
-    <div className="flex flex-col items-center py-4">
-      <svg viewBox="0 0 200 120" className="w-48">
-        {/* Background arc */}
+    <div className="flex flex-col items-center py-2">
+      <svg viewBox="0 0 200 120" className="w-40">
         <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" strokeLinecap="round" />
-        {/* Score arc */}
         <path
           d="M 20 100 A 80 80 0 0 1 180 100"
           fill="none"
