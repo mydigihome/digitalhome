@@ -106,7 +106,14 @@ export default function SettingsPage() {
   const [profileData, setProfileData] = useState({ full_name: "", handle: "", email: "", location: "" });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(isDark);
-  const [selectedTheme, setSelectedTheme] = useState("Emerald");
+  const [selectedTheme, setSelectedTheme] = useState(() => {
+    const savedName = localStorage.getItem("dh_theme_name");
+    if (savedName) {
+      const match = ACCENT_THEMES.find(t => t.name === savedName);
+      if (match) return match.name;
+    }
+    return "Emerald";
+  });
   const [currentPlan, setCurrentPlan] = useState("free");
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [studioUnlocked, setStudioUnlocked] = useState(false);
