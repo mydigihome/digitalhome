@@ -562,7 +562,7 @@ export default function SettingsPage() {
                   <div style={{ display: "flex", alignItems: "flex-end", paddingBottom: 2 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "10px 14px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 10 }}>
                       <span style={{ fontSize: 13, fontWeight: 500, color: text1, fontFamily: "Inter, sans-serif" }}>Daily Scripture</span>
-                      <button onClick={() => setShowScripture(!showScripture)} style={{ width: 44, height: 24, borderRadius: 12, border: "none", background: showScripture ? "#10B981" : "#D1D5DB", cursor: "pointer", position: "relative", transition: "background 200ms" }}>
+                      <button onClick={() => { const next = !showScripture; setShowScripture(next); localStorage.setItem("dh_scripture", next.toString()); upsertPrefs.mutate({ show_scripture_card: next } as any); }} style={{ width: 44, height: 24, borderRadius: 12, border: "none", background: showScripture ? "#10B981" : "#D1D5DB", cursor: "pointer", position: "relative", transition: "background 200ms" }}>
                         <div style={{ width: 18, height: 18, borderRadius: "50%", background: "white", position: "absolute", top: 3, left: showScripture ? 23 : 3, transition: "left 200ms" }} />
                       </button>
                     </div>

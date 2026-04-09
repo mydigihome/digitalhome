@@ -68,14 +68,35 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     setBody(drafts[next].replace(/{name}/g, firstName));
   };
 
-  const handleMailto = () => {
+  const handleMailto = async () => {
     if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
+    // Track sent email
+    if (user) {
+      await (supabase as any).from("contact_emails").insert({
+        user_id: user.id,
+        contact_id: active.id,
+        content: `Subject: ${subject}\n\n${body}`,
+        tone: "professional",
+        sent_at: new Date().toISOString(),
+      });
+    }
     const mailto = `mailto:${encodeURIComponent(active.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailto;
     toast.success("Email app opened");
+  };
+
+  const handleSaveDraft = async () => {
+    if (!user) return;
+    await (supabase as any).from("email_drafts").insert({
+      user_id: user.id,
+      contact_id: active.id,
+      content: `Subject: ${subject}\n\n${body}`,
+      tone: "professional",
+    });
+    toast.success("Draft saved");
   };
 
   const handleGmailDraft = async () => {
