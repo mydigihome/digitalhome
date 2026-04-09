@@ -4,12 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { format, formatDistanceToNow, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
-import { type Task } from "@/hooks/useTasks";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Users, Copy, Mail, Send, MapPin, Calendar, Clock,
-  CheckCircle, HelpCircle, XCircle, Eye, X, Globe, Lock,
-  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, Link,
+  CheckCircle, CheckCircle2, Circle, HelpCircle, XCircle, Eye, X, Globe, Lock,
+  Trash2, ExternalLink, Plus, Crown, UserPlus, ChevronLeft, ChevronDown, Link,
+  AlertTriangle, Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,11 @@ import {
   useAddEventGuests, useDeleteEventGuest, useUpsertEventDetails,
   type EventGuest,
 } from "@/hooks/useEvents";
+import {
+  useGoalStages, useGoalTasks, useCreateGoalStage, useCreateGoalTask,
+  useUpdateGoalTask, useDeleteGoalStage, useDeleteGoalTask,
+  type GoalStage, type GoalTask,
+} from "@/hooks/useGoals";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useCollaborators,
@@ -82,19 +87,6 @@ interface Props {
   projectData?: any;
 }
 
-type PrepTask = Task & {
-  ai_generated?: boolean | null;
-  labels?: string[] | null;
-};
-
-const sortPrepTasks = (tasks: PrepTask[]) =>
-  [...tasks].sort((a, b) => {
-    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
-    if (a.due_date) return -1;
-    if (b.due_date) return 1;
-    return a.position - b.position;
-  });
-
 export default function EventDetailView({ projectId, projectName, coverImage, projectData }: Props) {
   const navigate = useNavigate();
   const { data: event } = useEventDetails(projectId);
@@ -103,6 +95,15 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const addGuests = useAddEventGuests();
   const deleteGuest = useDeleteEventGuest();
   const { user } = useAuth();
+
+  // Use goal_stages and goal_tasks for preparation stages (same as goals)
+  const { data: stages = [], isLoading: stagesLoading } = useGoalStages(projectId);
+  const { data: tasks = [], isLoading: tasksLoading } = useGoalTasks(projectId);
+  const createStage = useCreateGoalStage();
+  const createTask = useCreateGoalTask();
+  const updateTask = useUpdateGoalTask();
+  const deleteStage = useDeleteGoalStage();
+  const deleteTask = useDeleteGoalTask();
 
   const { data: allCollaborators = [] } = useCollaborators();
   const createCollab = useCreateCollaborator();
@@ -117,14 +118,19 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
   const [emailBody, setEmailBody] = useState("");
   const [showCoHostInvite, setShowCoHostInvite] = useState(false);
   const [coHostEmail, setCoHostEmail] = useState("");
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // Stages UI state (matching goal detail)
+  const [expandedStages, setExpandedStages] = useState<Set<string>>(new Set());
+  const [addingTaskToStage, setAddingTaskToStage] = useState<string | null>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [addingStageName, setAddingStageName] = useState("");
   const [showAddStage, setShowAddStage] = useState(false);
-  const [newStageTitle, setNewStageTitle] = useState("");
-  const [newStageDueDate, setNewStageDueDate] = useState("");
-  const [addingStage, setAddingStage] = useState(false);
-  const [prepTasks, setPrepTasks] = useState<PrepTask[]>([]);
+
+  // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteChecked, setDeleteChecked] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   // Use event_details data, falling back to project-level data for imported events
   const effectiveEvent = event || (projectData ? {
@@ -147,34 +153,68 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     updated_at: projectData.updated_at,
   } as any : null);
 
-  // Load existing tasks only
+  // Auto-expand all stages on load
   useEffect(() => {
-    if (!projectId || !user) return;
-    let cancelled = false;
-    const loadTasks = async () => {
-      const { data: existingTasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("position", { ascending: true });
-      if (cancelled) return;
-      setPrepTasks(sortPrepTasks((existingTasks as PrepTask[] | null) || []));
-    };
-    loadTasks();
-    return () => { cancelled = true; };
-  }, [projectId, user]);
+    if (stages.length > 0 && expandedStages.size === 0) {
+      setExpandedStages(new Set(stages.map(s => s.id)));
+    }
+  }, [stages]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedStages(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleTask = async (task: GoalTask) => {
+    const wasCompleted = task.completed;
+    await updateTask.mutateAsync({
+      id: task.id,
+      completed: !wasCompleted,
+      completed_at: wasCompleted ? null : new Date().toISOString(),
+    });
+  };
+
+  const handleAddTask = async (stageId: string) => {
+    if (!newTaskTitle.trim()) return;
+    const stageTasks = tasks.filter(t => t.stage_id === stageId);
+    await createTask.mutateAsync({
+      stage_id: stageId,
+      project_id: projectId,
+      title: newTaskTitle,
+      position: stageTasks.length,
+    });
+    setNewTaskTitle("");
+    setAddingTaskToStage(null);
+  };
+
+  const handleAddStage = async () => {
+    if (!addingStageName.trim()) return;
+    await createStage.mutateAsync({
+      project_id: projectId,
+      name: addingStageName,
+      position: stages.length,
+    });
+    setAddingStageName("");
+    setShowAddStage(false);
+  };
 
   const handleDeleteEvent = async () => {
     if (!user) return;
     setDeleting(true);
     try {
-      // Delete tasks linked to this project
+      // Delete goal_tasks and goal_stages linked to this project
+      await (supabase as any).from("goal_tasks").delete().eq("project_id", projectId);
+      await (supabase as any).from("goal_stages").delete().eq("project_id", projectId);
+      // Delete old tasks too
       await supabase.from("tasks").delete().eq("project_id", projectId);
-      // Delete event guests
+      // Delete event guests, questions, details
       if (event?.id) {
-        await supabase.from("event_rsvp_questions").delete().eq("event_id", event.id);
-        await supabase.from("event_guests").delete().eq("event_id", event.id);
-        await supabase.from("event_details").delete().eq("id", event.id);
+        await (supabase as any).from("event_rsvp_questions").delete().eq("event_id", event.id);
+        await (supabase as any).from("event_guests").delete().eq("event_id", event.id);
+        await (supabase as any).from("event_details").delete().eq("id", event.id);
       }
       // Delete the project
       await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id);
@@ -185,6 +225,21 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
       toast.error("Delete failed. Try again.");
     } finally {
       setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleArchiveEvent = async () => {
+    if (!user) return;
+    setArchiving(true);
+    try {
+      await supabase.from("projects").update({ archived: true }).eq("id", projectId).eq("user_id", user.id);
+      toast.success("Event archived");
+      navigate("/projects");
+    } catch (e) {
+      toast.error("Archive failed. Try again.");
+    } finally {
+      setArchiving(false);
       setShowDeleteConfirm(false);
     }
   };
@@ -262,10 +317,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #374151 0%, #1F2937 100%)", zIndex: 0 }} />
         )}
 
-        {/* Dark Overlay */}
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%)", zIndex: 1 }} />
 
-        {/* Back Button */}
         <button
           onClick={() => navigate("/projects")}
           className="absolute flex items-center justify-center rounded-full cursor-pointer transition-all duration-200"
@@ -281,7 +334,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           <ChevronLeft className="h-6 w-6" style={{ color: "#1F2937" }} />
         </button>
 
-        {/* Event Type Badge */}
         <div
           className="absolute"
           style={{
@@ -300,7 +352,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           {eventType}
         </div>
 
-        {/* Event Title */}
         <h1
           className="absolute font-bold"
           style={{
@@ -345,7 +396,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             <div>
               <p className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF", marginBottom: 6 }}>Date & Time</p>
               <p className="font-semibold" style={{ fontSize: 16, color: "#1F2937", lineHeight: 1.4 }}>
-                {format(new Date(effectiveEvent.event_date), "EEEE, MMMM d, yyyy")} • {format(new Date(effectiveEvent.event_date), "h:mm a")}
+                {format(new Date(effectiveEvent.event_date), "EEEE, MMMM d, yyyy")} {effectiveEvent.event_date.includes("T") && `\u2022 ${format(new Date(effectiveEvent.event_date), "h:mm a")}`}
               </p>
             </div>
           </motion.div>
@@ -391,6 +442,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                 borderRadius: 24,
                 fontSize: 14, fontWeight: 600,
                 color: "#1F2937",
+                minHeight: 44,
               }}
               onMouseEnter={e => { e.currentTarget.style.background = "#F9FAFB"; e.currentTarget.style.borderColor = "#D1D5DB"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#E5E7EB"; }}
@@ -509,7 +561,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                 );
               })}
 
-              {/* Counts Row */}
               <div className="flex justify-around text-center" style={{ borderTop: "1px solid #F3F4F6", paddingTop: 24, paddingBottom: 8, margin: "0 16px" }}>
                 <div>
                   <span className="block font-bold" style={{ fontSize: 28, color: "#1F2937", marginBottom: 4 }}><AnimatedCount value={counts.accepted} /></span>
@@ -523,7 +574,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
             </div>
           )}
 
-          {/* RSVP Deadline */}
           {effectiveEvent.rsvp_deadline && (
             <p className="text-center mt-6" style={{ fontSize: 13, color: "#9CA3AF" }}>
               RSVP Deadline: {format(new Date(effectiveEvent.rsvp_deadline), "MMMM d, yyyy")}
@@ -534,162 +584,310 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           )}
         </motion.div>
 
-        {/* ═══ PREPARATION TIMELINE ═══ */}
+        {/* ═══ PREPARATION STAGES — matching GoalDetailView exactly ═══ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="mt-10"
+          style={{ maxWidth: 800 }}
         >
-          <p className="font-bold uppercase" style={{ fontSize: 11, letterSpacing: "0.8px", color: "#9CA3AF", margin: "32px 0 16px" }}>
-            Preparation Timeline
-          </p>
-          {prepTasks.length === 0 && !showAddStage ? (
-            <div className="text-center" style={{ background: "white", border: "2px dashed #E5E7EB", borderRadius: 20, padding: "32px 24px" }}>
-              <Clock className="mx-auto mb-3" style={{ width: 36, height: 36, color: "#D1D5DB" }} />
-              <p className="font-semibold mb-1" style={{ fontSize: 15, color: "#1F2937" }}>No stages yet.</p>
-            </div>
-          ) : (
-            <div style={{ background: "white", border: "1.5px solid #F3F4F6", borderRadius: 20, overflow: "hidden" }}>
-              {[...prepTasks]
-                .sort((a, b) => {
-                  if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
-                  return a.position - b.position;
-                })
-                .map((task, i) => {
-                  const isDone = task.status === "done" || completedTasks.has(task.id);
-                  return (
-                    <div
-                      key={task.id}
-                      className="flex items-start gap-3 transition-colors"
-                      style={{ padding: "14px 20px", borderBottom: i < prepTasks.length - 1 ? "1px solid #F3F4F6" : "none" }}
-                      onMouseEnter={e => (e.currentTarget.style.background = "#F9FAFB")}
-                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                    >
-                      <button
-                        onClick={async () => {
-                          const newStatus = isDone ? "backlog" : "done";
-                          setCompletedTasks(prev => {
-                            const next = new Set(prev);
-                            if (isDone) next.delete(task.id); else next.add(task.id);
-                            return next;
-                          });
-                          await supabase.from("tasks").update({ status: newStatus }).eq("id", task.id);
-                        }}
-                        className="mt-0.5 shrink-0 cursor-pointer"
-                        style={{
-                          width: 22, height: 22, borderRadius: "50%",
-                          border: `2px solid ${isDone ? "#10B981" : "#D1D5DB"}`,
-                          background: isDone ? "#10B981" : "transparent",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          transition: "all 200ms",
-                        }}
-                      >
-                        {isDone && <CheckCircle className="h-3 w-3 text-white" />}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p style={{
-                          fontSize: 14, fontWeight: 500, color: isDone ? "#9CA3AF" : "#1F2937",
-                          textDecoration: isDone ? "line-through" : "none",
-                          lineHeight: 1.4,
-                        }}>
-                          {task.title}
-                        </p>
-                        {task.due_date && (
-                          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
-                            Due {format(new Date(task.due_date), "MMM d, yyyy")}
-                          </p>
-                        )}
-                      </div>
-                      {(task as any).ai_generated && (
-                        <span style={{
-                          fontSize: 10, fontWeight: 600, color: "#8B5CF6",
-                          background: "rgba(139,92,246,0.1)", padding: "2px 8px",
-                          borderRadius: 6, whiteSpace: "nowrap",
-                        }}>
-                          AI
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+          <div className="flex items-center justify-between mb-8 px-2">
+            <h2 className="font-bold" style={{ fontSize: 32, color: "#1F2937", letterSpacing: "-0.02em" }}>
+              Stages
+            </h2>
+            <button
+              onClick={() => setShowAddStage(true)}
+              className="flex items-center gap-1.5 transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+              style={{
+                padding: "10px 20px",
+                background: "rgba(123,94,167,0.08)",
+                borderRadius: 14,
+                border: "none",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "#7B5EA7",
+                minHeight: 44,
+              }}
+            >
+              <Plus className="h-[18px] w-[18px]" style={{ color: "#7B5EA7" }} />
+              Add Stage
+            </button>
+          </div>
 
-              <div style={{ padding: "10px 20px", borderTop: prepTasks.length > 0 ? "1px solid #F3F4F6" : "none", display: "flex", gap: 12, alignItems: "center" }}>
-                {!showAddStage ? (
-                  <button
-                    onClick={() => setShowAddStage(true)}
-                    className="cursor-pointer"
-                    style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6", background: "transparent", border: "none" }}
-                  >
-                    + Add Stage
-                  </button>
-                ) : (
-                  <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
-                    <div style={{ flex: 1, minWidth: 150 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", display: "block", marginBottom: 4 }}>Title</label>
-                      <input
-                        value={newStageTitle}
-                        onChange={e => setNewStageTitle(e.target.value)}
-                        placeholder="e.g. Confirm catering"
-                        style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #E5E7EB", borderRadius: 8, fontSize: 13, color: "#1F2937", outline: "none" }}
-                      />
-                    </div>
-                    <div style={{ width: 140 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", display: "block", marginBottom: 4 }}>Due date</label>
-                      <input
-                        type="date"
-                        value={newStageDueDate}
-                        onChange={e => setNewStageDueDate(e.target.value)}
-                        style={{ width: "100%", padding: "8px 10px", border: "1.5px solid #E5E7EB", borderRadius: 8, fontSize: 13, color: "#1F2937", outline: "none" }}
-                      />
-                    </div>
-                    <button
-                      disabled={!newStageTitle.trim() || addingStage}
-                      onClick={async () => {
-                        if (!newStageTitle.trim() || !user) return;
-                        setAddingStage(true);
-                        const { error } = await supabase.from("tasks").insert({
-                          project_id: projectId,
-                          user_id: user.id,
-                          title: newStageTitle.trim(),
-                          due_date: newStageDueDate || null,
-                          status: "backlog",
-                          priority: "medium",
-                          position: prepTasks.length,
-                        });
-                        setAddingStage(false);
-                        if (error) { toast.error("Failed to add stage"); return; }
-                        setNewStageTitle("");
-                        setNewStageDueDate("");
-                        setShowAddStage(false);
-                        toast.success("Stage added");
-                      }}
-                      style={{
-                        padding: "8px 16px", borderRadius: 8, border: "none",
-                        background: "#8B5CF6", color: "white", fontSize: 13, fontWeight: 600,
-                        cursor: newStageTitle.trim() ? "pointer" : "not-allowed",
-                        opacity: newStageTitle.trim() ? 1 : 0.5,
-                      }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => { setShowAddStage(false); setNewStageTitle(""); setNewStageDueDate(""); }}
-                      style={{ padding: "8px 12px", borderRadius: 8, border: "1.5px solid #E5E7EB", background: "white", fontSize: 13, color: "#6B7280", cursor: "pointer" }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </div>
+          {/* Empty State */}
+          {stages.length === 0 && !showAddStage && (
+            <div
+              className="flex flex-col items-center justify-center py-16"
+              style={{ borderRadius: 20, border: "2px dashed rgba(0,0,0,0.08)" }}
+            >
+              <Clock className="h-8 w-8 mb-3" style={{ color: "rgba(123,94,167,0.3)" }} />
+              <p className="text-sm mb-1" style={{ color: "#6B7280" }}>No stages yet.</p>
             </div>
           )}
+
+          {/* Stage Cards — pixel-identical to GoalDetailView */}
+          <div className="space-y-4">
+            {stages.map((stage, si) => {
+              const stageTasks = tasks.filter(t => t.stage_id === stage.id).sort((a, b) => a.position - b.position);
+              const stageCompleted = stageTasks.filter(t => t.completed).length;
+              const stageTotal = stageTasks.length;
+              const isExpanded = expandedStages.has(stage.id);
+
+              return (
+                <div key={stage.id} className="space-y-0">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: si * 0.05 }}
+                    className="overflow-hidden transition-all duration-300"
+                    style={{
+                      background: "white",
+                      border: "1.5px solid rgba(0,0,0,0.08)",
+                      borderRadius: 20,
+                      padding: 24,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                    }}
+                    onMouseEnter={e => {
+                      if (!isExpanded) {
+                        (e.currentTarget as HTMLElement).style.borderColor = "rgba(123,94,167,0.2)";
+                        (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
+                    }}
+                  >
+                    {/* Stage Header */}
+                    <div className="flex items-start gap-4 cursor-pointer" onClick={() => toggleExpand(stage.id)}>
+                      <div
+                        className="flex items-center justify-center shrink-0"
+                        style={{
+                          width: 40, height: 40,
+                          borderRadius: "50%",
+                          background: "rgba(123,94,167,0.12)",
+                          border: "1px solid rgba(123,94,167,0.3)",
+                          fontSize: 18, fontWeight: 700,
+                          color: "#7B5EA7",
+                        }}
+                      >
+                        {si + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold leading-snug" style={{ fontSize: 20, color: "#1F2937", marginBottom: 4 }}>
+                          {stage.name}
+                        </h4>
+                        {stage.description && (
+                          <p style={{ fontSize: 14, color: "#6B7280", lineHeight: 1.6 }}>{stage.description}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="font-semibold" style={{ fontSize: 13, color: "#9CA3AF" }}>
+                          {stageCompleted} / {stageTotal}
+                        </span>
+                        <ChevronDown
+                          className="transition-transform duration-300"
+                          style={{
+                            width: 20, height: 20,
+                            color: "#9CA3AF",
+                            transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Task List (Expandable) */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-6 mt-6 space-y-1" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                            {stageTasks.map(task => (
+                              <div
+                                key={task.id}
+                                className="group flex items-start gap-3 transition-all duration-200 rounded-lg"
+                                style={{ padding: "12px 0" }}
+                                onMouseEnter={e => {
+                                  (e.currentTarget as HTMLElement).style.background = "rgba(123,94,167,0.03)";
+                                  (e.currentTarget as HTMLElement).style.margin = "0 -12px";
+                                  (e.currentTarget as HTMLElement).style.padding = "12px";
+                                }}
+                                onMouseLeave={e => {
+                                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                                  (e.currentTarget as HTMLElement).style.margin = "0";
+                                  (e.currentTarget as HTMLElement).style.padding = "12px 0";
+                                }}
+                              >
+                                <button onClick={() => handleToggleTask(task)} className="shrink-0 mt-0.5">
+                                  {task.completed ? (
+                                    <motion.div
+                                      initial={{ scale: 0.8 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    >
+                                      <div
+                                        className="flex items-center justify-center"
+                                        style={{
+                                          width: 24, height: 24,
+                                          borderRadius: "50%",
+                                          background: "linear-gradient(135deg, #7B5EA7 0%, #8B5CF6 100%)",
+                                        }}
+                                      >
+                                        <CheckCircle2 className="h-4 w-4 text-white" />
+                                      </div>
+                                    </motion.div>
+                                  ) : (
+                                    <div
+                                      className="transition-all duration-200 cursor-pointer hover:border-[#7B5EA7]"
+                                      style={{
+                                        width: 24, height: 24,
+                                        borderRadius: "50%",
+                                        border: "2px solid #D1D5DB",
+                                        background: "white",
+                                      }}
+                                    />
+                                  )}
+                                </button>
+                                <span
+                                  className="flex-1 transition-all duration-200"
+                                  style={{
+                                    fontSize: 15,
+                                    lineHeight: 1.5,
+                                    color: task.completed ? "#9CA3AF" : "#1F2937",
+                                    textDecoration: task.completed ? "line-through" : "none",
+                                  }}
+                                >
+                                  {task.title}
+                                </span>
+                                <button
+                                  onClick={() => { deleteTask.mutate(task.id); toast.success("Task removed"); }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ml-auto"
+                                >
+                                  <Trash2 className="h-4 w-4" style={{ color: "#EF4444" }} />
+                                </button>
+                              </div>
+                            ))}
+
+                            {/* Add Task Input */}
+                            {addingTaskToStage === stage.id ? (
+                              <div className="flex items-center gap-2 mt-4">
+                                <input
+                                  value={newTaskTitle}
+                                  onChange={e => setNewTaskTitle(e.target.value)}
+                                  placeholder="Add new task..."
+                                  autoFocus
+                                  className="flex-1 outline-none"
+                                  style={{
+                                    padding: "10px 14px",
+                                    border: "1px dashed rgba(123,94,167,0.3)",
+                                    borderRadius: 12,
+                                    fontSize: 14,
+                                    background: "rgba(123,94,167,0.03)",
+                                    color: "#1F2937",
+                                  }}
+                                  onFocus={e => {
+                                    e.currentTarget.style.borderStyle = "solid";
+                                    e.currentTarget.style.borderColor = "#7B5EA7";
+                                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(123,94,167,0.1)";
+                                  }}
+                                  onBlur={e => {
+                                    e.currentTarget.style.borderStyle = "dashed";
+                                    e.currentTarget.style.borderColor = "rgba(123,94,167,0.3)";
+                                    e.currentTarget.style.boxShadow = "none";
+                                  }}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") handleAddTask(stage.id);
+                                    if (e.key === "Escape") { setAddingTaskToStage(null); setNewTaskTitle(""); }
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handleAddTask(stage.id)}
+                                  className="flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105"
+                                  style={{
+                                    width: 32, height: 32,
+                                    background: "#7B5EA7",
+                                    borderRadius: 8,
+                                    color: "white",
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                                <button onClick={() => { setAddingTaskToStage(null); setNewTaskTitle(""); }} className="cursor-pointer">
+                                  <X className="h-4 w-4" style={{ color: "#9CA3AF" }} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setAddingTaskToStage(stage.id)}
+                                className="flex items-center gap-1.5 mt-3 cursor-pointer transition-colors duration-200"
+                                style={{ fontSize: 14, fontWeight: 600, color: "#7B5EA7" }}
+                              >
+                                <Plus className="h-4 w-4" /> Add task
+                              </button>
+                            )}
+
+                            {/* Delete Stage */}
+                            <div className="flex justify-end pt-3">
+                              <button
+                                onClick={() => { deleteStage.mutate(stage.id); toast.success("Stage removed"); }}
+                                className="flex items-center gap-1 transition-colors cursor-pointer text-xs"
+                                style={{ color: "#9CA3AF" }}
+                                onMouseEnter={e => (e.currentTarget.style.color = "#EF4444")}
+                                onMouseLeave={e => (e.currentTarget.style.color = "#9CA3AF")}
+                              >
+                                <Trash2 className="h-3 w-3" /> Remove stage
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Add Stage Inline */}
+          <AnimatePresence>
+            {showAddStage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex items-center gap-2 mt-4"
+              >
+                <Input
+                  value={addingStageName}
+                  onChange={e => setAddingStageName(e.target.value)}
+                  placeholder="Stage name..."
+                  className="flex-1"
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === "Enter") handleAddStage();
+                    if (e.key === "Escape") { setShowAddStage(false); setAddingStageName(""); }
+                  }}
+                />
+                <Button size="sm" onClick={handleAddStage} style={{ background: "#7B5EA7", minHeight: 44 }}>Add</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowAddStage(false); setAddingStageName(""); }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* ═══ DELETE SECTION ═══ */}
         <div className="text-center" style={{ marginTop: 48, paddingTop: 32, borderTop: "1px solid #F3F4F6" }}>
           <button
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => { setShowDeleteConfirm(true); setDeleteChecked(false); }}
             className="cursor-pointer transition-all duration-200"
-            style={{ background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#EF4444", padding: "12px 24px", borderRadius: 8 }}
+            style={{ background: "transparent", border: "none", fontSize: 15, fontWeight: 600, color: "#EF4444", padding: "12px 24px", borderRadius: 8, minHeight: 44 }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.05)")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
@@ -697,7 +895,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
           </button>
         </div>
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Confirmation Dialog — matches goal delete modal */}
         <AnimatePresence>
           {showDeleteConfirm && (
             <motion.div
@@ -712,31 +910,84 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                 style={{ background: "white", borderRadius: 24, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
                 onClick={e => e.stopPropagation()}
               >
-                <h3 className="text-lg font-semibold mb-2" style={{ color: "#1F2937" }}>Delete this event?</h3>
-                <p className="text-sm mb-6" style={{ color: "#6B7280" }}>This cannot be undone.</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold"
-                    style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteEvent}
-                    disabled={deleting}
-                    className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white"
-                    style={{ background: "#EF4444", fontSize: 14, opacity: deleting ? 0.7 : 1 }}
-                  >
-                    {deleting ? "Deleting..." : "Delete"}
-                  </button>
+                {/* Header with warning */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-center shrink-0" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(239,68,68,0.1)" }}>
+                    <AlertTriangle className="h-5 w-5" style={{ color: "#EF4444" }} />
+                  </div>
+                  <h3 className="text-lg font-semibold" style={{ color: "#1F2937" }}>Are you sure?</h3>
                 </div>
+
+                {/* Red warning box */}
+                <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                  <p className="text-sm font-medium" style={{ color: "#EF4444" }}>
+                    This action will permanently delete your project
+                  </p>
+                  <p className="text-sm mt-1" style={{ color: "#6B7280" }}>
+                    {projectName}
+                  </p>
+                </div>
+
+                {/* Checkbox confirmation */}
+                <label className="flex items-center gap-3 cursor-pointer mb-6 select-none" style={{ padding: "8px 0" }}>
+                  <button
+                    onClick={() => setDeleteChecked(!deleteChecked)}
+                    style={{
+                      width: 20, height: 20, borderRadius: 4, flexShrink: 0,
+                      border: `2px solid ${deleteChecked ? "#EF4444" : "#D1D5DB"}`,
+                      background: deleteChecked ? "#EF4444" : "white",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", transition: "all 150ms",
+                    }}
+                  >
+                    {deleteChecked && <CheckCircle2 className="h-3 w-3 text-white" />}
+                  </button>
+                  <span className="text-sm" style={{ color: "#1F2937" }}>Yes, please delete</span>
+                </label>
+
+                {/* Action buttons */}
+                {deleteChecked && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2 mb-4"
+                  >
+                    <button
+                      onClick={handleDeleteEvent}
+                      disabled={deleting}
+                      className="w-full cursor-pointer transition-all py-3 rounded-xl font-semibold text-white"
+                      style={{ background: "#EF4444", fontSize: 14, opacity: deleting ? 0.7 : 1, minHeight: 44 }}
+                    >
+                      {deleting ? "Deleting..." : "Permanently Delete"}
+                    </button>
+                    <button
+                      onClick={handleArchiveEvent}
+                      disabled={archiving}
+                      className="w-full cursor-pointer transition-all py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
+                      style={{ border: "1.5px solid #E5E7EB", color: "#6B7280", fontSize: 14, minHeight: 44, opacity: archiving ? 0.7 : 1 }}
+                    >
+                      <Archive className="h-4 w-4" />
+                      {archiving ? "Archiving..." : "Archive Event"}
+                    </button>
+                  </motion.div>
+                )}
+
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-full cursor-pointer transition-all py-2.5 rounded-xl font-semibold"
+                  style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14, minHeight: 44 }}
+                >
+                  Cancel
+                </button>
+
+                <p className="text-center mt-4 text-xs" style={{ color: "#9CA3AF" }}>
+                  Archived events can be restored from Settings → Archived
+                </p>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
 
       {/* ═══ MODALS ═══ */}
 
@@ -761,8 +1012,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
               </div>
               <Textarea value={newEmails} onChange={e => setNewEmails(e.target.value)} placeholder="email1@example.com, email2@example.com" rows={4} />
               <div className="flex gap-3">
-                <button onClick={() => setShowAddGuests(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}>Cancel</button>
-                <button onClick={handleAddGuests} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white" style={{ background: "#8B5CF6", fontSize: 14 }}>Add Guests</button>
+                <button onClick={() => setShowAddGuests(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14, minHeight: 44 }}>Cancel</button>
+                <button onClick={handleAddGuests} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white" style={{ background: "#8B5CF6", fontSize: 14, minHeight: 44 }}>Add Guests</button>
               </div>
             </motion.div>
           </motion.div>
@@ -815,8 +1066,8 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                 <Textarea value={emailBody} onChange={e => setEmailBody(e.target.value)} rows={6} />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowEmailModal(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14 }}>Cancel</button>
-                <button onClick={handleSendEmail} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white inline-flex items-center justify-center gap-2" style={{ background: "#8B5CF6", fontSize: 14 }}>
+                <button onClick={() => setShowEmailModal(false)} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", fontSize: 14, minHeight: 44 }}>Cancel</button>
+                <button onClick={handleSendEmail} className="flex-1 cursor-pointer transition-all py-2.5 rounded-xl font-semibold text-white inline-flex items-center justify-center gap-2" style={{ background: "#8B5CF6", fontSize: 14, minHeight: 44 }}>
                   <Send className="h-4 w-4" /> Open Email Client
                 </button>
               </div>
@@ -887,7 +1138,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
                     }).catch((err: any) => toast.error(err.message || "Failed to invite"));
                   }}
                   className="inline-flex items-center gap-1 px-4 py-2 rounded-xl font-semibold text-white text-sm cursor-pointer"
-                  style={{ background: "#8B5CF6" }}
+                  style={{ background: "#8B5CF6", minHeight: 44 }}
                 >
                   <Plus className="h-4 w-4" /> Add
                 </button>
@@ -919,7 +1170,7 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
               )}
 
               <div className="flex justify-end">
-                <button onClick={() => setShowCoHostInvite(false)} className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937" }}>Done</button>
+                <button onClick={() => setShowCoHostInvite(false)} className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer" style={{ border: "1.5px solid #E5E7EB", color: "#1F2937", minHeight: 44 }}>Done</button>
               </div>
             </motion.div>
           </motion.div>
