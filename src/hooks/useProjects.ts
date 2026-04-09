@@ -32,7 +32,8 @@ export function useProjects() {
         .eq("archived", false)
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as Project[];
+      // Filter out any projects that were deleted in this session
+      return (data as Project[]).filter(p => !deletedProjectIds.has(p.id));
     },
     enabled: !!user,
   });
