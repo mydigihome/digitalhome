@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+const SINGLE_STRIPE_URL = "https://buy.stripe.com/6oUfZhdWa88m71a1Tsak005";
+const BUNDLE_STRIPE_URL = "https://buy.stripe.com/cNiaEXcS6dsG5X6bu2ak006";
 const STATIC_CATEGORIES = [
   "All", "Finance", "Events", "College", "AI", "Productivity",
   "Automation", "Development", "Design", "Communication",
@@ -114,6 +116,7 @@ export default function ResourcesPage() {
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
 
   useEffect(() => {
     fetchResources();
@@ -434,23 +437,65 @@ export default function ResourcesPage() {
                     }}>{r.description}</p>
 
                     <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => {
-                          if (r.resource_type === "link" || r.resource_type === "video") {
-                            if (r.url) window.open(r.url, "_blank");
-                          } else if (r.file_url) {
-                            window.open(r.file_url, "_blank");
-                          }
-                        }}
-                        style={{
-                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                          padding: "8px 14px", background: "#10B981", color: "white",
-                          border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                          cursor: "pointer", minHeight: 44,
-                        }}
-                      >
-                        {getActionIcon(r.resource_type)} {getActionLabel(r.resource_type)}
-                      </button>
+                      {(r.resource_type === "file" || r.resource_type === "template") && r.file_url ? (
+                        <>
+                          <button
+                            onClick={() => setPreviewResource(r)}
+                            style={{
+                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              padding: "8px 14px", background: isDark ? "#252528" : "#F3F4F6",
+                              color: text1, border: `1px solid ${inputBorder}`, borderRadius: 8,
+                              fontSize: 12, fontWeight: 600, cursor: "pointer", minHeight: 44,
+                            }}
+                          >
+                            <Eye size={14} /> Preview
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (isAdmin) {
+                                window.open(r.file_url!, "_blank");
+                              } else {
+                                window.location.href = SINGLE_STRIPE_URL;
+                              }
+                            }}
+                            style={{
+                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              padding: "8px 14px", background: "#10B981", color: "white",
+                              border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                              cursor: "pointer", minHeight: 44,
+                            }}
+                          >
+                            <Download size={14} /> Download
+                          </button>
+                        </>
+                      ) : !r.file_url && (r.resource_type === "file" || r.resource_type === "template") ? (
+                        <span style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                          padding: "8px 14px", background: isDark ? "#252528" : "#F9FAFB",
+                          color: text2, border: `1px solid ${inputBorder}`, borderRadius: 8,
+                          fontSize: 12, fontWeight: 500, minHeight: 44,
+                        }}>
+                          Coming soon
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (r.resource_type === "link" || r.resource_type === "video") {
+                              if (r.url) window.open(r.url, "_blank");
+                            } else if (r.file_url) {
+                              window.open(r.file_url, "_blank");
+                            }
+                          }}
+                          style={{
+                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                            padding: "8px 14px", background: "#10B981", color: "white",
+                            border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            cursor: "pointer", minHeight: 44,
+                          }}
+                        >
+                          {getActionIcon(r.resource_type)} {getActionLabel(r.resource_type)}
+                        </button>
+                      )}
                       {isAdmin && (
                         <>
                           <button onClick={() => handleEditResource(r)} style={{
@@ -657,6 +702,97 @@ export default function ResourcesPage() {
                 border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600,
                 cursor: "pointer", minHeight: 44,
               }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {previewResource && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }} onClick={() => setPreviewResource(null)}>
+          <div style={{
+            width: "100%", maxWidth: 700, height: "80vh",
+            background: isDark ? "#1C1C1E" : "white", borderRadius: 16,
+            overflow: "hidden", position: "relative", display: "flex", flexDirection: "column",
+          }} onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "14px 20px", borderBottom: `1px solid ${border}`,
+            }}>
+              <p style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
+                {previewResource.title}
+              </p>
+              <button onClick={() => setPreviewResource(null)} style={{
+                padding: 6, border: "none", background: "transparent", cursor: "pointer",
+              }}>
+                <X size={18} color={text2} />
+              </button>
+            </div>
+
+            {/* Document preview area */}
+            <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+              {previewResource.file_url ? (
+                <iframe
+                  src={previewResource.file_url}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  title="Document preview"
+                />
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <p style={{ color: text2, fontSize: 14 }}>No file available</p>
+                </div>
+              )}
+
+              {/* Blur overlay for non-admin */}
+              {!isAdmin && previewResource.file_url && (
+                <div style={{
+                  position: "absolute", top: "30%", left: 0, right: 0, bottom: 0,
+                  backdropFilter: "blur(8px)", background: "rgba(255,255,255,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <div style={{
+                    background: isDark ? "#1C1C1E" : "white",
+                    borderRadius: 16, padding: "32px 28px", textAlign: "center",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)", maxWidth: 320,
+                    border: `1px solid ${border}`,
+                  }}>
+                    {/* Lock SVG icon */}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={text2} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 16px", display: "block" }}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <p style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: "0 0 8px" }}>
+                      Purchase to unlock full access
+                    </p>
+                    <button
+                      onClick={() => { window.location.href = SINGLE_STRIPE_URL; }}
+                      style={{
+                        width: "100%", padding: "12px 20px", background: "#10B981",
+                        color: "white", border: "none", borderRadius: 10,
+                        fontSize: 14, fontWeight: 600, cursor: "pointer", minHeight: 44,
+                        marginBottom: 10,
+                      }}
+                    >
+                      Download Template
+                    </button>
+                    <button
+                      onClick={() => { window.location.href = BUNDLE_STRIPE_URL; }}
+                      style={{
+                        background: "none", border: "none", color: "#7B5EA7",
+                        fontSize: 13, fontWeight: 600, cursor: "pointer",
+                        fontFamily: "Inter, sans-serif",
+                      }}
+                    >
+                      Or get all templates for $25
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

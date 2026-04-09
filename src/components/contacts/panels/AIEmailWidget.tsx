@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { X, Paperclip, Link2, Pencil, Send, Mail } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Mail } from "lucide-react";
 import { useGmailConnection } from "@/hooks/useGmail";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
   const [sent, setSent] = useState(false);
   const { data: gmailConn } = useGmailConnection();
   const { user } = useAuth();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Reset draft when contact changes
   useEffect(() => {
@@ -65,7 +66,24 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
   const regenerate = () => {
     const next = (draftIndex + 1) % drafts.length;
     setDraftIndex(next);
-    setBody(drafts[next].replace(/{name}/g, firstName));
+    const newBody = drafts[next].replace(/{name}/g, firstName);
+    setBody(newBody);
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  const wrapSelection = (prefix: string, suffix: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = body.substring(start, end);
+    if (start === end) return; // nothing selected
+    const newBody = body.substring(0, start) + prefix + selected + suffix + body.substring(end);
+    setBody(newBody);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
   };
 
   const handleMailto = async () => {
@@ -73,7 +91,6 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
       toast.error("No email address for this contact");
       return;
     }
-    // Track sent email
     if (user) {
       await (supabase as any).from("contact_emails").insert({
         user_id: user.id,
@@ -112,11 +129,10 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
       if (error) throw error;
       if (data?.draftLink) {
         window.open(data.draftLink, "_blank");
-        toast.success("Draft saved to Gmail ");
+        toast.success("Draft saved to Gmail");
       }
       setSent(true);
     } catch {
-      // Fallback to mailto
       handleMailto();
     } finally {
       setSending(false);
@@ -141,19 +157,27 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     );
   }
 
+  const toolbarBtnStyle: React.CSSProperties = {
+    height: 32, minWidth: 32, padding: "0 8px",
+    background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6,
+    fontFamily: "Inter, sans-serif", fontSize: 13, cursor: "pointer",
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    color: "#1a1c1f",
+  };
+
   return (
     <div className="rounded-[24px] p-5" style={{ background: "#ffffff", boxShadow: "0 12px 40px rgba(70,69,84,0.06)", border: "1px solid #f0f0f5" }}>
       {/* Header */}
       {!contact ? (
         <div className="mb-3">
           <div className="text-sm font-bold text-[#1a1c1f]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            ✦ Send an email to...
+            Send an email to...
           </div>
           <div className="text-sm font-bold text-[#4648d4] mt-0.5">{active.name}</div>
           <div className="bg-[#f3f3f8] rounded-full px-3 py-1 text-[10px] font-bold text-[#767586] inline-flex mt-1">
             {statusLabel} · {active.role} · {active.location}
           </div>
-          <div className="text-[10px] text-[#767586] mt-1">Or select a contact →</div>
+          <div className="text-[10px] text-[#767586] mt-1">Or select a contact</div>
         </div>
       ) : (
         <div className="flex items-center gap-3 mb-3">
@@ -167,7 +191,6 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
               {statusLabel}
             </span>
           </div>
-          {/* No close button — always pinned */}
         </div>
       )}
 
@@ -179,23 +202,36 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
         placeholder="Subject"
       />
 
-      {/* AI Draft */}
-      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#4648d4", marginBottom: 4, marginTop: 8, fontFamily: "Inter, sans-serif" }}>AI DRAFT</div>
+      {/* AI Draft label */}
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#4648d4", marginBottom: 4, marginTop: 8, fontFamily: "Inter, sans-serif" }}>AI DRAFT</div>
 
-      {/* B / I / U toolbar */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>B</button>
-        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontStyle: "italic", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>I</button>
-        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, textDecoration: "underline", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>U</button>
-      </div>
+      {/* Toolbar + Textarea — only show when draft exists */}
+      {body.length > 0 && (
+        <>
+          {/* B / I / U toolbar */}
+          <div style={{ display: "flex", flexDirection: "row", gap: 6, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid #E5E7EB" }}>
+            <button type="button" onClick={() => wrapSelection("**", "**")} style={{ ...toolbarBtnStyle, fontWeight: 700 }}>B</button>
+            <button type="button" onClick={() => wrapSelection("_", "_")} style={{ ...toolbarBtnStyle, fontStyle: "italic" }}>I</button>
+            <button type="button" onClick={() => wrapSelection("<u>", "</u>")} style={{ ...toolbarBtnStyle, textDecoration: "underline" }}>U</button>
+          </div>
 
-      <textarea
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        style={{ width: "100%", minHeight: 180, padding: 12, fontFamily: "Inter, sans-serif", fontSize: 13, lineHeight: 1.6, color: "#1a1c1f", background: "#f3f3f8", border: "1px solid #E5E7EB", borderRadius: 8, resize: "vertical" as const, outline: "none" }}
-        onFocus={(e) => { e.currentTarget.style.borderColor = "#4648d4"; }}
-        onBlur={(e) => { e.currentTarget.style.borderColor = "#E5E7EB"; }}
-      />
+          <textarea
+            ref={textareaRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            style={{
+              width: "100%", minHeight: 180, padding: 12,
+              fontFamily: "Inter, sans-serif", fontSize: 14, lineHeight: 1.6,
+              color: "#1a1c1f", background: "#f3f3f8",
+              border: "1px solid #E5E7EB", borderRadius: 8,
+              resize: "vertical", outline: "none", display: "block", boxSizing: "border-box",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "#7B5EA7"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "#E5E7EB"; }}
+          />
+        </>
+      )}
+
       <button onClick={regenerate} style={{ fontSize: 10, color: "#4648d4", fontWeight: 700, marginTop: 4, background: "none", border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif", padding: 0 }}>
         Regenerate
       </button>
@@ -209,6 +245,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
                 onClick={handleGmailDraft}
                 disabled={sending}
                 className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 disabled:opacity-60 flex items-center justify-center gap-1.5"
+                style={{ minHeight: 44 }}
               >
                 {sending ? "Saving..." : "Save to Gmail Drafts"}
               </button>
@@ -216,6 +253,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
                 onClick={handleMailto}
                 className="bg-[#f3f3f8] text-[#374151] rounded-[8px] font-bold text-xs py-2.5 px-3 flex items-center gap-1"
                 title="Open in Email App"
+                style={{ minHeight: 44 }}
               >
                 <Mail className="w-3 h-3" /> Email App
               </button>
@@ -224,6 +262,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
             <button
               onClick={handleMailto}
               className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5"
+              style={{ minHeight: 44 }}
             >
               <Mail className="w-3 h-3" /> Open in Mail
             </button>
@@ -232,6 +271,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
         <button
           onClick={handleSaveDraft}
           className="w-full bg-[#f3f3f8] text-[#374151] rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 hover:bg-[#e5e7eb] transition-colors"
+          style={{ minHeight: 44 }}
         >
           Save Draft
         </button>
