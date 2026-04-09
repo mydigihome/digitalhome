@@ -133,7 +133,10 @@ export default function SettingsPage() {
   const [selectedReligion, setSelectedReligion] = useState("");
   const [showScripture, setShowScripture] = useState(() => localStorage.getItem("dh_scripture") === "true");
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("");
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") || "general";
+  });
   const [feedbackType, setFeedbackType] = useState("General Feedback");
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
