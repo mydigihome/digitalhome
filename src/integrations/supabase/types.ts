@@ -2635,6 +2635,51 @@ export type Database = {
         }
         Relationships: []
       }
+      resources: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          file_url: string | null
+          id: string
+          published: boolean
+          resource_type: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          file_url?: string | null
+          id?: string
+          published?: boolean
+          resource_type?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          file_url?: string | null
+          id?: string
+          published?: boolean
+          resource_type?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       resumes: {
         Row: {
           application_id: string | null
