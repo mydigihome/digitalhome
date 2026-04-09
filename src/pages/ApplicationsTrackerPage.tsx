@@ -47,7 +47,8 @@ const gradientPresets = [
   "linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 50%, #9CA3AF 100%)",
 ];
 
-const BUNDLE_STRIPE_URL = "https://buy.stripe.com/PLACEHOLDER_BUNDLE";
+const BUNDLE_STRIPE_URL = "https://buy.stripe.com/cNiaEXcS6dsG5X6bu2ak006";
+const SINGLE_STRIPE_URL = "https://buy.stripe.com/6oUfZhdWa88m71a1Tsak005";
 
 const defaultTemplateData = [
   { name: "Corporate Resume", description: "Professional format for traditional industries. Clean, ATS-friendly layout that gets callbacks." },
