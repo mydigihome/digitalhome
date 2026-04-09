@@ -1207,7 +1207,7 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               ) : (
                 <>
                   <button
-                    onClick={() => openStripeForSingle(previewTemplate)}
+                    onClick={() => openStripeForSingle()}
                     style={{
                       display: "flex", alignItems: "center", gap: 6,
                       padding: "10px 20px", background: isDark ? "#1C1C1E" : "white",
