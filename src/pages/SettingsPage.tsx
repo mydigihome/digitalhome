@@ -5,7 +5,6 @@ import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPrefere
 import { useArchivedProjects, useRestoreProject } from "@/hooks/useArchivedProjects";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoogleCalendarConnection, useConnectGoogleCalendar, useDisconnectGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { Calendar } from "lucide-react";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
@@ -14,7 +13,7 @@ import {
   Bell, ExternalLink, Archive, HelpCircle, ChevronRight,
   Heart, BookOpen, MapPin, RotateCcw, Mail, MessageSquare,
   ChevronLeft, DollarSign, CreditCard, Target, Users, Loader2, Save, BarChart2, Receipt,
-  Lock as LockIcon, Unlock, Plus, Trash2, X,
+  Lock as LockIcon, Unlock, Plus, Trash2, X, Calendar,
 } from "lucide-react";
 import { applyThemeOverride } from "@/hooks/useThemeApplicator";
 
