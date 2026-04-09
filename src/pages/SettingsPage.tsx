@@ -131,7 +131,7 @@ export default function SettingsPage() {
   const [plaidModalOpen, setPlaidModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedReligion, setSelectedReligion] = useState("");
-  const [showScripture, setShowScripture] = useState(false);
+  const [showScripture, setShowScripture] = useState(() => localStorage.getItem("dh_scripture") === "true");
   const [welcomeVideoUrl, setWelcomeVideoUrl] = useState("");
   const [activeTab, setActiveTab] = useState("general");
   const [feedbackType, setFeedbackType] = useState("General Feedback");
