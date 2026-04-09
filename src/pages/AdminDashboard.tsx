@@ -85,6 +85,16 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+
+      // Fetch real user list with emails via edge function
+      let edgeFnUsers: any[] = [];
+      try {
+        const { data: efData, error: efError } = await supabase.functions.invoke("admin-users");
+        if (!efError && Array.isArray(efData)) {
+          edgeFnUsers = efData;
+        }
+      } catch (e) { console.error("admin-users edge function failed:", e); }
+
       const [
         { count: totalUsers },
         { count: newThisWeek },
@@ -112,7 +122,21 @@ export default function AdminDashboard() {
       const now = new Date();
       const thisMonthRevenue = (purchases || []).filter((p: any) => { const d = new Date(p.purchased_at); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).reduce((s: number, p: any) => s + (p.amount_paid || 0), 0) / 100;
       setStats({ totalUsers: totalUsers || 0, newThisWeek: newThisWeek || 0, activeToday: 0, totalRevenue, thisMonthRevenue, totalContent: totalContent || 0, totalJournals: totalJournals || 0, totalContacts: totalContacts || 0, totalProjects: totalProjects || 0, totalPurchases: (purchases || []).length });
-      setUsersList(profilesList || []);
+
+      // Merge edge function user data (with emails) into profiles list
+      if (edgeFnUsers.length > 0) {
+        const emailMap = Object.fromEntries(edgeFnUsers.map((u: any) => [u.id, u]));
+        const merged = (profilesList || []).map((p: any) => ({
+          ...p,
+          email: emailMap[p.id]?.email || p.email || null,
+          last_login: p.last_login || emailMap[p.id]?.last_login || null,
+          role: emailMap[p.id]?.role || "main_account",
+        }));
+        setUsersList(merged);
+      } else {
+        setUsersList(profilesList || []);
+      }
+
       setRecentActivity(activity || []);
       setFeedbackItems(feedbackData || []);
       const byMonth: Record<string, number> = {};
@@ -346,16 +370,17 @@ export default function AdminDashboard() {
             <h3 style={{ fontSize: 15, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>All Users ({stats.totalUsers})</h3>
             <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search users..." style={{ padding: "7px 12px", border: `1px solid ${inputBorder}`, borderRadius: 8, fontSize: 13, outline: "none", fontFamily: "Inter, sans-serif", width: 200, background: inputBg, color: text1 }} />
           </div>
-          <div style={{ background: tableBg, borderRadius: 8, padding: "8px 14px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, marginBottom: 4 }}>
-            {["Name", "Plan", "Joined", "Actions"].map(h => <span key={h} style={{ fontSize: 11, fontWeight: 700, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</span>)}
+          <div style={{ background: tableBg, borderRadius: 8, padding: "8px 14px", display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 140px", gap: 8, marginBottom: 4 }}>
+            {["Name", "Email", "Plan", "Joined", "Actions"].map(h => <span key={h} style={{ fontSize: 11, fontWeight: 700, color: text2, fontFamily: "Inter, sans-serif", textTransform: "uppercase" as const, letterSpacing: "0.5px" }}>{h}</span>)}
           </div>
           {filteredUsers.slice(0, 30).map(u => (
-            <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 140px", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${rowBorder}`, alignItems: "center" }}>
+            <div key={u.id} style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr 140px", gap: 8, padding: "10px 14px", borderBottom: `1px solid ${rowBorder}`, alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 28, height: 28, borderRadius: "50%", background: isDark ? "#252528" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: text2 }}>{(u.full_name || "?").charAt(0).toUpperCase()}</div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{u.full_name || "No name"}</span>
               </div>
-              <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>free</span>
+              <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email || "—"}</span>
+              <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{u.role || "free"}</span>
               <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{new Date(u.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               <div style={{ display: "flex", gap: 4 }}>
                 <button onClick={() => { setGhostUser(u); setGhostPanelOpen(true); loadUserDetail(u.id); }} style={{ padding: "4px 8px", background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 6, fontSize: 11, color: "#1D4ED8", cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View</button>
