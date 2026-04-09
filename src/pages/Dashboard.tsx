@@ -727,7 +727,16 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-center py-6 text-muted-foreground">No events today</p>
+                <div className="text-center py-6">
+                  <p className="text-sm text-muted-foreground">No events today.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Connect Google or Apple Calendar in{" "}
+                    <button onClick={() => navigate("/settings?tab=connections")} className="text-primary font-medium hover:underline">
+                      Settings &rarr; Connections
+                    </button>{" "}
+                    to sync your schedule.
+                  </p>
+                </div>
               )}
             </div>
           </SortableCard>
