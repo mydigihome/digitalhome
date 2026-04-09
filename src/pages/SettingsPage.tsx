@@ -131,6 +131,11 @@ export default function SettingsPage() {
   const [preferredBroker, setPreferredBroker] = useState("");
   const [brokerUrl, setBrokerUrl] = useState("");
   const [plaidModalOpen, setPlaidModalOpen] = useState(false);
+  const [appleCalModalOpen, setAppleCalModalOpen] = useState(false);
+  const [caldavUrl, setCaldavUrl] = useState("");
+  const gcalConnection = useGoogleCalendarConnection();
+  const { startConnect: connectGcal, connecting: gcalConnecting } = useConnectGoogleCalendar();
+  const disconnectGcal = useDisconnectGoogleCalendar();
   const [saving, setSaving] = useState(false);
   const [selectedReligion, setSelectedReligion] = useState("");
   const [showScripture, setShowScripture] = useState(() => localStorage.getItem("dh_scripture") === "true");
