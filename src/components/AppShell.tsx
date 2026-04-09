@@ -93,6 +93,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
+  const isFoundingMember = profile?.founding_member === true || (prefs as any)?.is_founding_member === true || (prefs as any)?.subscription_type === "founding";
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
