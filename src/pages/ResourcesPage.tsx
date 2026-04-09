@@ -114,6 +114,7 @@ export default function ResourcesPage() {
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
 
   useEffect(() => {
     fetchResources();
