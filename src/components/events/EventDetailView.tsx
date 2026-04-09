@@ -205,14 +205,6 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     if (!user) return;
     setDeleting(true);
     try {
-      // Optimistic: remove from projects cache immediately
-      const queryClient = (await import("@tanstack/react-query")).QueryClient;
-      // Use inline cache removal
-      const { queryClient: qc } = await import("@tanstack/react-query").then(() => {
-        // We need to access the existing query client - use window.__REACT_QUERY_GLOBAL_CACHE__ or import
-        return { queryClient: null };
-      });
-
       // Delete goal_tasks and goal_stages linked to this project
       const { error: e1 } = await (supabase as any).from("goal_tasks").delete().eq("project_id", projectId);
       if (e1) console.error("goal_tasks delete:", e1);
