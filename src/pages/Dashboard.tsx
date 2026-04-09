@@ -229,6 +229,26 @@ export default function Dashboard() {
   const [rightOrder, setRightOrder] = useState<string[]>(() =>
     loadStoredJson<string[]>("dh_right_column_order", DEFAULT_RIGHT_ORDER)
   );
+
+  // Load widget order from Supabase on mount (overrides localStorage)
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("user_preferences")
+        .select("widget_order_left, widget_order_right")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.widget_order_left && Array.isArray(data.widget_order_left)) {
+        setLeftOrder(data.widget_order_left);
+        saveStoredJson("dh_left_column_order", data.widget_order_left);
+      }
+      if (data?.widget_order_right && Array.isArray(data.widget_order_right)) {
+        setRightOrder(data.widget_order_right);
+        saveStoredJson("dh_right_column_order", data.widget_order_right);
+      }
+    })();
+  }, [user]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
