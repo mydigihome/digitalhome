@@ -206,18 +206,28 @@ export default function EventDetailView({ projectId, projectName, coverImage, pr
     setDeleting(true);
     try {
       // Delete goal_tasks and goal_stages linked to this project
-      await (supabase as any).from("goal_tasks").delete().eq("project_id", projectId);
-      await (supabase as any).from("goal_stages").delete().eq("project_id", projectId);
+      const { error: e1 } = await (supabase as any).from("goal_tasks").delete().eq("project_id", projectId);
+      if (e1) console.error("goal_tasks delete:", e1);
+      const { error: e2 } = await (supabase as any).from("goal_stages").delete().eq("project_id", projectId);
+      if (e2) console.error("goal_stages delete:", e2);
       // Delete old tasks too
-      await supabase.from("tasks").delete().eq("project_id", projectId);
+      const { error: e3 } = await supabase.from("tasks").delete().eq("project_id", projectId);
+      if (e3) console.error("tasks delete:", e3);
       // Delete event guests, questions, details
       if (event?.id) {
         await (supabase as any).from("event_rsvp_questions").delete().eq("event_id", event.id);
         await (supabase as any).from("event_guests").delete().eq("event_id", event.id);
         await (supabase as any).from("event_details").delete().eq("id", event.id);
       }
+      // Delete documents and contact links
+      await supabase.from("documents").delete().eq("project_id", projectId);
+      await (supabase as any).from("contact_project_links").delete().eq("project_id", projectId);
       // Delete the project
-      await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id);
+      const { error } = await supabase.from("projects").delete().eq("id", projectId);
+      if (error) {
+        console.error("Project delete error:", error);
+        throw error;
+      }
       toast.success("Event deleted");
       navigate("/projects");
     } catch (e) {
