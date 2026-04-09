@@ -72,7 +72,7 @@ export default function Projects() {
   }, [deletedProjectIdsKey]);
 
   useEffect(() => {
-    const hiddenIds = new Set(removedProjectIds);
+    const hiddenIds = new Set([...removedProjectIds, ...deletedIdsRef.current]);
     setProjectCards(projects.filter((project) => !hiddenIds.has(project.id)));
   }, [projects, removedProjectIds]);
 
