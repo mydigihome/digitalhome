@@ -45,6 +45,7 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
   const [projectCards, setProjectCards] = useState<typeof projects>([]);
   const [removedProjectIds, setRemovedProjectIds] = useState<string[]>([]);
+  const deletedIdsRef = useRef(new Set<string>());
   const navigate = useNavigate();
 
   // Bulk selection
