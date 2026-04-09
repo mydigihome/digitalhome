@@ -144,9 +144,9 @@ export default function ResourcesPage() {
 
     // Upload file if provided
     if (resourceFile) {
-      const path = `resources/${user.id}/${Date.now()}-${resourceFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile);
-      if (error) { toast.error("File upload failed"); setUploading(false); return; }
+      const path = `${user.id}/resources/${Date.now()}-${resourceFile.name}`;
+      const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile, { upsert: true });
+      if (error) { toast.error("File upload failed: " + error.message); setUploading(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
       file_url = publicUrl;
     }
