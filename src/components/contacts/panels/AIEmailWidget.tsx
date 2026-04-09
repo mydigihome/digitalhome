@@ -180,28 +180,25 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
       />
 
       {/* AI Draft */}
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[#4648d4] mb-1 mt-2">✦ AI DRAFT</div>
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#4648d4", marginBottom: 4, marginTop: 8, fontFamily: "Inter, sans-serif" }}>AI DRAFT</div>
+
+      {/* B / I / U toolbar */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>B</button>
+        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontStyle: "italic", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>I</button>
+        <button type="button" style={{ width: 32, height: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, textDecoration: "underline", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#1a1c1f" }}>U</button>
+      </div>
+
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        className="bg-[#f3f3f8] rounded-[16px] p-3 text-xs text-[#1a1c1f] leading-relaxed w-full border-none resize-y min-h-[140px] focus:ring-1 focus:ring-[#4648d4]/20 focus:outline-none"
+        style={{ width: "100%", minHeight: 180, padding: 12, fontFamily: "Inter, sans-serif", fontSize: 13, lineHeight: 1.6, color: "#1a1c1f", background: "#f3f3f8", border: "1px solid #E5E7EB", borderRadius: 8, resize: "vertical" as const, outline: "none" }}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#4648d4"; }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#E5E7EB"; }}
       />
-      <button onClick={regenerate} className="text-[10px] text-[#4648d4] font-bold mt-1 hover:underline">
-        ✦ Regenerate
+      <button onClick={regenerate} style={{ fontSize: 10, color: "#4648d4", fontWeight: 700, marginTop: 4, background: "none", border: "none", cursor: "pointer", fontFamily: "Inter, sans-serif", padding: 0 }}>
+        Regenerate
       </button>
-
-      {/* Toolbar */}
-      <div className="flex gap-2 items-center mt-2">
-        <button className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
-          <Pencil className="w-3 h-3" />
-        </button>
-        <button onClick={() => toast.info("Attachments coming soon")} className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
-          <Paperclip className="w-3 h-3" />
-        </button>
-        <button className="w-6 h-6 rounded-full bg-[#f3f3f8] flex items-center justify-center text-[#767586] hover:text-[#4648d4]">
-          <Link2 className="w-3 h-3" />
-        </button>
-      </div>
 
       {/* Send */}
       <div className="flex flex-col gap-2 mt-3">
