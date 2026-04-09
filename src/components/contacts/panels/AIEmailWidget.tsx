@@ -228,10 +228,16 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
               onClick={handleMailto}
               className="flex-1 bg-[#111827] text-white rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5"
             >
-              <Mail className="w-3 h-3" /> Open in Email App
+              <Mail className="w-3 h-3" /> Open in Mail
             </button>
           )}
         </div>
+        <button
+          onClick={handleSaveDraft}
+          className="w-full bg-[#f3f3f8] text-[#374151] rounded-[8px] font-bold text-xs py-2.5 flex items-center justify-center gap-1.5 hover:bg-[#e5e7eb] transition-colors"
+        >
+          Save Draft
+        </button>
         <p className="text-[10px] text-[#9ca3af] text-center">
           Your email will open pre-filled and ready to send.
         </p>
