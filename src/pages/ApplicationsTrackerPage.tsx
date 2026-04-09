@@ -870,9 +870,8 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
     }
   };
 
-  const openStripeForSingle = (template: any) => {
-    const url = template.stripe_single_url || "https://buy.stripe.com/PLACEHOLDER_SINGLE";
-    window.location.href = url;
+  const openStripeForSingle = () => {
+    window.location.href = SINGLE_STRIPE_URL;
   };
 
   const openStripeForBundle = () => {
