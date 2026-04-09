@@ -1163,8 +1163,3 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     </>
   );
 }
-        </div>
-      )}
-    </>
-  );
-}
