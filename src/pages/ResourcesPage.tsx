@@ -435,23 +435,65 @@ export default function ResourcesPage() {
                     }}>{r.description}</p>
 
                     <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => {
-                          if (r.resource_type === "link" || r.resource_type === "video") {
-                            if (r.url) window.open(r.url, "_blank");
-                          } else if (r.file_url) {
-                            window.open(r.file_url, "_blank");
-                          }
-                        }}
-                        style={{
-                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                          padding: "8px 14px", background: "#10B981", color: "white",
-                          border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                          cursor: "pointer", minHeight: 44,
-                        }}
-                      >
-                        {getActionIcon(r.resource_type)} {getActionLabel(r.resource_type)}
-                      </button>
+                      {(r.resource_type === "file" || r.resource_type === "template") && r.file_url ? (
+                        <>
+                          <button
+                            onClick={() => setPreviewResource(r)}
+                            style={{
+                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              padding: "8px 14px", background: isDark ? "#252528" : "#F3F4F6",
+                              color: text1, border: `1px solid ${inputBorder}`, borderRadius: 8,
+                              fontSize: 12, fontWeight: 600, cursor: "pointer", minHeight: 44,
+                            }}
+                          >
+                            <Eye size={14} /> Preview
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (isAdmin) {
+                                window.open(r.file_url!, "_blank");
+                              } else {
+                                window.location.href = SINGLE_STRIPE_URL;
+                              }
+                            }}
+                            style={{
+                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              padding: "8px 14px", background: "#10B981", color: "white",
+                              border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                              cursor: "pointer", minHeight: 44,
+                            }}
+                          >
+                            <Download size={14} /> Download
+                          </button>
+                        </>
+                      ) : !r.file_url && (r.resource_type === "file" || r.resource_type === "template") ? (
+                        <span style={{
+                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+                          padding: "8px 14px", background: isDark ? "#252528" : "#F9FAFB",
+                          color: text2, border: `1px solid ${inputBorder}`, borderRadius: 8,
+                          fontSize: 12, fontWeight: 500, minHeight: 44,
+                        }}>
+                          Coming soon
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (r.resource_type === "link" || r.resource_type === "video") {
+                              if (r.url) window.open(r.url, "_blank");
+                            } else if (r.file_url) {
+                              window.open(r.file_url, "_blank");
+                            }
+                          }}
+                          style={{
+                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                            padding: "8px 14px", background: "#10B981", color: "white",
+                            border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                            cursor: "pointer", minHeight: 44,
+                          }}
+                        >
+                          {getActionIcon(r.resource_type)} {getActionLabel(r.resource_type)}
+                        </button>
+                      )}
                       {isAdmin && (
                         <>
                           <button onClick={() => handleEditResource(r)} style={{
