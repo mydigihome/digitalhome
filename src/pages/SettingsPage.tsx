@@ -1040,6 +1040,25 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {appleCalModalOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: isDark ? "#1C1C1E" : "white", borderRadius: 16, padding: 24, maxWidth: 440, width: "100%" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>Connect Apple Calendar</h3>
+              <button onClick={() => setAppleCalModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: text2, padding: 4 }}><X size={18} /></button>
+            </div>
+            <p style={{ fontSize: 13, color: text2, fontFamily: "Inter, sans-serif", marginBottom: 16, lineHeight: 1.6 }}>
+              To connect Apple Calendar, enable CalDAV sync in your Apple Calendar settings and paste your CalDAV URL below.
+            </p>
+            <label style={labelStyle}>CalDAV URL</label>
+            <input value={caldavUrl} onChange={e => setCaldavUrl(e.target.value)} placeholder="https://caldav.icloud.com/..." style={inputStyle} />
+            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              <button onClick={() => { if (!caldavUrl.trim()) { toast.error("Please enter a CalDAV URL"); return; } localStorage.setItem("dh_caldav_url", caldavUrl.trim()); setAppleCalModalOpen(false); toast.success("Apple Calendar connected"); }} style={{ flex: 1, padding: "10px 16px", background: "#FF3B30", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>Save</button>
+              <button onClick={() => setAppleCalModalOpen(false)} style={{ flex: 1, padding: "10px 16px", border: `1.5px solid ${inputBorder}`, borderRadius: 10, background: inputBg, fontSize: 13, fontWeight: 500, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
 
