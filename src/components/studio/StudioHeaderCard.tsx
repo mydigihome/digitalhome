@@ -76,6 +76,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const studioImageInputRef = useRef<HTMLInputElement>(null);
   const [studioStats, setStudioStats] = useState<StudioStats>({});
+  const [shareLinkModalOpen, setShareLinkModalOpen] = useState(false);
   const [editingStat, setEditingStat] = useState<string | null>(null);
 
   // Modals
@@ -225,6 +226,24 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     }, { onConflict: "user_id" });
     setStudioName(formProfile.studio_name || "");
     setStudioHandle(formProfile.handle || "");
+    // Reload stats so Platforms tab picks up new handles
+    const { data: refreshed } = await supabase
+      .from("studio_profile")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (refreshed) {
+      setFormProfile(refreshed);
+      const p = refreshed as any;
+      const combined = (p.combined_followers || 0) || ((p.youtube_subscribers || 0) + (p.instagram_followers || 0) + (p.tiktok_followers || 0) + (p.twitter_followers || 0));
+      setStudioStats({
+        combined_followers: combined || undefined,
+        reach_30d: p.reach_30d || undefined,
+        interactions_30d: p.interactions_30d || undefined,
+        avg_engagement: p.avg_engagement || undefined,
+      });
+      if (Array.isArray(p.images)) setStudioImages(p.images);
+    }
     setSettingsOpen(false);
     toast.success("Studio settings saved!");
   };
@@ -434,12 +453,13 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                 }}>Preview</button>
               <button
                 onClick={() => {
-                  const shareUrl = `${window.location.origin}/studio/${user?.id}`;
+                  const shareUrl = `https://digitalhome.lovable.app/studio/${user?.id}`;
+                  const shareTitle = `${studioName || "My Studio"} Studio Profile`;
+                  const shareText = `Check out ${studioName || "my studio"} on Digital Home`;
                   if (navigator.share) {
-                    navigator.share({ title: studioName || "My Studio", text: "Check out my studio on Digital Home", url: shareUrl }).catch(() => {});
+                    navigator.share({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
                   } else {
-                    navigator.clipboard.writeText(shareUrl);
-                    toast("Link copied!", { description: "Studio link copied to clipboard." });
+                    setShareLinkModalOpen(true);
                   }
                 }}
                 style={{
@@ -924,72 +944,222 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
       )}
 
       {/* PREVIEW MODAL */}
-      {studioPreviewOpen && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 100,
-          background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }} onClick={() => setStudioPreviewOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: "100%", maxWidth: "480px", margin: "0 16px",
-            background: isDark ? "#1C1C1E" : "white", borderRadius: "14px",
-            border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
-            overflow: "hidden",
-          }}>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+      {studioPreviewOpen && (() => {
+        const platforms = [
+          { name: "Instagram", handle: formProfile.instagram_handle, followers: (formProfile as any).instagram_followers, color: "#E1306C" },
+          { name: "YouTube", handle: formProfile.youtube_url, followers: (formProfile as any).youtube_subscribers, color: "#FF0000" },
+          { name: "TikTok", handle: formProfile.tiktok_handle, followers: (formProfile as any).tiktok_followers, color: "#000000" },
+          { name: "Twitter/X", handle: formProfile.twitter_handle, followers: (formProfile as any).twitter_followers, color: "#1DA1F2" },
+        ].filter(p => p.handle);
+        const totalFollowers = platforms.reduce((sum, p) => sum + (p.followers || 0), 0);
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "auto",
+          }} onClick={() => setStudioPreviewOpen(false)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              width: "100%", maxWidth: "560px", margin: "24px 16px",
+              background: isDark ? "#1C1C1E" : "white", borderRadius: "14px",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              overflow: "hidden",
             }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
-                Studio Preview
-              </h3>
-              <button onClick={() => setStudioPreviewOpen(false)} style={{
-                background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "4px",
-              }}><X size={16} /></button>
-            </div>
-            <div style={{ padding: "24px 20px" }}>
-              {studioImages[0] && (
-                <img src={studioImages[0]} alt="Studio" style={{
-                  width: "100%", height: "180px", objectFit: "cover", borderRadius: "10px", marginBottom: "16px",
-                }} />
-              )}
-              <h2 style={{
-                fontSize: "22px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827",
-                margin: "0 0 4px", fontFamily: "Inter, sans-serif",
-              }}>{studioName || "Your Studio"}</h2>
-              {studioHandle && (
-                <p style={{ fontSize: "13px", color: "#9CA3AF", margin: "0 0 20px", fontFamily: "Inter, sans-serif" }}>
-                  @{studioHandle}
-                </p>
-              )}
-              {studioGoals.length > 0 && (
-                <div>
-                  <p style={{ fontSize: "12px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
-                    Studio Goals
+              {/* Header */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "16px 20px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+              }}>
+                <h3 style={{ fontSize: "16px", fontWeight: 700, margin: 0, color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+                  Studio Preview
+                </h3>
+                <button onClick={() => setStudioPreviewOpen(false)} style={{
+                  background: "transparent", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "4px",
+                  minHeight: "44px", minWidth: "44px", display: "flex", alignItems: "center", justifyContent: "center",
+                }}><X size={16} /></button>
+              </div>
+
+              <div style={{ padding: "24px 20px" }}>
+                {/* Profile section */}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "20px" }}>
+                  {studioImages[0] ? (
+                    <img src={studioImages[0]} alt="Studio" style={{
+                      width: "72px", height: "72px", objectFit: "cover", borderRadius: "50%",
+                    }} />
+                  ) : (
+                    <div style={{
+                      width: "72px", height: "72px", borderRadius: "50%",
+                      background: "#10B981", display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "28px", fontWeight: 700, color: "white", fontFamily: "Inter, sans-serif",
+                    }}>
+                      {(studioName || "S")[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h2 style={{
+                      fontSize: "22px", fontWeight: 800, color: isDark ? "#F2F2F2" : "#111827",
+                      margin: "0 0 2px", fontFamily: "Inter, sans-serif",
+                    }}>{studioName || "Your Studio"}</h2>
+                    {studioHandle && (
+                      <p style={{ fontSize: "13px", color: "#9CA3AF", margin: 0, fontFamily: "Inter, sans-serif" }}>
+                        @{studioHandle.replace(/^@/, '')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                {(formProfile as any).description && (
+                  <p style={{ fontSize: "13px", color: isDark ? "#D1D5DB" : "#374151", lineHeight: 1.6, margin: "0 0 20px", fontFamily: "Inter, sans-serif" }}>
+                    {(formProfile as any).description}
                   </p>
-                  {studioGoals.map(goal => (
-                    <div key={goal.id} style={{ marginBottom: "10px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>{goal.title}</span>
-                        <span style={{ fontSize: "12px", color: "#10B981", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>{goal.progress}%</span>
-                      </div>
-                      <div style={{ height: "6px", borderRadius: "999px", background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }}>
-                        <div style={{ height: "100%", borderRadius: "999px", background: "#10B981", width: `${goal.progress}%`, transition: "width 300ms" }} />
-                      </div>
+                )}
+
+                {/* Platforms Row */}
+                {platforms.length > 0 ? (
+                  <div style={{ marginBottom: "20px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
+                      Platforms
+                    </p>
+                    <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                      {platforms.map(p => (
+                        <div key={p.name} style={{
+                          display: "flex", alignItems: "center", gap: "8px",
+                          padding: "8px 14px", borderRadius: "8px",
+                          border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+                        }}>
+                          <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: p.color }} />
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>
+                            {p.name}
+                          </span>
+                          <span style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "Inter, sans-serif" }}>
+                            {p.followers ? p.followers.toLocaleString() : "\u2014"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "12px", color: "#9CA3AF", marginBottom: "20px", fontFamily: "Inter, sans-serif" }}>No platforms connected</p>
+                )}
+
+                {/* Stats Row */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "20px" }}>
+                  {[
+                    { label: "Followers", value: totalFollowers ? totalFollowers.toLocaleString() : "\u2014" },
+                    { label: "30D Reach", value: studioStats.reach_30d ? studioStats.reach_30d.toLocaleString() : "\u2014" },
+                    { label: "Engagement", value: studioStats.avg_engagement ? `${studioStats.avg_engagement}%` : "\u2014" },
+                    { label: "Interactions", value: studioStats.interactions_30d ? studioStats.interactions_30d.toLocaleString() : "\u2014" },
+                  ].map(s => (
+                    <div key={s.label} style={{
+                      textAlign: "center", padding: "10px 4px",
+                      borderRadius: "8px", background: isDark ? "#252528" : "#F9FAFB",
+                    }}>
+                      <p style={{ fontSize: "16px", fontWeight: 700, color: isDark ? "#F2F2F2" : "#111827", margin: "0 0 2px", fontFamily: "Inter, sans-serif", fontVariantNumeric: "tabular-nums" }}>{s.value}</p>
+                      <p style={{ fontSize: "10px", color: "#9CA3AF", margin: 0, fontFamily: "Inter, sans-serif", textTransform: "uppercase" }}>{s.label}</p>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-            <div style={{ padding: "12px 20px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, display: "flex", justifyContent: "center" }}>
-              <button onClick={() => setStudioPreviewOpen(false)} style={{
-                padding: "8px 20px", background: "#111827", color: "white", border: "none",
-                borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
-              }}>Close</button>
+
+                {/* Photos */}
+                {studioImages.length > 0 && (
+                  <div style={{ marginBottom: "20px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
+                      Photos
+                    </p>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
+                      {studioImages.slice(0, 6).map((img, i) => (
+                        <img key={i} src={img} alt={`Photo ${i + 1}`} style={{
+                          width: "100%", height: "100px", objectFit: "cover", borderRadius: "8px",
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Goals */}
+                {studioGoals.length > 0 && (
+                  <div style={{ marginBottom: "20px" }}>
+                    <p style={{ fontSize: "11px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "10px", fontFamily: "Inter, sans-serif" }}>
+                      Studio Goals
+                    </p>
+                    {studioGoals.map(goal => (
+                      <div key={goal.id} style={{ marginBottom: "10px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 600, color: isDark ? "#F2F2F2" : "#374151", fontFamily: "Inter, sans-serif" }}>{goal.title}</span>
+                          <span style={{ fontSize: "12px", color: "#10B981", fontWeight: 600, fontFamily: "Inter, sans-serif" }}>{goal.progress}%</span>
+                        </div>
+                        <div style={{ height: "6px", borderRadius: "999px", background: isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6" }}>
+                          <div style={{ height: "100%", borderRadius: "999px", background: "#10B981", width: `${goal.progress}%`, transition: "width 300ms" }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: "14px 20px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0, fontFamily: "Inter, sans-serif" }}>Powered by Digital Home</p>
+                <button onClick={() => setStudioPreviewOpen(false)} style={{
+                  padding: "8px 20px", background: "#111827", color: "white", border: "none",
+                  borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  minHeight: "44px",
+                }}>Close</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
+
+      {/* SHARE LINK MODAL (desktop fallback) */}
+      {shareLinkModalOpen && (() => {
+        const shareUrl = `https://digitalhome.lovable.app/studio/${user?.id}`;
+        return (
+          <div style={{
+            position: "fixed", inset: 0, zIndex: 100,
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }} onClick={() => setShareLinkModalOpen(false)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              width: "100%", maxWidth: "420px", margin: "0 16px",
+              background: isDark ? "#1C1C1E" : "white", borderRadius: "14px",
+              border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB"}`,
+              padding: "24px",
+            }}>
+              <h3 style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 14px", color: isDark ? "#F2F2F2" : "#111827", fontFamily: "Inter, sans-serif" }}>
+                Share Studio Link
+              </h3>
+              <input
+                readOnly
+                value={shareUrl}
+                style={{
+                  width: "100%", padding: "10px 12px", fontSize: "13px",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  borderRadius: "8px", outline: "none",
+                  background: isDark ? "#252528" : "#F9FAFB",
+                  color: isDark ? "#F2F2F2" : "#374151",
+                  marginBottom: "14px", boxSizing: "border-box",
+                  fontFamily: "Inter, sans-serif",
+                }}
+                onClick={e => (e.target as HTMLInputElement).select()}
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(shareUrl);
+                  toast.success("Link copied!");
+                  setShareLinkModalOpen(false);
+                }}
+                style={{
+                  width: "100%", padding: "10px", background: "#10B981",
+                  color: "white", border: "none", borderRadius: "8px", fontSize: "14px",
+                  fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  minHeight: "44px",
+                }}>Copy Link</button>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
