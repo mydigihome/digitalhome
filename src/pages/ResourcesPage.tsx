@@ -197,10 +197,17 @@ export default function ResourcesPage() {
 
   const handleDeleteResource = async () => {
     if (!deleteConfirm) return;
-    await (supabase as any).from("resources").delete().eq("id", deleteConfirm.id);
+    const deleteId = deleteConfirm.id;
+    // Optimistic removal
+    setDynamicResources(prev => prev.filter(r => r.id !== deleteId));
     setDeleteConfirm(null);
+    const { error } = await (supabase as any).from("resources").delete().eq("id", deleteId);
+    if (error) {
+      toast.error("Delete failed: " + error.message);
+      fetchResources(); // Refetch on error
+      return;
+    }
     toast.success("Resource deleted");
-    fetchResources();
   };
 
   const handleEditResource = (r: DynamicResource) => {
