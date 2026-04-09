@@ -47,7 +47,8 @@ const gradientPresets = [
   "linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 50%, #9CA3AF 100%)",
 ];
 
-const BUNDLE_STRIPE_URL = "https://buy.stripe.com/PLACEHOLDER_BUNDLE";
+const BUNDLE_STRIPE_URL = "https://buy.stripe.com/cNiaEXcS6dsG5X6bu2ak006";
+const SINGLE_STRIPE_URL = "https://buy.stripe.com/6oUfZhdWa88m71a1Tsak005";
 
 const defaultTemplateData = [
   { name: "Corporate Resume", description: "Professional format for traditional industries. Clean, ATS-friendly layout that gets callbacks." },
@@ -869,9 +870,8 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
     }
   };
 
-  const openStripeForSingle = (template: any) => {
-    const url = template.stripe_single_url || "https://buy.stripe.com/PLACEHOLDER_SINGLE";
-    window.location.href = url;
+  const openStripeForSingle = () => {
+    window.location.href = SINGLE_STRIPE_URL;
   };
 
   const openStripeForBundle = () => {
@@ -1101,47 +1101,58 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               </div>
             )}
 
-            {/* Preview / Download button */}
-            {template.file_url && uploadingId !== template.id && (
-              <div style={{ padding: "0 16px 16px" }}>
-                {hasPurchased ? (
-                  <button
-                    onClick={() => handleDownload(template)}
-                    className="template-download-btn"
-                    style={{
-                      width: "100%", padding: 10, marginTop: 0,
-                      background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
-                      border: `1.5px solid ${isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"}`,
-                      borderRadius: 999, fontSize: 13, fontWeight: 600,
-                      color: isDark ? "#10B981" : "#065F46",
-                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                      transition: "all 150ms",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#10B981"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "#10B981"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"; e.currentTarget.style.color = isDark ? "#10B981" : "#065F46"; e.currentTarget.style.borderColor = isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"; }}
-                  >
-                    <Download size={14} /> Download Now
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => handlePreview(template)}
-                    style={{
-                      width: "100%", padding: 10, marginTop: 0,
-                      background: "transparent",
-                      border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`,
-                      borderRadius: 999, fontSize: 13, fontWeight: 500,
-                      color: isDark ? "rgba(255,255,255,0.7)" : "#374151",
-                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                      transition: "all 150ms",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.7)" : "#374151"; }}
-                  >
-                    <Eye size={14} /> Preview
-                  </button>
-                )}
-              </div>
-            )}
+            {/* Preview / Download buttons */}
+            <div style={{ padding: "0 16px 16px", display: "flex", gap: 8 }}>
+              {template.file_url && (
+                <button
+                  onClick={() => handlePreview(template)}
+                  style={{
+                    flex: 1, padding: 10,
+                    background: "transparent",
+                    border: `1.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"}`,
+                    borderRadius: 999, fontSize: 13, fontWeight: 500,
+                    color: isDark ? "rgba(255,255,255,0.7)" : "#374151",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    transition: "all 150ms", minHeight: 44,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#10B981"; e.currentTarget.style.color = "#10B981"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "#E5E7EB"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.7)" : "#374151"; }}
+                >
+                  <Eye size={14} /> Preview
+                </button>
+              )}
+              {hasPurchased ? (
+                <button
+                  onClick={() => handleDownload(template)}
+                  style={{
+                    flex: 1, padding: 10,
+                    background: isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4",
+                    border: `1.5px solid ${isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"}`,
+                    borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    color: isDark ? "#10B981" : "#065F46",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    transition: "all 150ms", minHeight: 44,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#10B981"; e.currentTarget.style.color = "white"; e.currentTarget.style.borderColor = "#10B981"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(16,185,129,0.1)" : "#F0FDF4"; e.currentTarget.style.color = isDark ? "#10B981" : "#065F46"; e.currentTarget.style.borderColor = isDark ? "rgba(16,185,129,0.3)" : "#BBF7D0"; }}
+                >
+                  <Download size={14} /> Download
+                </button>
+              ) : (
+                <button
+                  onClick={() => { window.location.href = SINGLE_STRIPE_URL; }}
+                  style={{
+                    flex: 1, padding: 10,
+                    background: "#10B981", color: "white",
+                    border: "none", borderRadius: 999, fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    transition: "all 150ms", minHeight: 44,
+                  }}
+                >
+                  <Download size={14} /> Download — $8
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -1196,7 +1207,7 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
               ) : (
                 <>
                   <button
-                    onClick={() => openStripeForSingle(previewTemplate)}
+                    onClick={() => openStripeForSingle()}
                     style={{
                       display: "flex", alignItems: "center", gap: 6,
                       padding: "10px 20px", background: isDark ? "#1C1C1E" : "white",
