@@ -291,8 +291,15 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[14px] font-normal text-white">
-                {displayName}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate text-[14px] font-normal text-white">
+                  {displayName}
+                </span>
+                {isFoundingMember && (
+                  <span title="Founding Member" className="flex-shrink-0">
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                  </span>
+                )}
               </div>
               <div className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 {user?.email || ''}

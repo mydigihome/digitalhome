@@ -100,6 +100,7 @@ export default function Projects() {
     const deletedItems = projectCards.filter(p => idsToDelete.includes(p.id));
 
     // Step 1 — remove from UI immediately
+    idsToDelete.forEach(id => deletedIdsRef.current.add(id));
     setRemovedProjectIds((prev) => [...new Set([...prev, ...idsToDelete])]);
     setProjectCards((prev) => prev.filter((item) => !idsToDelete.includes(item.id)));
     setSelectedIds([]);

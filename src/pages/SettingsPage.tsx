@@ -711,11 +711,22 @@ export default function SettingsPage() {
                   </div>
                   {currentPlan === plan.tier ? (
                     <div style={{ padding: 10, background: plan.color + "15", borderRadius: 10, textAlign: "center", fontSize: 13, fontWeight: 700, color: plan.color, fontFamily: "Inter, sans-serif", marginTop: "auto" }}>Current Plan</div>
+                  ) : billingCycle === "annual" && (prefs as any)?.billing_cycle === "annual" && (prefs as any)?.renewal_date ? (
+                    <div style={{ padding: "12px 14px", background: isDark ? "#252528" : "#F9FAFB", borderRadius: 10, textAlign: "center", marginTop: "auto", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 4 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <LockIcon size={14} color={text2} />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>
+                          Renews {new Date((prefs as any).renewal_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 11, color: text2, fontFamily: "Inter, sans-serif" }}>Annual plans cannot be changed until renewal</span>
+                    </div>
                   ) : plan.stripeMonthly ? (
                     <button onClick={() => {
-                      const url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
+                      let url = billingCycle === "annual" ? plan.stripeAnnual : plan.stripeMonthly;
+                      if (studentDiscount) url += "?prefilled_promo_code=STUDENT50";
                       window.location.href = url;
-                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms", marginTop: "auto" }}
+                    }} style={{ width: "100%", padding: 10, background: plan.color, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "opacity 150ms", marginTop: "auto", minHeight: 44 }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.9"; }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
                       Get {plan.name}
