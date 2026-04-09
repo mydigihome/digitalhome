@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, MessageSquare, Shield, MoreHorizontal, Moon, Sun, Users, Clapperboard, Bell, BookOpen } from "lucide-react";
+import { Home, Folder, Menu, X, Settings, LogOut, PanelLeftClose, PanelLeft, LayoutGrid, Wallet, MessageSquare, Shield, MoreHorizontal, Moon, Sun, Users, Clapperboard, Bell, BookOpen, Star } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useRef, useEffect, createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
@@ -93,6 +93,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const avatarUrl = prefs?.profile_photo;
+  const isFoundingMember = profile?.founding_member === true || (prefs as any)?.is_founding_member === true || (prefs as any)?.subscription_type === "founding";
 
   // Tooltip wrapper for collapsed mode
   const NavTooltip = ({ label, children }: { label: string; children: React.ReactNode }) => {
@@ -290,8 +291,15 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="truncate text-[14px] font-normal text-white">
-                {displayName}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate text-[14px] font-normal text-white">
+                  {displayName}
+                </span>
+                {isFoundingMember && (
+                  <span title="Founding Member" className="flex-shrink-0">
+                    <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                  </span>
+                )}
               </div>
               <div className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 {user?.email || ''}

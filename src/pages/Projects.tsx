@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useAllTasks } from "@/hooks/useTasks";
@@ -45,6 +45,7 @@ export default function Projects() {
   const [statusFilter, setStatusFilter] = useState<"active" | "all">("active");
   const [projectCards, setProjectCards] = useState<typeof projects>([]);
   const [removedProjectIds, setRemovedProjectIds] = useState<string[]>([]);
+  const deletedIdsRef = useRef(new Set<string>());
   const navigate = useNavigate();
 
   // Bulk selection
@@ -71,7 +72,7 @@ export default function Projects() {
   }, [deletedProjectIdsKey]);
 
   useEffect(() => {
-    const hiddenIds = new Set(removedProjectIds);
+    const hiddenIds = new Set([...removedProjectIds, ...deletedIdsRef.current]);
     setProjectCards(projects.filter((project) => !hiddenIds.has(project.id)));
   }, [projects, removedProjectIds]);
 
@@ -99,6 +100,7 @@ export default function Projects() {
     const deletedItems = projectCards.filter(p => idsToDelete.includes(p.id));
 
     // Step 1 — remove from UI immediately
+    idsToDelete.forEach(id => deletedIdsRef.current.add(id));
     setRemovedProjectIds((prev) => [...new Set([...prev, ...idsToDelete])]);
     setProjectCards((prev) => prev.filter((item) => !idsToDelete.includes(item.id)));
     setSelectedIds([]);

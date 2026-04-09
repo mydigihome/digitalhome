@@ -60,8 +60,14 @@ serve(async (req) => {
       update.plan_tier = purchase.tier;
       update.billing_cycle = purchase.cycle;
       update.is_subscribed = true;
+      if (purchase.tier === "founding") {
+        update.is_founding_member = true;
+      }
       if (purchase.cycle === "annual") {
         update.annual_start_date = new Date().toISOString();
+        const renewalDate = new Date();
+        renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+        update.renewal_date = renewalDate.toISOString();
       }
     }
 
