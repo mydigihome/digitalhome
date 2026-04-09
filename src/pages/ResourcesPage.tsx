@@ -173,19 +173,26 @@ export default function ResourcesPage() {
     };
 
     if (editingResource) {
-      const { error } = await (supabase as any).from("resources").update(payload).eq("id", editingResource.id);
-      if (error) { toast.error("Update failed"); setUploading(false); return; }
+      const { data: updated, error } = await (supabase as any).from("resources").update(payload).eq("id", editingResource.id).select().single();
+      if (error) { toast.error("Update failed: " + error.message); setUploading(false); return; }
+      // Optimistic update - immediately reflect in UI
+      if (updated) {
+        setDynamicResources(prev => prev.map(r => r.id === editingResource.id ? updated : r));
+      }
       toast.success("Resource updated");
     } else {
-      const { error } = await (supabase as any).from("resources").insert(payload);
-      if (error) { toast.error("Save failed"); setUploading(false); return; }
+      const { data: inserted, error } = await (supabase as any).from("resources").insert(payload).select().single();
+      if (error) { toast.error("Save failed: " + error.message); setUploading(false); return; }
+      // Optimistic insert - immediately add to UI
+      if (inserted) {
+        setDynamicResources(prev => [inserted, ...prev]);
+      }
       toast.success("Resource added");
     }
 
     setUploading(false);
     setShowAddForm(false);
     resetForm();
-    fetchResources();
   };
 
   const handleDeleteResource = async () => {
