@@ -146,18 +146,30 @@ export default function ResourcesPage() {
     if (resourceFile) {
       const path = `${user.id}/resources/${Date.now()}-${resourceFile.name}`;
       const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile, { upsert: true });
-      if (error) { toast.error("File upload failed: " + error.message); setUploading(false); return; }
-      const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
-      file_url = publicUrl;
+      if (error) {
+        console.error("Storage upload failed:", error);
+        toast.error("File upload failed: " + error.message);
+        setUploading(false);
+        return;
+      }
+      const { data: pubData } = supabase.storage.from("user-assets").getPublicUrl(path);
+      file_url = pubData.publicUrl;
+      console.log("publicUrl obtained:", file_url);
     }
 
     // Upload thumbnail if provided
     if (thumbnailFile) {
       const path = `${user.id}/thumbnails/${Date.now()}-${thumbnailFile.name}`;
       const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile, { upsert: true });
-      if (error) { toast.error("Thumbnail upload failed: " + error.message); setUploading(false); return; }
-      const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
-      thumbnail_url = publicUrl;
+      if (error) {
+        console.error("Thumbnail upload failed:", error);
+        toast.error("Thumbnail upload failed: " + error.message);
+        setUploading(false);
+        return;
+      }
+      const { data: pubData } = supabase.storage.from("user-assets").getPublicUrl(path);
+      thumbnail_url = pubData.publicUrl;
+      console.log("thumbnail publicUrl obtained:", thumbnail_url);
     }
 
     const payload = {
@@ -170,24 +182,64 @@ export default function ResourcesPage() {
       thumbnail_url,
       published: form.published,
       user_id: user.id,
+      updated_at: new Date().toISOString(),
     };
 
+    console.log("Saving resource payload:", JSON.stringify(payload));
+
     if (editingResource) {
-      const { data: updated, error } = await (supabase as any).from("resources").update(payload).eq("id", editingResource.id).select().single();
-      if (error) { toast.error("Update failed: " + error.message); setUploading(false); return; }
-      // Optimistic update - immediately reflect in UI
-      if (updated) {
-        setDynamicResources(prev => prev.map(r => r.id === editingResource.id ? updated : r));
+      const { data: updateData, error: updateError } = await (supabase as any)
+        .from("resources")
+        .update(payload)
+        .eq("id", editingResource.id)
+        .select();
+
+      console.log("DB update result:", updateData, updateError);
+
+      if (updateError) {
+        console.error("CRITICAL: DB update failed:", updateError);
+        toast.error("Update failed: " + updateError.message);
+        setUploading(false);
+        return;
       }
-      toast.success("Resource updated");
+
+      if (!updateData || updateData.length === 0) {
+        console.error("CRITICAL: No rows updated. Check RLS policy.");
+        toast.error("File uploaded but not saved. Contact support.");
+        setUploading(false);
+        return;
+      }
+
+      setDynamicResources(prev => prev.map(r =>
+        r.id === editingResource.id
+          ? { ...r, ...updateData[0] }
+          : r
+      ));
+      toast.success("Resource updated successfully");
     } else {
-      const { data: inserted, error } = await (supabase as any).from("resources").insert(payload).select().single();
-      if (error) { toast.error("Save failed: " + error.message); setUploading(false); return; }
-      // Optimistic insert - immediately add to UI
-      if (inserted) {
-        setDynamicResources(prev => [inserted, ...prev]);
+      const { data: insertData, error: insertError } = await (supabase as any)
+        .from("resources")
+        .insert(payload)
+        .select();
+
+      console.log("DB insert result:", insertData, insertError);
+
+      if (insertError) {
+        console.error("CRITICAL: DB insert failed:", insertError);
+        toast.error("Save failed: " + insertError.message);
+        setUploading(false);
+        return;
       }
-      toast.success("Resource added");
+
+      if (!insertData || insertData.length === 0) {
+        console.error("CRITICAL: No rows inserted. Check RLS policy.");
+        toast.error("Resource not saved. Contact support.");
+        setUploading(false);
+        return;
+      }
+
+      setDynamicResources(prev => [insertData[0], ...prev]);
+      toast.success("Resource added successfully");
     }
 
     setUploading(false);
