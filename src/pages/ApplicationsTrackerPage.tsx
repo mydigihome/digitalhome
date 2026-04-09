@@ -1175,62 +1175,92 @@ function ResourceStudioSection({ userId, userEmail }: { userId?: string; userEma
             </button>
           </div>
 
-          {/* PDF iframe */}
-          <div style={{ flex: 1 }}>
+          {/* Content area with conditional blur */}
+          <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
             <iframe src={previewTemplate.signedUrl} style={{ width: "100%", height: "100%", border: "none" }} />
+
+            {/* Blur overlay for non-purchasers */}
+            {!hasPurchased && !isAdmin && (
+              <>
+                {/* Gradient + blur overlay starting at 30% */}
+                <div style={{
+                  position: "absolute", left: 0, right: 0, top: "30%", bottom: 0,
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  background: isDark
+                    ? "linear-gradient(to bottom, rgba(17,17,18,0) 0%, rgba(17,17,18,0.7) 30%, rgba(17,17,18,0.95) 100%)"
+                    : "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0.95) 100%)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }} />
+
+                {/* Purchase CTA card */}
+                <div style={{
+                  position: "absolute", left: "50%", top: "55%", transform: "translate(-50%, -50%)",
+                  background: isDark ? "#1C1C1E" : "white",
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  borderRadius: 16, padding: "28px 32px", textAlign: "center",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+                  maxWidth: 340, width: "90%",
+                  zIndex: 2,
+                }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={isDark ? "#9CA3AF" : "#6B7280"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 12px" }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }} className="text-foreground">Purchase to unlock full access</p>
+                  <p style={{ fontSize: 13, marginBottom: 16 }} className="text-muted-foreground">Get the full template to customize</p>
+                  <button
+                    onClick={() => { window.location.href = SINGLE_STRIPE_URL; }}
+                    style={{
+                      width: "100%", padding: "12px 20px",
+                      background: "#10B981", color: "white",
+                      border: "none", borderRadius: 10,
+                      fontSize: 14, fontWeight: 600, cursor: "pointer",
+                      minHeight: 44, marginBottom: 10,
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    Download Template — $8
+                  </button>
+                  <button
+                    onClick={() => { window.location.href = BUNDLE_STRIPE_URL; }}
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: 500,
+                      color: "#7B5EA7", textDecoration: "underline",
+                      fontFamily: "Inter, sans-serif",
+                    }}
+                  >
+                    Or get all templates for $25
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Footer */}
-          <div style={{
-            padding: "16px 24px",
-            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
-            background: isDark ? "#111112" : "#F9FAFB",
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            flexShrink: 0,
-          }}>
-            <div>
-              <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280", marginBottom: 2 }}>Like what you see?</p>
-              <p style={{ fontSize: 12, color: isDark ? "rgba(255,255,255,0.35)" : "#9CA3AF" }}>This template or get all 4</p>
+          {/* Footer — only show for purchasers/admin */}
+          {(hasPurchased || isAdmin) && (
+            <div style={{
+              padding: "16px 24px",
+              borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#F3F4F6"}`,
+              background: isDark ? "#111112" : "#F9FAFB",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              flexShrink: 0,
+            }}>
+              <div>
+                <p style={{ fontSize: 13, color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280", marginBottom: 2 }}>Ready to download</p>
+              </div>
+              <button
+                onClick={() => { handleDownload(previewTemplate); setPreviewTemplate(null); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "10px 24px", background: "#10B981", color: "white",
+                  border: "none", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                <Download size={14} /> Download Now
+              </button>
             </div>
-            <div style={{ display: "flex", gap: 10 }}>
-              {hasPurchased ? (
-                <button
-                  onClick={() => { handleDownload(previewTemplate); setPreviewTemplate(null); }}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "10px 24px", background: "#10B981", color: "white",
-                    border: "none", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer",
-                  }}
-                >
-                  <Download size={14} /> Download Now
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => openStripeForSingle()}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      padding: "10px 20px", background: isDark ? "#1C1C1E" : "white",
-                      border: "1.5px solid #7B5EA7", borderRadius: 999,
-                      fontSize: 13, fontWeight: 600, color: "#7B5EA7", cursor: "pointer",
-                    }}
-                  >
-                    This one — $8
-                  </button>
-                  <button
-                    onClick={openStripeForBundle}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      padding: "10px 20px", background: "#10B981", color: "white",
-                      border: "none", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                    }}
-                  >
-                    All 4 — $25
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
 
