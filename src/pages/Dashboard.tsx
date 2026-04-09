@@ -657,7 +657,7 @@ export default function Dashboard() {
   const renderRightCard = (id: string) => {
     switch (id) {
       case "scripture":
-        if (!(prefs as any)?.show_scripture_card) return null;
+        if (!(prefs as any)?.show_scripture_card && localStorage.getItem("dh_scripture") !== "true") return null;
         return (
           <SortableCard key={id} id={id}>
             <div className="p-5 bg-card border border-border rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
