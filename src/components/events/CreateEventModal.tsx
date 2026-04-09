@@ -30,9 +30,9 @@ const EVENT_TYPES = [
 ];
 
 const IMPORT_PLATFORMS = [
-  { value: "partiful", label: "Partiful", color: "#FF6B6B" },
-  { value: "posh", label: "Posh", color: "#6366F1" },
-  { value: "eventbrite", label: "Eventbrite", color: "#F05537" },
+  { value: "partiful", label: "Partiful", color: "#FF6B6B", domain: "partiful.com" },
+  { value: "posh", label: "Posh", color: "#6366F1", domain: "posh.vip" },
+  { value: "eventbrite", label: "Eventbrite", color: "#F05537", domain: "eventbrite.com" },
 ];
 
 interface AIStage {
