@@ -254,6 +254,14 @@ export default function Dashboard() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const saveWidgetOrderToDb = async (left: string[], right: string[]) => {
+    if (!user) return;
+    await (supabase as any).from("user_preferences").update({
+      widget_order_left: left,
+      widget_order_right: right,
+    }).eq("user_id", user.id);
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
@@ -265,12 +273,14 @@ export default function Dashboard() {
       setLeftOrder((prev) => {
         const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
         saveStoredJson("dh_left_column_order", next);
+        saveWidgetOrderToDb(next, rightOrder);
         return next;
       });
     } else if (rightOrder.includes(active.id as string)) {
       setRightOrder((prev) => {
         const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
         saveStoredJson("dh_right_column_order", next);
+        saveWidgetOrderToDb(leftOrder, next);
         return next;
       });
     }
