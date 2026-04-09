@@ -628,7 +628,7 @@ export default function SettingsPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>{item.title}</span>
-                      {item.connected && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected ✓</span>}
+                      {item.connected && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
                     </div>
                     <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>{item.detail || item.desc}</span>
                   </div>
@@ -636,6 +636,52 @@ export default function SettingsPage() {
                 <button onClick={item.action} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{item.actionLabel}</button>
               </div>
             ))}
+
+            {/* Google Calendar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(66,133,244,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  <img src="https://logo.clearbit.com/calendar.google.com" alt="" style={{ width: 22, height: 22, objectFit: "contain" }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; (e.currentTarget.parentElement as HTMLElement).innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4285F4" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'; }} />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>Google Calendar</span>
+                    {gcalConnection.data && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
+                  </div>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>
+                    {gcalConnection.data?.calendar_email || "Sync your Google Calendar events to Today's Agenda on your dashboard"}
+                  </span>
+                </div>
+              </div>
+              {gcalConnection.data ? (
+                <button onClick={() => disconnectGcal.mutate()} disabled={disconnectGcal.isPending} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#DC2626", cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                  {disconnectGcal.isPending ? "..." : "Disconnect"}
+                </button>
+              ) : (
+                <button onClick={connectGcal} disabled={gcalConnecting} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                  {gcalConnecting ? "Connecting..." : "Connect"}
+                </button>
+              )}
+            </div>
+
+            {/* Apple Calendar */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${border}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,59,48,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Calendar size={18} color="#FF3B30" />
+                </div>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif" }}>Apple Calendar</span>
+                    {!!localStorage.getItem("dh_caldav_url") && <span style={{ fontSize: 10, fontWeight: 600, color: "#10B981", background: isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4", padding: "2px 8px", borderRadius: 999, fontFamily: "Inter, sans-serif" }}>Connected</span>}
+                  </div>
+                  <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>Sync your Apple Calendar events to Today's Agenda on your dashboard</span>
+                </div>
+              </div>
+              <button onClick={() => setAppleCalModalOpen(true)} style={{ padding: "7px 16px", background: inputBg, border: `1.5px solid ${inputBorder}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: text1, cursor: "pointer", fontFamily: "Inter, sans-serif", minHeight: 44 }}>
+                {localStorage.getItem("dh_caldav_url") ? "Change" : "Connect"}
+              </button>
+            </div>
           </div>
         )}
 
