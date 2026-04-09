@@ -144,18 +144,18 @@ export default function ResourcesPage() {
 
     // Upload file if provided
     if (resourceFile) {
-      const path = `resources/${user.id}/${Date.now()}-${resourceFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile);
-      if (error) { toast.error("File upload failed"); setUploading(false); return; }
+      const path = `${user.id}/resources/${Date.now()}-${resourceFile.name}`;
+      const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile, { upsert: true });
+      if (error) { toast.error("File upload failed: " + error.message); setUploading(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
       file_url = publicUrl;
     }
 
     // Upload thumbnail if provided
     if (thumbnailFile) {
-      const path = `thumbnails/${user.id}/${Date.now()}-${thumbnailFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile);
-      if (error) { toast.error("Thumbnail upload failed"); setUploading(false); return; }
+      const path = `${user.id}/thumbnails/${Date.now()}-${thumbnailFile.name}`;
+      const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile, { upsert: true });
+      if (error) { toast.error("Thumbnail upload failed: " + error.message); setUploading(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
       thumbnail_url = publicUrl;
     }
@@ -173,27 +173,41 @@ export default function ResourcesPage() {
     };
 
     if (editingResource) {
-      const { error } = await (supabase as any).from("resources").update(payload).eq("id", editingResource.id);
-      if (error) { toast.error("Update failed"); setUploading(false); return; }
+      const { data: updated, error } = await (supabase as any).from("resources").update(payload).eq("id", editingResource.id).select().single();
+      if (error) { toast.error("Update failed: " + error.message); setUploading(false); return; }
+      // Optimistic update - immediately reflect in UI
+      if (updated) {
+        setDynamicResources(prev => prev.map(r => r.id === editingResource.id ? updated : r));
+      }
       toast.success("Resource updated");
     } else {
-      const { error } = await (supabase as any).from("resources").insert(payload);
-      if (error) { toast.error("Save failed"); setUploading(false); return; }
+      const { data: inserted, error } = await (supabase as any).from("resources").insert(payload).select().single();
+      if (error) { toast.error("Save failed: " + error.message); setUploading(false); return; }
+      // Optimistic insert - immediately add to UI
+      if (inserted) {
+        setDynamicResources(prev => [inserted, ...prev]);
+      }
       toast.success("Resource added");
     }
 
     setUploading(false);
     setShowAddForm(false);
     resetForm();
-    fetchResources();
   };
 
   const handleDeleteResource = async () => {
     if (!deleteConfirm) return;
-    await (supabase as any).from("resources").delete().eq("id", deleteConfirm.id);
+    const deleteId = deleteConfirm.id;
+    // Optimistic removal
+    setDynamicResources(prev => prev.filter(r => r.id !== deleteId));
     setDeleteConfirm(null);
+    const { error } = await (supabase as any).from("resources").delete().eq("id", deleteId);
+    if (error) {
+      toast.error("Delete failed: " + error.message);
+      fetchResources(); // Refetch on error
+      return;
+    }
     toast.success("Resource deleted");
-    fetchResources();
   };
 
   const handleEditResource = (r: DynamicResource) => {

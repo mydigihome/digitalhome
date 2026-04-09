@@ -86,20 +86,34 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
     }, 0);
   };
 
+  const trackEmailSent = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase.from("contact_emails").insert({
+        user_id: user.id,
+        contact_id: active.id,
+        content: `Subject: ${subject}\n\n${body}`,
+        tone: "professional",
+      });
+      if (error) console.error("Failed to track email:", error);
+
+      // Update last_contacted_date on the contact
+      await supabase.from("contacts").update({
+        last_contacted_date: new Date().toISOString(),
+        last_email_date: new Date().toISOString(),
+        email_count: (active as any).email_count ? (active as any).email_count + 1 : 1,
+      }).eq("id", active.id);
+    } catch (e) {
+      console.error("Email tracking error:", e);
+    }
+  };
+
   const handleMailto = async () => {
     if (!active.email) {
       toast.error("No email address for this contact");
       return;
     }
-    if (user) {
-      await (supabase as any).from("contact_emails").insert({
-        user_id: user.id,
-        contact_id: active.id,
-        content: `Subject: ${subject}\n\n${body}`,
-        tone: "professional",
-        sent_at: new Date().toISOString(),
-      });
-    }
+    await trackEmailSent();
     const mailto = `mailto:${encodeURIComponent(active.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailto;
     toast.success("Email app opened");
@@ -131,6 +145,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
         window.open(data.draftLink, "_blank");
         toast.success("Draft saved to Gmail");
       }
+      await trackEmailSent();
       setSent(true);
     } catch {
       handleMailto();
