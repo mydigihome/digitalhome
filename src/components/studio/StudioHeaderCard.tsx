@@ -226,6 +226,24 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     }, { onConflict: "user_id" });
     setStudioName(formProfile.studio_name || "");
     setStudioHandle(formProfile.handle || "");
+    // Reload stats so Platforms tab picks up new handles
+    const { data: refreshed } = await supabase
+      .from("studio_profile")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (refreshed) {
+      setFormProfile(refreshed);
+      const p = refreshed as any;
+      const combined = (p.combined_followers || 0) || ((p.youtube_subscribers || 0) + (p.instagram_followers || 0) + (p.tiktok_followers || 0) + (p.twitter_followers || 0));
+      setStudioStats({
+        combined_followers: combined || undefined,
+        reach_30d: p.reach_30d || undefined,
+        interactions_30d: p.interactions_30d || undefined,
+        avg_engagement: p.avg_engagement || undefined,
+      });
+      if (Array.isArray(p.images)) setStudioImages(p.images);
+    }
     setSettingsOpen(false);
     toast.success("Studio settings saved!");
   };
