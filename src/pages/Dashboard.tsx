@@ -477,9 +477,9 @@ export default function Dashboard() {
         const mobile = window.innerWidth < 768;
         return (
            <SortableCard key={id} id={id}>
-            <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: '16px', alignItems: 'stretch', width: '100%' }}>
-              <div style={{ width: mobile ? '100%' : '260px', flexShrink: 0, flexGrow: 0 }}>{compactNetWorth}</div>
-              <div style={{ flex: 1, flexGrow: 1, minWidth: 0 }}>{compactProjects}</div>
+            <div style={{ display: 'flex', flexDirection: mobile ? 'column' : 'row', gap: '12px', alignItems: 'stretch', width: '100%' }}>
+              <div style={{ flex: mobile ? 'unset' : '2 1 0%', minWidth: 0, width: mobile ? '100%' : 'auto' }}>{compactNetWorth}</div>
+              <div style={{ flex: mobile ? 'unset' : '3 1 0%', minWidth: 0, width: mobile ? '100%' : 'auto' }}>{compactProjects}</div>
             </div>
           </SortableCard>
         );
