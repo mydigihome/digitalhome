@@ -66,23 +66,27 @@ export function useUpdateProject() {
   });
 }
 
+// Track deleted IDs to prevent reappearance from refetches
+const deletedProjectIds = new Set<string>();
+
 export function useDeleteProject() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
     mutationFn: async (id: string) => {
+      // Track this ID so it never reappears from cache invalidation
+      deletedProjectIds.add(id);
+
       // Optimistic: remove from cache immediately
       qc.setQueryData<Project[]>(["projects", user?.id], (old) =>
         old ? old.filter((p) => p.id !== id) : []
       );
 
       // Cascade delete all children before deleting the project
-      // Goal children
       await supabase.from("goal_tasks" as any).delete().eq("project_id", id);
       await supabase.from("goal_stages" as any).delete().eq("project_id", id);
-      // Task children
       await supabase.from("tasks").delete().eq("project_id", id);
-      // Event children (need event_details id first)
+
       const { data: eventDetails } = await supabase
         .from("event_details")
         .select("id")
@@ -94,16 +98,23 @@ export function useDeleteProject() {
         }
         await supabase.from("event_details").delete().eq("project_id", id);
       }
-      // Documents and contact links
+
       await supabase.from("documents").delete().eq("project_id", id);
       await supabase.from("contact_project_links" as any).delete().eq("project_id", id);
 
-      // Finally delete the project itself
       const { error } = await supabase.from("projects").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["projects"], refetchType: "all" });
+    onSuccess: () => {
+      // Do NOT refetch from Supabase — rely on optimistic removal only
+      // This prevents deleted items from reappearing due to RLS or timing
+    },
+    onError: (_err, id) => {
+      // On failure, remove from deleted set and refetch to restore
+      deletedProjectIds.delete(id);
+      qc.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 }
+
+export { deletedProjectIds };
