@@ -654,6 +654,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           photo_url: string | null
+          priority: boolean | null
           relationship_type: string | null
           status: string | null
           tags: string[] | null
@@ -681,6 +682,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          priority?: boolean | null
           relationship_type?: string | null
           status?: string | null
           tags?: string[] | null
@@ -708,6 +710,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           photo_url?: string | null
+          priority?: boolean | null
           relationship_type?: string | null
           status?: string | null
           tags?: string[] | null
@@ -3916,6 +3919,8 @@ export type Database = {
           website: string | null
           welcome_video_url: string | null
           welcome_video_watched: boolean | null
+          widget_order_left: Json | null
+          widget_order_right: Json | null
         }
         Insert: {
           accent_colors?: Json | null
@@ -3982,6 +3987,8 @@ export type Database = {
           website?: string | null
           welcome_video_url?: string | null
           welcome_video_watched?: boolean | null
+          widget_order_left?: Json | null
+          widget_order_right?: Json | null
         }
         Update: {
           accent_colors?: Json | null
@@ -4048,6 +4055,8 @@ export type Database = {
           website?: string | null
           welcome_video_url?: string | null
           welcome_video_watched?: boolean | null
+          widget_order_left?: Json | null
+          widget_order_right?: Json | null
         }
         Relationships: []
       }

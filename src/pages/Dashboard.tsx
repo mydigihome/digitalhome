@@ -229,10 +229,38 @@ export default function Dashboard() {
   const [rightOrder, setRightOrder] = useState<string[]>(() =>
     loadStoredJson<string[]>("dh_right_column_order", DEFAULT_RIGHT_ORDER)
   );
+
+  // Load widget order from Supabase on mount (overrides localStorage)
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("user_preferences")
+        .select("widget_order_left, widget_order_right")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data?.widget_order_left && Array.isArray(data.widget_order_left)) {
+        setLeftOrder(data.widget_order_left);
+        saveStoredJson("dh_left_column_order", data.widget_order_left);
+      }
+      if (data?.widget_order_right && Array.isArray(data.widget_order_right)) {
+        setRightOrder(data.widget_order_right);
+        saveStoredJson("dh_right_column_order", data.widget_order_right);
+      }
+    })();
+  }, [user]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const saveWidgetOrderToDb = async (left: string[], right: string[]) => {
+    if (!user) return;
+    await (supabase as any).from("user_preferences").update({
+      widget_order_left: left,
+      widget_order_right: right,
+    }).eq("user_id", user.id);
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -245,12 +273,14 @@ export default function Dashboard() {
       setLeftOrder((prev) => {
         const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
         saveStoredJson("dh_left_column_order", next);
+        saveWidgetOrderToDb(next, rightOrder);
         return next;
       });
     } else if (rightOrder.includes(active.id as string)) {
       setRightOrder((prev) => {
         const next = arrayMove(prev, prev.indexOf(active.id as string), prev.indexOf(over.id as string));
         saveStoredJson("dh_right_column_order", next);
+        saveWidgetOrderToDb(leftOrder, next);
         return next;
       });
     }

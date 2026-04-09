@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PriorityContactCard from "../cards/PriorityContactCard";
 import ContactRow from "../cards/ContactRow";
 import AddContactModal from "../modals/AddContactModal";
@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import PremiumGate from "@/components/PremiumGate";
 import { Loader2, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 const FILTERS = ["All", "Family", "Friends", "Professional", "Digi Home"];
 
@@ -33,19 +36,45 @@ interface Props {
 }
 
 export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("All");
   const [showAddModal, setShowAddModal] = useState(false);
   const [detailContact, setDetailContact] = useState<Contact | null>(null);
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
-  const [priorityStars, setPriorityStars] = useState<Record<string, boolean>>({});
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
 
   const { data: contacts = [], isLoading } = useContacts();
 
-  const toggleStar = (id: string) => {
-    setPriorityStars((prev) => ({ ...prev, [id]: !prev[id] }));
-    toast.success(priorityStars[id] ? "Removed from priority" : "Added to priority");
+  // Priority stars loaded from DB (contacts.priority column)
+  const priorityStars: Record<string, boolean> = {};
+  contacts.forEach(c => {
+    priorityStars[c.id] = (c as any).priority === true;
+  });
+
+  const toggleStar = async (id: string) => {
+    const current = priorityStars[id] ?? false;
+    const newVal = !current;
+
+    // Optimistic update via queryClient
+    queryClient.setQueryData(["contacts", user?.id, undefined], (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((c: any) => c.id === id ? { ...c, priority: newVal } : c);
+    });
+
+    toast.success(newVal ? "Added to priority" : "Removed from priority");
+
+    const { error } = await (supabase as any)
+      .from("contacts")
+      .update({ priority: newVal })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Failed to save priority:", error);
+      toast.error("Failed to save priority");
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    }
   };
 
   const filteredContacts = contacts.filter((c) => {
@@ -109,7 +138,6 @@ export default function OverviewView({ onSwitchToEmails, onCompose }: Props) {
     <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-6">
       {/* LEFT COLUMN */}
       <div>
-        {/* All Contacts */}
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-xl text-foreground" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
