@@ -222,7 +222,11 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
       youtube_url: formProfile.youtube_url || null,
       tiktok_handle: formProfile.tiktok_handle || null,
       twitter_handle: formProfile.twitter_handle || null,
-    }, { onConflict: "user_id" });
+      linkedin_url: (formProfile as any).linkedin_url || null,
+      podcast_name: (formProfile as any).podcast_name || null,
+      podcast_url: (formProfile as any).podcast_url || null,
+      substack_url: (formProfile as any).substack_url || null,
+    } as any, { onConflict: "user_id" });
     setStudioName(formProfile.studio_name || "");
     setStudioHandle(formProfile.handle || "");
     setSettingsOpen(false);
@@ -739,6 +743,10 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                 { label: "YouTube", key: "youtube_url", placeholder: "https://youtube.com/..." },
                 { label: "TikTok", key: "tiktok_handle", placeholder: "yourhandle", prefix: "@" },
                 { label: "Twitter/X", key: "twitter_handle", placeholder: "yourhandle", prefix: "@" },
+                { label: "LinkedIn", key: "linkedin_url", placeholder: "https://linkedin.com/in/..." },
+                { label: "Substack", key: "substack_url", placeholder: "https://yourname.substack.com" },
+                { label: "Podcast Name", key: "podcast_name", placeholder: "e.g. The Daily Hustle" },
+                { label: "Podcast URL", key: "podcast_url", placeholder: "https://..." },
               ].map(f => (
                 <div key={f.key}>
                   <label style={{ fontSize: "12px", fontWeight: 600, color: isDark ? "#9CA3AF" : "#374151", marginBottom: "4px", display: "block" }}>
