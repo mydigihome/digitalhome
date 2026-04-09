@@ -145,6 +145,7 @@ export default function AIEmailWidget({ contact, suggestedContact }: Props) {
         window.open(data.draftLink, "_blank");
         toast.success("Draft saved to Gmail");
       }
+      await trackEmailSent();
       setSent(true);
     } catch {
       handleMailto();
