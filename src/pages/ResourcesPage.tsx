@@ -153,9 +153,9 @@ export default function ResourcesPage() {
 
     // Upload thumbnail if provided
     if (thumbnailFile) {
-      const path = `thumbnails/${user.id}/${Date.now()}-${thumbnailFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile);
-      if (error) { toast.error("Thumbnail upload failed"); setUploading(false); return; }
+      const path = `${user.id}/thumbnails/${Date.now()}-${thumbnailFile.name}`;
+      const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile, { upsert: true });
+      if (error) { toast.error("Thumbnail upload failed: " + error.message); setUploading(false); return; }
       const { data: { publicUrl } } = supabase.storage.from("user-assets").getPublicUrl(path);
       thumbnail_url = publicUrl;
     }
