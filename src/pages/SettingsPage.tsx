@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserPreferences, useUpsertPreferences } from "@/hooks/useUserPreferences";
 import { useArchivedProjects, useRestoreProject } from "@/hooks/useArchivedProjects";
 import { supabase } from "@/integrations/supabase/client";
+import { useGoogleCalendarConnection, useConnectGoogleCalendar, useDisconnectGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { Calendar } from "lucide-react";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
