@@ -681,7 +681,7 @@ Return a JSON array of exactly 5 objects:
             /* ═══ IMPORT MODE ═══ */
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Platform</Label>
+                <Label>Where is your event hosted?</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {IMPORT_PLATFORMS.map(p => {
                     const selected = importPlatform === p.value;
@@ -690,7 +690,7 @@ Return a JSON array of exactly 5 objects:
                         key={p.value}
                         onClick={() => setImportPlatform(p.value)}
                         style={{
-                          display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
                           padding: "14px 12px", borderRadius: "10px",
                           border: `1.5px solid ${selected ? p.color : (isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB")}`,
                           background: selected ? `${p.color}10` : (isDark ? "#252528" : "white"),
@@ -698,10 +698,12 @@ Return a JSON array of exactly 5 objects:
                           fontFamily: "Inter, sans-serif",
                         }}
                       >
-                        <div style={{
-                          width: 8, height: 8, borderRadius: "50%",
-                          background: p.color, flexShrink: 0,
-                        }} />
+                        <img
+                          src={`https://logo.clearbit.com/${p.domain}`}
+                          alt={p.label}
+                          style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0 }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
                         <span style={{
                           fontSize: "13px", fontWeight: selected ? "600" : "400",
                           color: selected ? p.color : (isDark ? "#F2F2F2" : "#374151"),
@@ -712,15 +714,25 @@ Return a JSON array of exactly 5 objects:
                     );
                   })}
                 </div>
+                {!importPlatform && (
+                  <p className="text-xs text-muted-foreground">Select a platform to continue</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Event URL</Label>
                 <Input
                   value={importUrl}
                   onChange={e => setImportUrl(e.target.value)}
-                  placeholder={importPlatform ? `Paste ${IMPORT_PLATFORMS.find(p => p.value === importPlatform)?.label} event URL...` : "Select a platform first"}
+                  placeholder={
+                    importPlatform
+                      ? `Paste your ${IMPORT_PLATFORMS.find(p => p.value === importPlatform)?.label} event link...`
+                      : "Select a platform first"
+                  }
                   disabled={!importPlatform}
-                  className="focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10"
+                  className={cn(
+                    "focus-visible:border-[#7B5EA7] focus-visible:ring-[#7B5EA7]/10",
+                    !importPlatform && "opacity-50 cursor-not-allowed"
+                  )}
                 />
               </div>
               <div className="pt-2">
