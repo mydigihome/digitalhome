@@ -639,8 +639,9 @@ export default function ResourcesPage() {
                   placeholder="e.g. Notion, Shopify..."
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
                     outline: "none", boxSizing: "border-box" as const,
+                    minHeight: 48,
                   }}
                 />
               </div>
@@ -653,9 +654,9 @@ export default function ResourcesPage() {
                   rows={2}
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
                     outline: "none", resize: "vertical", boxSizing: "border-box" as const,
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "Inter, sans-serif", minHeight: 48,
                   }}
                 />
               </div>
@@ -666,7 +667,8 @@ export default function ResourcesPage() {
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg, cursor: "pointer",
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg, cursor: "pointer",
+                    minHeight: 48,
                   }}>
                   {STATIC_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
