@@ -435,8 +435,96 @@ export default function ResourcesPage() {
                   <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tool.desc}</p>
                 </div>
                 <ExternalLink size={14} color={text2} style={{ flexShrink: 0 }} />
-              </button>
+            </button>
             ))}
+            {dynamicResources
+              .filter(r => {
+                if (!r.published && !isAdmin) return false;
+                if (!r.url) return false;
+                const matchCat = activeCategory === "All" || r.category === activeCategory;
+                const matchSearch = !search || r.title.toLowerCase().includes(search.toLowerCase());
+                return matchCat && matchSearch;
+              })
+              .map(r => {
+                let domain = "";
+                try { domain = new URL(r.url!).hostname.replace('www.', ''); } catch {}
+                const faviconUrl = domain ? 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128' : null;
+                return (
+                  <div
+                    key={r.id}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12, padding: 16,
+                      background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
+                      cursor: "pointer", transition: "all 150ms", width: "100%",
+                      position: "relative" as const,
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
+                    onClick={() => {
+                      if (r.url) {
+                        const a = document.createElement("a");
+                        a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                      }
+                    }}
+                  >
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 10,
+                      background: isDark ? "#252528" : "#F9FAFB",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, overflow: "hidden",
+                    }}>
+                      {faviconUrl ? (
+                        <img src={faviconUrl} alt={r.title}
+                          style={{ width: 24, height: 24, borderRadius: 4 }}
+                          onError={e => {
+                            const el = e.target as HTMLImageElement;
+                            el.style.display = "none";
+                            const parent = el.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<span style="font-size:16px;font-weight:700;color:#6B7280">' + r.title.charAt(0).toUpperCase() + '</span>';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: 16, fontWeight: 700, color: "#6B7280" }}>
+                          {r.title.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 2 }}>
+                        {r.title}
+                      </p>
+                      <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {r.description}
+                      </p>
+                    </div>
+                    <ExternalLink size={14} color={text2} style={{ flexShrink: 0 }} />
+                    {isAdmin && (
+                      <div style={{ display: "flex", gap: 4, position: "absolute" as const, top: 8, right: 8 }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleEditResource(r); }}
+                          style={{
+                            width: 24, height: 24, background: "rgba(0,0,0,0.4)",
+                            border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+                          }}
+                        >✎</button>
+                        <button
+                          onClick={e => { e.stopPropagation(); setDeleteConfirm(r); }}
+                          style={{
+                            width: 24, height: 24, background: "rgba(220,38,38,0.7)",
+                            border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                          }}
+                        >×</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            }
           </div>
           {filteredTools.length === 0 && (
             <div style={{ textAlign: "center", padding: "48px 0" }}>
@@ -709,6 +797,37 @@ export default function ResourcesPage() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* URL (first) */}
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>URL {form.resource_type === "link" || form.resource_type === "video" ? "*" : ""}</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                    onBlur={() => {
+                      try {
+                        if (form.url) {
+                          const domain = new URL(form.url).hostname.replace('www.', '');
+                          const logoUrl = 'https://logo.clearbit.com/' + domain;
+                          setAutoLogoUrl(logoUrl);
+                          setForm(p => ({ ...p, thumbnail_url: logoUrl }));
+                        }
+                      } catch {}
+                    }}
+                    placeholder="https://..." style={{
+                      flex: 1, padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                      borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                      outline: "none", boxSizing: "border-box" as const,
+                    }} />
+                  {autoLogoUrl && (
+                    <img
+                      src={autoLogoUrl}
+                      alt="logo"
+                      style={{ width: 24, height: 24, borderRadius: 6, objectFit: "contain", flexShrink: 0, border: `1px solid ${inputBorder}` }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  )}
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Title *</label>
@@ -768,39 +887,6 @@ export default function ResourcesPage() {
                 </div>
               </div>
 
-              {/* URL field (for Link and Video) */}
-              {(form.resource_type === "link" || form.resource_type === "video") && (
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>URL</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                      onBlur={() => {
-                        try {
-                          if (form.url) {
-                            const domain = new URL(form.url).hostname.replace('www.', '');
-                            const logoUrl = 'https://logo.clearbit.com/' + domain;
-                            setAutoLogoUrl(logoUrl);
-                            setForm(p => ({ ...p, thumbnail_url: logoUrl }));
-                          }
-                        } catch {}
-                      }}
-                      placeholder="https://..." style={{
-                        flex: 1, padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                        borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
-                        outline: "none", boxSizing: "border-box" as const,
-                      }} />
-                    {autoLogoUrl && (
-                      <img
-                        src={autoLogoUrl}
-                        alt="logo"
-                        style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", flexShrink: 0, border: `1px solid ${inputBorder}` }}
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* File upload (for File and Template) */}
               {(form.resource_type === "file" || form.resource_type === "template") && (
                 <div>
@@ -810,12 +896,14 @@ export default function ResourcesPage() {
                 </div>
               )}
 
-              {/* Thumbnail */}
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Thumbnail (optional)</label>
-                <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
-                  style={{ fontSize: 13, color: text1 }} />
-              </div>
+              {/* Thumbnail — only for file/template types */}
+              {(form.resource_type === "file" || form.resource_type === "template") && (
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Thumbnail (optional)</label>
+                  <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
+                    style={{ fontSize: 13, color: text1 }} />
+                </div>
+              )}
 
               {/* Published toggle */}
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
