@@ -159,16 +159,34 @@ export default function MarketIntelCard() {
 
     try {
       const { data, error } = await supabase
-        .functions.invoke("generate-trading-plan", {
+        .functions.invoke("market-intel", {
           body: {
-            prompt: `You are a financial intelligence assistant. 
-Answer this question with current knowledge, 
-cite sources where possible, and end with 
-one actionable takeaway.
+            prompt: `You are a financial intelligence assistant inside Digital Home.
+
+Today is ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+
+CRITICAL FACTS:
+- Donald Trump is the current US President
+- He took office January 20 2025
+- ALWAYS search the web before answering
+- NEVER answer from memory alone
+- NEVER say "as of my last update"
 
 Question: ${question}
 
-Be concise, direct, under 250 words.`,
+FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
+Write 2-3 short plain paragraphs answering the question with current information.
+No bullet points. No bold text. No headers.
+Maximum 180 words total.
+
+Then on a new line write exactly:
+---
+Sources:
+[Source Name](https://full-url-here.com)
+[Source Name 2](https://full-url-here.com)
+
+Then on a new line write exactly:
+Takeaway: One sentence of practical advice.`,
           },
         });
 

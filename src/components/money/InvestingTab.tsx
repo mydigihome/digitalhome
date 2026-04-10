@@ -569,6 +569,10 @@ export default function InvestingTab() {
         </div>
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+        <MarketIntelCard />
+      </div>
+
       {/* Deposit / Withdraw */}
       <div className="rounded-2xl border border-border bg-card" style={{ padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -844,8 +848,6 @@ export default function InvestingTab() {
       {/* Live Trading Terminal */}
       <TradingTerminal onOpenPlanModal={() => setPlanModalOpen(true)} />
 
-      {/* Market Intelligence */}
-      <MarketIntelCard />
 
       {/* Past Trading Plans */}
       <PastTradingPlans />
