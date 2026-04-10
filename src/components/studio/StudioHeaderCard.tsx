@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -66,6 +67,7 @@ interface Props {
 export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const { user } = useAuth();
   const isDark = document.documentElement.classList.contains("dark");
+  const queryClient = useQueryClient();
 
   const [studioName, setStudioName] = useState("");
   const [studioHandle, setStudioHandle] = useState("");
@@ -231,6 +233,9 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     setStudioHandle(formProfile.handle || "");
     setSettingsOpen(false);
     toast.success("Studio settings saved!");
+    queryClient.invalidateQueries({ 
+      queryKey: ["studio_profile_overview"] 
+    });
   };
 
   const handleAddGoal = async () => {
@@ -269,10 +274,18 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     }
     const updated = [...studioImages, ...urls];
     setStudioImages(updated);
-    await supabase.from("studio_profile").upsert({
-      user_id: user.id,
-      images: updated as any,
-    } as any, { onConflict: "user_id" });
+    const { error: saveError } = await supabase
+      .from("studio_profile")
+      .upsert({
+        user_id: user.id,
+        images: updated as any,
+      } as any, { onConflict: "user_id" });
+
+    if (saveError) {
+      console.error("Failed to save photos:", saveError);
+      toast.error("Upload failed to save: " + saveError.message);
+      return;
+    }
     toast.success("Photos uploaded!");
   };
 

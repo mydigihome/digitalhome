@@ -508,8 +508,8 @@ export default function Dashboard() {
         return (
            <SortableCard key={id} id={id}>
             <div className="flex flex-col md:flex-row items-stretch gap-4 w-full">
-              <div className="w-full md:w-72 flex-shrink-0">{compactNetWorth}</div>
-              <div className="w-full md:flex-1 min-w-0">{compactProjects}</div>
+              <div className="w-full md:w-72 flex-shrink-0 flex flex-col">{compactNetWorth}</div>
+              <div className="w-full md:flex-1 min-w-0 flex flex-col">{compactProjects}</div>
             </div>
           </SortableCard>
         );
