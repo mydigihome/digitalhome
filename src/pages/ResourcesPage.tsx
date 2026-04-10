@@ -217,16 +217,22 @@ export default function ResourcesPage() {
       ));
       toast.success("Resource updated successfully");
     } else {
+      console.log("INSERT PAYLOAD:", JSON.stringify(payload));
+      console.log("CURRENT USER:", user?.id, user?.email);
+
       const { data: insertData, error: insertError } = await (supabase as any)
         .from("resources")
-        .insert(payload)
+        .insert({
+          ...payload,
+          user_id: user.id,
+        })
         .select();
 
-      console.log("DB insert result:", insertData, insertError);
+      console.log("INSERT RESULT:", insertData, insertError);
 
       if (insertError) {
-        console.error("CRITICAL: DB insert failed:", insertError);
-        toast.error("Save failed: " + insertError.message);
+        console.error("INSERT ERROR DETAILS:", JSON.stringify(insertError));
+        toast.error("Failed: " + insertError.message);
         setUploading(false);
         return;
       }
