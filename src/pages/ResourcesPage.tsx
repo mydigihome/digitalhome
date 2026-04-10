@@ -175,6 +175,11 @@ export default function ResourcesPage() {
       console.log("thumbnail publicUrl obtained:", thumbnail_url);
     }
 
+    // Use auto-logo if no thumbnail was manually uploaded
+    if (!thumbnailFile && !thumbnail_url && form.thumbnail_url) {
+      thumbnail_url = form.thumbnail_url;
+    }
+
     const payload = {
       title: form.title,
       description: form.description,
