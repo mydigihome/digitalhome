@@ -3,6 +3,7 @@ import TotalSpendingsCard from "./TotalSpendingsCard";
 import TotalEarningsCard from "./TotalEarningsCard";
 import BillsRecurringCard from "./BillsRecurringCard";
 import CreditScoreGaugeCard from "./CreditScoreGaugeCard";
+import PlaidConnect from "@/components/money/PlaidConnect";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function MoneyOverview() {
@@ -10,6 +11,7 @@ export default function MoneyOverview() {
 
   return (
     <div className="space-y-6">
+      <PlaidConnect />
       {/* Top: Transaction History + Spendings/Earnings */}
       <div
         style={{
