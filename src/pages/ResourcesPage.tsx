@@ -130,10 +130,11 @@ export default function ResourcesPage() {
   };
 
   const resetForm = () => {
-    setForm({ title: "", description: "", category: "Career", resource_type: "link", url: "", published: true });
+    setForm({ title: "", description: "", category: "Career", resource_type: "link", url: "", published: true, thumbnail_url: "" });
     setThumbnailFile(null);
     setResourceFile(null);
     setEditingResource(null);
+    setAutoLogoUrl(null);
   };
 
   const handleSaveResource = async () => {
@@ -274,7 +275,9 @@ export default function ResourcesPage() {
     setForm({
       title: r.title, description: r.description, category: r.category,
       resource_type: r.resource_type, url: r.url || "", published: r.published,
+      thumbnail_url: r.thumbnail_url || "",
     });
+    setAutoLogoUrl(r.thumbnail_url || null);
     setEditingResource(r);
     setShowAddForm(true);
   };
