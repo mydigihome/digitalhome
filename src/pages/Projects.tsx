@@ -69,6 +69,11 @@ export default function Projects() {
   const isDark = document.documentElement.classList.contains("dark");
 
   useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["projects"] });
+    queryClient.invalidateQueries({ queryKey: ["projects", user?.id] });
+  }, []);
+
+  useEffect(() => {
     if (deletedProjectIdsFromRoute.length === 0) return;
 
     deletedProjectIdsFromRoute.forEach(id => {
