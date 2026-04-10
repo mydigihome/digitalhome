@@ -68,10 +68,24 @@ export default function Projects() {
 
   useEffect(() => {
     if (deletedProjectIdsFromRoute.length === 0) return;
-    deletedProjectIdsFromRoute.forEach(id => 
-      deletedIdsRef.current.add(id)
-    );
-    setRemovedProjectIds((prev) => 
+    deletedProjectIdsFromRoute.forEach(id => {
+      deletedIdsRef.current.add(id);
+      queryClient.setQueryData(
+        ["projects", user?.id],
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((p: any) => p.id !== id);
+        }
+      );
+      queryClient.setQueryData(
+        ["projects"],
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter((p: any) => p.id !== id);
+        }
+      );
+    });
+    setRemovedProjectIds((prev) =>
       [...new Set([...prev, ...deletedProjectIdsFromRoute])]
     );
   }, [deletedProjectIdsKey]);
@@ -113,18 +127,40 @@ export default function Projects() {
 
     try {
       await supabase.from("tasks").delete().in("project_id", idsToDelete);
-      const { error } = await supabase.from("projects").delete().in("id", idsToDelete);
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .in("id", idsToDelete)
+        .eq("user_id", user!.id);
+      console.log("Delete result error:", error);
       if (error) {
+        console.error("Delete blocked:", error.message, error.code);
         setProjectCards(prev => [...deletedItems, ...prev]);
-        setRemovedProjectIds(prev => prev.filter(id => !idsToDelete.includes(id)));
-        toast.error("Delete failed. Please try again.");
+        setRemovedProjectIds(prev => 
+          prev.filter(id => !idsToDelete.includes(id))
+        );
+        idsToDelete.forEach(id => deletedIdsRef.current.delete(id));
+        toast.error("Delete failed: " + error.message);
         return;
       }
-      // Set query data directly to avoid refetch restoring deleted items
-      queryClient.setQueryData(["projects", user?.id], (old: any) => {
-        if (!Array.isArray(old)) return old;
-        return old.filter((p: any) => !idsToDelete.includes(p.id));
-      });
+      queryClient.setQueryData(
+        ["projects", user?.id], 
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter(
+            (p: any) => !idsToDelete.includes(p.id)
+          );
+        }
+      );
+      queryClient.setQueryData(
+        ["projects"], 
+        (old: any) => {
+          if (!Array.isArray(old)) return old;
+          return old.filter(
+            (p: any) => !idsToDelete.includes(p.id)
+          );
+        }
+      );
       toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
     } catch (err) {
       setProjectCards(prev => [...deletedItems, ...prev]);
@@ -534,7 +570,7 @@ export default function Projects() {
             }}
           >
             <Link size={14} />
-            Import from Partiful
+            Import
           </button>
 
           <div className="flex items-center gap-0.5 rounded-[14px] bg-card border border-border p-1">

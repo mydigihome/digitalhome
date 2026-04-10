@@ -113,8 +113,10 @@ export default function ResourcesPage() {
   const [form, setForm] = useState({
     title: "", description: "", category: "Career",
     resource_type: "link", url: "", published: true,
+    thumbnail_url: "" as string,
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [autoLogoUrl, setAutoLogoUrl] = useState<string | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
 
