@@ -159,45 +159,46 @@ export default function MarketIntelCard() {
 
     try {
       const { data, error } = await supabase
-        .functions.invoke("market-intel", {
-          body: { 
-            question,
-            history: messages
-              .slice(-6)
-              .map(m => ({
-                role: m.role,
-                content: m.content,
-              })),
+        .functions.invoke("generate-trading-plan", {
+          body: {
+            prompt: `You are a financial intelligence assistant. 
+Answer this question with current knowledge, 
+cite sources where possible, and end with 
+one actionable takeaway.
+
+Question: ${question}
+
+Be concise, direct, under 250 words.`,
           },
         });
 
       if (error) throw new Error(error.message);
 
-      const answerText = data?.answer || 
+      const answerText = data?.plan || 
+        data?.answer ||
+        data?.result ||
         "Could not get an answer. Try again.";
-      const sources = data?.sources || [];
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: answerText,
-        sources,
+        sources: [],
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, assistantMsg]);
       await incrementUsage();
-      await saveToHistory(question, answerText, sources);
+      await saveToHistory(question, answerText, []);
 
     } catch (err: any) {
       console.error("Chat error:", err);
-      const errorMsg: Message = {
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: "Something went wrong. Please try again.",
         timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      }]);
       toast.error("Request failed: " + err.message);
     } finally {
       setLoading(false);
