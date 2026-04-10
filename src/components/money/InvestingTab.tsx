@@ -569,9 +569,7 @@ export default function InvestingTab() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <MarketIntelCard />
-      </div>
+      <MarketIntelCard />
 
       {/* Deposit / Withdraw */}
       <div className="rounded-2xl border border-border bg-card" style={{ padding: 24 }}>
