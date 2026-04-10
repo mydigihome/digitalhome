@@ -158,139 +158,43 @@ export default function MarketIntelCard() {
     setMessages(prev => [...prev, userMsg]);
 
     try {
-      const systemPrompt = `You are a sharp, concise financial intelligence assistant built into Digital Home — a personal finance app. 
+      const { data, error } = await supabase
+        .functions.invoke("market-intel", {
+          body: { 
+            question,
+            history: messages
+              .slice(-6)
+              .map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+          },
+        });
 
-Your job is to help users understand:
-- Current market movements and news
-- Investment strategies used by wealthy investors
-- Economic indicators and what they mean
-- Stock, crypto, and asset analysis
-- Federal Reserve decisions and impact
-- Global events affecting markets
+      if (error) throw new Error(error.message);
 
-RULES:
-- Always be direct and practical
-- Lead with the most important insight first
-- Use simple language, not jargon
-- When you reference a news source, include the source name
-- Keep answers under 250 words unless the question needs more depth
-- If asked about specific stocks, give context but remind user you are not a financial advisor
-- Always end with 1 actionable takeaway when relevant
-- Format with short paragraphs, no bullet overload
-- Current date: ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`;
-
-      const response = await fetch(
-        "https://api.anthropic.com/v1/messages",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1024,
-            system: systemPrompt,
-            tools: [
-              {
-                type: "web_search_20250305",
-                name: "web_search",
-              },
-            ],
-            messages: [
-              {
-                role: "user",
-                content: question,
-              },
-            ],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("API request failed: " + response.status);
-      }
-
-      const data = await response.json();
-
-      // Extract text and sources from response
-      let answerText = "";
-      const sources: { title: string; url: string }[] = [];
-
-      if (Array.isArray(data.content)) {
-        for (const block of data.content) {
-          if (block.type === "text") {
-            answerText += block.text;
-          }
-          if (block.type === "tool_result" || block.type === "web_search_result") {
-            if (block.content) {
-              for (const item of block.content) {
-                if (item.type === "web_search_result" && item.url) {
-                  sources.push({
-                    title: item.title || item.url,
-                    url: item.url,
-                  });
-                }
-              }
-            }
-          }
-        }
-        // Handle multi-turn tool use response
-        if (!answerText && data.stop_reason === "tool_use") {
-          const toolUseBlock = data.content.find(
-            (b: any) => b.type === "tool_use"
-          );
-          if (toolUseBlock) {
-            const followUp = await fetch(
-              "https://api.anthropic.com/v1/messages",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  model: "claude-sonnet-4-20250514",
-                  max_tokens: 1024,
-                  system: systemPrompt,
-                  tools: [
-                    {
-                      type: "web_search_20250305",
-                      name: "web_search",
-                    },
-                  ],
-                  messages: [
-                    { role: "user", content: question },
-                    { role: "assistant", content: data.content },
-                  ],
-                }),
-              }
-            );
-            const followData = await followUp.json();
-            for (const block of followData.content || []) {
-              if (block.type === "text") answerText += block.text;
-            }
-          }
-        }
-      }
-
-      if (!answerText) {
-        answerText =
-          "I couldn't retrieve an answer right now. Please try again.";
-      }
+      const answerText = data?.answer || 
+        "Could not get an answer. Try again.";
+      const sources = data?.sources || [];
 
       const assistantMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: answerText,
-        sources: sources.slice(0, 3),
+        sources,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, assistantMsg]);
       await incrementUsage();
-      await saveToHistory(question, answerText, sources.slice(0, 3));
+      await saveToHistory(question, answerText, sources);
+
     } catch (err: any) {
       console.error("Chat error:", err);
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content:
-          "Something went wrong fetching that answer. Check your connection and try again.",
+        content: "Something went wrong. Please try again.",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMsg]);
