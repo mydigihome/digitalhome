@@ -486,7 +486,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Category pills */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 24, overflowX: isMobile ? "auto" : undefined, flexWrap: isMobile ? "nowrap" : "wrap", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" as const }}>
         {STATIC_CATEGORIES.map(cat => (
           <button
             key={cat}
@@ -498,6 +498,7 @@ export default function ResourcesPage() {
               color: activeCategory === cat ? (isDark ? "#10B981" : "#065F46") : text2,
               fontSize: 12, fontWeight: activeCategory === cat ? 600 : 400,
               cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+              flexShrink: 0, whiteSpace: "nowrap",
             }}
           >
             {cat}
@@ -506,7 +507,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Unified tools grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {combinedTools.map(tool => (
           <div
             key={tool.isDynamic ? tool.dynamicId : tool.name}
