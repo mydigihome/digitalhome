@@ -67,6 +67,7 @@ interface Props {
 
 export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const isDark = document.documentElement.classList.contains("dark");
   const queryClient = useQueryClient();
 
