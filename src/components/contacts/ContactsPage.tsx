@@ -1436,6 +1436,31 @@ function EmailsTabContent({ contacts, isDark, user }: {
   const [emailTone, setEmailTone] = useState("cold");
   const [emailSubject, setEmailSubject] = useState("");
   const [generatedEmail, setGeneratedEmail] = useState("");
+  const draftRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyFormat = (fmt: string) => {
+    const el = draftRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selected = el.value.substring(start, end);
+    if (!selected) return;
+    const wrapped = fmt === "bold"
+      ? "**" + selected + "**"
+      : fmt === "italic"
+      ? "_" + selected + "_"
+      : "<u>" + selected + "</u>";
+    const newVal =
+      el.value.substring(0, start) +
+      wrapped +
+      el.value.substring(end);
+    setGeneratedEmail(newVal);
+    setTimeout(() => {
+      el.selectionStart = start;
+      el.selectionEnd = start + wrapped.length;
+      el.focus();
+    }, 0);
+  };
   const [generating, setGenerating] = useState(false);
   const [emailHistory, setEmailHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -1608,7 +1633,42 @@ function EmailsTabContent({ contacts, isDark, user }: {
               borderRadius: "10px", padding: "14px",
             }}>
               <p style={{ fontSize: "10px", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>AI Draft</p>
-              <p style={{ fontSize: "13px", color: isDark ? "#F2F2F2" : "#374151", lineHeight: 1.6, margin: "0 0 14px", whiteSpace: "pre-wrap" }}>{generatedEmail}</p>
+              <div style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "6px",
+                marginBottom: "8px",
+                paddingBottom: "8px",
+                borderBottom: "1px solid #E5E7EB"
+              }}>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); applyFormat("bold"); }} style={{ height: 32, width: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>B</button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); applyFormat("italic"); }} style={{ height: 32, width: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, fontStyle: "italic", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>I</button>
+                <button type="button" onMouseDown={(e) => { e.preventDefault(); applyFormat("underline"); }} style={{ height: 32, width: 32, background: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: 6, fontFamily: "Inter, sans-serif", fontSize: 13, textDecoration: "underline", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>U</button>
+              </div>
+              <textarea
+                ref={draftRef}
+                value={generatedEmail}
+                onChange={e => setGeneratedEmail(e.target.value)}
+                style={{
+                  width: "100%",
+                  minHeight: 180,
+                  padding: 12,
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 8,
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  resize: "vertical",
+                  boxSizing: "border-box" as const,
+                  outline: "none",
+                  display: "block",
+                  background: isDark ? "#252528" : "white",
+                  color: isDark ? "#F2F2F2" : "#374151",
+                  margin: "0 0 14px",
+                }}
+                onFocus={e => { e.target.style.borderColor = "#7B5EA7"; }}
+                onBlur={e => { e.target.style.borderColor = "#E5E7EB"; }}
+              />
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <button onClick={openInEmail} style={{ width: "100%", padding: "10px", background: isDark ? "#F2F2F2" : "#111827", color: isDark ? "#111827" : "white", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Open in Email App</button>
                 <button onClick={saveToDrafts} style={{ width: "100%", padding: "10px", background: "transparent", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`, borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: isDark ? "#F2F2F2" : "#374151", cursor: "pointer" }}>Save to Drafts</button>

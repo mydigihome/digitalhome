@@ -467,10 +467,62 @@ export default function ResourcesPage() {
                     background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
                     overflow: "hidden", display: "flex", flexDirection: "column",
                     transition: "border-color 150ms",
+                    position: "relative",
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
                 >
+                  {isAdmin && r.file_url && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("Remove preview file from this resource?")) {
+                          (supabase as any)
+                            .from("resources")
+                            .update({
+                              file_url: null,
+                              thumbnail_url: null,
+                              updated_at: new Date().toISOString()
+                            })
+                            .eq("id", r.id)
+                            .then(({ error }: { error: any }) => {
+                              if (error) {
+                                toast.error("Failed to remove: " + error.message);
+                                return;
+                              }
+                              setDynamicResources(prev =>
+                                prev.map(res => res.id === r.id
+                                  ? { ...res, file_url: null, thumbnail_url: null }
+                                  : res
+                                )
+                              );
+                              toast.success("Preview removed");
+                            });
+                        }
+                      }}
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        width: 24,
+                        height: 24,
+                        background: "rgba(0,0,0,0.55)",
+                        border: "none",
+                        borderRadius: "50%",
+                        color: "white",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        zIndex: 10,
+                        lineHeight: 1,
+                      }}
+                      title="Remove preview file"
+                    >×</button>
+                  )}
                   {/* Thumbnail or category icon */}
                   {r.thumbnail_url ? (
                     <img src={r.thumbnail_url} alt={r.title} style={{ width: "100%", height: 140, objectFit: "cover" }} />
