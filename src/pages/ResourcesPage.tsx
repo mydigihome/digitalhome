@@ -799,7 +799,6 @@ export default function ResourcesPage() {
                     )}
                   </div>
                 </div>
-                </div>
               )}
 
               {/* File upload (for File and Template) */}
