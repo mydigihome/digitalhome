@@ -113,8 +113,10 @@ export default function ResourcesPage() {
   const [form, setForm] = useState({
     title: "", description: "", category: "Career",
     resource_type: "link", url: "", published: true,
+    thumbnail_url: "" as string,
   });
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [autoLogoUrl, setAutoLogoUrl] = useState<string | null>(null);
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
 
@@ -128,10 +130,11 @@ export default function ResourcesPage() {
   };
 
   const resetForm = () => {
-    setForm({ title: "", description: "", category: "Career", resource_type: "link", url: "", published: true });
+    setForm({ title: "", description: "", category: "Career", resource_type: "link", url: "", published: true, thumbnail_url: "" });
     setThumbnailFile(null);
     setResourceFile(null);
     setEditingResource(null);
+    setAutoLogoUrl(null);
   };
 
   const handleSaveResource = async () => {
@@ -170,6 +173,11 @@ export default function ResourcesPage() {
       const { data: pubData } = supabase.storage.from("user-assets").getPublicUrl(path);
       thumbnail_url = pubData.publicUrl;
       console.log("thumbnail publicUrl obtained:", thumbnail_url);
+    }
+
+    // Use auto-logo if no thumbnail was manually uploaded
+    if (!thumbnailFile && !thumbnail_url && form.thumbnail_url) {
+      thumbnail_url = form.thumbnail_url;
     }
 
     const payload = {
@@ -272,7 +280,9 @@ export default function ResourcesPage() {
     setForm({
       title: r.title, description: r.description, category: r.category,
       resource_type: r.resource_type, url: r.url || "", published: r.published,
+      thumbnail_url: r.thumbnail_url || "",
     });
+    setAutoLogoUrl(r.thumbnail_url || null);
     setEditingResource(r);
     setShowAddForm(true);
   };
@@ -554,7 +564,32 @@ export default function ResourcesPage() {
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 4 }}>{r.title}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      {r.thumbnail_url ? (
+                        <img
+                          src={r.thumbnail_url}
+                          alt=""
+                          style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", flexShrink: 0 }}
+                          onError={e => {
+                            const el = e.target as HTMLImageElement;
+                            el.style.display = "none";
+                            const fb = el.nextElementSibling as HTMLElement;
+                            if (fb) fb.style.display = "flex";
+                          }}
+                        />
+                      ) : null}
+                      {/* Fallback letter circle — hidden if img loads */}
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: CATEGORY_COLORS[r.category] || "#6B7280",
+                        color: "white", fontSize: 14, fontWeight: 700,
+                        display: r.thumbnail_url ? "none" : "flex",
+                        alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      }}>
+                        {r.title.charAt(0).toUpperCase()}
+                      </div>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{r.title}</p>
+                    </div>
                     <p style={{
                       fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 12,
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
@@ -737,12 +772,32 @@ export default function ResourcesPage() {
               {(form.resource_type === "link" || form.resource_type === "video") && (
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>URL</label>
-                  <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                    placeholder="https://..." style={{
-                      width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                      borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
-                      outline: "none", boxSizing: "border-box" as const,
-                    }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                      onBlur={() => {
+                        try {
+                          if (form.url) {
+                            const domain = new URL(form.url).hostname.replace('www.', '');
+                            const logoUrl = 'https://logo.clearbit.com/' + domain;
+                            setAutoLogoUrl(logoUrl);
+                            setForm(p => ({ ...p, thumbnail_url: logoUrl }));
+                          }
+                        } catch {}
+                      }}
+                      placeholder="https://..." style={{
+                        flex: 1, padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                        borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                        outline: "none", boxSizing: "border-box" as const,
+                      }} />
+                    {autoLogoUrl && (
+                      <img
+                        src={autoLogoUrl}
+                        alt="logo"
+                        style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", flexShrink: 0, border: `1px solid ${inputBorder}` }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                  </div>
                 </div>
               )}
 
