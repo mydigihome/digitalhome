@@ -141,9 +141,122 @@ export default function ResourcesPage() {
     setUrlPreviewDomain("");
   };
 
+  // Check for duplicate URL across static and dynamic resources
+  const isDuplicateUrl = (url: string, excludeId?: string): string | null => {
+    if (!url) return null;
+    try {
+      const normalizedDomain = new URL(url).hostname.replace('www.', '');
+      // Check static resources
+      const staticMatch = STATIC_RESOURCES.find(r => {
+        try { return new URL(r.url).hostname.replace('www.', '') === normalizedDomain; } catch { return false; }
+      });
+      if (staticMatch) return staticMatch.name;
+      // Check dynamic resources
+      const dynamicMatch = dynamicResources.find(r => {
+        if (excludeId && r.id === excludeId) return false;
+        if (!r.url) return false;
+        try { return new URL(r.url).hostname.replace('www.', '') === normalizedDomain; } catch { return false; }
+      });
+      if (dynamicMatch) return dynamicMatch.title;
+    } catch {}
+    return null;
+  };
+
+  // Auto-guess category from description/title keywords
+  const guessCategory = (title: string, description: string): string => {
+    const text = (title + " " + description).toLowerCase();
+    const map: [string, string[]][] = [
+      ["Finance", ["finance", "banking", "invest", "budget", "money", "stock", "trading", "payment", "accounting"]],
+      ["AI", ["ai", "artificial intelligence", "machine learning", "gpt", "llm", "chatbot"]],
+      ["Design", ["design", "ui", "ux", "graphic", "illustration", "figma", "sketch"]],
+      ["Development", ["developer", "code", "programming", "github", "deploy", "hosting", "api"]],
+      ["Productivity", ["productivity", "task", "project management", "notes", "organize", "calendar", "todo"]],
+      ["Communication", ["messaging", "chat", "email", "communication", "slack", "team"]],
+      ["Video", ["video", "editing", "streaming", "youtube", "film", "animation"]],
+      ["Presentations", ["presentation", "slides", "pitch", "deck"]],
+      ["Image Generation", ["image generat", "art generat", "midjourney", "dall-e", "stable diffusion"]],
+      ["Automation", ["automat", "workflow", "zapier", "integration"]],
+      ["Events", ["event", "ticket", "rsvp", "conference", "meetup"]],
+      ["College", ["college", "university", "sat", "admission", "scholarship", "education"]],
+      ["Career", ["career", "job", "resume", "hiring", "recruit", "interview"]],
+      ["Wellness", ["wellness", "health", "meditation", "fitness", "mental health"]],
+      ["Creativity", ["creativ", "music", "art", "writing", "content creation"]],
+      ["Legal", ["legal", "law", "contract", "compliance"]],
+    ];
+    for (const [cat, keywords] of map) {
+      if (keywords.some(kw => text.includes(kw))) return cat;
+    }
+    return "Productivity";
+  };
+
+  // Auto-populate from URL using fetch-og-tags
+  const autoPopulateFromUrl = async (url: string) => {
+    if (!url) return;
+    try {
+      new URL(url); // validate
+    } catch { return; }
+
+    const domain = new URL(url).hostname.replace('www.', '');
+    setUrlPreviewDomain(domain);
+    const logo = 'https://logo.clearbit.com/' + domain;
+    setUrlPreviewLogo(logo);
+    setForm(p => ({ ...p, thumbnail_url: logo }));
+
+    // Check for duplicate
+    const dupName = isDuplicateUrl(url, editingResource?.id);
+    if (dupName) {
+      toast.error(`"${dupName}" already exists in the Resource Center`);
+      return;
+    }
+
+    // Fetch OG tags for auto-populate
+    setUrlFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-og-tags", {
+        body: { url },
+      });
+      if (!error && data?.success && data.data) {
+        const og = data.data;
+        setForm(p => ({
+          ...p,
+          title: p.title || og.siteName || og.title?.split(/[|\-–—]/)[0]?.trim() || domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+          description: p.description || og.description?.substring(0, 120) || "",
+          category: p.category === "Career" && !editingResource
+            ? guessCategory(og.title || "", og.description || "")
+            : p.category,
+        }));
+      } else {
+        // Fallback: just set domain-based title
+        if (!form.title) {
+          setForm(p => ({
+            ...p,
+            title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+          }));
+        }
+      }
+    } catch {
+      if (!form.title) {
+        setForm(p => ({
+          ...p,
+          title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+        }));
+      }
+    } finally {
+      setUrlFetching(false);
+    }
+  };
+
   const handleSaveResource = async () => {
     if (!form.title || !form.description) { toast.error("Title and description required"); return; }
     if (!user) return;
+
+    // Final duplicate check before saving
+    const dupName = isDuplicateUrl(form.url, editingResource?.id);
+    if (dupName) {
+      toast.error(`"${dupName}" already exists in the Resource Center. Duplicate resources are not allowed.`);
+      return;
+    }
+
     setUploading(true);
 
     let thumbnail_url = editingResource?.thumbnail_url || null;
