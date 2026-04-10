@@ -29,6 +29,8 @@ const TYPE_COLORS = {
   event: { text: "text-success", bg: "bg-success/10", border: "bg-gradient-to-r from-success to-success/70" },
 };
 
+const DELETED_PROJECT_IDS = new Set<string>();
+
 export default function Projects() {
   const { user } = useAuth();
   const { data: projects = [], isLoading } = useProjects();
@@ -68,31 +70,49 @@ export default function Projects() {
 
   useEffect(() => {
     if (deletedProjectIdsFromRoute.length === 0) return;
+
     deletedProjectIdsFromRoute.forEach(id => {
       deletedIdsRef.current.add(id);
-      queryClient.setQueryData(
-        ["projects", user?.id],
-        (old: any) => {
-          if (!Array.isArray(old)) return old;
-          return old.filter((p: any) => p.id !== id);
-        }
-      );
-      queryClient.setQueryData(
-        ["projects"],
-        (old: any) => {
-          if (!Array.isArray(old)) return old;
-          return old.filter((p: any) => p.id !== id);
-        }
-      );
+      DELETED_PROJECT_IDS.add(id);
     });
+
+    queryClient.setQueryData(
+      ["projects", user?.id],
+      (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter(
+          (p: any) => !deletedProjectIdsFromRoute
+            .includes(p.id)
+        );
+      }
+    );
+
+    queryClient.setQueryData(
+      ["projects"],
+      (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter(
+          (p: any) => !deletedProjectIdsFromRoute
+            .includes(p.id)
+        );
+      }
+    );
+
     setRemovedProjectIds((prev) =>
       [...new Set([...prev, ...deletedProjectIdsFromRoute])]
     );
   }, [deletedProjectIdsKey]);
 
   useEffect(() => {
-    const hiddenIds = new Set([...removedProjectIds, ...deletedIdsRef.current]);
-    setProjectCards(projects.filter((project) => !hiddenIds.has(project.id)));
+    const hiddenIds = new Set([
+      ...removedProjectIds,
+      ...deletedIdsRef.current,
+      ...DELETED_PROJECT_IDS,
+    ]);
+
+    setProjectCards(
+      projects.filter(p => !hiddenIds.has(p.id))
+    );
   }, [projects, removedProjectIds]);
 
   const filtered = projectCards
@@ -120,6 +140,9 @@ export default function Projects() {
 
     // Step 1 — remove from UI immediately
     idsToDelete.forEach(id => deletedIdsRef.current.add(id));
+    idsToDelete.forEach(id =>
+      DELETED_PROJECT_IDS.add(id)
+    );
     setRemovedProjectIds((prev) => [...new Set([...prev, ...idsToDelete])]);
     setProjectCards((prev) => prev.filter((item) => !idsToDelete.includes(item.id)));
     setSelectedIds([]);
@@ -132,19 +155,41 @@ export default function Projects() {
         .delete()
         .in("id", idsToDelete)
         .eq("user_id", user!.id);
-      console.log("Delete result error:", error);
+
+      console.log(
+        "Delete attempted for IDs:", idsToDelete
+      );
+      console.log("Delete error:", error);
+
       if (error) {
-        console.error("Delete blocked:", error.message, error.code);
-        setProjectCards(prev => [...deletedItems, ...prev]);
-        setRemovedProjectIds(prev => 
+        console.error(
+          "DELETE FAILED - Code:", error.code,
+          "Message:", error.message,
+          "Details:", error.details
+        );
+
+        idsToDelete.forEach(id => {
+          deletedIdsRef.current.delete(id);
+          DELETED_PROJECT_IDS.delete(id);
+        });
+
+        setProjectCards(prev => [
+          ...deletedItems, ...prev
+        ]);
+        setRemovedProjectIds(prev =>
           prev.filter(id => !idsToDelete.includes(id))
         );
-        idsToDelete.forEach(id => deletedIdsRef.current.delete(id));
-        toast.error("Delete failed: " + error.message);
+        toast.error(
+          "Delete failed: " + error.message +
+          " (Code: " + error.code + ")"
+        );
         return;
       }
+
+      console.log("Delete succeeded for:", idsToDelete);
+
       queryClient.setQueryData(
-        ["projects", user?.id], 
+        ["projects", user?.id],
         (old: any) => {
           if (!Array.isArray(old)) return old;
           return old.filter(
@@ -152,8 +197,9 @@ export default function Projects() {
           );
         }
       );
+
       queryClient.setQueryData(
-        ["projects"], 
+        ["projects"],
         (old: any) => {
           if (!Array.isArray(old)) return old;
           return old.filter(
@@ -161,8 +207,13 @@ export default function Projects() {
           );
         }
       );
+
       toast.success(`${count} item${count > 1 ? "s" : ""} deleted`);
     } catch (err) {
+      idsToDelete.forEach(id => {
+        deletedIdsRef.current.delete(id);
+        DELETED_PROJECT_IDS.delete(id);
+      });
       setProjectCards(prev => [...deletedItems, ...prev]);
       setRemovedProjectIds(prev => prev.filter(id => !idsToDelete.includes(id)));
       toast.error("Delete failed. Please try again.");
