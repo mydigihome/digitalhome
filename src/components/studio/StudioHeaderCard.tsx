@@ -263,30 +263,87 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!user) return;
     const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    e.target.value = "";
+
     const urls: string[] = [];
+
     for (const file of files) {
-      const path = `studio-images/${user.id}/${Date.now()}-${file.name}`;
-      const { data } = await supabase.storage.from("studio-documents").upload(path, file);
-      if (data) {
-        const { data: url } = supabase.storage.from("studio-documents").getPublicUrl(path);
-        urls.push(url.publicUrl);
+      const ext = file.name.split(".").pop() || "jpg";
+      const path =
+        "studio-images/" + user.id + "/" +
+        Date.now() + "-" +
+        Math.random().toString(36).slice(2) +
+        "." + ext;
+
+      const { error: uploadError } =
+        await supabase.storage
+          .from("studio-documents")
+          .upload(path, file, { upsert: true });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast.error("Upload failed: " + uploadError.message);
+        continue;
+      }
+
+      const { data: urlData } =
+        supabase.storage
+          .from("studio-documents")
+          .getPublicUrl(path);
+
+      if (urlData?.publicUrl) {
+        urls.push(urlData.publicUrl);
       }
     }
+
+    if (urls.length === 0) {
+      toast.error("No photos uploaded");
+      return;
+    }
+
     const updated = [...studioImages, ...urls];
-    setStudioImages(updated);
-    const { error: saveError } = await supabase
+
+    const { error: dbError } = await supabase
       .from("studio_profile")
       .upsert({
         user_id: user.id,
         images: updated as any,
       } as any, { onConflict: "user_id" });
 
-    if (saveError) {
-      console.error("Failed to save photos:", saveError);
-      toast.error("Upload failed to save: " + saveError.message);
+    if (dbError) {
+      console.error("DB error:", dbError);
+      toast.error("Photo saved to storage but not DB: " + dbError.message);
       return;
     }
-    toast.success("Photos uploaded!");
+
+    setStudioImages(updated);
+    setCurrentImageIndex(updated.length - 1);
+    toast.success(
+      urls.length + " photo" +
+      (urls.length > 1 ? "s" : "") +
+      " uploaded!"
+    );
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    if (!user) return;
+    const updated = studioImages.filter((_, i) => i !== index);
+    const { error } = await supabase
+      .from("studio_profile")
+      .upsert({
+        user_id: user.id,
+        images: updated as any,
+      } as any, { onConflict: "user_id" });
+    if (error) {
+      toast.error("Failed to remove photo");
+      return;
+    }
+    setStudioImages(updated);
+    setCurrentImageIndex(
+      Math.max(0, Math.min(currentImageIndex, updated.length - 1))
+    );
+    toast.success("Photo removed");
   };
 
   const TABS = ["Overview", "HQ", "Platforms", "Deals", "Revenue"];
@@ -530,67 +587,89 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
             background: isDark ? "#252528" : "#F3F4F6",
             overflow: "hidden",
             borderLeft: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+            display: "flex",
+            flexDirection: "column",
           }}>
             {studioImages.length > 0 ? (
               <>
-                <img
-                  src={studioImages[currentImageIndex]}
-                  alt="Studio"
-                  style={{
-                    width: "100%", height: "100%", objectFit: "cover",
-                  }}
-                />
+                {/* Main image */}
+                <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                  <img
+                    src={studioImages[currentImageIndex]}
+                    alt="Studio"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                  {/* Remove current photo button */}
+                  <button
+                    onClick={() => handleRemoveImage(currentImageIndex)}
+                    style={{
+                      position: "absolute", top: 8, right: 8,
+                      width: 28, height: 28,
+                      background: "rgba(0,0,0,0.6)",
+                      border: "none", borderRadius: "50%",
+                      color: "white", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 16, fontWeight: 700, zIndex: 10,
+                    }}
+                    title="Remove this photo"
+                  >×</button>
+                  {/* Add more photos button */}
+                  <button
+                    onClick={() => studioImageInputRef.current?.click()}
+                    style={{
+                      position: "absolute", bottom: 8, right: 8,
+                      padding: "4px 10px",
+                      background: "rgba(0,0,0,0.6)",
+                      border: "1px solid rgba(255,255,255,0.3)",
+                      borderRadius: 8, color: "white", cursor: "pointer",
+                      fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif",
+                    }}
+                  >+ Add Photo</button>
+                </div>
+
+                {/* Thumbnail strip */}
                 {studioImages.length > 1 && (
                   <div style={{
-                    position: "absolute", bottom: "12px",
-                    left: "50%", transform: "translateX(-50%)",
-                    display: "flex", gap: "4px",
+                    display: "flex", gap: 4, padding: "8px 10px",
+                    overflowX: "auto",
+                    borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
                   }}>
-                    {studioImages.map((_, i) => (
+                    {studioImages.slice(0, 8).map((img, idx) => (
                       <button
-                        key={i}
-                        onClick={() => setCurrentImageIndex(i)}
+                        key={idx}
+                        onClick={() => setCurrentImageIndex(idx)}
                         style={{
-                          width: i === currentImageIndex ? "16px" : "6px",
-                          height: "6px", borderRadius: "999px",
-                          background: i === currentImageIndex ? "white" : "rgba(255,255,255,0.5)",
-                          border: "none", cursor: "pointer", padding: 0,
-                          transition: "all 300ms",
+                          width: 36, height: 36, borderRadius: 6,
+                          overflow: "hidden", flexShrink: 0,
+                          border: currentImageIndex === idx
+                            ? "2px solid #10B981"
+                            : "2px solid transparent",
+                          cursor: "pointer", padding: 0, background: "none",
                         }}
-                      />
+                      >
+                        <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </button>
                     ))}
                   </div>
                 )}
-                <button style={{
-                  position: "absolute", top: "12px", right: "12px",
-                  padding: "6px", background: "rgba(0,0,0,0.4)",
-                  border: "none", borderRadius: "6px", cursor: "pointer",
-                  color: "white",
-                }}>
-                  <Maximize2 size={14} />
-                </button>
               </>
             ) : (
+              /* Empty state */
               <div
                 onClick={() => studioImageInputRef.current?.click()}
                 style={{
-                  width: "100%", height: "100%",
+                  flex: 1,
                   display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", gap: "8px",
-                }}>
-                <div style={{
-                  width: "44px", height: "44px", borderRadius: "12px",
-                  background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Upload size={18} color={isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF"} />
-                </div>
-                <span style={{
-                  fontSize: "13px", fontWeight: 500,
-                  color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
-                  fontFamily: "Inter, sans-serif",
-                }}>
+                  alignItems: "center", justifyContent: "center", gap: 8,
+                  background: "transparent",
+                  border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
+                  borderRadius: 12, margin: 16, cursor: "pointer",
+                  color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                }}
+              >
+                <Upload size={18} />
+                <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "Inter, sans-serif" }}>
                   Add a studio photo or logo
                 </span>
               </div>
