@@ -5,7 +5,7 @@ import StudioHQView from "@/components/studio/StudioHQView";
 import StudioPlatformsView from "@/components/studio/StudioPlatformsView";
 import StudioDealsView from "@/components/studio/StudioDealsView";
 import StudioRevenueView from "@/components/studio/StudioRevenueView";
-import StudioHeaderCard from "@/components/studio/StudioHeaderCard";
+import StudioHeaderCard from "@/components/studio/StudioHeaderCardV2";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePlan } from "@/hooks/usePlan";
 import LockedFeature from "@/components/LockedFeature";
