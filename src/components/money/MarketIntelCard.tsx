@@ -247,44 +247,46 @@ Takeaway: One sentence of practical advice.`,
 
       {/* HEADER */}
       <div onClick={() => setCollapsed(p => !p)} style={{
-        padding: isMobile ? "14px 16px" : "16px 24px",
+        background: isDark
+          ? "linear-gradient(135deg, #0f2027, #203a43, #2c5364)"
+          : "linear-gradient(135deg, #667eea, #764ba2)",
+        padding: "20px 24px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         cursor: "pointer",
-        borderBottom: collapsed ? "none" : `1px solid ${border}`,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: "linear-gradient(135deg, #10B981, #059669)",
+            background: "rgba(255,255,255,0.2)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             <TrendingUp className="w-5 h-5" style={{ color: "white" }} />
           </div>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: text1, letterSpacing: "-0.01em" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "white", letterSpacing: "-0.01em" }}>
               Market Intelligence
             </div>
-            <div style={{ fontSize: 12, color: text2, marginTop: 1 }}>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>
               Ask anything — news, markets, investing
             </div>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {!isPaidUser && !collapsed && (
-            <span style={{ fontSize: 11, color: "#F59E0B", fontWeight: 600 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, background: "rgba(255,255,255,0.2)", color: "white", padding: "3px 10px", borderRadius: 999 }}>
               {remainingQuestions} left today
             </span>
           )}
           {isPaidUser && !collapsed && (
-            <span style={{ fontSize: 11, color: green, fontWeight: 600 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, background: "rgba(255,255,255,0.2)", color: "white", padding: "3px 10px", borderRadius: 999 }}>
               Unlimited
             </span>
           )}
           {collapsed
-            ? <ChevronDown className="w-4 h-4" style={{ color: text2 }} />
-            : <ChevronUp className="w-4 h-4" style={{ color: text2 }} />
+            ? <ChevronDown className="w-4 h-4" style={{ color: "rgba(255,255,255,0.7)" }} />
+            : <ChevronUp className="w-4 h-4" style={{ color: "rgba(255,255,255,0.7)" }} />
           }
         </div>
       </div>
@@ -308,7 +310,8 @@ Takeaway: One sentence of practical advice.`,
                       padding: "7px 12px",
                       background: bg2,
                       border: `1px solid ${border}`,
-                      borderRadius: 999,
+                      borderLeft: "3px solid #10B981",
+                      borderRadius: 14,
                       fontSize: 12,
                       fontWeight: 500,
                       color: text1,
@@ -342,8 +345,9 @@ Takeaway: One sentence of practical advice.`,
                     <div style={{
                       maxWidth: "85%",
                       padding: "10px 14px",
-                      borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                      background: msg.role === "user" ? green : bg2,
+                      borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "4px 18px 18px 18px",
+                      background: msg.role === "user" ? green : (isDark ? "rgba(255,255,255,0.04)" : "#F8FAFF"),
+                      border: msg.role === "assistant" ? `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "#E0E7FF"}` : "none",
                       color: msg.role === "user" ? "white" : text1,
                       fontSize: 13,
                       lineHeight: 1.6,
@@ -366,24 +370,22 @@ Takeaway: One sentence of practical advice.`,
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 4,
-                            padding: "3px 8px",
-                            background: isDark
-                              ? "rgba(16,185,129,0.1)"
-                              : "#F0FDF4",
-                            border: `1px solid ${isDark ? "rgba(16,185,129,0.2)" : "#BBF7D0"}`,
-                            borderRadius: 999,
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: green,
-                            fontFamily: "Inter, sans-serif",
+                            gap: 6,
+                            padding: "6px 12px",
+                            background: isDark ? "rgba(255,255,255,0.06)" : "white",
+                            border: `1px solid ${border}`,
+                            borderRadius: 10,
                             textDecoration: "none",
+                            boxShadow: isDark ? "none" : "0 1px 4px rgba(0,0,0,0.06)",
+                            transition: "all 150ms",
                           }}
                         >
-                          <ExternalLink className="w-3 h-3" />
-                          {src.title.length > 30
-                            ? src.title.slice(0, 30) + "..."
-                            : src.title}
+                          <ExternalLink className="w-3 h-3" style={{ color: text2 }} />
+                          <span style={{ fontSize: 11, fontWeight: 500, color: text1, fontFamily: "Inter, sans-serif" }}>
+                            {src.title.length > 30
+                              ? src.title.slice(0, 30) + "..."
+                              : src.title}
+                          </span>
                         </a>
                       ))}
                     </div>
@@ -484,7 +486,7 @@ Takeaway: One sentence of practical advice.`,
                     flex: 1,
                     padding: "10px 14px",
                     border: `1px solid ${border}`,
-                    borderRadius: 10,
+                    borderRadius: 14,
                     background: bg2,
                     color: text1,
                     fontSize: 14,
@@ -506,10 +508,10 @@ Takeaway: One sentence of practical advice.`,
                   style={{
                     width: 44,
                     height: 44,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     background: loading || !input.trim()
                       ? (isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6")
-                      : green,
+                      : "linear-gradient(135deg, #10B981, #059669)",
                     border: "none",
                     cursor: loading || !input.trim()
                       ? "not-allowed"
