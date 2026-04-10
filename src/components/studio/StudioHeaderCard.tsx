@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,6 +67,7 @@ interface Props {
 
 export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const isDark = document.documentElement.classList.contains("dark");
   const queryClient = useQueryClient();
 
@@ -374,8 +376,8 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         {/* TOP SECTION */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 380px",
-          minHeight: "260px",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 380px",
+          minHeight: isMobile ? undefined : "260px",
         }}>
           {/* LEFT — Identity + docs */}
           <div style={{ padding: "28px 32px", display: "flex", flexDirection: "column" }}>

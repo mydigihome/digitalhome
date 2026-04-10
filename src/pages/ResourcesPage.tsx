@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ExternalLink, Search, Sparkles, Plus, X, Upload, Eye, Download } from "lucide-react";
+import { ExternalLink, Search, Sparkles, Plus, X, Upload, Eye, Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 const SINGLE_STRIPE_URL = "https://buy.stripe.com/6oUfZhdWa88m71a1Tsak005";
@@ -95,6 +96,7 @@ interface CombinedTool {
 export default function ResourcesPage() {
   const { user } = useAuth();
   const isAdmin = user?.email === "myslimher@gmail.com";
+  const isMobile = useIsMobile();
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -105,6 +107,7 @@ export default function ResourcesPage() {
   const border = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6";
   const inputBg = isDark ? "#252528" : "white";
   const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB";
+  const [urlFetching, setUrlFetching] = useState(false);
 
   const [dynamicResources, setDynamicResources] = useState<DynamicResource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -138,9 +141,122 @@ export default function ResourcesPage() {
     setUrlPreviewDomain("");
   };
 
+  // Check for duplicate URL across static and dynamic resources
+  const isDuplicateUrl = (url: string, excludeId?: string): string | null => {
+    if (!url) return null;
+    try {
+      const normalizedDomain = new URL(url).hostname.replace('www.', '');
+      // Check static resources
+      const staticMatch = STATIC_RESOURCES.find(r => {
+        try { return new URL(r.url).hostname.replace('www.', '') === normalizedDomain; } catch { return false; }
+      });
+      if (staticMatch) return staticMatch.name;
+      // Check dynamic resources
+      const dynamicMatch = dynamicResources.find(r => {
+        if (excludeId && r.id === excludeId) return false;
+        if (!r.url) return false;
+        try { return new URL(r.url).hostname.replace('www.', '') === normalizedDomain; } catch { return false; }
+      });
+      if (dynamicMatch) return dynamicMatch.title;
+    } catch {}
+    return null;
+  };
+
+  // Auto-guess category from description/title keywords
+  const guessCategory = (title: string, description: string): string => {
+    const text = (title + " " + description).toLowerCase();
+    const map: [string, string[]][] = [
+      ["Finance", ["finance", "banking", "invest", "budget", "money", "stock", "trading", "payment", "accounting"]],
+      ["AI", ["ai", "artificial intelligence", "machine learning", "gpt", "llm", "chatbot"]],
+      ["Design", ["design", "ui", "ux", "graphic", "illustration", "figma", "sketch"]],
+      ["Development", ["developer", "code", "programming", "github", "deploy", "hosting", "api"]],
+      ["Productivity", ["productivity", "task", "project management", "notes", "organize", "calendar", "todo"]],
+      ["Communication", ["messaging", "chat", "email", "communication", "slack", "team"]],
+      ["Video", ["video", "editing", "streaming", "youtube", "film", "animation"]],
+      ["Presentations", ["presentation", "slides", "pitch", "deck"]],
+      ["Image Generation", ["image generat", "art generat", "midjourney", "dall-e", "stable diffusion"]],
+      ["Automation", ["automat", "workflow", "zapier", "integration"]],
+      ["Events", ["event", "ticket", "rsvp", "conference", "meetup"]],
+      ["College", ["college", "university", "sat", "admission", "scholarship", "education"]],
+      ["Career", ["career", "job", "resume", "hiring", "recruit", "interview"]],
+      ["Wellness", ["wellness", "health", "meditation", "fitness", "mental health"]],
+      ["Creativity", ["creativ", "music", "art", "writing", "content creation"]],
+      ["Legal", ["legal", "law", "contract", "compliance"]],
+    ];
+    for (const [cat, keywords] of map) {
+      if (keywords.some(kw => text.includes(kw))) return cat;
+    }
+    return "Productivity";
+  };
+
+  // Auto-populate from URL using fetch-og-tags
+  const autoPopulateFromUrl = async (url: string) => {
+    if (!url) return;
+    try {
+      new URL(url); // validate
+    } catch { return; }
+
+    const domain = new URL(url).hostname.replace('www.', '');
+    setUrlPreviewDomain(domain);
+    const logo = 'https://logo.clearbit.com/' + domain;
+    setUrlPreviewLogo(logo);
+    setForm(p => ({ ...p, thumbnail_url: logo }));
+
+    // Check for duplicate
+    const dupName = isDuplicateUrl(url, editingResource?.id);
+    if (dupName) {
+      toast.error(`"${dupName}" already exists in the Resource Center`);
+      return;
+    }
+
+    // Fetch OG tags for auto-populate
+    setUrlFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-og-tags", {
+        body: { url },
+      });
+      if (!error && data?.success && data.data) {
+        const og = data.data;
+        setForm(p => ({
+          ...p,
+          title: p.title || og.siteName || og.title?.split(/[|\-–—]/)[0]?.trim() || domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+          description: p.description || og.description?.substring(0, 120) || "",
+          category: p.category === "Career" && !editingResource
+            ? guessCategory(og.title || "", og.description || "")
+            : p.category,
+        }));
+      } else {
+        // Fallback: just set domain-based title
+        if (!form.title) {
+          setForm(p => ({
+            ...p,
+            title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+          }));
+        }
+      }
+    } catch {
+      if (!form.title) {
+        setForm(p => ({
+          ...p,
+          title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+        }));
+      }
+    } finally {
+      setUrlFetching(false);
+    }
+  };
+
   const handleSaveResource = async () => {
     if (!form.title || !form.description) { toast.error("Title and description required"); return; }
     if (!user) return;
+
+    // Final duplicate check before saving
+    const dupName = isDuplicateUrl(form.url, editingResource?.id);
+    if (dupName) {
+      toast.error(`"${dupName}" already exists in the Resource Center. Duplicate resources are not allowed.`);
+      return;
+    }
+
     setUploading(true);
 
     let thumbnail_url = editingResource?.thumbnail_url || null;
@@ -370,7 +486,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Category pills */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 24, overflowX: isMobile ? "auto" : undefined, flexWrap: isMobile ? "nowrap" : "wrap", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" as const }}>
         {STATIC_CATEGORIES.map(cat => (
           <button
             key={cat}
@@ -382,6 +498,7 @@ export default function ResourcesPage() {
               color: activeCategory === cat ? (isDark ? "#10B981" : "#065F46") : text2,
               fontSize: 12, fontWeight: activeCategory === cat ? 600 : 400,
               cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+              flexShrink: 0, whiteSpace: "nowrap",
             }}
           >
             {cat}
@@ -390,7 +507,7 @@ export default function ResourcesPage() {
       </div>
 
       {/* Unified tools grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {combinedTools.map(tool => (
           <div
             key={tool.isDynamic ? tool.dynamicId : tool.name}
@@ -456,11 +573,13 @@ export default function ResourcesPage() {
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
           background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+          display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? 0 : 16,
         }} onClick={() => { setShowAddForm(false); resetForm(); }}>
           <div style={{
-            width: "100%", maxWidth: 520, background: isDark ? "#1C1C1E" : "white",
-            borderRadius: 16, padding: 28, maxHeight: "90vh", overflowY: "auto",
+            width: "100%", maxWidth: isMobile ? "100%" : 520, background: isDark ? "#1C1C1E" : "white",
+            borderRadius: isMobile ? "16px 16px 0 0" : 16, padding: isMobile ? "20px 16px" : 28,
+            maxHeight: isMobile ? "95vh" : "90vh", overflowY: "auto",
+            paddingBottom: isMobile ? "calc(20px + env(safe-area-inset-bottom, 0px))" : 28,
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
@@ -475,32 +594,24 @@ export default function ResourcesPage() {
               {/* URL */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Resource URL</label>
-                <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                  onBlur={() => {
-                    try {
-                      if (form.url) {
-                        const domain = new URL(form.url).hostname.replace('www.', '');
-                        setUrlPreviewDomain(domain);
-                        const logo = 'https://logo.clearbit.com/' + domain;
-                        setUrlPreviewLogo(logo);
-                        setForm(p => ({ ...p, thumbnail_url: logo }));
-                        if (!form.title) {
-                          setForm(p => ({
-                            ...p,
-                            title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
-                          }));
-                        }
-                      }
-                    } catch {}
-                  }}
-                  type="url"
-                  placeholder="https://..."
-                  style={{
-                    width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
-                    outline: "none", boxSizing: "border-box" as const,
-                  }}
-                />
+                <div style={{ position: "relative" }}>
+                  <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                    onBlur={() => autoPopulateFromUrl(form.url)}
+                    type="url"
+                    placeholder="https://..."
+                    style={{
+                      width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                      borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
+                      outline: "none", boxSizing: "border-box" as const,
+                      minHeight: 48,
+                    }}
+                  />
+                  {urlFetching && (
+                    <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>
+                      <Loader2 size={16} color="#10B981" className="animate-spin" />
+                    </div>
+                  )}
+                </div>
                 {urlPreviewLogo && (
                   <div style={{
                     display: "flex", alignItems: "center", gap: 8, marginTop: 6,
@@ -528,8 +639,9 @@ export default function ResourcesPage() {
                   placeholder="e.g. Notion, Shopify..."
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
                     outline: "none", boxSizing: "border-box" as const,
+                    minHeight: 48,
                   }}
                 />
               </div>
@@ -542,9 +654,9 @@ export default function ResourcesPage() {
                   rows={2}
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
                     outline: "none", resize: "vertical", boxSizing: "border-box" as const,
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "Inter, sans-serif", minHeight: 48,
                   }}
                 />
               </div>
@@ -555,7 +667,8 @@ export default function ResourcesPage() {
                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
                   style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg, cursor: "pointer",
+                    borderRadius: 10, fontSize: 16, color: text1, background: inputBg, cursor: "pointer",
+                    minHeight: 48,
                   }}>
                   {STATIC_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
