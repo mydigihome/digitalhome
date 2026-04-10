@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { ExternalLink, Search, Sparkles, Plus, X, Upload, Eye, Download } from "lucide-react";
+import { ExternalLink, Search, Sparkles, Plus, X, Upload, Eye, Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 
 const SINGLE_STRIPE_URL = "https://buy.stripe.com/6oUfZhdWa88m71a1Tsak005";
@@ -95,6 +96,7 @@ interface CombinedTool {
 export default function ResourcesPage() {
   const { user } = useAuth();
   const isAdmin = user?.email === "myslimher@gmail.com";
+  const isMobile = useIsMobile();
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -105,6 +107,7 @@ export default function ResourcesPage() {
   const border = isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6";
   const inputBg = isDark ? "#252528" : "white";
   const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB";
+  const [urlFetching, setUrlFetching] = useState(false);
 
   const [dynamicResources, setDynamicResources] = useState<DynamicResource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
