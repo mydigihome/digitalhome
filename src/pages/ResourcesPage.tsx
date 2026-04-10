@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { ExternalLink, Search, Sparkles, Plus, X, Pencil, Trash2, Upload, Link, Video, FileText, Eye, Download, Globe } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ExternalLink, Search, Sparkles, Plus, X, Upload, Eye, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -10,9 +10,8 @@ const STATIC_CATEGORIES = [
   "All", "Finance", "Events", "College", "AI", "Productivity",
   "Automation", "Development", "Design", "Communication",
   "Presentations", "Image Generation", "Video",
+  "Career", "Wellness", "Creativity", "Legal", "Other",
 ];
-
-const DYNAMIC_CATEGORIES = ["All", "Career", "Finance", "Wellness", "Productivity", "Creativity", "Legal", "Other"];
 
 const STATIC_RESOURCES = [
   { name: "Robinhood", url: "https://robinhood.com", category: "Finance", desc: "Commission-free stock trading" },
@@ -69,11 +68,6 @@ function getFaviconUrl(url: string) {
   }
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Career: "#7B5EA7", Finance: "#10B981", Wellness: "#F59E0B",
-  Productivity: "#3B82F6", Creativity: "#EC4899", Legal: "#6B7280", Other: "#8B5CF6",
-};
-
 interface DynamicResource {
   id: string;
   title: string;
@@ -87,11 +81,21 @@ interface DynamicResource {
   user_id: string;
 }
 
+interface CombinedTool {
+  name: string;
+  url: string;
+  category: string;
+  desc: string;
+  isDynamic?: boolean;
+  dynamicId?: string;
+  thumbnail_url?: string | null;
+  published?: boolean;
+}
+
 export default function ResourcesPage() {
   const { user } = useAuth();
   const isAdmin = user?.email === "myslimher@gmail.com";
 
-  const [view, setView] = useState<"tools" | "resources">("tools");
   const [activeCategory, setActiveCategory] = useState("All");
   const [search, setSearch] = useState("");
   const isDark = document.documentElement.classList.contains("dark");
@@ -102,23 +106,21 @@ export default function ResourcesPage() {
   const inputBg = isDark ? "#252528" : "white";
   const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB";
 
-  // Dynamic resources state
   const [dynamicResources, setDynamicResources] = useState<DynamicResource[]>([]);
-  const [resourceCategory, setResourceCategory] = useState("All");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingResource, setEditingResource] = useState<DynamicResource | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<DynamicResource | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
 
   const [form, setForm] = useState({
     title: "", description: "", category: "Career",
     resource_type: "link", url: "", published: true,
     thumbnail_url: "" as string,
   });
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [autoLogoUrl, setAutoLogoUrl] = useState<string | null>(null);
-  const [resourceFile, setResourceFile] = useState<File | null>(null);
-  const [previewResource, setPreviewResource] = useState<DynamicResource | null>(null);
+
+  const [urlPreviewLogo, setUrlPreviewLogo] = useState("");
+  const [urlPreviewDomain, setUrlPreviewDomain] = useState("");
 
   useEffect(() => {
     fetchResources();
@@ -131,10 +133,9 @@ export default function ResourcesPage() {
 
   const resetForm = () => {
     setForm({ title: "", description: "", category: "Career", resource_type: "link", url: "", published: true, thumbnail_url: "" });
-    setThumbnailFile(null);
-    setResourceFile(null);
     setEditingResource(null);
-    setAutoLogoUrl(null);
+    setUrlPreviewLogo("");
+    setUrlPreviewDomain("");
   };
 
   const handleSaveResource = async () => {
@@ -142,41 +143,18 @@ export default function ResourcesPage() {
     if (!user) return;
     setUploading(true);
 
-    let file_url = editingResource?.file_url || null;
     let thumbnail_url = editingResource?.thumbnail_url || null;
 
-    // Upload file if provided
-    if (resourceFile) {
-      const path = `${user.id}/resources/${Date.now()}-${resourceFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, resourceFile, { upsert: true });
-      if (error) {
-        console.error("Storage upload failed:", error);
-        toast.error("File upload failed: " + error.message);
-        setUploading(false);
-        return;
-      }
-      const { data: pubData } = supabase.storage.from("user-assets").getPublicUrl(path);
-      file_url = pubData.publicUrl;
-      console.log("publicUrl obtained:", file_url);
+    // Auto-set thumbnail from URL domain
+    if (form.url) {
+      try {
+        const domain = new URL(form.url).hostname.replace('www.', '');
+        thumbnail_url = 'https://logo.clearbit.com/' + domain;
+      } catch {}
     }
 
-    // Upload thumbnail if provided
-    if (thumbnailFile) {
-      const path = `${user.id}/thumbnails/${Date.now()}-${thumbnailFile.name}`;
-      const { error } = await supabase.storage.from("user-assets").upload(path, thumbnailFile, { upsert: true });
-      if (error) {
-        console.error("Thumbnail upload failed:", error);
-        toast.error("Thumbnail upload failed: " + error.message);
-        setUploading(false);
-        return;
-      }
-      const { data: pubData } = supabase.storage.from("user-assets").getPublicUrl(path);
-      thumbnail_url = pubData.publicUrl;
-      console.log("thumbnail publicUrl obtained:", thumbnail_url);
-    }
-
-    // Use auto-logo if no thumbnail was manually uploaded
-    if (!thumbnailFile && !thumbnail_url && form.thumbnail_url) {
+    // Use form thumbnail_url if manually set
+    if (form.thumbnail_url) {
       thumbnail_url = form.thumbnail_url;
     }
 
@@ -184,16 +162,14 @@ export default function ResourcesPage() {
       title: form.title,
       description: form.description,
       category: form.category,
-      resource_type: form.resource_type,
+      resource_type: "link",
       url: form.url || null,
-      file_url,
+      file_url: editingResource?.file_url || null,
       thumbnail_url,
       published: form.published,
       user_id: user.id,
       updated_at: new Date().toISOString(),
     };
-
-    console.log("Saving resource payload:", JSON.stringify(payload));
 
     if (editingResource) {
       const { data: updateData, error: updateError } = await (supabase as any)
@@ -202,51 +178,35 @@ export default function ResourcesPage() {
         .eq("id", editingResource.id)
         .select();
 
-      console.log("DB update result:", updateData, updateError);
-
       if (updateError) {
-        console.error("CRITICAL: DB update failed:", updateError);
         toast.error("Update failed: " + updateError.message);
         setUploading(false);
         return;
       }
 
       if (!updateData || updateData.length === 0) {
-        console.error("CRITICAL: No rows updated. Check RLS policy.");
         toast.error("File uploaded but not saved. Contact support.");
         setUploading(false);
         return;
       }
 
       setDynamicResources(prev => prev.map(r =>
-        r.id === editingResource.id
-          ? { ...r, ...updateData[0] }
-          : r
+        r.id === editingResource.id ? { ...r, ...updateData[0] } : r
       ));
       toast.success("Resource updated successfully");
     } else {
-      console.log("INSERT PAYLOAD:", JSON.stringify(payload));
-      console.log("CURRENT USER:", user?.id, user?.email);
-
       const { data: insertData, error: insertError } = await (supabase as any)
         .from("resources")
-        .insert({
-          ...payload,
-          user_id: user.id,
-        })
+        .insert({ ...payload, user_id: user.id })
         .select();
 
-      console.log("INSERT RESULT:", insertData, insertError);
-
       if (insertError) {
-        console.error("INSERT ERROR DETAILS:", JSON.stringify(insertError));
         toast.error("Failed: " + insertError.message);
         setUploading(false);
         return;
       }
 
       if (!insertData || insertData.length === 0) {
-        console.error("CRITICAL: No rows inserted. Check RLS policy.");
         toast.error("Resource not saved. Contact support.");
         setUploading(false);
         return;
@@ -264,13 +224,12 @@ export default function ResourcesPage() {
   const handleDeleteResource = async () => {
     if (!deleteConfirm) return;
     const deleteId = deleteConfirm.id;
-    // Optimistic removal
     setDynamicResources(prev => prev.filter(r => r.id !== deleteId));
     setDeleteConfirm(null);
     const { error } = await (supabase as any).from("resources").delete().eq("id", deleteId);
     if (error) {
       toast.error("Delete failed: " + error.message);
-      fetchResources(); // Refetch on error
+      fetchResources();
       return;
     }
     toast.success("Resource deleted");
@@ -282,36 +241,91 @@ export default function ResourcesPage() {
       resource_type: r.resource_type, url: r.url || "", published: r.published,
       thumbnail_url: r.thumbnail_url || "",
     });
-    setAutoLogoUrl(r.thumbnail_url || null);
+    if (r.url) {
+      try {
+        const domain = new URL(r.url).hostname.replace('www.', '');
+        setUrlPreviewDomain(domain);
+        setUrlPreviewLogo('https://logo.clearbit.com/' + domain);
+      } catch {}
+    }
     setEditingResource(r);
     setShowAddForm(true);
   };
 
-  // Filter static tools
-  const filteredTools = STATIC_RESOURCES.filter(r => {
-    const matchesCategory = activeCategory === "All" || r.category === activeCategory;
-    const matchesSearch = !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.desc.toLowerCase().includes(search.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // Build combined array
+  const combinedTools: CombinedTool[] = [
+    ...STATIC_RESOURCES.filter(r => {
+      const matchCat = activeCategory === "All" || r.category === activeCategory;
+      const matchSearch = !search || r.name.toLowerCase().includes(search.toLowerCase()) || r.desc.toLowerCase().includes(search.toLowerCase());
+      return matchCat && matchSearch;
+    }),
+    ...dynamicResources
+      .filter(r => {
+        if (!isAdmin && !r.published) return false;
+        const matchCat = activeCategory === "All" || r.category === activeCategory;
+        const matchSearch = !search || r.title.toLowerCase().includes(search.toLowerCase()) || r.description.toLowerCase().includes(search.toLowerCase());
+        return matchCat && matchSearch;
+      })
+      .map(r => ({
+        name: r.title,
+        url: r.url || "",
+        category: r.category,
+        desc: r.description,
+        isDynamic: true,
+        dynamicId: r.id,
+        thumbnail_url: r.thumbnail_url,
+        published: r.published,
+      }))
+  ];
 
-  // Filter dynamic resources
-  const visibleResources = dynamicResources.filter(r => {
-    if (!isAdmin && !r.published) return false;
-    const matchesCat = resourceCategory === "All" || r.category === resourceCategory;
-    const matchesSearch = !search || r.title.toLowerCase().includes(search.toLowerCase()) || r.description.toLowerCase().includes(search.toLowerCase());
-    return matchesCat && matchesSearch;
-  });
+  const getDynamicResource = (id: string) => dynamicResources.find(r => r.id === id);
 
-  const getActionLabel = (type: string) => {
-    if (type === "link") return "Visit Link";
-    if (type === "video") return "Watch";
-    return "Download";
-  };
-
-  const getActionIcon = (type: string) => {
-    if (type === "link") return <ExternalLink size={14} />;
-    if (type === "video") return <Video size={14} />;
-    return <Download size={14} />;
+  const getIconForTool = (tool: CombinedTool) => {
+    if (tool.isDynamic) {
+      if (tool.thumbnail_url) {
+        return (
+          <img src={tool.thumbnail_url} alt={tool.name}
+            style={{ width: 24, height: 24, borderRadius: 4, objectFit: "contain" }}
+            onError={e => {
+              const el = e.target as HTMLImageElement;
+              el.style.display = "none";
+              const parent = el.parentElement;
+              if (parent) {
+                parent.innerHTML = '<span style="font-size:16px;font-weight:700;color:#6B7280">' + tool.name.charAt(0).toUpperCase() + '</span>';
+              }
+            }}
+          />
+        );
+      }
+      if (tool.url) {
+        const favicon = getFaviconUrl(tool.url);
+        if (favicon) {
+          return (
+            <img src={favicon} alt={tool.name}
+              style={{ width: 24, height: 24, borderRadius: 4 }}
+              onError={e => {
+                const el = e.target as HTMLImageElement;
+                el.style.display = "none";
+                const parent = el.parentElement;
+                if (parent) {
+                  parent.innerHTML = '<span style="font-size:16px;font-weight:700;color:#6B7280">' + tool.name.charAt(0).toUpperCase() + '</span>';
+                }
+              }}
+            />
+          );
+        }
+      }
+      return <span style={{ fontSize: 16, fontWeight: 700, color: "#6B7280" }}>{tool.name.charAt(0).toUpperCase()}</span>;
+    }
+    // Static tool
+    const favicon = getFaviconUrl(tool.url);
+    if (favicon) {
+      return (
+        <img src={favicon} alt={tool.name} style={{ width: 24, height: 24, borderRadius: 4 }}
+          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+      );
+    }
+    return <Sparkles size={18} color={text2} />;
   };
 
   return (
@@ -340,37 +354,13 @@ export default function ResourcesPage() {
         )}
       </div>
 
-      {/* Sub-tabs: Tools Directory | Custom Resources */}
-      <div style={{ display: "flex", gap: 0, borderBottom: `1px solid ${border}`, marginBottom: 20 }}>
-        {[
-          { id: "tools" as const, label: "Tools Directory" },
-          { id: "resources" as const, label: "Custom Resources" },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => { setView(tab.id); setSearch(""); }}
-            style={{
-              padding: "8px 16px", border: "none",
-              borderBottom: `2px solid ${view === tab.id ? "#10B981" : "transparent"}`,
-              background: "transparent", fontSize: 13,
-              fontWeight: view === tab.id ? 600 : 400,
-              color: view === tab.id ? text1 : text2,
-              cursor: "pointer", fontFamily: "Inter, sans-serif",
-              marginBottom: -1, transition: "all 150ms",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Search */}
       <div style={{ position: "relative", marginBottom: 16 }}>
         <Search size={16} color={text2} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} />
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder={view === "tools" ? "Search tools..." : "Search resources..."}
+          placeholder="Search tools..."
           style={{
             width: "100%", padding: "10px 14px 10px 40px", border: `1.5px solid ${inputBorder}`,
             borderRadius: 10, fontSize: 14, color: text1, fontFamily: "Inter, sans-serif",
@@ -379,401 +369,86 @@ export default function ResourcesPage() {
         />
       </div>
 
-      {view === "tools" ? (
-        <>
-          {/* Category pills for static tools */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
-            {STATIC_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: "6px 14px", borderRadius: 999, border: "1.5px solid",
-                  borderColor: activeCategory === cat ? "#10B981" : inputBorder,
-                  background: activeCategory === cat ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : inputBg,
-                  color: activeCategory === cat ? (isDark ? "#10B981" : "#065F46") : text2,
-                  fontSize: 12, fontWeight: activeCategory === cat ? 600 : 400,
-                  cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+      {/* Category pills */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
+        {STATIC_CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              padding: "6px 14px", borderRadius: 999, border: "1.5px solid",
+              borderColor: activeCategory === cat ? "#10B981" : inputBorder,
+              background: activeCategory === cat ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : inputBg,
+              color: activeCategory === cat ? (isDark ? "#10B981" : "#065F46") : text2,
+              fontSize: 12, fontWeight: activeCategory === cat ? 600 : 400,
+              cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
-          {/* Tools grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-            {filteredTools.map(tool => (
-              <button
-                key={tool.name}
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = tool.url; link.target = "_blank"; link.rel = "noopener noreferrer";
-                  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: 16,
-                  background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
-                  cursor: "pointer", textAlign: "left", transition: "all 150ms", width: "100%",
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
-              >
-                <div style={{
-                  width: 40, height: 40, borderRadius: 10, background: isDark ? "#252528" : "#F9FAFB",
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden",
-                }}>
-                  {getFaviconUrl(tool.url) ? (
-                    <img src={getFaviconUrl(tool.url)!} alt={tool.name} style={{ width: 24, height: 24, borderRadius: 4 }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  ) : (
-                    <Sparkles size={18} color={text2} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 2 }}>{tool.name}</p>
-                  <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tool.desc}</p>
-                </div>
-                <ExternalLink size={14} color={text2} style={{ flexShrink: 0 }} />
-            </button>
-            ))}
-            {dynamicResources
-              .filter(r => {
-                if (!r.published && !isAdmin) return false;
-                if (!r.url) return false;
-                const matchCat = activeCategory === "All" || r.category === activeCategory;
-                const matchSearch = !search || r.title.toLowerCase().includes(search.toLowerCase());
-                return matchCat && matchSearch;
-              })
-              .map(r => {
-                let domain = "";
-                try { domain = new URL(r.url!).hostname.replace('www.', ''); } catch {}
-                const faviconUrl = domain ? 'https://www.google.com/s2/favicons?domain=' + domain + '&sz=128' : null;
-                return (
-                  <div
-                    key={r.id}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 12, padding: 16,
-                      background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
-                      cursor: "pointer", transition: "all 150ms", width: "100%",
-                      position: "relative" as const,
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
-                    onClick={() => {
-                      if (r.url) {
-                        const a = document.createElement("a");
-                        a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer";
-                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                      }
-                    }}
-                  >
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: isDark ? "#252528" : "#F9FAFB",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      flexShrink: 0, overflow: "hidden",
-                    }}>
-                      {faviconUrl ? (
-                        <img src={faviconUrl} alt={r.title}
-                          style={{ width: 24, height: 24, borderRadius: 4 }}
-                          onError={e => {
-                            const el = e.target as HTMLImageElement;
-                            el.style.display = "none";
-                            const parent = el.parentElement;
-                            if (parent) {
-                              parent.innerHTML = '<span style="font-size:16px;font-weight:700;color:#6B7280">' + r.title.charAt(0).toUpperCase() + '</span>';
-                            }
-                          }}
-                        />
-                      ) : (
-                        <span style={{ fontSize: 16, fontWeight: 700, color: "#6B7280" }}>
-                          {r.title.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 2 }}>
-                        {r.title}
-                      </p>
-                      <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {r.description}
-                      </p>
-                    </div>
-                    <ExternalLink size={14} color={text2} style={{ flexShrink: 0 }} />
-                    {isAdmin && (
-                      <div style={{ display: "flex", gap: 4, position: "absolute" as const, top: 8, right: 8 }}>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleEditResource(r); }}
-                          style={{
-                            width: 24, height: 24, background: "rgba(0,0,0,0.4)",
-                            border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
-                          }}
-                        >✎</button>
-                        <button
-                          onClick={e => { e.stopPropagation(); setDeleteConfirm(r); }}
-                          style={{
-                            width: 24, height: 24, background: "rgba(220,38,38,0.7)",
-                            border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                          }}
-                        >×</button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            }
-          </div>
-          {filteredTools.length === 0 && (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>No tools found matching your search.</p>
+      {/* Unified tools grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+        {combinedTools.map(tool => (
+          <div
+            key={tool.isDynamic ? tool.dynamicId : tool.name}
+            onClick={() => {
+              if (tool.url) {
+                const a = document.createElement("a");
+                a.href = tool.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              }
+            }}
+            style={{
+              display: "flex", alignItems: "center", gap: 12, padding: 16,
+              background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
+              cursor: "pointer", textAlign: "left" as const, transition: "all 150ms", width: "100%",
+              position: "relative" as const,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, background: isDark ? "#252528" : "#F9FAFB",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden",
+            }}>
+              {getIconForTool(tool)}
             </div>
-          )}
-        </>
-      ) : (
-        <>
-          {/* Category pills for dynamic resources */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 24 }}>
-            {DYNAMIC_CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setResourceCategory(cat)}
-                style={{
-                  padding: "6px 14px", borderRadius: 999, border: "1.5px solid",
-                  borderColor: resourceCategory === cat ? "#10B981" : inputBorder,
-                  background: resourceCategory === cat ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : inputBg,
-                  color: resourceCategory === cat ? (isDark ? "#10B981" : "#065F46") : text2,
-                  fontSize: 12, fontWeight: resourceCategory === cat ? 600 : 400,
-                  cursor: "pointer", fontFamily: "Inter, sans-serif", transition: "all 150ms",
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Dynamic resources grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
-            {visibleResources.map(r => {
-              const catColor = CATEGORY_COLORS[r.category] || "#6B7280";
-              return (
-                <div
-                  key={r.id}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 2 }}>{tool.name}</p>
+              <p style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, whiteSpace: "nowrap" as const, overflow: "hidden", textOverflow: "ellipsis" }}>{tool.desc}</p>
+            </div>
+            <ExternalLink size={14} color={text2} style={{ flexShrink: 0 }} />
+            {tool.isDynamic && isAdmin && tool.dynamicId && (
+              <div style={{ display: "flex", gap: 4, position: "absolute" as const, top: 8, right: 8 }}>
+                <button
+                  onClick={e => { e.stopPropagation(); const dr = getDynamicResource(tool.dynamicId!); if (dr) handleEditResource(dr); }}
                   style={{
-                    background: cardBg, border: `1px solid ${border}`, borderRadius: 14,
-                    overflow: "hidden", display: "flex", flexDirection: "column",
-                    transition: "border-color 150ms",
-                    position: "relative",
+                    width: 24, height: 24, background: "rgba(0,0,0,0.4)",
+                    border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "#10B981"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = border; }}
-                >
-                  {isAdmin && r.file_url && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm("Remove preview file from this resource?")) {
-                          (supabase as any)
-                            .from("resources")
-                            .update({
-                              file_url: null,
-                              thumbnail_url: null,
-                              updated_at: new Date().toISOString()
-                            })
-                            .eq("id", r.id)
-                            .then(({ error }: { error: any }) => {
-                              if (error) {
-                                toast.error("Failed to remove: " + error.message);
-                                return;
-                              }
-                              setDynamicResources(prev =>
-                                prev.map(res => res.id === r.id
-                                  ? { ...res, file_url: null, thumbnail_url: null }
-                                  : res
-                                )
-                              );
-                              toast.success("Preview removed");
-                            });
-                        }
-                      }}
-                      style={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        width: 24,
-                        height: 24,
-                        background: "rgba(0,0,0,0.55)",
-                        border: "none",
-                        borderRadius: "50%",
-                        color: "white",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        zIndex: 10,
-                        lineHeight: 1,
-                      }}
-                      title="Remove preview file"
-                    >×</button>
-                  )}
-                  {/* Thumbnail or category icon */}
-                  {r.thumbnail_url ? (
-                    <img src={r.thumbnail_url} alt={r.title} style={{ width: "100%", height: 140, objectFit: "cover" }} />
-                  ) : (
-                    <div style={{
-                      height: 80, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: isDark ? "#252528" : "#F9FAFB",
-                    }}>
-                      {r.resource_type === "video" ? <Video size={28} color={catColor} /> :
-                       r.resource_type === "file" || r.resource_type === "template" ? <FileText size={28} color={catColor} /> :
-                       <Globe size={28} color={catColor} />}
-                    </div>
-                  )}
-
-                  <div style={{ padding: 16, flex: 1, display: "flex", flexDirection: "column" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                      <span style={{
-                        padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
-                        background: catColor + "15", color: catColor,
-                      }}>
-                        {r.category}
-                      </span>
-                      {!r.published && isAdmin && (
-                        <span style={{
-                          padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600,
-                          background: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6", color: text2,
-                        }}>
-                          Draft
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                      {r.thumbnail_url ? (
-                        <img
-                          src={r.thumbnail_url}
-                          alt=""
-                          style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", flexShrink: 0 }}
-                          onError={e => {
-                            const el = e.target as HTMLImageElement;
-                            el.style.display = "none";
-                            const fb = el.nextElementSibling as HTMLElement;
-                            if (fb) fb.style.display = "flex";
-                          }}
-                        />
-                      ) : null}
-                      {/* Fallback letter circle — hidden if img loads */}
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8,
-                        background: CATEGORY_COLORS[r.category] || "#6B7280",
-                        color: "white", fontSize: 14, fontWeight: 700,
-                        display: r.thumbnail_url ? "none" : "flex",
-                        alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        {r.title.charAt(0).toUpperCase()}
-                      </div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>{r.title}</p>
-                    </div>
-                    <p style={{
-                      fontSize: 12, color: text2, fontFamily: "Inter, sans-serif", margin: 0, marginBottom: 12,
-                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
-                    }}>{r.description}</p>
-
-                    <div style={{ marginTop: "auto", display: "flex", gap: 8 }}>
-                      {(r.resource_type === "file" || r.resource_type === "template") && r.file_url ? (
-                        <>
-                          <button
-                            onClick={() => setPreviewResource(r)}
-                            style={{
-                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                              padding: "8px 14px", background: isDark ? "#252528" : "#F3F4F6",
-                              color: text1, border: `1px solid ${inputBorder}`, borderRadius: 8,
-                              fontSize: 12, fontWeight: 600, cursor: "pointer", minHeight: 44,
-                            }}
-                          >
-                            <Eye size={14} /> Preview
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (isAdmin) {
-                                window.open(r.file_url!, "_blank");
-                              } else {
-                                window.location.href = SINGLE_STRIPE_URL;
-                              }
-                            }}
-                            style={{
-                              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                              padding: "8px 14px", background: "#10B981", color: "white",
-                              border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                              cursor: "pointer", minHeight: 44,
-                            }}
-                          >
-                            <Download size={14} /> Download
-                          </button>
-                        </>
-                      ) : !r.file_url && (r.resource_type === "file" || r.resource_type === "template") ? (
-                        <span style={{
-                          flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                          padding: "8px 14px", background: isDark ? "#252528" : "#F9FAFB",
-                          color: text2, border: `1px solid ${inputBorder}`, borderRadius: 8,
-                          fontSize: 12, fontWeight: 500, minHeight: 44,
-                        }}>
-                          Coming soon
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            if (r.resource_type === "link" || r.resource_type === "video") {
-                              if (r.url) window.open(r.url, "_blank");
-                            } else if (r.file_url) {
-                              window.open(r.file_url, "_blank");
-                            }
-                          }}
-                          style={{
-                            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                            padding: "8px 14px", background: "#10B981", color: "white",
-                            border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600,
-                            cursor: "pointer", minHeight: 44,
-                          }}
-                        >
-                          {getActionIcon(r.resource_type)} {getActionLabel(r.resource_type)}
-                        </button>
-                      )}
-                      {isAdmin && (
-                        <>
-                          <button onClick={() => handleEditResource(r)} style={{
-                            padding: "8px 10px", border: `1px solid ${inputBorder}`, background: "transparent",
-                            borderRadius: 8, cursor: "pointer", minHeight: 44,
-                          }}>
-                            <Pencil size={14} color={text2} />
-                          </button>
-                          <button onClick={() => setDeleteConfirm(r)} style={{
-                            padding: "8px 10px", border: `1px solid ${inputBorder}`, background: "transparent",
-                            borderRadius: 8, cursor: "pointer", minHeight: 44,
-                          }}>
-                            <Trash2 size={14} color="#DC2626" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                >✎</button>
+                <button
+                  onClick={e => { e.stopPropagation(); const dr = getDynamicResource(tool.dynamicId!); if (dr) setDeleteConfirm(dr); }}
+                  style={{
+                    width: 24, height: 24, background: "rgba(220,38,38,0.7)",
+                    border: "none", borderRadius: "50%", color: "white", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  }}
+                >×</button>
+              </div>
+            )}
           </div>
+        ))}
+      </div>
 
-          {visibleResources.length === 0 && (
-            <div style={{ textAlign: "center", padding: "48px 0" }}>
-              <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>
-                {isAdmin ? "No resources yet. Click 'Add Resource' to create one." : "No resources available yet."}
-              </p>
-            </div>
-          )}
-        </>
+      {combinedTools.length === 0 && (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <p style={{ fontSize: 14, color: text2, fontFamily: "Inter, sans-serif" }}>No tools found matching your search.</p>
+        </div>
       )}
 
       {/* Add/Edit Resource Modal (Admin Only) */}
@@ -797,58 +472,81 @@ export default function ResourcesPage() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {/* URL (first) */}
+              {/* URL */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>URL {form.resource_type === "link" || form.resource_type === "video" ? "*" : ""}</label>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                    onBlur={() => {
-                      try {
-                        if (form.url) {
-                          const domain = new URL(form.url).hostname.replace('www.', '');
-                          const logoUrl = 'https://logo.clearbit.com/' + domain;
-                          setAutoLogoUrl(logoUrl);
-                          setForm(p => ({ ...p, thumbnail_url: logoUrl }));
+                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Resource URL</label>
+                <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                  onBlur={() => {
+                    try {
+                      if (form.url) {
+                        const domain = new URL(form.url).hostname.replace('www.', '');
+                        setUrlPreviewDomain(domain);
+                        const logo = 'https://logo.clearbit.com/' + domain;
+                        setUrlPreviewLogo(logo);
+                        setForm(p => ({ ...p, thumbnail_url: logo }));
+                        if (!form.title) {
+                          setForm(p => ({
+                            ...p,
+                            title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
+                          }));
                         }
-                      } catch {}
-                    }}
-                    placeholder="https://..." style={{
-                      flex: 1, padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                      borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
-                      outline: "none", boxSizing: "border-box" as const,
-                    }} />
-                  {autoLogoUrl && (
+                      }
+                    } catch {}
+                  }}
+                  type="url"
+                  placeholder="https://..."
+                  style={{
+                    width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
+                    outline: "none", boxSizing: "border-box" as const,
+                  }}
+                />
+                {urlPreviewLogo && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8, marginTop: 6,
+                    padding: "6px 10px",
+                    background: isDark ? "#252528" : "#F9FAFB",
+                    borderRadius: 8, width: "fit-content",
+                  }}>
                     <img
-                      src={autoLogoUrl}
-                      alt="logo"
-                      style={{ width: 24, height: 24, borderRadius: 6, objectFit: "contain", flexShrink: 0, border: `1px solid ${inputBorder}` }}
+                      src={urlPreviewLogo}
+                      alt=""
+                      style={{ width: 20, height: 20, borderRadius: 4 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
-                  )}
-                </div>
+                    <span style={{ fontSize: 12, color: text2, fontFamily: "Inter, sans-serif" }}>
+                      {urlPreviewDomain}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Title */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Title *</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Name *</label>
                 <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  placeholder="Resource name" style={{
+                  placeholder="e.g. Notion, Shopify..."
+                  style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
                     borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
                     outline: "none", boxSizing: "border-box" as const,
-                  }} />
+                  }}
+                />
               </div>
 
               {/* Description */}
               <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Description *</label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Short description *</label>
                 <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                  placeholder="Short description" rows={3} style={{
+                  placeholder="What does this tool do?"
+                  rows={2}
+                  style={{
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
                     borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
                     outline: "none", resize: "vertical", boxSizing: "border-box" as const,
                     fontFamily: "Inter, sans-serif",
-                  }} />
+                  }}
+                />
               </div>
 
               {/* Category */}
@@ -859,51 +557,9 @@ export default function ResourcesPage() {
                     width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
                     borderRadius: 10, fontSize: 14, color: text1, background: inputBg, cursor: "pointer",
                   }}>
-                  {DYNAMIC_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
+                  {STATIC_CATEGORIES.filter(c => c !== "All").map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
-              {/* Resource Type */}
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Type</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {[
-                    { id: "link", label: "Link", icon: <Link size={14} /> },
-                    { id: "file", label: "File", icon: <FileText size={14} /> },
-                    { id: "video", label: "Video", icon: <Video size={14} /> },
-                    { id: "template", label: "Template", icon: <FileText size={14} /> },
-                  ].map(t => (
-                    <button key={t.id} onClick={() => setForm(p => ({ ...p, resource_type: t.id }))}
-                      style={{
-                        flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-                        padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 500,
-                        border: `1.5px solid ${form.resource_type === t.id ? "#10B981" : inputBorder}`,
-                        background: form.resource_type === t.id ? (isDark ? "rgba(16,185,129,0.15)" : "#F0FDF4") : "transparent",
-                        color: form.resource_type === t.id ? "#10B981" : text2, cursor: "pointer",
-                      }}>
-                      {t.icon} {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* File upload (for File and Template) */}
-              {(form.resource_type === "file" || form.resource_type === "template") && (
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>File Upload</label>
-                  <input type="file" onChange={e => setResourceFile(e.target.files?.[0] || null)}
-                    style={{ fontSize: 13, color: text1 }} />
-                </div>
-              )}
-
-              {/* Thumbnail — only for file/template types */}
-              {(form.resource_type === "file" || form.resource_type === "template") && (
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Thumbnail (optional)</label>
-                  <input type="file" accept="image/*" onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
-                    style={{ fontSize: 13, color: text1 }} />
-                </div>
-              )}
 
               {/* Published toggle */}
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -986,7 +642,6 @@ export default function ResourcesPage() {
             background: isDark ? "#1C1C1E" : "white", borderRadius: 16,
             overflow: "hidden", position: "relative", display: "flex", flexDirection: "column",
           }} onClick={e => e.stopPropagation()}>
-            {/* Header */}
             <div style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
               padding: "14px 20px", borderBottom: `1px solid ${border}`,
@@ -1000,8 +655,6 @@ export default function ResourcesPage() {
                 <X size={18} color={text2} />
               </button>
             </div>
-
-            {/* Document preview area */}
             <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
               {previewResource.file_url ? (
                 <iframe
@@ -1014,8 +667,6 @@ export default function ResourcesPage() {
                   <p style={{ color: text2, fontSize: 14 }}>No file available</p>
                 </div>
               )}
-
-              {/* Blur overlay for non-admin */}
               {!isAdmin && previewResource.file_url && (
                 <div style={{
                   position: "absolute", top: "30%", left: 0, right: 0, bottom: 0,
@@ -1028,7 +679,6 @@ export default function ResourcesPage() {
                     boxShadow: "0 8px 32px rgba(0,0,0,0.15)", maxWidth: 320,
                     border: `1px solid ${border}`,
                   }}>
-                    {/* Lock SVG icon */}
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={text2} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: "0 auto 16px", display: "block" }}>
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
