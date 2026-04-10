@@ -123,12 +123,23 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         }
         // Load all platform stats into header
         const p = profile as any;
-        const combined = (p.combined_followers || 0) || ((p.youtube_subscribers || 0) + (p.instagram_followers || 0) + (p.tiktok_followers || 0) + (p.twitter_followers || 0));
+        const ig = Number(p.instagram_followers) || 0;
+        const yt = Number(p.youtube_subscribers) || 0;
+        const tt = Number(p.tiktok_followers) || 0;
+        const tw = Number(p.twitter_followers) || 0;
+        const sub = Number(p.substack_subscriber_count) || 0;
+        const manualCombined = Number(p.combined_followers) || 0;
+        const calculatedCombined = ig + yt + tt + tw + sub;
+        const finalCombined = manualCombined > 0 ? manualCombined : calculatedCombined;
         setStudioStats({
-          combined_followers: combined || undefined,
+          combined_followers: finalCombined || undefined,
           reach_30d: p.reach_30d || undefined,
           interactions_30d: p.interactions_30d || undefined,
           avg_engagement: p.avg_engagement || undefined,
+          followers_change: p.followers_change || undefined,
+          reach_change: p.reach_change || undefined,
+          interactions_change: p.interactions_change || undefined,
+          engagement_change: p.engagement_change || undefined,
         });
       }
 
@@ -219,17 +230,26 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     if (!user) return;
     await supabase.from("studio_profile").upsert({
       user_id: user.id,
-      studio_name: formProfile.studio_name || null,
-      handle: formProfile.handle || null,
-      description: formProfile.description || null,
-      instagram_handle: formProfile.instagram_handle || null,
-      youtube_url: formProfile.youtube_url || null,
-      tiktok_handle: formProfile.tiktok_handle || null,
-      twitter_handle: formProfile.twitter_handle || null,
+      studio_name: (formProfile as any).studio_name || null,
+      handle: (formProfile as any).handle || null,
+      description: (formProfile as any).description || null,
+      instagram_handle: (formProfile as any).instagram_handle || null,
+      instagram_url: (formProfile as any).instagram_url || null,
+      instagram_followers: Number((formProfile as any).instagram_followers) || null,
+      youtube_url: (formProfile as any).youtube_url || null,
+      youtube_handle: (formProfile as any).youtube_handle || null,
+      youtube_subscribers: Number((formProfile as any).youtube_subscribers) || null,
+      tiktok_handle: (formProfile as any).tiktok_handle || null,
+      tiktok_url: (formProfile as any).tiktok_url || null,
+      tiktok_followers: Number((formProfile as any).tiktok_followers) || null,
+      twitter_handle: (formProfile as any).twitter_handle || null,
+      twitter_url: (formProfile as any).twitter_url || null,
+      twitter_followers: Number((formProfile as any).twitter_followers) || null,
       linkedin_url: (formProfile as any).linkedin_url || null,
+      substack_url: (formProfile as any).substack_url || null,
+      substack_subscriber_count: Number((formProfile as any).substack_subscriber_count) || null,
       podcast_name: (formProfile as any).podcast_name || null,
       podcast_url: (formProfile as any).podcast_url || null,
-      substack_url: (formProfile as any).substack_url || null,
     } as any, { onConflict: "user_id" });
     setStudioName(formProfile.studio_name || "");
     setStudioHandle(formProfile.handle || "");
@@ -268,64 +288,55 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     if (files.length === 0) return;
     e.target.value = "";
 
-    const urls: string[] = [];
+    const newUrls: string[] = [];
 
     for (const file of files) {
       const ext = file.name.split(".").pop() || "jpg";
-      const path =
-        "studio-images/" + user.id + "/" +
-        Date.now() + "-" +
-        Math.random().toString(36).slice(2) +
-        "." + ext;
+      const uniqueName = Date.now() + "-" + Math.random().toString(36).slice(2) + "." + ext;
+      const path = user.id + "/studio-images/" + uniqueName;
 
-      const { error: uploadError } =
-        await supabase.storage
-          .from("studio-documents")
-          .upload(path, file, { upsert: true });
+      const { error: uploadErr } = await supabase.storage
+        .from("studio-documents")
+        .upload(path, file, { upsert: true });
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        toast.error("Upload failed: " + uploadError.message);
+      if (uploadErr) {
+        console.error("Upload error:", uploadErr);
+        toast.error("Upload failed: " + uploadErr.message);
         continue;
       }
 
-      const { data: urlData } =
-        supabase.storage
-          .from("studio-documents")
-          .getPublicUrl(path);
+      const { data: urlData } = supabase.storage
+        .from("studio-documents")
+        .getPublicUrl(path);
 
       if (urlData?.publicUrl) {
-        urls.push(urlData.publicUrl);
+        newUrls.push(urlData.publicUrl);
       }
     }
 
-    if (urls.length === 0) {
-      toast.error("No photos uploaded");
+    if (newUrls.length === 0) {
+      toast.error("No photos uploaded successfully");
       return;
     }
 
-    const updated = [...studioImages, ...urls];
+    const updated = [...studioImages, ...newUrls];
 
-    const { error: dbError } = await supabase
+    const { error: dbErr } = await supabase
       .from("studio_profile")
-      .upsert({
-        user_id: user.id,
-        images: updated as any,
-      } as any, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, images: updated } as any,
+        { onConflict: "user_id" }
+      );
 
-    if (dbError) {
-      console.error("DB error:", dbError);
-      toast.error("Photo saved to storage but not DB: " + dbError.message);
+    if (dbErr) {
+      console.error("DB save error:", dbErr);
+      toast.error("Uploaded but not saved: " + dbErr.message);
       return;
     }
 
     setStudioImages(updated);
     setCurrentImageIndex(updated.length - 1);
-    toast.success(
-      urls.length + " photo" +
-      (urls.length > 1 ? "s" : "") +
-      " uploaded!"
-    );
+    toast.success(newUrls.length + " photo" + (newUrls.length > 1 ? "s" : "") + " uploaded!");
   };
 
   const handleRemoveImage = async (index: number) => {
@@ -333,18 +344,17 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
     const updated = studioImages.filter((_, i) => i !== index);
     const { error } = await supabase
       .from("studio_profile")
-      .upsert({
-        user_id: user.id,
-        images: updated as any,
-      } as any, { onConflict: "user_id" });
+      .upsert(
+        { user_id: user.id, images: updated } as any,
+        { onConflict: "user_id" }
+      );
     if (error) {
       toast.error("Failed to remove photo");
       return;
     }
     setStudioImages(updated);
-    setCurrentImageIndex(
-      Math.max(0, Math.min(currentImageIndex, updated.length - 1))
-    );
+    setCurrentImageIndex(Math.max(0, Math.min(currentImageIndex, updated.length - 1)));
+    if (updated.length === 0) setCurrentImageIndex(0);
     toast.success("Photo removed");
   };
 
@@ -588,46 +598,60 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
             position: "relative",
             background: isDark ? "#252528" : "#F3F4F6",
             overflow: "hidden",
-            borderLeft: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+            borderLeft: isMobile ? "none" : `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
+            borderTop: isMobile ? `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}` : "none",
             display: "flex",
             flexDirection: "column",
+            minHeight: isMobile ? "200px" : "260px",
           }}>
             {studioImages.length > 0 ? (
-              <>
+              <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                 {/* Main image */}
-                <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                <div style={{ flex: 1, position: "relative", overflow: "hidden", minHeight: isMobile ? "160px" : "200px" }}>
                   <img
                     src={studioImages[currentImageIndex]}
                     alt="Studio"
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
-                  {/* Remove current photo button */}
+                  {/* Remove current photo */}
                   <button
                     onClick={() => handleRemoveImage(currentImageIndex)}
+                    title="Remove this photo"
                     style={{
-                      position: "absolute", top: 8, right: 8,
-                      width: 28, height: 28,
+                      position: "absolute", top: 10, right: 10,
+                      width: 30, height: 30,
                       background: "rgba(0,0,0,0.6)",
                       border: "none", borderRadius: "50%",
                       color: "white", cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 16, fontWeight: 700, zIndex: 10,
+                      fontSize: 18, fontWeight: 700, zIndex: 10, lineHeight: 1,
                     }}
-                    title="Remove this photo"
                   >×</button>
-                  {/* Add more photos button */}
+                  {/* Add more photos */}
                   <button
                     onClick={() => studioImageInputRef.current?.click()}
                     style={{
-                      position: "absolute", bottom: 8, right: 8,
-                      padding: "4px 10px",
-                      background: "rgba(0,0,0,0.6)",
-                      border: "1px solid rgba(255,255,255,0.3)",
-                      borderRadius: 8, color: "white", cursor: "pointer",
-                      fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif",
+                      position: "absolute", bottom: 10, right: 10,
+                      padding: "5px 12px",
+                      background: "rgba(0,0,0,0.55)",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      borderRadius: "8px", color: "white", cursor: "pointer",
+                      fontSize: "11px", fontWeight: 600, fontFamily: "Inter, sans-serif",
+                      display: "flex", alignItems: "center", gap: 4, zIndex: 10,
                     }}
                   >+ Add Photo</button>
+                  {/* Image counter */}
+                  {studioImages.length > 1 && (
+                    <div style={{
+                      position: "absolute", bottom: 10, left: 10,
+                      padding: "3px 8px", borderRadius: 6,
+                      background: "rgba(0,0,0,0.55)", color: "white",
+                      fontSize: 11, fontWeight: 600, fontFamily: "Inter, sans-serif",
+                    }}>
+                      {currentImageIndex + 1} / {studioImages.length}
+                    </div>
+                  )}
                 </div>
 
                 {/* Thumbnail strip */}
@@ -637,17 +661,16 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                     overflowX: "auto",
                     borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
                   }}>
-                    {studioImages.slice(0, 8).map((img, idx) => (
+                    {studioImages.slice(0, 10).map((img, idx) => (
                       <button
                         key={idx}
                         onClick={() => setCurrentImageIndex(idx)}
                         style={{
-                          width: 36, height: 36, borderRadius: 6,
+                          width: 38, height: 38, borderRadius: 6,
                           overflow: "hidden", flexShrink: 0,
-                          border: currentImageIndex === idx
-                            ? "2px solid #10B981"
-                            : "2px solid transparent",
+                          border: currentImageIndex === idx ? "2px solid #10B981" : "2px solid transparent",
                           cursor: "pointer", padding: 0, background: "none",
+                          transition: "border-color 150ms",
                         }}
                       >
                         <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -655,23 +678,29 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                     ))}
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               /* Empty state */
               <div
                 onClick={() => studioImageInputRef.current?.click()}
                 style={{
-                  flex: 1,
+                  width: "100%", height: "100%", minHeight: "220px",
                   display: "flex", flexDirection: "column",
-                  alignItems: "center", justifyContent: "center", gap: 8,
-                  background: "transparent",
-                  border: `2px dashed ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  borderRadius: 12, margin: 16, cursor: "pointer",
-                  color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                  alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", gap: 10,
                 }}
               >
-                <Upload size={18} />
-                <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "Inter, sans-serif" }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%",
+                  background: isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Upload size={18} color={isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"} />
+                </div>
+                <span style={{
+                  fontSize: 13, fontWeight: 500, fontFamily: "Inter, sans-serif",
+                  color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF",
+                }}>
                   Add a studio photo or logo
                 </span>
               </div>
@@ -691,7 +720,7 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
         {/* STATS ROW */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
           borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "#E5E7EB"}`,
         }}>
           {statItems.map((stat, i) => (
@@ -833,12 +862,17 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                 textTransform: "uppercase", letterSpacing: "0.5px", margin: "8px 0 0",
               }}>Social Accounts</p>
               {[
-                { label: "Instagram", key: "instagram_handle", placeholder: "yourhandle", prefix: "@" },
-                { label: "YouTube", key: "youtube_url", placeholder: "https://youtube.com/..." },
-                { label: "TikTok", key: "tiktok_handle", placeholder: "yourhandle", prefix: "@" },
-                { label: "Twitter/X", key: "twitter_handle", placeholder: "yourhandle", prefix: "@" },
-                { label: "LinkedIn", key: "linkedin_url", placeholder: "https://linkedin.com/in/..." },
-                { label: "Substack", key: "substack_url", placeholder: "https://yourname.substack.com" },
+                { label: "Instagram Handle", key: "instagram_handle", placeholder: "yourhandle", prefix: "@" },
+                { label: "Instagram Followers", key: "instagram_followers", placeholder: "e.g. 12500", type: "number" },
+                { label: "YouTube URL", key: "youtube_url", placeholder: "https://youtube.com/@yourchannel" },
+                { label: "YouTube Subscribers", key: "youtube_subscribers", placeholder: "e.g. 5000", type: "number" },
+                { label: "TikTok Handle", key: "tiktok_handle", placeholder: "yourhandle", prefix: "@" },
+                { label: "TikTok Followers", key: "tiktok_followers", placeholder: "e.g. 8000", type: "number" },
+                { label: "Twitter / X Handle", key: "twitter_handle", placeholder: "yourhandle", prefix: "@" },
+                { label: "Twitter Followers", key: "twitter_followers", placeholder: "e.g. 3200", type: "number" },
+                { label: "LinkedIn URL", key: "linkedin_url", placeholder: "https://linkedin.com/in/..." },
+                { label: "Substack URL", key: "substack_url", placeholder: "https://yourname.substack.com" },
+                { label: "Substack Subscribers", key: "substack_subscriber_count", placeholder: "e.g. 1200", type: "number" },
                 { label: "Podcast Name", key: "podcast_name", placeholder: "e.g. The Daily Hustle" },
                 { label: "Podcast URL", key: "podcast_url", placeholder: "https://..." },
               ].map(f => (
@@ -847,28 +881,28 @@ export default function StudioHeaderCard({ activeTab, onTabChange }: Props) {
                     {f.label}
                   </label>
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    {f.prefix && (
+                    {(f as any).prefix && (
                       <span style={{
                         padding: "8px 10px", fontSize: "13px",
                         background: isDark ? "#252528" : "#F3F4F6",
                         border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
                         borderRight: "none", borderRadius: "8px 0 0 8px",
                         color: "#9CA3AF",
-                      }}>{f.prefix}</span>
+                      }}>{(f as any).prefix}</span>
                     )}
                     <input
-                      type="text"
+                      type={(f as any).type || "text"}
                       value={(formProfile as any)[f.key] || ""}
                       onChange={e => setFormProfile(p => ({ ...p, [f.key]: e.target.value }))}
                       placeholder={f.placeholder}
                       style={{
                         flex: 1, padding: "8px 12px", fontSize: "13px",
                         border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                        borderRadius: f.prefix ? "0 8px 8px 0" : "8px",
+                        borderRadius: (f as any).prefix ? "0 8px 8px 0" : "8px",
                         outline: "none",
                         background: isDark ? "#252528" : "white",
                         color: isDark ? "#F2F2F2" : "#374151",
-                        boxSizing: "border-box",
+                        boxSizing: "border-box" as const,
                       }}
                     />
                   </div>
