@@ -68,7 +68,12 @@ export default function Projects() {
 
   useEffect(() => {
     if (deletedProjectIdsFromRoute.length === 0) return;
-    setRemovedProjectIds((prev) => [...new Set([...prev, ...deletedProjectIdsFromRoute])]);
+    deletedProjectIdsFromRoute.forEach(id => 
+      deletedIdsRef.current.add(id)
+    );
+    setRemovedProjectIds((prev) => 
+      [...new Set([...prev, ...deletedProjectIdsFromRoute])]
+    );
   }, [deletedProjectIdsKey]);
 
   useEffect(() => {
@@ -516,7 +521,7 @@ export default function Projects() {
 
           {/* Import from Partiful */}
           <button
-            onClick={() => setPartifulModalOpen(true)}
+            onClick={() => setShowCreateEvent(true)}
             style={{
               display: "flex", alignItems: "center", gap: "6px",
               padding: "7px 14px", border: "1.5px solid",
@@ -738,221 +743,7 @@ export default function Projects() {
         </div>
       )}
 
-      {/* ── Partiful Import Modal ── */}
-      {partifulModalOpen && (
-        <div
-          onClick={() => setPartifulModalOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 10000,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: "500px", maxWidth: "90vw", maxHeight: "85vh", overflowY: "auto",
-              background: isDark ? "#1C1C1E" : "white",
-              borderRadius: "16px", padding: "24px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-              fontFamily: "Inter, sans-serif",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
-              <div>
-                <h3 style={{ fontSize: "17px", fontWeight: "700", color: isDark ? "#F2F2F2" : "#111827", marginBottom: "4px" }}>
-                  Import from Partiful
-                </h3>
-                <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF" }}>
-                  Paste your Partiful event URL to import it
-                </p>
-              </div>
-              <button onClick={() => { setPartifulModalOpen(false); setPartifulPreview(null); setPartifulError(null); setShowManualEntry(false); }} style={{ background: "transparent", border: "none", cursor: "pointer" }}>
-                <X size={18} color={isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"} />
-              </button>
-            </div>
-
-            {/* URL input */}
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ fontSize: "13px", fontWeight: "600", color: isDark ? "#F2F2F2" : "#374151", display: "block", marginBottom: "6px" }}>
-                Partiful Event URL
-              </label>
-              <input
-                value={partifulUrl}
-                onChange={e => { setPartifulUrl(e.target.value); setPartifulPreview(null); setPartifulError(null); }}
-                placeholder="https://partiful.com/e/..."
-                style={{
-                  width: "100%", padding: "12px 14px",
-                  border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  borderRadius: "10px", fontSize: "14px",
-                  color: isDark ? "#F2F2F2" : "#374151",
-                  background: isDark ? "#252528" : "white",
-                  outline: "none", boxSizing: "border-box",
-                }}
-              />
-              <p style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF", marginTop: "4px" }}>
-                Paste the link from your Partiful event page
-              </p>
-            </div>
-
-            {/* Preview button */}
-            {partifulUrl && !partifulPreview && !partifulError && (
-              <button
-                onClick={handleFetchPartiful}
-                disabled={partifulFetching}
-                style={{
-                  width: "100%", padding: "11px", marginBottom: "16px",
-                  background: isDark ? "#252528" : "#F9FAFB",
-                  border: `1.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                  borderRadius: "10px", fontSize: "13px", fontWeight: "600",
-                  color: isDark ? "#F2F2F2" : "#374151",
-                  cursor: partifulFetching ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                }}
-              >
-                {partifulFetching ? (
-                  <><Loader2 size={14} className="animate-spin" /> Fetching event details...</>
-                ) : (
-                  <><Eye size={14} /> Preview Event</>
-                )}
-              </button>
-            )}
-
-            {/* Preview card */}
-            {partifulPreview && (
-              <div style={{
-                borderRadius: "12px", overflow: "hidden", marginBottom: "16px",
-                border: `1px solid ${isDark ? "rgba(123,94,167,0.3)" : "#E5E7EB"}`,
-                background: isDark ? "#1C1C1E" : "white",
-              }}>
-                {partifulPreview.image_url && (
-                  <img src={partifulPreview.image_url} alt="" style={{ width: "100%", height: "140px", objectFit: "cover" }} />
-                )}
-                <div style={{ padding: "16px" }}>
-                  <h4 style={{ fontSize: "16px", fontWeight: "700", color: isDark ? "#F2F2F2" : "#111827", marginBottom: "10px" }}>
-                    {partifulPreview.name}
-                  </h4>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
-                    {partifulPreview.date && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Calendar size={14} color={isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"} />
-                        <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" }}>
-                          {partifulPreview.date_formatted || partifulPreview.date}
-                        </span>
-                      </div>
-                    )}
-                    {partifulPreview.location && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <MapPin size={14} color={isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"} />
-                        <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" }}>{partifulPreview.location}</span>
-                      </div>
-                    )}
-                    {partifulPreview.host && (
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Users size={14} color={isDark ? "rgba(255,255,255,0.4)" : "#9CA3AF"} />
-                        <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "#6B7280" }}>Hosted by {partifulPreview.host}</span>
-                      </div>
-                    )}
-                  </div>
-                  {partifulPreview.description && (
-                    <p style={{
-                      fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280",
-                      lineHeight: "1.5", padding: "10px", borderRadius: "8px",
-                      background: isDark ? "#252528" : "#F9FAFB",
-                    }}>
-                      {partifulPreview.description}
-                    </p>
-                  )}
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: "6px",
-                    marginTop: "10px", fontSize: "11px", color: isDark ? "rgba(255,255,255,0.3)" : "#9CA3AF",
-                  }}>
-                    <Sparkles size={12} />
-                    AI prep stages will generate when you open the event
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Error state */}
-            {partifulError && (
-              <div style={{
-                display: "flex", alignItems: "flex-start", gap: "10px",
-                padding: "14px", borderRadius: "10px", marginBottom: "16px",
-                background: isDark ? "rgba(220,38,38,0.08)" : "#FEF2F2",
-                border: `1px solid ${isDark ? "rgba(220,38,38,0.2)" : "#FECACA"}`,
-              }}>
-                <AlertTriangle size={16} color="#DC2626" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: "600", color: isDark ? "#FCA5A5" : "#DC2626", marginBottom: "2px" }}>Could not fetch event</p>
-                  <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "#6B7280" }}>The event may be private or the URL may be incorrect.</p>
-                  <button
-                    onClick={() => { setPartifulError(null); setShowManualEntry(true); }}
-                    style={{ marginTop: "6px", background: "transparent", border: "none", fontSize: "12px", color: "#7B5EA7", cursor: "pointer", padding: 0, fontWeight: "600" }}
-                  >
-                    Enter manually →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Manual fallback */}
-            {showManualEntry && (
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ fontSize: "13px", fontWeight: "600", color: isDark ? "#F2F2F2" : "#374151", marginBottom: "12px" }}>Enter event details manually</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {[
-                    { label: "Event Name*", key: "name", placeholder: "My Birthday Bash" },
-                    { label: "Date*", key: "date", type: "date" },
-                    { label: "Location", key: "location", placeholder: "123 Main St, Denver" },
-                    { label: "Description", key: "description", placeholder: "What should guests know?" },
-                  ].map(field => (
-                    <div key={field.key}>
-                      <label style={{ fontSize: "12px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.5)" : "#6B7280", display: "block", marginBottom: "4px" }}>{field.label}</label>
-                      <input
-                        type={field.type || "text"}
-                        value={manualEventData[field.key] || ""}
-                        onChange={e => setManualEventData(prev => ({ ...prev, [field.key]: e.target.value }))}
-                        placeholder={field.placeholder}
-                        style={{
-                          width: "100%", padding: "9px 12px",
-                          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "#E5E7EB"}`,
-                          borderRadius: "8px", fontSize: "13px",
-                          color: isDark ? "#F2F2F2" : "#374151",
-                          background: isDark ? "#252528" : "white",
-                          outline: "none", boxSizing: "border-box",
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Import button */}
-            {(partifulPreview || (showManualEntry && manualEventData.name && manualEventData.date)) && (
-              <button
-                onClick={handlePartifulImport}
-                disabled={partifulImporting}
-                style={{
-                  width: "100%", padding: "12px",
-                  background: "#7B5EA7", border: "none", borderRadius: "10px",
-                  fontSize: "14px", fontWeight: "600", color: "white",
-                  cursor: partifulImporting ? "not-allowed" : "pointer",
-                  opacity: partifulImporting ? 0.7 : 1,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                }}
-              >
-                {partifulImporting ? (
-                  <><Loader2 size={16} className="animate-spin" /> Importing event...</>
-                ) : (
-                  <><Sparkles size={16} /> Import Event</>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Partiful Import Modal removed — use CreateEventModal instead */}
 
       <CreateEventModal open={showCreateEvent} onClose={() => setShowCreateEvent(false)} />
       <CreateGoalModal open={showCreateGoal} onClose={() => setShowCreateGoal(false)} />
