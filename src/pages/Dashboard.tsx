@@ -504,7 +504,7 @@ export default function Dashboard() {
   const renderLeftCard = (id: string) => {
     switch (id) {
       case "networth-projects": {
-        const mobile = window.innerWidth < 768;
+        
         return (
            <SortableCard key={id} id={id}>
             <div className="flex flex-col md:flex-row items-stretch gap-4 w-full">
