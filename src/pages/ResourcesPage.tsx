@@ -573,11 +573,13 @@ export default function ResourcesPage() {
         <div style={{
           position: "fixed", inset: 0, zIndex: 9999,
           background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+          display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? 0 : 16,
         }} onClick={() => { setShowAddForm(false); resetForm(); }}>
           <div style={{
-            width: "100%", maxWidth: 520, background: isDark ? "#1C1C1E" : "white",
-            borderRadius: 16, padding: 28, maxHeight: "90vh", overflowY: "auto",
+            width: "100%", maxWidth: isMobile ? "100%" : 520, background: isDark ? "#1C1C1E" : "white",
+            borderRadius: isMobile ? "16px 16px 0 0" : 16, padding: isMobile ? "20px 16px" : 28,
+            maxHeight: isMobile ? "95vh" : "90vh", overflowY: "auto",
+            paddingBottom: isMobile ? "calc(20px + env(safe-area-inset-bottom, 0px))" : 28,
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: text1, fontFamily: "Inter, sans-serif", margin: 0 }}>
@@ -592,32 +594,24 @@ export default function ResourcesPage() {
               {/* URL */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: text2, display: "block", marginBottom: 4 }}>Resource URL</label>
-                <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
-                  onBlur={() => {
-                    try {
-                      if (form.url) {
-                        const domain = new URL(form.url).hostname.replace('www.', '');
-                        setUrlPreviewDomain(domain);
-                        const logo = 'https://logo.clearbit.com/' + domain;
-                        setUrlPreviewLogo(logo);
-                        setForm(p => ({ ...p, thumbnail_url: logo }));
-                        if (!form.title) {
-                          setForm(p => ({
-                            ...p,
-                            title: domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1),
-                          }));
-                        }
-                      }
-                    } catch {}
-                  }}
-                  type="url"
-                  placeholder="https://..."
-                  style={{
-                    width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
-                    borderRadius: 10, fontSize: 14, color: text1, background: inputBg,
-                    outline: "none", boxSizing: "border-box" as const,
-                  }}
-                />
+                <div style={{ position: "relative" }}>
+                  <input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))}
+                    onBlur={() => autoPopulateFromUrl(form.url)}
+                    type="url"
+                    placeholder="https://..."
+                    style={{
+                      width: "100%", padding: "10px 14px", border: `1.5px solid ${inputBorder}`,
+                      borderRadius: 10, fontSize: 16, color: text1, background: inputBg,
+                      outline: "none", boxSizing: "border-box" as const,
+                      minHeight: 48,
+                    }}
+                  />
+                  {urlFetching && (
+                    <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>
+                      <Loader2 size={16} color="#10B981" className="animate-spin" />
+                    </div>
+                  )}
+                </div>
                 {urlPreviewLogo && (
                   <div style={{
                     display: "flex", alignItems: "center", gap: 8, marginTop: 6,
