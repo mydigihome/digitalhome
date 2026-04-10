@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import TradingTerminal from "./investing/TradingTerminal";
 import TradingPlanModal from "./investing/TradingPlanModal";
 import PastTradingPlans from "./investing/PastTradingPlans";
+import MarketIntelCard from "./MarketIntelCard";
 
 /* ──────────────────────── types ──────────────────────── */
 interface WatchlistStock {
@@ -842,6 +843,9 @@ export default function InvestingTab() {
 
       {/* Live Trading Terminal */}
       <TradingTerminal onOpenPlanModal={() => setPlanModalOpen(true)} />
+
+      {/* Market Intelligence */}
+      <MarketIntelCard />
 
       {/* Past Trading Plans */}
       <PastTradingPlans />
