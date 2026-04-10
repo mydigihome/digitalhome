@@ -178,7 +178,8 @@ function ScriptureContent({ religion }: { religion?: string }) {
 
 const DEFAULT_LEFT_ORDER = ["networth-projects", "market", "momentum", "links", "studio", "reflections"];
 const DEFAULT_RIGHT_ORDER = ["scripture", "reminders", "agenda", "todos", "network"];
-const HERO_BG = "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80";
+import defaultHeroBg from "@/assets/default-dashboard-hero.png";
+const HERO_BG = defaultHeroBg;
 
 /* ═══════════════════════════════════════════════════ */
 export default function Dashboard() {
