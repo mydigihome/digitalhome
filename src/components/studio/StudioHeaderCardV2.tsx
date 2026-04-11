@@ -183,20 +183,40 @@ export default function StudioHeaderCardV2({ activeTab, onTabChange }: Props) {
     setEinModalOpen(false); toast.success("EIN saved!");
   };
 
+  const extractHandle = (url: string): string => {
+    if (!url || !url.startsWith("http")) return url || "";
+    try {
+      const u = new URL(url);
+      return u.pathname.replace(/^\//, "").replace(/^@/, "").split("/")[0].split("?")[0] || "";
+    } catch { return url; }
+  };
+
   const handleSaveSettings = async () => {
     if (!user) return;
+    const igHandle = formProfile.instagram_url?.includes("instagram.com")
+      ? extractHandle(formProfile.instagram_url)
+      : formProfile.instagram_handle || "";
+    const ttHandle = formProfile.tiktok_url?.includes("tiktok.com")
+      ? extractHandle(formProfile.tiktok_url)
+      : formProfile.tiktok_handle || "";
+    const twHandle = (formProfile.twitter_url?.includes("twitter.com") || formProfile.twitter_url?.includes("x.com"))
+      ? extractHandle(formProfile.twitter_url)
+      : formProfile.twitter_handle || "";
     const { error } = await upsertProfile({
       studio_name: formProfile.studio_name || null,
       handle: formProfile.handle || null,
       description: formProfile.description || null,
-      instagram_handle: formProfile.instagram_handle || null,
+      instagram_handle: igHandle || null,
       instagram_followers: Number(formProfile.instagram_followers) || null,
+      instagram_url: formProfile.instagram_url || null,
       youtube_url: formProfile.youtube_url || null,
       youtube_subscribers: Number(formProfile.youtube_subscribers) || null,
-      tiktok_handle: formProfile.tiktok_handle || null,
+      tiktok_handle: ttHandle || null,
       tiktok_followers: Number(formProfile.tiktok_followers) || null,
-      twitter_handle: formProfile.twitter_handle || null,
+      tiktok_url: formProfile.tiktok_url || null,
+      twitter_handle: twHandle || null,
       twitter_followers: Number(formProfile.twitter_followers) || null,
+      twitter_url: formProfile.twitter_url || null,
       linkedin_url: formProfile.linkedin_url || null,
       substack_url: formProfile.substack_url || null,
       substack_subscriber_count: Number(formProfile.substack_subscriber_count) || null,
@@ -396,23 +416,35 @@ export default function StudioHeaderCardV2({ activeTab, onTabChange }: Props) {
             <div>{label("Studio / Brand Name")}{inp("studio_name", "e.g. Chloe Creates")}</div>
             <div>{label("Handle")}{inp("handle", "yourhandle", "text", "@")}</div>
             <div>{label("Description")}<textarea value={(formProfile as any)?.description || ""} onChange={e => setFormProfile((p: any) => ({ ...p, description: e.target.value }))} placeholder="What your studio is about..." rows={3} style={{ width: "100%", padding: "8px 12px", fontSize: 13, border: `1px solid ${inputBorder}`, borderRadius: 8, resize: "vertical" as const, outline: "none", background: inputBg, color: text1, fontFamily: "inherit", boxSizing: "border-box" as const }} /></div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>Social Accounts</p>
-            {[
-              { l: "Instagram Handle", k: "instagram_handle", ph: "yourhandle", pre: "@" },
-              { l: "Instagram Followers", k: "instagram_followers", ph: "12500", t: "number" },
-              { l: "YouTube URL", k: "youtube_url", ph: "https://youtube.com/@channel" },
-              { l: "YouTube Subscribers", k: "youtube_subscribers", ph: "5000", t: "number" },
-              { l: "TikTok Handle", k: "tiktok_handle", ph: "yourhandle", pre: "@" },
-              { l: "TikTok Followers", k: "tiktok_followers", ph: "8000", t: "number" },
-              { l: "Twitter / X Handle", k: "twitter_handle", ph: "yourhandle", pre: "@" },
-              { l: "Twitter Followers", k: "twitter_followers", ph: "3200", t: "number" },
-              { l: "LinkedIn URL", k: "linkedin_url", ph: "https://linkedin.com/in/..." },
-              { l: "Substack URL", k: "substack_url", ph: "https://yourname.substack.com" },
-              { l: "Substack Subscribers", k: "substack_subscriber_count", ph: "1200", t: "number" },
-              { l: "Podcast Name", k: "podcast_name", ph: "The Daily Hustle" },
-              { l: "Podcast URL", k: "podcast_url", ph: "https://..." },
-            ].map(f => <div key={f.k}>{label(f.l)}{inp(f.k, f.ph, (f as any).t || "text", (f as any).pre)}</div>)}
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>Instagram</p>
+            <div>{label("Instagram Profile URL")}{inp("instagram_url", "https://instagram.com/yourhandle")}</div>
+            <div>{label("Followers")}{inp("instagram_followers", "e.g. 12500", "number")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>YouTube</p>
+            <div>{label("YouTube Channel URL")}{inp("youtube_url", "https://youtube.com/@channel")}</div>
+            <div>{label("Subscribers")}{inp("youtube_subscribers", "e.g. 5000", "number")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>TikTok</p>
+            <div>{label("TikTok Profile URL")}{inp("tiktok_url", "https://tiktok.com/@yourhandle")}</div>
+            <div>{label("Followers")}{inp("tiktok_followers", "e.g. 8000", "number")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>Twitter / X</p>
+            <div>{label("Twitter / X Profile URL")}{inp("twitter_url", "https://twitter.com/yourhandle")}</div>
+            <div>{label("Followers")}{inp("twitter_followers", "e.g. 3200", "number")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>LinkedIn</p>
+            <div>{label("LinkedIn Profile URL")}{inp("linkedin_url", "https://linkedin.com/in/...")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>Substack</p>
+            <div>{label("Substack URL")}{inp("substack_url", "https://yourname.substack.com")}</div>
+            <div>{label("Subscribers")}{inp("substack_subscriber_count", "e.g. 1200", "number")}</div>
+
+            <p style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" as const, letterSpacing: "0.5px", margin: "4px 0 0" }}>Podcast</p>
+            <div>{label("Podcast Name")}{inp("podcast_name", "The Daily Hustle")}</div>
+            <div>{label("Podcast URL")}{inp("podcast_url", "https://...")}</div>
+
             <button onClick={handleSaveSettings} style={{ marginTop: 8, padding: "12px 0", width: "100%", background: "#10B981", color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Save Settings</button>
+            <p style={{ fontSize: 11, color: "#9CA3AF", textAlign: "center" as const, margin: "6px 0 0" }}>Paste your profile URL — handles are extracted automatically when you save.</p>
           </div>
         </>,
         () => setSettingsOpen(false)
