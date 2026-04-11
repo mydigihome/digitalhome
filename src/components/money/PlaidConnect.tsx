@@ -193,7 +193,7 @@ export default function PlaidConnect() {
     setSyncing(true);
     if (!silent) toast.info("Syncing your accounts...");
     try {
-      const { data, error } = await supabase.functions.invoke("plaid-sync-transactions", {
+      const { data, error } = await supabase.functions.invoke("plaid-sync", {
         body: { user_id: user.id },
         headers: { "Content-Type": "application/json" },
       });
