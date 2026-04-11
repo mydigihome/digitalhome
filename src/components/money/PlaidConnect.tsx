@@ -27,6 +27,7 @@ export default function PlaidConnect() {
   const [linking, setLinking] = useState(false);
   const [accounts, setAccounts] = useState<PlaidAccount | null>(null);
   const [institutionName, setInstitutionName] = useState("");
+  const [isPaid, setIsPaid] = useState(false);
 
   const border = isDark ? "rgba(255,255,255,0.08)" : "#E5E7EB";
   const bg = isDark ? "#1C1C1E" : "#ffffff";
@@ -46,7 +47,26 @@ export default function PlaidConnect() {
   useEffect(() => {
     if (!user) return;
     checkConnection();
+    checkPlanAndUsage();
   }, [user]);
+
+  const checkPlanAndUsage = async () => {
+    if (!user) return;
+    try {
+      const { data: prefs } = await (supabase as any)
+        .from("user_preferences")
+        .select("is_subscribed, subscription_type, plan_tier")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setIsPaid(
+        !!prefs?.is_subscribed ||
+        (prefs?.plan_tier != null &&
+         prefs?.plan_tier !== 'free')
+      );
+    } catch (err) {
+      console.error("Plan check error:", err);
+    }
+  };
 
   const checkConnection = async () => {
     if (!user) return;
@@ -92,6 +112,7 @@ export default function PlaidConnect() {
 
       const { data, error } = await supabase.functions.invoke("plaid-link-token", {
         body: { user_id: user.id },
+        headers: { "Content-Type": "application/json" },
       });
 
       console.log("plaid-link-token response:", data, error);
@@ -135,6 +156,7 @@ export default function PlaidConnect() {
                   user_id: user.id,
                   institution_name: institution,
                 },
+                headers: { "Content-Type": "application/json" },
               }
             );
 
@@ -173,6 +195,7 @@ export default function PlaidConnect() {
     try {
       const { data, error } = await supabase.functions.invoke("plaid-sync-transactions", {
         body: { user_id: user.id },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (error || data?.error) {
