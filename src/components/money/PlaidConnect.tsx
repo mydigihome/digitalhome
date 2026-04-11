@@ -83,12 +83,29 @@ export default function PlaidConnect() {
     if (!user) return;
     setLinking(true);
     try {
+      console.log("Invoking plaid-link-token with user_id:", user?.id);
+      if (!user?.id) {
+        toast.error("You must be logged in to connect a bank");
+        setLinking(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("plaid-link-token", {
         body: { user_id: user.id },
       });
 
-      if (error || data?.error) {
-        throw new Error(error?.message || data?.error);
+      console.log("plaid-link-token response:", data, error);
+
+      if (error) {
+        toast.error("Function error: " + error.message);
+        setLinking(false);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error("Plaid error: " + data.error + " Code: " + data.code);
+        setLinking(false);
+        return;
       }
 
       const linkToken = data.link_token;
