@@ -1,234 +1,79 @@
 import { Link } from "react-router-dom";
 
 export default function PrivacyPolicy() {
+  const h2 = { fontSize: 18, fontWeight: 700, color: "#111827", marginTop: 40, marginBottom: 10, paddingBottom: 8, borderBottom: "1px solid #F3F4F6" } as React.CSSProperties;
+  const p = { marginBottom: 14, color: "#374151", lineHeight: 1.8 } as React.CSSProperties;
+  const li = { marginBottom: 6, paddingLeft: 4, color: "#374151" } as React.CSSProperties;
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#111]">
-      <div className="max-w-[760px] mx-auto px-6 py-16" style={{ fontFamily: 'Inter, sans-serif' }}>
-        <Link to="/" className="inline-block font-bold text-sm text-[#6366f1] mb-8">
-          Digital Home
+    <div style={{ minHeight: "100vh", background: "white", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "60px 32px 80px" }}>
+        <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none", marginBottom: 40 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M4 12L16 4L28 12V26C28 27.1 27.1 28 26 28H6C4.9 28 4 27.1 4 26V12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M12 28V16H20V28" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#6366f1" }}>Digital Home</span>
         </Link>
 
-        <h1 className="font-bold text-3xl text-[#111827] dark:text-white tracking-tight">Privacy Policy</h1>
-        <p className="text-sm text-[#9ca3af] mt-2 mb-10">Last updated: March 27, 2026</p>
-        <div className="h-px bg-[#f0f0f0] dark:bg-white/10 mb-10" />
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: "#111827", marginBottom: 8 }}>Privacy Policy</h1>
+        <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 8 }}>Effective Date: April 16, 2026 &middot; Last Updated: April 16, 2026</p>
+        <div style={{ height: 1, background: "#F3F4F6", marginBottom: 40 }} />
 
-        <div className="space-y-8 text-sm text-[#374151] dark:text-[#d1d5db] leading-[1.8]">
-          <p>Your privacy is important to us. This Privacy Policy explains how Digital Home ("we," "us," or "our") collects, uses, stores, and protects your personal information when you use our application and services at digitalhome.lovable.app and any associated domains.</p>
-          <p>By using Digital Home, you agree to the collection and use of information in accordance with this policy.</p>
+        <p style={p}>Digital Home (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your personal information when you use our application at <strong>mydigitalhome.app</strong>.</p>
+        <p style={{ ...p, padding: "14px 18px", background: "#EEF2FF", borderLeft: "4px solid #6366f1", borderRadius: "0 8px 8px 0" }}>This policy meets or exceeds the requirements of GDPR, CCPA, and COPPA.</p>
 
-          <Section title="1. Information We Collect">
-            <p>We collect the following types of information:</p>
+        <h2 style={h2}>1. Information We Collect</h2>
+        <p style={p}><strong>Account Information:</strong> Name, email address, profile photo, and authentication credentials.</p>
+        <p style={p}><strong>Financial Data (via Plaid):</strong> Bank balances, transactions, and investment data when you connect your accounts. We never store your bank login credentials.</p>
+        <p style={p}><strong>Google/Gmail:</strong> Email and calendar data when you enable these integrations. We comply fully with Google API Services User Data Policy.</p>
+        <p style={p}><strong>Usage Data:</strong> Pages visited, features used, device type, IP address, and error logs.</p>
+        <p style={p}><strong>Your Content:</strong> Journal entries, projects, contacts, financial plans, and any content you create within the app.</p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Account Information</p>
-            <List items={[
-              "Your name and email address when you create an account",
-              "Profile photo if you choose to upload one",
-              "Authentication credentials (stored securely via encrypted auth)",
-              "Subscription status and billing information (processed by Stripe)",
-            ]} />
+        <h2 style={h2}>2. How We Use Your Information</h2>
+        <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+          {["Provide, operate, maintain, and improve the Service","Display your data in an organized, useful format","Generate AI-powered insights based on your data","Process payments and send transactional emails","Respond to support requests and feedback","Detect and prevent fraud and security issues","Comply with applicable legal obligations"].map((item, i) => <li key={i} style={li}>{item}</li>)}
+        </ul>
+        <p style={{ ...p, padding: "14px 18px", background: "#F0FDF4", borderLeft: "4px solid #10B981", borderRadius: "0 8px 8px 0" }}>
+          <strong>We do NOT</strong> sell your personal information, share financial data with advertisers, use your content to train AI models without explicit consent, or share your data with other users.
+        </p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Financial Information (via Plaid)</p>
-            <List items={[
-              "Bank account balances and transaction history when you connect your bank account through Plaid",
-              "Credit and liability account information",
-              "Investment account data",
-              "We do not store your bank login credentials. All financial data connections are established through Plaid's secure API and governed by Plaid's Privacy Policy (plaid.com/legal/privacy-policy)",
-            ]} />
+        <h2 style={h2}>3. Data Sharing</h2>
+        <p style={p}>We share data only with service providers operating under confidentiality agreements: Supabase (infrastructure), Stripe (payments), Plaid (financial data), Google (auth/calendar), and Anthropic (AI features). We never sell or rent your data.</p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Social Media Information (via Platform Integrations)</p>
-            <List items={[
-              "Social media account usernames, follower counts, and engagement metrics when you connect platforms in the Studio tab",
-              "Post performance data, comments, and reach statistics",
-              "OAuth tokens required to access your accounts (stored encrypted)",
-              "We only request the minimum permissions necessary for each platform",
-            ]} />
+        <h2 style={h2}>4. Data Security</h2>
+        <ul style={{ paddingLeft: 20, marginBottom: 16 }}>
+          {["AES-256 encryption at rest, TLS 1.2+ in transit","Row-level security ensuring only you can access your data","OAuth tokens stored encrypted","Passwords hashed with bcrypt","Automated backups with point-in-time recovery","Breach notification within 72 hours as required by GDPR"].map((item, i) => <li key={i} style={li}>{item}</li>)}
+        </ul>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Email Information (via Gmail)</p>
-            <List items={[
-              "Access to read emails from priority contacts you identify",
-              "Ability to send emails on your behalf when you use the email compose feature",
-              "We do not read, store, or analyze emails beyond what is necessary to display them in the app",
-              "Gmail access is governed by Google's Privacy Policy (policies.google.com/privacy)",
-            ]} />
+        <h2 style={h2}>5. Your Rights</h2>
+        <p style={p}>You have the right to access, correct, delete, and export your data. California residents have additional CCPA rights. EU/UK users have GDPR rights including data portability and the right to object. Contact <a href="mailto:privacy@mydigitalhome.app" style={{ color: "#6366f1" }}>privacy@mydigitalhome.app</a> to exercise any right.</p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Professional Network Information (via LinkedIn)</p>
-            <List items={[
-              "Basic profile information and connection data when you authorize LinkedIn access",
-              "LinkedIn integration is governed by LinkedIn's Privacy Policy (linkedin.com/legal/privacy-policy)",
-            ]} />
+        <h2 style={h2}>6. Children's Privacy (COPPA)</h2>
+        <p style={p}>Digital Home is not directed at children under 13. We do not knowingly collect data from children under 13. Contact us immediately if you believe we have collected such data.</p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Usage Information</p>
-            <List items={[
-              "Pages visited, features used, and time spent in the app",
-              "Device type, browser, and IP address",
-              "Error logs and performance data",
-            ]} />
+        <h2 style={h2}>7. Cookies</h2>
+        <p style={p}>We use essential cookies for authentication, preference cookies for settings, and analytics cookies to understand usage. We do not use advertising or cross-site tracking cookies.</p>
 
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Content You Create</p>
-            <List items={[
-              "Projects, goals, tasks, and notes you create in the app",
-              "Contacts and relationship data you add or import",
-              "Content plans, brand deals, and revenue data you enter in Studio",
-              "Monthly review responses and financial snapshots",
-            ]} />
-          </Section>
+        <h2 style={h2}>8. Changes</h2>
+        <p style={p}>We may update this policy with 30 days advance notice via email and in-app notification for material changes.</p>
 
-          <Section title="2. How We Use Your Information">
-            <p>We use your information to:</p>
-            <List items={[
-              "Provide, maintain, and improve the Digital Home application",
-              "Display your financial data, social media analytics, and content performance",
-              "Generate AI-powered insights and recommendations",
-              "Send transactional emails (account confirmation, billing receipts)",
-              "Process subscription payments through Stripe",
-              "Provide customer support when you contact us",
-              "Comply with legal obligations",
-            ]} />
-            <p className="mt-4">We do NOT:</p>
-            <List items={[
-              "Sell your personal information to any third party",
-              "Share your financial data with advertisers",
-              "Use your data to train AI models without your explicit consent",
-              "Share your data with other Digital Home users",
-            ]} />
-          </Section>
-
-          <Section title="3. Third-Party Services">
-            <p>Digital Home integrates with the following third-party services. Each has their own privacy policy governing how they handle your data:</p>
-
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Plaid (Financial Data)</p>
-            <List items={[
-              "Plaid connects your bank accounts securely",
-              "Privacy Policy: plaid.com/legal/privacy-policy",
-              "Plaid End User Privacy Policy: plaid.com/legal/end-user-privacy-policy",
-            ]} />
-
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Stripe (Payments)</p>
-            <List items={[
-              "Stripe processes all subscription payments",
-              "We never store your credit card information",
-              "Privacy Policy: stripe.com/privacy",
-            ]} />
-
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">Google / Gmail</p>
-            <List items={[
-              "Used for email integration and OAuth authentication",
-              "Privacy Policy: policies.google.com/privacy",
-              "We comply with Google API Services User Data Policy",
-            ]} />
-
-            <p className="font-semibold text-[#111827] dark:text-white mt-4">LinkedIn</p>
-            <List items={[
-              "Used for contact import and professional network integration",
-              "Privacy Policy: linkedin.com/legal/privacy-policy",
-            ]} />
-          </Section>
-
-          <Section title="4. Data Storage and Security">
-            <List items={[
-              "All data is stored in secure cloud infrastructure",
-              "Data is encrypted at rest (AES-256) and in transit (TLS 1.2+)",
-              "We implement row-level security ensuring each user can only access their own data",
-              "OAuth tokens for third-party integrations are stored encrypted",
-              "We maintain regular automated backups",
-              "We conduct periodic security reviews",
-            ]} />
-          </Section>
-
-          <Section title="5. Data Retention">
-            <List items={[
-              "We retain your account data for as long as your account is active",
-              "If you delete your account, all personal data is permanently deleted within 30 days",
-              "Financial transaction data synced from Plaid is retained for 12 months",
-              "Backup copies may persist for up to 90 days after deletion",
-            ]} />
-          </Section>
-
-          <Section title="6. Your Rights">
-            <p>You have the right to:</p>
-            <List items={[
-              "Access all data we hold about you (export available in Settings → Account → Export My Data)",
-              "Correct inaccurate information in your profile",
-              "Delete your account and all associated data (Settings → Account → Delete Account)",
-              "Disconnect any third-party integration at any time (Settings → Integrations)",
-              "Opt out of non-essential communications",
-              "Request a copy of your data in JSON format",
-            ]} />
-            <p className="mt-4">To exercise any of these rights, contact us at: contact@digitalhome.app</p>
-          </Section>
-
-          <Section title="7. Children's Privacy">
-            <p>Digital Home is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe we have collected information from a child under 13, please contact us immediately at contact@digitalhome.app.</p>
-          </Section>
-
-          <Section title="8. Financial Data Specific Provisions">
-            <p>In connection with our use of Plaid:</p>
-            <List items={[
-              "You authorize Digital Home to retrieve financial information on your behalf through Plaid",
-              "We access your financial data only to provide the services you request within the app",
-              "We do not sell, rent, or share your financial data with third parties for marketing purposes",
-              "You can revoke Plaid access at any time through Settings → Integrations → Disconnect Bank",
-            ]} />
-          </Section>
-
-          <Section title="9. Cookies and Tracking">
-            <List items={[
-              "We use session cookies necessary for authentication",
-              "We use analytics cookies to understand how the app is used (you can opt out in Settings)",
-              "We do not use advertising cookies or cross-site tracking",
-            ]} />
-          </Section>
-
-          <Section title="10. Changes to This Policy">
-            <p>We may update this Privacy Policy from time to time. We will notify you of significant changes by email and by posting a notice in the app. Your continued use of Digital Home after changes are posted constitutes your acceptance of the updated policy.</p>
-          </Section>
-
-          <Section title="11. Contact Us">
-            <p>If you have questions about this Privacy Policy or how we handle your data:</p>
-            <List items={[
-              "Email: contact@digitalhome.app",
-              "Website: digitalhome.lovable.app",
-              "Response time: within 5 business days",
-            ]} />
-          </Section>
+        <h2 style={h2}>9. Contact</h2>
+        <div style={{ background: "#F9FAFB", border: "1px solid #F3F4F6", borderRadius: 12, padding: "20px 24px", marginBottom: 24 }}>
+          <p style={{ margin: 0, lineHeight: 2 }}>
+            <strong>Digital Home</strong><br />
+            Privacy: <a href="mailto:privacy@mydigitalhome.app" style={{ color: "#6366f1" }}>privacy@mydigitalhome.app</a><br />
+            Support: <a href="mailto:support@mydigitalhome.app" style={{ color: "#6366f1" }}>support@mydigitalhome.app</a>
+          </p>
         </div>
 
-        <LegalFooter />
+        <div style={{ borderTop: "1px solid #F3F4F6", paddingTop: 24, marginTop: 40, textAlign: "center" as const }}>
+          <p style={{ fontSize: 13, color: "#9CA3AF" }}>
+            &copy; {new Date().getFullYear()} Digital Home &nbsp;&middot;&nbsp;
+            <Link to="/privacy" style={{ color: "#9CA3AF", textDecoration: "none" }}>Privacy</Link> &nbsp;&middot;&nbsp;
+            <Link to="/terms" style={{ color: "#9CA3AF", textDecoration: "none" }}>Terms</Link>
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="font-semibold text-base text-[#111827] dark:text-white mt-8 mb-3">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function List({ items }: { items: string[] }) {
-  return (
-    <ul className="pl-4 space-y-1">
-      {items.map((item, i) => (
-        <li key={i}>— {item}</li>
-      ))}
-    </ul>
-  );
-}
-
-function LegalFooter() {
-  return (
-    <div className="mt-16 pt-6 border-t border-[#f0f0f0] dark:border-white/10 text-center">
-      <p className="text-xs text-[#9ca3af]">
-        Digital Home · contact@digitalhome.app · digitalhome.lovable.app
-      </p>
-      <p className="text-xs text-[#9ca3af] mt-2">
-        <Link to="/privacy" className="hover:text-[#6366f1] transition-colors">Privacy Policy</Link>
-        <span className="mx-2">·</span>
-        <Link to="/terms" className="hover:text-[#6366f1] transition-colors">Terms of Service</Link>
-      </p>
     </div>
   );
 }
