@@ -8,49 +8,46 @@
 
 @layer base {
   :root {
-    /* Mature design system */
-    --background: 210 5% 97%;        /* #F8F9FA */
-    --foreground: 0 0% 5%;           /* #0D0D0D */
+    --background: 0 0% 100%;           /* pure white */
+    --foreground: 222 47% 11%;         /* near-black, always readable */
 
-    --card: 0 0% 100%;               /* #FFFFFF */
-    --card-foreground: 0 0% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Deep green primary */
-    --primary: 153 42% 30%;           /* #2D6A4F */
+    --primary: 153 42% 30%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 5% 94%;          /* #EFEFEF */
-    --secondary-foreground: 0 0% 5%;
+    --secondary: 210 5% 94%;
+    --secondary-foreground: 222 47% 11%;
 
     --muted: 210 5% 94%;
-    --muted-foreground: 220 5% 47%;   /* #6B7280 */
+    --muted-foreground: 220 5% 47%;
 
-    --accent: 267 28% 51%;            /* #7B5EA7 */
+    --accent: 267 28% 51%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;         /* #DC2626 */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 64% 34%;           /* #16A34A */
+    --success: 142 64% 34%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 36 100% 57%;           /* #FFB224 */
+    --warning: 36 100% 57%;
     --warning-foreground: 0 0% 5%;
 
-    --info: 206 52% 55%;              /* #529CCA */
+    --info: 206 52% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 9% 90%;             /* #E5E7EB */
+    --border: 220 9% 90%;
     --input: 220 9% 90%;
     --ring: 153 42% 30%;
 
     --radius: 0.75rem;
 
-    /* Sidebar: charcoal in light mode */
-    --sidebar-background: 240 4% 12%;  /* #1C1C1E */
+    --sidebar-background: 240 4% 12%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 153 42% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -65,39 +62,32 @@
     --chart-4: 142 64% 34%;
     --chart-5: 36 100% 57%;
 
-    /* Shadows */
-    --shadow-2xs: 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
     --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08);
     --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08);
-    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.08);
-    --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.15);
 
     --sidebar: 240 4% 12%;
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --tracking-normal: 0em;
-    --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 240 2% 7%;            /* #111112 — warm dark charcoal */
-    --foreground: 0 0% 95%;             /* #F2F2F2 */
+    --background: 240 2% 7%;
+    --foreground: 0 0% 95%;
 
-    --card: 240 3% 11%;                 /* #1C1C1E — warm dark card */
+    --card: 240 3% 11%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 240 3% 11%;              /* #1C1C1E */
+    --popover: 240 3% 11%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 153 42% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 2% 15%;            /* #252528 */
+    --secondary: 240 2% 15%;
     --secondary-foreground: 0 0% 95%;
 
     --muted: 240 2% 15%;
-    --muted-foreground: 0 0% 95% / 0.5;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 267 28% 40%;
     --accent-foreground: 267 40% 85%;
@@ -114,12 +104,11 @@
     --info: 206 52% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 100% / 0.08;        /* rgba(255,255,255,0.08) */
-    --input: 240 2% 15%;               /* #252528 */
+    --border: 0 0% 100% / 0.08;
+    --input: 240 2% 15%;
     --ring: 153 42% 38%;
 
-    /* Sidebar: near-black in dark mode */
-    --sidebar-background: 240 3% 5%;   /* #0D0D0E */
+    --sidebar-background: 240 3% 5%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 153 42% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -134,14 +123,6 @@
     --chart-4: 142 64% 40%;
     --chart-5: 36 100% 57%;
 
-    --shadow-2xs: 0 1px 2px rgba(0,0,0,0.2);
-    --shadow-xs: 0 1px 2px rgba(0,0,0,0.2);
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.3);
-    --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.4);
-
     --radius: 0.75rem;
     --sidebar: 240 3% 11%;
   }
@@ -150,6 +131,11 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /* Force light mode by default — only go dark when .dark class is explicitly applied */
+  html:not(.dark) {
+    color-scheme: light;
   }
 
   body {
@@ -214,10 +200,7 @@
 }
 
 /* TipTap editor styles */
-.tiptap {
-  outline: none;
-}
-
+.tiptap { outline: none; }
 .tiptap p.is-editor-empty:first-child::before {
   color: hsl(var(--muted-foreground) / 0.5);
   content: attr(data-placeholder);
@@ -225,135 +208,40 @@
   height: 0;
   pointer-events: none;
 }
-
-.tiptap ul:not([data-type="taskList"]) {
-  list-style: disc;
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;
-}
-
-.tiptap ul:not([data-type="taskList"]) li {
-  margin: 0.15rem 0;
-}
-
-.tiptap ol {
-  list-style: decimal;
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;
-}
-
-.tiptap ul[data-type="taskList"] {
-  list-style: none;
-  padding: 0;
-}
-
-.tiptap ul[data-type="taskList"] li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.tiptap ul[data-type="taskList"] li label {
-  margin-top: 0.15rem;
-}
-
-.tiptap ul[data-type="taskList"] li label input[type="checkbox"] {
-  accent-color: hsl(var(--primary));
-}
+.tiptap ul:not([data-type="taskList"]) { list-style: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap ul:not([data-type="taskList"]) li { margin: 0.15rem 0; }
+.tiptap ol { list-style: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap ul[data-type="taskList"] { list-style: none; padding: 0; }
+.tiptap ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tiptap ul[data-type="taskList"] li label { margin-top: 0.15rem; }
+.tiptap ul[data-type="taskList"] li label input[type="checkbox"] { accent-color: hsl(var(--primary)); }
 
 @keyframes iconFloat {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
 }
+.icon-float { animation: iconFloat 3s ease-in-out infinite; }
 
-.icon-float {
-  animation: iconFloat 3s ease-in-out infinite;
-}
-
-/* ══════════════════════════════════════════════════════════
-   MOBILE APP EXPERIENCE — max-width: 767px ONLY
-   ══════════════════════════════════════════════════════════ */
 @media (max-width: 1023px) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-
-  button, a, [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
+  input, select, textarea { font-size: 16px !important; }
+  button, a, [role="button"] { min-height: 44px; min-width: 44px; }
   .mobile-main-content {
     padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
-
-  .mobile-tab-bar nav {
-    box-shadow: 0 -1px 0 hsl(var(--border)), 0 -4px 12px rgba(0,0,0,0.06);
-  }
-
-  .mobile-tab-item {
-    position: relative;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .mobile-tab-item:active {
-    transform: scale(0.92);
-    transition: transform 0.1s ease;
-  }
-
-  .bg-card {
-    border-radius: 16px !important;
-  }
-
-  .rounded-xl {
-    border-radius: 16px !important;
-  }
-
-  .rounded-lg {
-    border-radius: 14px !important;
-  }
-
-  .shadow-sm, .border {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
-  }
-
-  /* Force single column on mobile for common grids */
-  .sm\:grid-cols-2,
-  .sm\:grid-cols-3,
-  .sm\:grid-cols-4,
-  .lg\:grid-cols-3,
-  .lg\:grid-cols-4,
-  .lg\:grid-cols-5 {
-    grid-template-columns: 1fr !important;
-  }
-
-  .grid-cols-2.gap-3,
-  .grid-cols-2.gap-4 {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .mobile-header {
-    height: 52px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-
-  /* Settings sidebar becomes horizontal on mobile */
-  .settings-sidebar-desktop {
-    display: none !important;
-  }
+  .bg-card { border-radius: 16px !important; }
+  .rounded-xl { border-radius: 16px !important; }
+  .rounded-lg { border-radius: 14px !important; }
+  .settings-sidebar-desktop { display: none !important; }
 }
 
 @media (min-width: 1024px) {
-  .settings-sidebar-mobile {
-    display: none !important;
-  }
+  .settings-sidebar-mobile { display: none !important; }
 }
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
+.animate-marquee { animation: marquee 30s linear infinite; }
